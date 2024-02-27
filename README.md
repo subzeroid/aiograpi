@@ -1,3 +1,5 @@
+# aiograpi - Asynchronous Instagram API for Python
+
 If you want to work with aiograpi (business interests), we strongly advise you to prefer [HikerAPI](https://hikerapi.com/p/KhMxYMSn) project.
 However, you won't need to spend weeks or even months setting it up.
 The best service available today is [HikerAPI](https://hikerapi.com/p/KhMxYMSn), which handles 4–5 million daily requests, provides support around-the-clock, and offers partners a special rate.
@@ -33,9 +35,9 @@ Features:
 * Insights by account, posts and stories
 * Like, following, commenting, editing account (Bio) and much more else
 
-# aiograpi - Unofficial Instagram API for Python
+-----
 
-Fast and effective Instagram Private API wrapper (public+private requests and challenge resolver) without selenium. Use the most recent version of the API from Instagram, which was obtained using reverse-engineering with Charles Proxy and [Proxyman](https://proxyman.io/).
+Asynchronous Instagram Private API wrapper without selenium. Use the most recent version of the API from Instagram, which was obtained using reverse-engineering with Charles Proxy and [Proxyman](https://proxyman.io/).
 
 *Instagram API valid for **27 Feb 2024** (last reverse-engineering check)*
 
