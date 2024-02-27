@@ -141,7 +141,7 @@ class CollectionMixin:
                 self.logger.exception(e)
                 break
             for item in result["items"]:
-                if last_media_pk and last_media_pk == item["media"]["pk"]:
+                if last_media_pk and last_media_pk == item.pk:
                     found_last_media_pk = True
                     break
                 total_items.append(extract_media_v1(item.get("media", item)))
