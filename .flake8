@@ -1,0 +1,4 @@
+[flake8]
+ignore = W503
+max-line-length = 88
+exclude = */tests/*,*test*.py
