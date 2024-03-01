@@ -371,6 +371,7 @@ def extract_direct_media(media):
 
 
 def extract_account(data):
+    data["pk"] = str(data["pk"])
     data["external_url"] = data.get("external_url") or None
     return Account(**data)
 
