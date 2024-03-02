@@ -10,6 +10,7 @@ from aiograpi.exceptions import (
     ClientLoginRequired,
     ClientNotFoundError,
     MediaNotFound,
+    PreLoginRequired,
     PrivateError,
 )
 from aiograpi.extractors import (
@@ -19,9 +20,9 @@ from aiograpi.extractors import (
     extract_media_v1,
     extract_user_short,
 )
-from aiograpi.types import Location, Media, UserShort, Usertag
-from aiograpi.utils import InstagramIdCodec, json_value, dumps, generate_jazoest
 from aiograpi.mixins.graphql import GQL_STUFF
+from aiograpi.types import Location, Media, UserShort, Usertag
+from aiograpi.utils import InstagramIdCodec, dumps, generate_jazoest, json_value
 
 
 class MediaMixin:
@@ -49,9 +50,8 @@ class MediaMixin:
         """
         media_id = str(media_pk)
         if "_" not in media_id:
-            assert media_id.isdigit(), (
-                "media_id must been contain digits, now %s" % media_id
-            )
+            if not media_id.isdigit():
+                raise Exception("media_id must been contain digits, now %s" % media_id)
             user = await self.media_user(media_id)
             media_id = "%s_%s" % (media_id, user.pk)
         return media_id
@@ -280,7 +280,8 @@ class MediaMixin:
         bool
             A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         media_id = await self.media_id(media_id)
         result = await self.private_request(
             f"media/{media_id}/delete/", self.with_default_data({"media_id": media_id})
@@ -316,7 +317,8 @@ class MediaMixin:
         Dict
             A dictionary of response from the call
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         media_id = await self.media_id(media_id)
         media = await self.media_info(media_id)
         usertags = [
@@ -395,7 +397,8 @@ class MediaMixin:
         bool
             A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         media_id = await self.media_pk(media_id)
         data = {
             "inventory_source": "media_or_ad",

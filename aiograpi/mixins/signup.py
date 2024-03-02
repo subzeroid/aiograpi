@@ -26,9 +26,11 @@ class SignUpMixin:
         month: int = None,
         day: int = None,
     ) -> UserShort:
-        assert email or phone_number, "Use email or phone_number"
+        if not (email or phone_number):
+            raise Exception("Use email or phone_number")
         check = await self.check_username(username)
-        assert check.get("available"), f"Username is't available ({check})"
+        if not check.get("available"):
+            raise Exception(f"Username is't available ({check})")
         kwargs = {
             "username": username,
             "password": password,
@@ -40,11 +42,14 @@ class SignUpMixin:
         if email:
             kwargs["email"] = email
             check = await self.check_email(email)
-            assert check.get("valid"), f"Email not valid ({check})"
-            assert check.get("available"), f"Email not available ({check})"
+            if not check.get("valid"):
+                raise Exception(f"Email not valid ({check})")
+            if not check.get("available"):
+                raise Exception(f"Email not available ({check})")
             config = await self.get_signup_config()
             sent = await self.send_verify_email(email)
-            assert sent.get("email_sent"), "Email not sent ({sent})"
+            if not sent.get("email_sent"):
+                raise Exception("Email not sent ({sent})")
             # send code confirmation
             code = ""
             for attempt in range(1, 11):
@@ -65,11 +70,11 @@ class SignUpMixin:
             kwargs["phone_number"] = phone_number
             config = await self.get_signup_config()
             check = await self.check_phone_number(phone_number)
-            assert check.get("status") == "ok", f"Phone number not valid ({check})"
+            if check.get("status") != "ok":
+                raise Exception(f"Phone number not valid ({check})")
             sms = await self.send_signup_sms_code(phone_number)
-            assert (
-                check.get("status") == "ok"
-            ), f"Error when verify phone number ({sms})"
+            if check.get("status") != "ok":
+                raise Exception(f"Error when verify phone number ({sms})")
             if "verification_code" in sms:
                 # when you have multiple accounts
                 code = sms["verification_code"]

@@ -1,19 +1,19 @@
 import random
 from typing import List, Optional, Tuple
 
-from aiograpi.exceptions import (
+from aiograpi.exceptions import (  # CommentsDisabled,
     ClientError,
     ClientLoginRequired,
     ClientNotFoundError,
-    # CommentsDisabled,
     CommentNotFound,
     MediaNotFound,
+    PreLoginRequired,
     PrivateError,
 )
 from aiograpi.extractors import extract_comment
-from aiograpi.types import Comment
-from aiograpi.utils import generate_jazoest, dumps
 from aiograpi.mixins.graphql import GQL_STUFF
+from aiograpi.types import Comment
+from aiograpi.utils import dumps, generate_jazoest
 
 
 class CommentMixin:
@@ -400,7 +400,8 @@ class CommentMixin:
         Comment
             An object of Comment type
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         data = {
             "delivery_class": "organic",
             "feed_position": "0",
@@ -433,7 +434,8 @@ class CommentMixin:
         bool
             A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         comment_pk = int(comment_pk)
         data = {
             "is_carousel_bumped_post": "false",

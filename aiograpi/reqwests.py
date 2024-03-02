@@ -1,35 +1,33 @@
 import httpx
 import orjson
 import zstandard as zstd
-
 from httpx import (
-    HTTPError,
-    RequestError,
-    TransportError,
-    TimeoutException,
-    ConnectTimeout,
-    ReadTimeout,
-    WriteTimeout,
-    PoolTimeout,
-    NetworkError,
-    ConnectError,
-    ReadError,
-    WriteError,
     CloseError,
-    ProtocolError,
-    LocalProtocolError,
-    RemoteProtocolError,
-    ProxyError,
-    UnsupportedProtocol,
+    ConnectError,
+    ConnectTimeout,
+    CookieConflict,
     DecodingError,
-    TooManyRedirects,
+    HTTPError,
     HTTPStatusError,
     InvalidURL,
-    CookieConflict,
+    LocalProtocolError,
+    NetworkError,
+    PoolTimeout,
+    ProtocolError,
+    ProxyError,
+    ReadError,
+    ReadTimeout,
+    RemoteProtocolError,
+    RequestError,
+    TimeoutException,
+    TooManyRedirects,
+    TransportError,
+    UnsupportedProtocol,
+    WriteError,
+    WriteTimeout,
 )
-from httpx._decoders import SUPPORTED_DECODERS, ContentDecoder
 from httpx._client import ClientState
-
+from httpx._decoders import SUPPORTED_DECODERS, ContentDecoder
 
 httpx.Response.json = lambda self: orjson.loads(self.content)
 

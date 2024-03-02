@@ -3,15 +3,20 @@ from typing import List, Tuple
 
 import orjson
 
-from aiograpi.utils import dumps
-from aiograpi.exceptions import ClientUnauthorizedError
-from aiograpi.exceptions import ClientError, HashtagNotFound, WrongCursorError
+from aiograpi.exceptions import (
+    ClientError,
+    ClientUnauthorizedError,
+    HashtagNotFound,
+    PreLoginRequired,
+    WrongCursorError,
+)
 from aiograpi.extractors import (
     extract_hashtag_gql,
     extract_hashtag_v1,
     extract_media_v1,
 )
 from aiograpi.types import Hashtag, Media
+from aiograpi.utils import dumps
 
 
 class HashtagMixin:
@@ -494,7 +499,8 @@ class HashtagMixin:
         bool
             A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         name = "unfollow" if unfollow else "follow"
         data = self.with_action_data({"user_id": self.user_id})
         result = await self.private_request(

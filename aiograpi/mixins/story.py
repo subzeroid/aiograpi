@@ -6,15 +6,12 @@ from urllib.parse import urlparse
 from aiograpi import config
 from aiograpi.exceptions import (
     ClientNotFoundError,
-    UserNotFound,
-    StoryNotFound,
+    PreLoginRequired,
     PrivateError,
+    StoryNotFound,
+    UserNotFound,
 )
-from aiograpi.extractors import (
-    extract_story_gql,
-    extract_story_v1,
-    extract_user_short,
-)
+from aiograpi.extractors import extract_story_gql, extract_story_v1, extract_user_short
 from aiograpi.types import Story, UserShort
 
 
@@ -98,7 +95,8 @@ class StoryMixin:
         bool
             A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         media_id = await self.media_id(story_pk)
         return await self.media_delete(media_id)
 
@@ -123,7 +121,8 @@ class StoryMixin:
         self.inject_sessionid_to_public()
 
         def _userid_chunks():
-            assert user_ids is not None
+            if user_ids is None:
+                raise Exception("Undefined user_ids")
             user_ids_per_query = 50
             for i in range(0, len(user_ids), user_ids_per_query):
                 end = i + user_ids_per_query
@@ -284,7 +283,8 @@ class StoryMixin:
             Path for the file downloaded
         """
         fname = urlparse(url).path.rsplit("/", 1)[1].strip()
-        assert fname, "The URL must contain the path to the file (mp4 or jpg)"
+        if not fname:
+            raise Exception("The URL must contain the path to the file (mp4 or jpg)")
         filename = "%s.%s" % (filename, fname.rsplit(".", 1)[1]) if filename else fname
         path = Path(folder) / filename
         response = await self.public.get(url)
@@ -351,7 +351,8 @@ class StoryMixin:
         bool
             A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         media_id = await self.media_id(story_id)
         data = {
             "media_id": media_id,
@@ -402,5 +403,6 @@ class StoryMixin:
             data=data,
             with_signature=True,
         )
-        assert result["status"] == "ok"
+        if result["status"] != "ok":
+            raise Exception("Sticker not ok")
         return result

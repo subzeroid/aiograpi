@@ -57,7 +57,8 @@ class DownloadPhotoMixin:
             Path for the file downloaded
         """
         media = await self.media_info(media_pk)
-        assert media.media_type == 1, "Must been photo"
+        if media.media_type != 1:
+            raise Exception("Must been photo")
         filename = "{username}_{media_pk}".format(
             username=media.user.username, media_pk=media_pk
         )
@@ -135,10 +136,12 @@ class UploadPhotoMixin:
         tuple
             (Upload ID for the media, width, height)
         """
-        assert isinstance(path, Path), f"Path must been Path, now {path} ({type(path)})"
+        if not isinstance(path, Path):
+            raise Exception(f"Path must been Path, now {path} ({type(path)})")
         # upload_id = 516057248854759
         upload_id = upload_id or str(int(time.time() * 1000))
-        assert path, "Not specified path to photo"
+        if not path:
+            raise Exception("Not specified path to photo")
         waterfall_id = str(uuid4())
         # upload_name example: '1576102477530_0_7823256191'
         upload_name = "{upload_id}_0_{rand}".format(
@@ -596,7 +599,8 @@ class UploadPhotoMixin:
                     data["has_animated_sticker"] = "1"
         if medias:
             for feed_media in medias:
-                assert feed_media.media_pk, "Required StoryMedia.media_pk"
+                if not feed_media.media_pk:
+                    raise Exception("Required StoryMedia.media_pk")
                 # if not feed_media.user_id:
                 #     user = self.media_user(feed_media.media_pk)
                 #     feed_media.user_id = user.pk

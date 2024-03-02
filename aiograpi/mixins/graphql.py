@@ -1,12 +1,14 @@
 import asyncio
 import logging
 import time
+
 import orjson
 
 from aiograpi import reqwests
-from aiograpi.utils import random_delay
 from aiograpi.exceptions import (
-    ClientUnauthorizedError,
+    AboutUsError,
+    AccountSuspended,
+    ChallengeRequired,
     ClientBadRequestError,
     ClientConnectionError,
     ClientError,
@@ -15,13 +17,11 @@ from aiograpi.exceptions import (
     ClientLoginRequired,
     ClientNotFoundError,
     ClientThrottledError,
-    ChallengeRequired,
-    AccountSuspended,
-    TermsUnblock,
+    ClientUnauthorizedError,
     TermsAccept,
-    AboutUsError,
+    TermsUnblock,
 )
-
+from aiograpi.utils import random_delay
 
 GRAPHQL_API_URL = "https://www.instagram.com/api/graphql"
 
@@ -122,8 +122,10 @@ class GraphQLRequestMixin:
             headers=headers,
             return_json=return_json,
         )
-        assert retries_count <= 10, "Retries count is too high"
-        assert retries_timeout <= 600, "Retries timeout is too high"
+        if retries_count > 10:
+            raise Exception("Retries count is too high")
+        if retries_timeout > 600:
+            raise Exception("Retries timeout is too high")
         self.inject_sessionid_to_public()
         for iteration in range(retries_count):
             try:

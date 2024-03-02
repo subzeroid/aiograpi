@@ -1,9 +1,14 @@
 import asyncio
 from typing import Dict, List
 
-from aiograpi.exceptions import ClientError, MediaError, UserError
+from aiograpi.exceptions import (
+    ClientError,
+    MediaError,
+    PreLoginRequired,
+    UnsupportedError,
+    UserError,
+)
 from aiograpi.utils import json_value
-
 
 POST_TYPES = ("ALL", "CAROUSEL_V2", "IMAGE", "SHOPPING", "VIDEO")
 TIME_FRAMES = (
@@ -72,16 +77,14 @@ class InsightsMixin:
         List[Dict]
             List of dictionaries of response from the call
         """
-        assert (
-            post_type in POST_TYPES
-        ), f'Unsupported post_type="{post_type}" {POST_TYPES}'
-        assert (
-            time_frame in TIME_FRAMES
-        ), f'Unsupported time_frame="{time_frame}" {TIME_FRAMES}'
-        assert (
-            data_ordering in DATA_ORDERS
-        ), f'Unsupported data_ordering="{data_ordering}" {DATA_ORDERS}'
-        assert self.user_id, "Login required"
+        if post_type not in POST_TYPES:
+            raise UnsupportedError(post_type, POST_TYPES)
+        if time_frame not in TIME_FRAMES:
+            raise UnsupportedError(time_frame, TIME_FRAMES)
+        if data_ordering not in DATA_ORDERS:
+            raise UnsupportedError(data_ordering, DATA_ORDERS)
+        if not self.user_id:
+            raise PreLoginRequired
         medias = []
         cursor = None
         data = {
@@ -150,7 +153,8 @@ class InsightsMixin:
         Dict
             A dictionary of response from the call
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         data = {
             "surface": "account",
             "doc_id": 2449243051851783,
@@ -190,7 +194,8 @@ class InsightsMixin:
         Dict
             A dictionary with insights data
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         media_pk = await self.media_pk(media_pk)
         data = {
             "surface": "post",

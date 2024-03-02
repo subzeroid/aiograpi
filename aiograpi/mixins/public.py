@@ -1,13 +1,15 @@
 import asyncio
+import json
 import logging
 import time
-import json
 
 import orjson
 
 from aiograpi import reqwests
 from aiograpi.exceptions import (
-    ClientUnauthorizedError,
+    AboutUsError,
+    AccountSuspended,
+    ChallengeRequired,
     ClientBadRequestError,
     ClientConnectionError,
     ClientError,
@@ -17,11 +19,9 @@ from aiograpi.exceptions import (
     ClientLoginRequired,
     ClientNotFoundError,
     ClientThrottledError,
-    ChallengeRequired,
-    AccountSuspended,
-    TermsUnblock,
+    ClientUnauthorizedError,
     TermsAccept,
-    AboutUsError,
+    TermsUnblock,
 )
 from aiograpi.utils import random_delay
 
@@ -72,8 +72,10 @@ class PublicRequestMixin:
             headers=headers,
             return_json=return_json,
         )
-        assert retries_count <= 10, "Retries count is too high"
-        assert retries_timeout <= 600, "Retries timeout is too high"
+        if retries_count > 10:
+            raise Exception("Retries count is too high")
+        if retries_timeout > 600:
+            raise Exception("Retries timeout is too high")
         for iteration in range(retries_count):
             try:
                 if self.delay_range:
@@ -202,7 +204,8 @@ class PublicRequestMixin:
         params=None,
         headers=None,
     ):
-        assert query_id or query_hash, "Must provide valid one of: query_id, query_hash"
+        if not (query_id or query_hash):
+            raise Exception("Must provide valid one of: query_id, query_hash")
         default_params = {"variables": json.dumps(variables, separators=(",", ":"))}
         if query_id:
             # 17851374694183129

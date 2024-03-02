@@ -4,7 +4,11 @@ import time
 from pathlib import Path
 from typing import List, Optional
 
-from aiograpi.exceptions import ClientNotFoundError, DirectThreadNotFound
+from aiograpi.exceptions import (
+    ClientNotFoundError,
+    DirectThreadNotFound,
+    PreLoginRequired,
+)
 from aiograpi.extractors import (
     extract_direct_message,
     extract_direct_response,
@@ -54,7 +58,8 @@ class DirectMixin:
         List[DirectThread]
             A list of objects of DirectThread
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         params = {
             "visual_message_return_type": "unseen",
             "thread_message_limit": "10",
@@ -104,7 +109,8 @@ class DirectMixin:
         List[DirectThread]
             A list of objects of DirectThread
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         params = {
             "visual_message_return_type": "unseen",
             "persistentBadging": "true",
@@ -145,7 +151,8 @@ class DirectMixin:
         DirectThread
             An object of DirectThread
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         params = {
             "visual_message_return_type": "unseen",
             "direction": "older",
@@ -193,7 +200,8 @@ class DirectMixin:
         List[DirectMessage]
             A list of objects of DirectMessage
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         return await self.direct_thread(thread_id, amount).messages
 
     async def direct_answer(self, thread_id: int, text: str) -> DirectMessage:
@@ -213,7 +221,8 @@ class DirectMixin:
         DirectMessage
             An object of DirectMessage
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         return await self.direct_send(text, [], [int(thread_id)])
 
     async def direct_send(
@@ -238,7 +247,8 @@ class DirectMixin:
         DirectMessage
             An object of DirectMessage
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         assert (user_ids or thread_ids) and not (
             user_ids and thread_ids
         ), "Specify user_ids or thread_ids, but not both"
@@ -342,7 +352,8 @@ class DirectMixin:
         DirectMessage
             An object of DirectMessage
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         assert (user_ids or thread_ids) and not (
             user_ids and thread_ids
         ), "Specify user_ids or thread_ids, but not both"
@@ -501,7 +512,8 @@ class DirectMixin:
         DirectMessage
             An object of DirectMessage
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         token = self.generate_mutation_token()
         media_id = await self.media_id(media_id)
         recipient_users = dumps([[int(uid) for uid in user_ids]])
@@ -544,7 +556,8 @@ class DirectMixin:
         DirectMessage
             An object of DirectMessage
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         assert (user_ids or thread_ids) and not (
             user_ids and thread_ids
         ), "Specify user_ids or thread_ids, but not both"

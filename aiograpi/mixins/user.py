@@ -8,21 +8,21 @@ from aiograpi.exceptions import (
     ClientJSONDecodeError,
     ClientLoginRequired,
     ClientNotFoundError,
-    UserNotFound,
-    PrivateError,
     ClientStatusFail,
     IsRegulatedC18Error,
+    PreLoginRequired,
+    PrivateError,
+    UserNotFound,
 )
 from aiograpi.extractors import (
+    extract_about_v1,
+    extract_guide_v1,
     extract_user_gql,
     extract_user_short,
     extract_user_v1,
-    extract_guide_v1,
-    extract_about_v1,
 )
 from aiograpi.types import About, Guide, Relationship, User, UserShort
 from aiograpi.utils import dumps, json_value
-
 
 logger = logging.getLogger(__name__)
 
@@ -857,7 +857,8 @@ class UserMixin:
         bool
             A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         user_id = str(user_id)
         if user_id in self._users_following.get(self.user_id, []):
             self.logger.debug("User %s already followed", user_id)
@@ -881,7 +882,8 @@ class UserMixin:
         bool
             A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         user_id = str(user_id)
         data = self.with_action_data({"user_id": user_id})
         result = await self.private_request(f"friendships/destroy/{user_id}/", data)
@@ -902,7 +904,8 @@ class UserMixin:
         bool
             A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         user_id = str(user_id)
         data = self.with_action_data({"user_id": str(user_id)})
         result = await self.private_request(
@@ -1020,7 +1023,8 @@ class UserMixin:
         bool
             A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         user_id = str(user_id)
         data = self.with_action_data({"user_id": user_id, "_uid": self.user_id})
         name = "unfavorite" if disable else "favorite"
@@ -1060,7 +1064,8 @@ class UserMixin:
         bool
         A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         user_id = str(user_id)
         data = self.with_action_data({"user_id": user_id, "_uid": self.user_id})
         name = "unfavorite" if revert else "favorite"
@@ -1102,7 +1107,8 @@ class UserMixin:
         bool
         A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         user_id = str(user_id)
         data = self.with_action_data({"user_id": user_id, "_uid": self.user_id})
         name = "unfavorite" if revert else "favorite"
@@ -1144,7 +1150,8 @@ class UserMixin:
         bool
         A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         user_id = str(user_id)
         data = self.with_action_data({"user_id": user_id, "_uid": self.user_id})
         name = "unfavorite" if revert else "favorite"

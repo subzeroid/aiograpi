@@ -1,5 +1,5 @@
-from typing import Any, Dict
 from pathlib import Path
+from typing import Any, Dict
 from urllib.parse import urlparse
 
 from aiograpi import reqwests
@@ -29,7 +29,8 @@ class TrackMixin:
             Path for the file downloaded
         """
         fname = urlparse(url).path.rsplit("/", 1)[1].strip()
-        assert fname, """The URL must contain the path to the file (m4a or mp3)."""
+        if not fname:
+            raise Exception("The URL must contain the path to the file (m4a or mp3).")
         filename = "%s.%s" % (filename, fname.rsplit(".", 1)[1]) if filename else fname
         path = Path(folder) / filename
         response = await reqwests.get(url, timeout=self.request_timeout)

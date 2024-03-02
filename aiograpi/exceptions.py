@@ -383,3 +383,17 @@ class ConnectProxyError(ProxyError):
 
 class AuthRequiredProxyError(ProxyError):
     """ProxyError is raised due to a HTTP 407 response"""
+
+
+class UnsupportedError(ClientError):
+    def __init__(self, value, items):
+        message = f'Unsupported value="{value}" {items}'
+        super().__init__(message)
+
+
+class UnsupportedSettingValue(UnsupportedError):
+    ...
+
+
+class PreLoginRequired(ClientError):
+    message = "Login required"

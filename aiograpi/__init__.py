@@ -10,8 +10,8 @@ from aiograpi.mixins.clip import DownloadClipMixin, UploadClipMixin
 from aiograpi.mixins.collection import CollectionMixin
 from aiograpi.mixins.comment import CommentMixin
 from aiograpi.mixins.direct import DirectMixin
-from aiograpi.mixins.track import TrackMixin
 from aiograpi.mixins.fbsearch import FbSearchMixin
+from aiograpi.mixins.graphql import GraphQLRequestMixin
 from aiograpi.mixins.hashtag import HashtagMixin
 from aiograpi.mixins.highlight import HighlightMixin
 from aiograpi.mixins.igtv import DownloadIGTVMixin, UploadIGTVMixin
@@ -27,12 +27,12 @@ from aiograpi.mixins.public import (
     PublicRequestMixin,
     TopSearchesPublicMixin,
 )
-from aiograpi.mixins.graphql import GraphQLRequestMixin
 from aiograpi.mixins.share import ShareMixin
 from aiograpi.mixins.signup import SignUpMixin
 from aiograpi.mixins.story import StoryMixin
 from aiograpi.mixins.timeline import ReelsMixin
 from aiograpi.mixins.totp import TOTPMixin
+from aiograpi.mixins.track import TrackMixin
 from aiograpi.mixins.user import UserMixin
 from aiograpi.mixins.video import DownloadVideoMixin, UploadVideoMixin
 

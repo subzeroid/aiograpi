@@ -1,6 +1,6 @@
 from typing import List
 
-from aiograpi.exceptions import CollectionNotFound, PrivateError
+from aiograpi.exceptions import CollectionNotFound, PrivateError, PreLoginRequired
 from aiograpi.extractors import extract_collection, extract_media_v1
 from aiograpi.types import Collection, Media
 
@@ -172,7 +172,8 @@ class CollectionMixin:
         bool
             A boolean value
         """
-        assert self.user_id, "Login required"
+        if not self.user_id:
+            raise PreLoginRequired
         media_id = await self.media_id(media_id)
         data = {
             "module_name": "feed_timeline",

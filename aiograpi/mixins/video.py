@@ -52,7 +52,8 @@ class DownloadVideoMixin:
             Path for the file downloaded
         """
         media = await self.media_info(media_pk)
-        assert media.media_type == 2, "Must been video"
+        if media.media_type != 2:
+            raise Exception("Must been video")
         filename = "{username}_{media_pk}".format(
             username=media.user.username, media_pk=media_pk
         )
@@ -151,7 +152,8 @@ class UploadVideoMixin:
         tuple
             (Upload ID for the media, width, height)
         """
-        assert isinstance(path, Path), f"Path must been Path, now {path} ({type(path)})"
+        if not isinstance(path, Path):
+            raise Exception(f"Path must been Path, now {path} ({type(path)})")
         upload_id = str(int(time.time() * 1000))
         width, height, duration, thumbnail = analyze_video(path, thumbnail)
         waterfall_id = str(uuid4())
@@ -735,7 +737,8 @@ class UploadVideoMixin:
                     data["has_animated_sticker"] = "1"
         if medias:
             for feed_media in medias:
-                assert feed_media.media_pk, "Required StoryMedia.media_pk"
+                if not feed_media.media_pk:
+                    raise Exception("Required StoryMedia.media_pk")
                 # if not feed_media.user_id:
                 #     user = await self.media_user(feed_media.media_pk)
                 #     feed_media.user_id = user.pk

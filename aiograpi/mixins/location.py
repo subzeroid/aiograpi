@@ -2,12 +2,8 @@ import base64
 import json
 from typing import List, Tuple
 
-from aiograpi.exceptions import (
-    ClientNotFoundError,
-    LocationNotFound,
-    WrongCursorError,
-)
-from aiograpi.extractors import extract_location, extract_media_v1, extract_guide_v1
+from aiograpi.exceptions import ClientNotFoundError, LocationNotFound, WrongCursorError
+from aiograpi.extractors import extract_guide_v1, extract_location, extract_media_v1
 from aiograpi.types import Guide, Location, Media
 
 tab_keys_a1 = ("edge_location_to_top_posts", "edge_location_to_media")
@@ -64,9 +60,8 @@ class LocationMixin:
         Location
             An object of Location
         """
-        assert location and isinstance(
-            location, Location
-        ), f'Location is wrong "{location}" ({type(location)})'
+        if not (location and isinstance(location, Location)):
+            raise Exception(f'Location is wrong "{location}" ({type(location)})')
         if location.pk and not location.lat:
             # search lat and lng
             info = await self.location_info(location.pk)
@@ -215,9 +210,10 @@ class LocationMixin:
         Tuple[List[Media], str]
             List of objects of Media and end_cursor
         """
-        assert (
-            tab_key in tab_keys_a1
-        ), f'You must specify one of the options for "tab_key" {tab_keys_a1}'
+        if tab_key not in tab_keys_a1:
+            raise Exception(
+                f'You must specify one of the options for "tab_key" {tab_keys_a1}'
+            )
         unique_set = set()
         medias = []
         end_cursor = None
@@ -262,9 +258,10 @@ class LocationMixin:
         List[Media]
             List of objects of Media
         """
-        assert (
-            tab_key in tab_keys_a1
-        ), f'You must specify one of the options for "tab_key" {tab_keys_a1}'
+        if tab_key not in tab_keys_a1:
+            raise Exception(
+                f'You must specify one of the options for "tab_key" {tab_keys_a1}'
+            )
         medias, _ = await self.location_medias_a1_chunk(
             location_pk, amount, sleep, tab_key
         )
@@ -297,9 +294,10 @@ class LocationMixin:
         Tuple[List[Media], str]
             List of objects of Media and max_id
         """
-        assert (
-            tab_key in tab_keys_v1
-        ), f'You must specify one of the options for "tab_key" {tab_keys_v1}'
+        if tab_key not in tab_keys_v1:
+            raise Exception(
+                f'You must specify one of the options for "tab_key" {tab_keys_v1}'
+            )
         data = {
             "_uuid": self.uuid,
             "session_id": self.client_session_id,
@@ -354,9 +352,10 @@ class LocationMixin:
         List[Media]
             List of objects of Media
         """
-        assert (
-            tab_key in tab_keys_v1
-        ), f'You must specify one of the options for "tab_key" {tab_keys_a1}'
+        if tab_key not in tab_keys_v1:
+            raise Exception(
+                f'You must specify one of the options for "tab_key" {tab_keys_a1}'
+            )
         medias, _ = await self.location_medias_v1_chunk(
             location_pk=location_pk, tab_key=tab_key
         )

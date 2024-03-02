@@ -1,7 +1,5 @@
 import logging
 
-# from copy import deepcopy
-
 import orjson
 
 from .types import (
@@ -14,10 +12,10 @@ from .types import (
     DirectResponse,
     DirectShortThread,
     DirectThread,
+    Guide,
     Hashtag,
     Highlight,
     Location,
-    Guide,
     Media,
     MediaOembed,
     Resource,
@@ -31,6 +29,8 @@ from .types import (
     Usertag,
 )
 from .utils import InstagramIdCodec, json_value
+
+# from copy import deepcopy
 
 
 MEDIA_TYPES_GQL = {"GraphImage": 1, "GraphVideo": 2, "GraphSidecar": 8, "StoryVideo": 2}
