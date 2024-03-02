@@ -14,7 +14,7 @@ The aiograpi more suits for testing or research than a working business!
 * [HikerAPI](https://hikerapi.com/p/KhMxYMSn) for Instagram API ⚡⚡⚡
 * [DataLikers](https://datalikers.com/p/XPhrh0Y3) for Instagram Datasets 🚀
 
-[![Package](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml/badge.svg?branch=master&1)](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml)
+[![Package](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml/badge.svg?branch=main&1)](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml)
 [![PyPI](https://img.shields.io/pypi/v/aiograpi)](https://pypi.org/project/aiograpi/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aiograpi)
 ![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue)

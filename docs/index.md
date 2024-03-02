@@ -6,7 +6,7 @@
 * [HikerAPI](https://hikerapi.com/p/KhMxYMSn) for Instagram API ⚡⚡⚡
 * [DataLikers](https://datalikers.com/p/XPhrh0Y3) for Instagram Datasets 🚀
 
-[![Package](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml)
+[![Package](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml/badge.svg?branch=main)](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml)
 [![PyPI](https://img.shields.io/pypi/v/aiograpi)][pypi]
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aiograpi)][pypi]
 
@@ -115,7 +115,7 @@ To learn more about the various ways `aiograpi` can be used, read the [Usage Gui
   * [`StoryMention`](usage-guide/story.md) - Mention users in Story (user, coordinates and dimensions)
   * [`StoryHashtag`](usage-guide/story.md) - Hashtag for story (as sticker)
   * [`StorySticker`](usage-guide/story.md) - Tag sticker to story (for example from giphy)
-  * [`StoryBuild`](usage-guide/story.md) - [StoryBuilder](https://github.com/subzeroid/aiograpi/blob/master/aiograpi/story.py) return path to photo/video and mention co-ordinates
+  * [`StoryBuild`](usage-guide/story.md) - [StoryBuilder](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/story.py) return path to photo/video and mention co-ordinates
   * [`DirectThread`](usage-guide/direct.md) - Thread (topic) with messages in Direct Message
   * [`DirectMessage`](usage-guide/direct.md) - Message in Direct Message
   * [`Insight`](usage-guide/insight.md) - Insights for a post

@@ -33,7 +33,7 @@ The first request to fetch media/user is `public` (anonymous), if instagram rais
   * [`StoryMention`](story.md) - Mention users in Story (user, coordinates and dimensions)
   * [`StoryHashtag`](story.md) - Hashtag for story (as sticker)
   * [`StorySticker`](story.md) - Tag sticker to story (for example from giphy)
-  * [`StoryBuild`](story.md) - [StoryBuilder](https://github.com/subzeroid/aiograpi/blob/master/aiograpi/story.py) return path to photo/video and mention co-ordinates
+  * [`StoryBuild`](story.md) - [StoryBuilder](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/story.py) return path to photo/video and mention co-ordinates
   * [`DirectThread`](direct.md) - Thread (topic) with messages in Direct Message
   * [`DirectMessage`](direct.md) - Message in Direct Message
   * [`Insight`](insight.md) - Insights for a post

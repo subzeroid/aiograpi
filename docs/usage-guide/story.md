@@ -120,7 +120,7 @@ await cl.video_upload_to_story(
 
 Result:
 
-![](https://raw.githubusercontent.com/example/aiograpi/master/examples/dhb.gif)
+![](https://raw.githubusercontent.com/example/aiograpi/main/examples/dhb.gif)
 
 Photo upload:
 

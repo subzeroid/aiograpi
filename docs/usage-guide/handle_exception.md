@@ -65,4 +65,4 @@ await cl.login(USERNAME, PASSWORD)
 
 In this way, you can centrally handle errors and not repeat handlers throughout your code.
 
-Full example [here](https://github.com/subzeroid/aiograpi/blob/master/examples/handle_exception.py)
+Full example [here](https://github.com/subzeroid/aiograpi/blob/main/examples/handle_exception.py)

@@ -77,6 +77,6 @@ async def get_code_from_email(username):
     return False
 ```
 
-All challenges solved in the module [challenge.py](https://github.com/subzeroid/aiograpi/blob/master/aiograpi/mixins/challenge.py)
+All challenges solved in the module [challenge.py](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/mixins/challenge.py)
 
-Automatic submission code from SMS/Email in examples [here](https://github.com/subzeroid/aiograpi/blob/master/examples/challenge_resolvers.py)
+Automatic submission code from SMS/Email in examples [here](https://github.com/subzeroid/aiograpi/blob/main/examples/challenge_resolvers.py)
