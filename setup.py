@@ -18,7 +18,7 @@ Features:
 """
 
 requirements = [
-    "httpx==0.26.0",
+    "httpx==0.27.0",
     "orjson==3.9.15",
     "pydantic==2.6.3",
     "moviepy==1.0.3",
