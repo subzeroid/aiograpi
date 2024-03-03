@@ -1,6 +1,6 @@
 from typing import List
 
-from instagrapi.types import Note
+from aiograpi.types import Note
 
 
 class NoteMixin:
