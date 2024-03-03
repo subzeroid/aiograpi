@@ -19,7 +19,7 @@ Features:
 
 requirements = [
     "httpx==0.26.0",
-    "orjson==3.9.10",
+    "orjson==3.9.15",
     "pydantic==2.6.3",
     "moviepy==1.0.3",
     "pycryptodomex==3.14.1",
