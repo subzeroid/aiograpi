@@ -1,6 +1,6 @@
 from typing import List
 
-from aiograpi.exceptions import CollectionNotFound, PrivateError, PreLoginRequired
+from aiograpi.exceptions import CollectionNotFound, PreLoginRequired, PrivateError
 from aiograpi.extractors import extract_collection, extract_media_v1
 from aiograpi.types import Collection, Media
 
