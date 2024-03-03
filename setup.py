@@ -22,7 +22,7 @@ requirements = [
     "orjson==3.9.15",
     "pydantic==2.6.3",
     "moviepy==1.0.3",
-    "pycryptodomex==3.14.1",
+    "pycryptodomex==3.20.0",
     "zstandard==0.22.0",
 ]
 
