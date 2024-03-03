@@ -18,6 +18,8 @@ from aiograpi.mixins.igtv import DownloadIGTVMixin, UploadIGTVMixin
 from aiograpi.mixins.insights import InsightsMixin
 from aiograpi.mixins.location import LocationMixin
 from aiograpi.mixins.media import MediaMixin
+from aiograpi.mixins.multiple_accounts import MultipleAccountsMixin
+from aiograpi.mixins.note import NoteMixin
 from aiograpi.mixins.notification import NotificationMixin
 from aiograpi.mixins.password import PasswordMixin
 from aiograpi.mixins.photo import DownloadPhotoMixin, UploadPhotoMixin
@@ -38,6 +40,8 @@ from aiograpi.mixins.video import DownloadVideoMixin, UploadVideoMixin
 
 
 class Client(
+    MultipleAccountsMixin,
+    NoteMixin,
     GraphQLRequestMixin,
     PublicRequestMixin,
     ChallengeResolveMixin,

@@ -16,6 +16,7 @@ from pydantic import ValidationError
 
 from aiograpi import config
 from aiograpi.exceptions import (
+    BadCredentials,
     ClientThrottledError,
     PleaseWaitFewMinutes,
     PrivateError,
@@ -376,9 +377,14 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         bool
             A boolean value
         """
-        self.username = username
-        self.password = password
-        # self.init()
+
+        if not self.username or not self.password:
+            if username is None or password is None:
+                raise BadCredentials("Both username and password must be provided.")
+
+            self.username = username
+            self.password = password
+
         if relogin:
             self.authorization_data = {}
             self.private.headers.pop("Authorization", None)

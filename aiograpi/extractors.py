@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 import orjson
@@ -18,6 +19,8 @@ from .types import (
     Location,
     Media,
     MediaOembed,
+    MediaXma,
+    ReplyMessage,
     Resource,
     Story,
     StoryLink,
@@ -85,6 +88,25 @@ def extract_media_v1(media):
         resources=[
             extract_resource_v1(edge) for edge in media.get("carousel_media", [])
         ],
+        **media,
+    )
+
+
+def extract_media_v1_xma(media):
+    """Extract media from Private API"""
+    # media = deepcopy(data)
+    # media["media_type"] = 10
+    media["video_url"] = media.get("target_url", "")
+    media["title"] = media.get("title_text", "")
+    media["preview_url"] = media.get("preview_url", "")
+    media["preview_url_mime_type"] = media.get("preview_url_mime_type", "")
+    media["header_icon_url"] = media.get("header_icon_url", "")
+    media["header_icon_width"] = media.get("header_icon_width", 0)
+    media["header_icon_height"] = media.get("header_icon_height", 0)
+    media["header_title_text"] = media.get("header_title_text", "")
+    media["preview_media_fbid"] = media.get("preview_media_fbid", "")
+
+    return MediaXma(
         **media,
     )
 
@@ -335,7 +357,7 @@ def extract_direct_response(data):
     return DirectResponse(**data)
 
 
-def extract_direct_message(data):
+def extract_reply_message(data):
     data["id"] = data.get("item_id")
     if "media_share" in data:
         ms = data["media_share"]
@@ -350,6 +372,42 @@ def extract_direct_message(data):
             # Instagram ¯\_(ツ)_/¯
             clip = clip.get("clip")
         data["clip"] = extract_media_v1(clip)
+
+    data["timestamp"] = datetime.datetime.fromtimestamp(data["timestamp"] // 1_000_000)
+    data["user_id"] = str(data["user_id"])
+
+    return ReplyMessage(**data)
+
+
+def extract_direct_message(data):
+    data["id"] = data.get("item_id")
+    if "replied_to_message" in data:
+        data["reply"] = extract_reply_message(data["replied_to_message"])
+    if "media_share" in data:
+        ms = data["media_share"]
+        if not ms.get("code"):
+            ms["code"] = InstagramIdCodec.encode(ms["id"])
+        data["media_share"] = extract_media_v1(ms)
+    if "media" in data:
+        data["media"] = extract_direct_media(data["media"])
+    if "voice_media" in data:
+        if "media" in data["voice_media"]:
+            data["media"] = extract_direct_media(data["voice_media"]["media"])
+    clip = data.get("clip", {})
+    if clip:
+        if "clip" in clip:
+            # Instagram ¯\_(ツ)_/¯
+            clip = clip.get("clip")
+        data["clip"] = extract_media_v1(clip)
+    xma_media_share = data.get("xma_media_share", {})
+    if xma_media_share:
+        data["xma_share"] = extract_media_v1_xma(xma_media_share[0])
+
+    data["timestamp"] = datetime.datetime.fromtimestamp(
+        int(data["timestamp"]) // 1_000_000
+    )
+    data["user_id"] = str(data.get("user_id", ""))
+
     return DirectMessage(**data)
 
 

@@ -21,7 +21,14 @@ from aiograpi.extractors import (
     extract_user_short,
     extract_user_v1,
 )
-from aiograpi.types import About, Guide, Relationship, User, UserShort
+from aiograpi.types import (
+    About,
+    Guide,
+    Relationship,
+    RelationshipShort,
+    User,
+    UserShort,
+)
 from aiograpi.utils import dumps, json_value
 
 logger = logging.getLogger(__name__)
@@ -342,23 +349,33 @@ class UserMixin:
         results = await self.private_request("feed/new_feed_posts_exist/")
         return results.get("new_feed_posts_exist", False)
 
-    async def user_friendships_v1(self, user_ids: List[str]) -> dict:
+    async def user_friendships_v1(self, user_ids: List[str]) -> List[RelationshipShort]:
         """
         Get user friendship status
 
         Parameters
         ----------
         user_ids: List[str]
-            List of user id of an instagram account
+            List of user ID of an instagram account
 
         Returns
         -------
-        dict
+        List[RelationshipShort]
+           List of RelationshipShorts with requested user_ids
         """
+        user_ids_str = ",".join(user_ids)
         result = await self.private_request(
-            "friendships/show_many/", data={"user_ids": user_ids}
+            "friendships/show_many/",
+            data={"user_ids": user_ids_str, "_uuid": self.uuid},
+            with_signature=False,
         )
-        return result["friendship_statuses"]
+        assert result.get("status", "") == "ok"
+
+        relationships = []
+        for user_id, status in result.get("friendship_statuses", {}).items():
+            relationships.append(RelationshipShort(user_id=user_id, **status))
+
+        return relationships
 
     async def user_friendship_v1(self, user_id: str) -> Relationship:
         """
@@ -376,11 +393,49 @@ class UserMixin:
         """
 
         try:
-            results = await self.private_request(f"friendships/show/{user_id}/")
-            return Relationship(**results)
+            result = await self.private_request(f"friendships/show/{user_id}/")
+            assert result.get("status", "") == "ok"
+
+            return Relationship(user_id=user_id, **result)
         except ClientError as e:
             self.logger.exception(e)
             return None
+
+    async def search_users_v1(self, query: str, count: int) -> List[UserShort]:
+        """
+        Search users by a query (Private Mobile API)
+        Parameters
+        ----------
+        query: str
+            Query to search
+        count: int
+            The count of search results
+        Returns
+        -------
+        List[UserShort]
+            List of users
+        """
+        results = await self.private_request(
+            "users/search/", params={"query": query, "count": count}
+        )
+        users = results.get("users", [])
+        return [extract_user_short(user) for user in users]
+
+    async def search_users(self, query: str, count: int = 50) -> List[UserShort]:
+        """
+        Search users by a query
+        Parameters
+        ----------
+        query: str
+            Query string to search
+        count: int
+            The count of search results
+        Returns
+        -------
+        List[UserShort]
+            List of User short object
+        """
+        return await self.search_users_v1(query, count)
 
     async def search_followers_v1(self, user_id: str, query: str) -> List[UserShort]:
         """

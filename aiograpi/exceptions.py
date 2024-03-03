@@ -173,6 +173,10 @@ class BadPassword(PrivateError):
     ...
 
 
+class BadCredentials(PrivateError):
+    ...
+
+
 class PleaseWaitFewMinutes(PrivateError):
     ...
 
@@ -315,6 +319,10 @@ class HighlightNotFound(NotFoundError, PrivateError):
 
 class InvalidNonce(PrivateError):
     ...
+
+
+class NoteNotFound(NotFoundError):
+    reason = "Not found"
 
 
 class ConsentRequired(PrivateError):
