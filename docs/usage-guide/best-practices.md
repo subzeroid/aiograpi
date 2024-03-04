@@ -65,9 +65,10 @@ The first time you run your script
 ``` python
 from aiograpi import Client
 
-cl = Client()
-await cl.login(USERNAME, PASSWORD)
-cl.dump_settings("session.json")
+async def main():
+    cl = Client()
+    await cl.login(USERNAME, PASSWORD)
+    cl.dump_settings("session.json")
 ```
 
 And the next time
@@ -75,10 +76,11 @@ And the next time
 ``` python
 from aiograpi import Client
 
-cl = Client()
-cl.load_settings("session.json")
-await cl.login(USERNAME, PASSWORD) # this doesn't actually login using username/password but uses the session
-await cl.get_timeline_feed() # check session
+async def main():
+    cl = Client()
+    cl.load_settings("session.json")
+    await cl.login(USERNAME, PASSWORD) # this doesn't actually login using username/password but uses the session
+    await cl.get_timeline_feed() # check session
 ```
 
 You'll notice we do a call to `await cl.get_timeline_feed()` to check if the session is valid. If it's not valid, you'll get an exception.
@@ -92,7 +94,7 @@ import logging
 
 logger = logging.getLogger()
 
-def login_user():
+async def login_user():
     """
     Attempts to login to Instagram using either the provided session information
     or the provided username and password.
