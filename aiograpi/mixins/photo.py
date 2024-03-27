@@ -228,7 +228,7 @@ class UploadPhotoMixin:
         for attempt in range(10):
             self.logger.debug(f"Attempt #{attempt} to configure Photo: {path}")
             await asyncio.sleep(3)
-            if self.photo_configure(
+            if await self.photo_configure(
                 upload_id,
                 width,
                 height,
@@ -238,7 +238,7 @@ class UploadPhotoMixin:
                 extra_data=extra_data,
             ):
                 media = self.last_json.get("media")
-                self.expose()
+                await self.expose()
                 return extract_media_v1(media)
         raise PhotoConfigureError(response=self.last_response, **self.last_json)
 
@@ -292,7 +292,7 @@ class UploadPhotoMixin:
             "scene_capture_type": "standard",
             "software": config.SOFTWARE.format(**self.device_settings),
             "multi_sharing": "1",
-            "location": self.location_build(location),
+            "location": await self.location_build(location),
             "media_folder": "Camera",
             "source_type": "4",
             "caption": caption,
