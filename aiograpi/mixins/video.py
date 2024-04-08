@@ -290,7 +290,7 @@ class UploadVideoMixin:
             else:
                 if configured:
                     media = configured.get("media")
-                    self.expose()
+                    await self.expose()
                     return extract_media_v1(media)
         raise VideoConfigureError(response=self.last_response, **self.last_json)
 
@@ -344,7 +344,7 @@ class UploadVideoMixin:
             "creation_logger_session_id": self.client_session_id,
             "upload_id": upload_id,
             "source_type": "4",
-            "location": self.location_build(location),
+            "location": await self.location_build(location),
             "poster_frame_index": 0,
             "length": duration,
             "audio_muted": False,
@@ -442,7 +442,7 @@ class UploadVideoMixin:
                 raise e
             if configured:
                 media = configured.get("media")
-                self.expose()
+                await self.expose()
                 return Story(
                     links=links,
                     mentions=mentions,

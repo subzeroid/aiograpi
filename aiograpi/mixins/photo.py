@@ -374,7 +374,7 @@ class UploadPhotoMixin:
                 extra_data=extra_data,
             ):
                 media = self.last_json.get("media")
-                self.expose()
+                await self.expose()
                 return Story(
                     links=links,
                     mentions=mentions,

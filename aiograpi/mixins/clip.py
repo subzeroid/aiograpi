@@ -193,7 +193,7 @@ class UploadClipMixin:
             else:
                 if configured:
                     media = self.last_json.get("media")
-                    self.expose()
+                    await self.expose()
                     return extract_media_v1(media)
         raise ClipConfigureError(response=self.last_response, **self.last_json)
 
@@ -248,7 +248,7 @@ class UploadClipMixin:
             "filter_type": "0",
             "timezone_offset": str(self.timezone_offset),
             "media_folder": "ScreenRecorder",
-            "location": self.location_build(location),
+            "location": await self.location_build(location),
             "source_type": "4",
             # "title": title,
             "caption": caption,
