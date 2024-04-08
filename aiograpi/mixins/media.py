@@ -328,7 +328,7 @@ class MediaMixin:
             "caption_text": caption,
             "container_module": "edit_media_info",
             "feed_position": "0",
-            "location": self.location_build(location),
+            "location": await self.location_build(location),
             "usertags": json.dumps({"in": usertags}),
             "is_carousel_bumped_post": "false",
         }

@@ -274,7 +274,7 @@ class UploadAlbumMixin:
             "timezone_offset": str(self.timezone_offset),
             "source_type": "4",
             "creation_logger_session_id": self.client_session_id,
-            "location": self.location_build(location),
+            "location": await self.location_build(location),
             "caption": caption,
             "client_sidecar_id": upload_id,
             "upload_id": upload_id,

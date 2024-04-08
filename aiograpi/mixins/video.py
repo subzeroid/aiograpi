@@ -344,7 +344,7 @@ class UploadVideoMixin:
             "creation_logger_session_id": self.client_session_id,
             "upload_id": upload_id,
             "source_type": "4",
-            "location": self.location_build(location),
+            "location": await self.location_build(location),
             "poster_frame_index": 0,
             "length": duration,
             "audio_muted": False,
