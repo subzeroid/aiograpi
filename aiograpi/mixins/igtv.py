@@ -195,7 +195,7 @@ class UploadIGTVMixin:
             else:
                 if configured:
                     media = self.last_json.get("media")
-                    self.expose()
+                    await self.expose()
                     return extract_media_v1(media)
         raise IGTVConfigureError(response=self.last_response, **self.last_json)
 

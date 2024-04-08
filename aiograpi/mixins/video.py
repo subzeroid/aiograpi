@@ -290,7 +290,7 @@ class UploadVideoMixin:
             else:
                 if configured:
                     media = configured.get("media")
-                    self.expose()
+                    await self.expose()
                     return extract_media_v1(media)
         raise VideoConfigureError(response=self.last_response, **self.last_json)
 
@@ -442,7 +442,7 @@ class UploadVideoMixin:
                 raise e
             if configured:
                 media = configured.get("media")
-                self.expose()
+                await self.expose()
                 return Story(
                     links=links,
                     mentions=mentions,
