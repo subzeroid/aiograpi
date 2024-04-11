@@ -229,7 +229,7 @@ class UploadAlbumMixin:
             else:
                 if configured:
                     media = configured.get("media")
-                    self.expose()
+                    await self.expose()
                     return extract_media_v1(media)
         raise (configure_exception or AlbumConfigureError)(
             response=self.last_response, **self.last_json
@@ -274,7 +274,7 @@ class UploadAlbumMixin:
             "timezone_offset": str(self.timezone_offset),
             "source_type": "4",
             "creation_logger_session_id": self.client_session_id,
-            "location": self.location_build(location),
+            "location": await self.location_build(location),
             "caption": caption,
             "client_sidecar_id": upload_id,
             "upload_id": upload_id,
