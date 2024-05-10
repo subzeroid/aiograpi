@@ -344,6 +344,11 @@ def extract_direct_thread(data):
     if "inviter" in data:
         data["inviter"] = extract_user_short(data["inviter"])
     data["left_users"] = data.get("left_users", [])
+
+    data["last_activity_at"] = datetime.datetime.fromtimestamp(
+        data["last_activity_at"] // 1_000_000
+    )
+
     return DirectThread(**data)
 
 
