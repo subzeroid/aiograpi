@@ -23,7 +23,7 @@ requirements = [
     "pydantic==2.8.0",
     "moviepy==1.0.3",
     "pycryptodomex==3.20.0",
-    "zstandard==0.22.0",
+    "zstandard==0.23.0",
 ]
 
 setup(
