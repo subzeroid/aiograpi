@@ -20,10 +20,10 @@ Features:
 requirements = [
     "httpx==0.27.0",
     "orjson==3.10.6",
-    "pydantic==2.8.0",
+    "pydantic==2.8.2",
     "moviepy==1.0.3",
     "pycryptodomex==3.20.0",
-    "zstandard==0.22.0",
+    "zstandard==0.23.0",
 ]
 
 setup(
