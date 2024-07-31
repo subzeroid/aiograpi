@@ -406,10 +406,9 @@ def extract_direct_message(data):
     if xma_media_share:
         data["xma_share"] = extract_media_v1_xma(xma_media_share[0])
 
-    timestamp = data["timestamp"]
-    if isinstance(timestamp, str):
-        timestamp = int(timestamp)
-    data["timestamp"] = datetime.datetime.fromtimestamp(timestamp / 1_000_000)
+    data["timestamp"] = datetime.datetime.fromtimestamp(
+        int(data["timestamp"])
+    )
     data["user_id"] = str(data.get("user_id", ""))
 
     return DirectMessage(**data)
