@@ -408,8 +408,8 @@ def extract_direct_message(data):
 
     timestamp = data["timestamp"]
     if isinstance(timestamp, str):
-        timestamp = int(timestamp) / 1_000_000
-    data["timestamp"] = datetime.datetime.fromtimestamp(timestamp)
+        timestamp = int(timestamp)
+    data["timestamp"] = datetime.datetime.fromtimestamp(timestamp / 1_000_000)
     data["user_id"] = str(data.get("user_id", ""))
 
     return DirectMessage(**data)
