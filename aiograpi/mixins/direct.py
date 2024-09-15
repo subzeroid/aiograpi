@@ -202,7 +202,7 @@ class DirectMixin:
         """
         if not self.user_id:
             raise PreLoginRequired
-        return await self.direct_thread(thread_id, amount).messages
+        return (await self.direct_thread(thread_id, amount)).messages
 
     async def direct_answer(self, thread_id: int, text: str) -> DirectMessage:
         """
