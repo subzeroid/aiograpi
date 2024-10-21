@@ -953,9 +953,9 @@ class MediaMixin:
             "live_vods_skipped": {},
             "nuxes_skipped": {},
             "nuxes": {},
-            "reels": gen(media_ids),
+            "reels": await gen(media_ids),
             "live_vods": {},
-            "reel_media_skipped": gen(skipped_media_ids),
+            "reel_media_skipped": await gen(skipped_media_ids),
         }
         result = await self.private_request(
             "/v2/media/seen/?reel=1&live_vod=0", self.with_default_data(data)
