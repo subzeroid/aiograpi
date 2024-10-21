@@ -176,7 +176,7 @@ class PostLoginFlowMixin:
         return all(check_flow)
 
     async def get_timeline_feed(
-        self, options: List[Dict] = ["pull_to_refresh"]
+        self, options: List[Dict] = ["pull_to_refresh"], cursor: str = ""
     ) -> Dict:
         """
         Get your timeline feed
@@ -217,6 +217,9 @@ class PostLoginFlowMixin:
         elif "cold_start_fetch" in options:
             data["reason"] = "cold_start_fetch"
             data["is_pull_to_refresh"] = "0"
+        if cursor:
+            data["max_id"] = cursor
+            data["reason"] = "pagination"
         # if "push_disabled" in options:
         #     data["push_disabled"] = "true"
         # if "recovered_from_crash" in options:
