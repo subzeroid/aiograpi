@@ -9,7 +9,7 @@ WORKDIR /mnt/build
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN python3 setup.py sdist && \
+RUN python3 setup.py install && \
     cd / && \
     rm -rf /mnt/build
 
