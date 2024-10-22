@@ -218,6 +218,7 @@ class PostLoginFlowMixin:
             data["reason"] = "cold_start_fetch"
             data["is_pull_to_refresh"] = "0"
         if cursor:
+            data["is_pull_to_refresh"] = "0"
             data["max_id"] = cursor
             data["reason"] = "pagination"
         # if "push_disabled" in options:
