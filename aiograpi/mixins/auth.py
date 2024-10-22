@@ -219,7 +219,7 @@ class PostLoginFlowMixin:
             data["is_pull_to_refresh"] = "0"
         if cursor:
             data["is_pull_to_refresh"] = "0"
-            data["max_id"] = cursor
+            data["max_id"] = data["min_id"] = data["after"] = cursor
             data["reason"] = "pagination"
         # if "push_disabled" in options:
         #     data["push_disabled"] = "true"
