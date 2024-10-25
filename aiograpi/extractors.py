@@ -341,7 +341,7 @@ def extract_direct_thread(data):
         item["thread_id"] = data["id"]
         data["messages"].append(extract_direct_message(item))
     data["users"] = [extract_user_short(u) for u in data["users"]]
-    if "inviter" in data:
+    if "inviter" in data and data["inviter"]:
         data["inviter"] = extract_user_short(data["inviter"])
     data["left_users"] = data.get("left_users", [])
 
