@@ -1,5 +1,21 @@
 # aiograpi - Asynchronous Instagram API for Python
 
+## Difference with upstream
+
+* [Dockerfile](./Dockerfile) based on Debian, with `ffmpeg` and `mpv` dependencies installed
+* [#116](https://github.com/subzeroid/aiograpi/issues/116) fixed
+* [#90](https://github.com/subzeroid/aiograpi/issues/90) fixed
+
+Full diff can be printed with
+
+```sh
+make sync # (or git remote add upstream https://github.com/subzeroid/aiograpi)
+
+git diff upstream/main
+```
+
+## aiograpi
+
 If you want to work with aiograpi (business interests), we strongly advise you to prefer [HikerAPI](https://hikerapi.com/p/KhMxYMSn) project.
 However, you won't need to spend weeks or even months setting it up.
 The best service available today is [HikerAPI](https://hikerapi.com/p/KhMxYMSn), which handles 4–5 million daily requests, provides support around-the-clock, and offers partners a special rate.
