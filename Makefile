@@ -8,3 +8,9 @@ help: ### Display this help screen
 docker: ### Build and tag docker image
 	docker build --tag aiograpi:future .
 .PHONY: docker
+
+sync: ### Sync fork with upstream repo
+	git remote add upstream 'https://github.com/subzeroid/aiograpi' || true;
+	git fetch upstream;
+	git merge upstream/main;
+.PHONY: sync
