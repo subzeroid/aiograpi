@@ -174,6 +174,9 @@ class PublicRequestMixin:
                     exc = ClientThrottledError
                 case 404:
                     exc = ClientNotFoundError
+                case 500:
+                    if "Oops, an error occurred" in self.last_public_response.text:
+                        exc = IsRegulatedC18Error
                 case _:
                     exc = ClientError
             raise exc(e, response=self.last_public_response)
