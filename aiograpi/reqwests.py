@@ -63,7 +63,10 @@ async def request(method, url, proxies=None, **kwargs):
     if "timeout" not in kwargs:
         kwargs["timeout"] = DEFAULT_TIMEOUT
     async with httpx.AsyncClient(
-        proxies=proxies, verify=False, follow_redirects=True
+        # The deprecated proxies argument has now been removed
+        # https://github.com/encode/httpx/releases/tag/0.28.0
+        # proxies=proxies,
+        verify=False, follow_redirects=True,
     ) as client:
         return await client.request(method, url, **kwargs)
 
