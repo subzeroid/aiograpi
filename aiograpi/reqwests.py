@@ -100,7 +100,10 @@ class Session:
 
     def _set_client(self):
         self._client = httpx.AsyncClient(
-            proxies=self._proxies, verify=self.verify, follow_redirects=True
+            # The deprecated proxies argument has now been removed
+            # https://github.com/encode/httpx/releases/tag/0.28.0
+            # proxies=proxies,
+            verify=self.verify, follow_redirects=True
         )
 
     async def __aenter__(self):
