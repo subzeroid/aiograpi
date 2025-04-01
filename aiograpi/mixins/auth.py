@@ -192,6 +192,7 @@ class PostLoginFlowMixin:
             A dictionary of response from the call
         """
         headers = {
+            "x-ig-accept-hint": "feed",
             "X-Ads-Opt-Out": "0",
             "X-DEVICE-ID": self.uuid,
             "X-CM-Bandwidth-KBPS": "-1.000",  # str(random.randint(2000, 5000)),
