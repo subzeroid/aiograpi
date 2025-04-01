@@ -155,6 +155,7 @@ class PrivateRequestMixin:
             "X-IG-Family-Device-ID": self.phone_id,
             "X-IG-Android-ID": self.android_device_id,
             "X-IG-Timezone-Offset": str(self.timezone_offset),
+            "x-fb-connection-type": "WIFI",
             "X-IG-Connection-Type": "WIFI",
             "X-IG-Capabilities": "3brTvx0=",  # "3brTvwE=" in instabot
             "X-IG-App-ID": self.app_id,
