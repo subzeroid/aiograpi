@@ -1,5 +1,5 @@
 httpx==0.28.1
-orjson==3.10.12
+orjson==3.10.17
 pydantic==2.10.6
 moviepy==1.0.3
 pycryptodomex==3.21.0
