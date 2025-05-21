@@ -63,9 +63,8 @@ class SignUpMixin:
                 f'Enter code "{code}" for {username} '
                 f"({attempt} attempts, by {self.wait_seconds} seconds)"
             )
-            kwargs["email_code"] = self.check_confirmation_code(email, code).get(
-                "signup_code"
-            )
+            confirmation_result = await self.check_confirmation_code(email, code)
+            kwargs["email_code"] = confirmation_result.get("signup_code")
         if phone_number:
             kwargs["phone_number"] = phone_number
             config = await self.get_signup_config()
@@ -100,7 +99,7 @@ class SignUpMixin:
                 raise InvalidNonce(data["errors"]["nonce"][0])
             if data.get("message") != "challenge_required":
                 break  # SUCCESS EXIT
-            if self.challenge_flow(data["challenge"]):
+            if await self.challenge_flow(data["challenge"]):
                 kwargs.update({"suggestedUsername": "", "sn_result": "MLA"})
             retries += 1
         self.authorization_data = self.parse_authorization(
