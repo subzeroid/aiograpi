@@ -125,7 +125,7 @@ class PublicRequestMixin:
             )
             self.request_logger.info(
                 "[%s] [%s] %s %s",
-                self.public.proxies.get("https"),
+                self.public.proxy,
                 response.status_code,
                 "POST" if data else "GET",
                 response.url,

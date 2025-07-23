@@ -132,8 +132,8 @@ await cl.get_timeline_feed()  # check session
 | Method                                   | Return | Description
 |------------------------------------------|------|----------------------------------------------------------------------------
 | set_proxy(dsn: str)                      | dict | Support socks and http/https proxy "scheme://username:password@host:port". We recommend using [these proxies](https://soax.com/?r=sEysufQI)
-| private.proxies                          | dict | Stores used proxy servers for private (mobile, v1) requests
-| public.proxies                           | dict | Stores used proxy servers for public (web, graphql) requests
+| private.proxy                            | dict | Stores used proxy server for private (mobile, v1) requests
+| public.proxy                             | dict | Stores used proxy server for public (web, graphql) requests
 | set_device(device: dict)                 | bool | Change device settings ([Android Device Information Generator Online](https://www.myfakeinfo.com/mobile/get-android-device-information.php))
 | device                                   | dict | Return device dict which we pass to Instagram
 | set_user_agent(user_agent: str = "")     | bool | Change User-Agent header ([User Agents](https://user-agents.net/applications/instagram-app))
