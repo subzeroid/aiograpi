@@ -94,7 +94,7 @@ class Client(
 
     def set_proxy(self, dsn: str):
         if not dsn:
-            self.public.proxies = self.private.proxies = {}
+            self.public.proxy = self.private.proxy = None
             return False
         assert isinstance(
             dsn, str
@@ -104,7 +104,5 @@ class Client(
             scheme="http://" if not urlparse(self.proxy).scheme else "",
             href=self.proxy,
         )
-        self.public.proxies = self.private.proxies = self.graphql.proxies = {
-            "all://": proxy_href
-        }
+        self.public.proxy = self.private.proxy = self.graphql.proxy = proxy_href
         return True

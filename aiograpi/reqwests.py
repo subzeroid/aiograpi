@@ -59,11 +59,11 @@ SUPPORTED_DECODERS["zstd"] = ZstdDecoder
 DEFAULT_TIMEOUT = 45
 
 
-async def request(method, url, proxies=None, **kwargs):
+async def request(method, url, proxy=None, **kwargs):
     if "timeout" not in kwargs:
         kwargs["timeout"] = DEFAULT_TIMEOUT
     async with httpx.AsyncClient(
-        proxies=proxies, verify=False, follow_redirects=True
+        proxy=proxy, verify=False, follow_redirects=True
     ) as client:
         return await client.request(method, url, **kwargs)
 
@@ -73,7 +73,7 @@ class Session:
         self.headers = {}
         self.verify = False
         self._client = None
-        self._proxies = None
+        self._proxy = None
 
     @property
     def cookies(self):
@@ -87,17 +87,17 @@ class Session:
             self._client.cookies.set(k, v)
 
     @property
-    def proxies(self):
-        return self._proxies
+    def proxy(self):
+        return self._proxy
 
-    @proxies.setter
-    def proxies(self, p):
-        self._proxies = p
+    @proxy.setter
+    def proxy(self, p):
+        self._proxy = p
         self._set_client()
 
     def _set_client(self):
         self._client = httpx.AsyncClient(
-            proxies=self._proxies, verify=self.verify, follow_redirects=True
+            proxy=self._proxy, verify=self.verify, follow_redirects=True
         )
 
     async def __aenter__(self):
@@ -110,7 +110,7 @@ class Session:
         if self._client and self._client._state is ClientState.OPENED:
             await self._client.__aexit__()
 
-    async def request(self, *args, headers=None, proxies=None, **kwargs):
+    async def request(self, *args, headers=None, proxy=None, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = DEFAULT_TIMEOUT
         if self._client._state is ClientState.UNOPENED:
