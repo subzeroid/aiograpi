@@ -28,7 +28,7 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | media_pk_from_code(code: str)                                   | int                | Return media_pk
 | media_pk_from_url(url: str)                                     | int                | Return media_pk
 | user_medias(user_id: str, amount: int = 20)                     | List\[Media]       | Get list of medias by user_id
-| user_medias_paginated(user_id: str, amount: int = 0, end_cursor: str = "")           | Tuple\[List\[Media], str] | Get one page of medias by user_id
+| user_medias_chunk(user_id: str, end_cursor: str = "")           | Tuple\[List\[Media], str] | Get one page of medias by user_id
 | user_clips(user_id: str, amount: int = 50)                      | List\[Media]       | Get list of clips (reels) by user_id
 | usertag_medias(user_id: str, amount: int = 20)                  | List\[Media]       | Get medias where a user is tagged
 | media_info(media_pk: int)                                       | Media              | Return media info
@@ -53,13 +53,13 @@ Low level methods:
 | media_info_gql(media_pk: int)                                   | Media        | Get Media from PK by Public Graphql API
 | media_info_v1(media_pk: int)                                    | Media        | Get Media from PK by Private Mobile API
 | user_medias_gql(user_id: str, amount: int = 50, sleep: int = 2) | List\[Media] | Get a user's media by Public Graphql API
-| user_medias_paginated_gql(user_id: str, amount: int = 50, sleep: int = 2, end_cursor=None) | Tuple\[List\[Media], str] | Get a page of user's media by Public Graphql API
+| user_medias_chunk_gql(user_id: str, sleep: int = 2, end_cursor=None) | Tuple\[List\[Media], str] | Get a page of user's media by Public Graphql API
 | user_medias_v1(user_id: str, amount: int = 18)                  | List\[Media] | Get a user's media by Private Mobile API
-| user_medias_paginated_v1(user_id: str, amount: int = 0, end_cursor="") | Tuple\[List\[Media], str] | Get a page of user's media by Private Mobile API
+| user_medias_chunk_v1(user_id: str, end_cursor: str = "") | Tuple\[List\[Media], str] | Get a page of user's media by Private Mobile API
 | user_clips_v1(user_id: str, amount: int = 50)                  | List\[Media] | Get a user's clip by Private Mobile API
-| user_clips_paginated_v1(user_id: str, amount: int = 50, end_cursor="") | Tuple\[List\[Media], str] | Get a page of user's clip by Private Mobile API
+| user_clips_chunk_v1(user_id: str, end_cursor: str = "") | Tuple\[List\[Media], str] | Get a page of user's clip by Private Mobile API
 | user_videos_v1(user_id: str, amount: int = 50)                  | List\[Media] | Get a user's video by Private Mobile API
-| user_videos_paginated_v1(ser_id: int, amount: int = 50, end_cursor="") | Tuple\[List\[Media], str] | Get a page of user's video by Private Mobile API
+| user_videos_chunk_v1(user_id: int, end_cursor: str = "") | Tuple\[List\[Media], str] | Get a page of user's video by Private Mobile API
 | usertag_medias_gql(user_id: str, amount: int = 20)              | List\[Media] | Get medias where a user is tagged by Public Graphql API
 | usertag_medias_v1(user_id: str, amount: int = 20)               | List\[Media] | Get medias where a user is tagged by Private Mobile API
 
@@ -192,7 +192,7 @@ True
 
 >>> end_cursor = None
 ... for page in range(3):
-...     medias, end_cursor = client.user_medias_paginated(1903424587, 5, end_cursor=end_cursor)
+...     medias, end_cursor = client.user_medias_chunk_v1(1903424587, 5, end_cursor=end_cursor)
 ...     print([ m.taken_at.date().isoformat() for m in medias ])
 ...
 
