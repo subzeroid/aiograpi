@@ -119,7 +119,7 @@ class ChallengeResolveMixin:
         enc_password = "#PWD_INSTAGRAM_BROWSER:0:%s:" % str(int(time.time()))
         instagram_ajax = hashlib.sha256(enc_password.encode()).hexdigest()[:12]
         session = reqwests.Session()
-        session.proxies = self.private.proxies
+        session.proxy = self.private.proxy
         session.headers.update(
             {
                 "User-Agent": "Mozilla/5.0 (Linux; Android 8.0.0; MI 5s Build/OPR1.170623.032; wv) "

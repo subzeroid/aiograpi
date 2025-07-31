@@ -176,7 +176,7 @@ class GraphQLRequestMixin:
             )
             self.request_logger.info(
                 "GraphQL: [%s] [%s] %s %s",
-                self.graphql.proxies.get("https"),
+                self.graphql.proxy,
                 response.status_code,
                 "POST" if data else "GET",
                 response.url,
