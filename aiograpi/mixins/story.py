@@ -35,6 +35,7 @@ class StoryMixin:
         https://www.instagram.com/stories/dhbastards/2581281926631793076/
           -> 2581281926631793076
         """
+        url = str(url)
         path = urlparse(url).path
         parts = [p for p in path.split("/") if p and p.isdigit()]
         return str(parts[0])
@@ -282,6 +283,7 @@ class StoryMixin:
         Path
             Path for the file downloaded
         """
+        url = str(url)
         fname = urlparse(url).path.rsplit("/", 1)[1].strip()
         if not fname:
             raise Exception("The URL must contain the path to the file (mp4 or jpg)")
