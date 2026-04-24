@@ -5,7 +5,7 @@ import time
 
 import orjson
 
-from aiograpi import reqwests
+from aiograpi import httpx_ext
 from aiograpi.exceptions import (
     AboutUsError,
     AccountSuspended,
@@ -40,7 +40,7 @@ class PublicRequestMixin:
     max_read_timeout = 46
 
     def __init__(self, *args, **kwargs):
-        self.public = reqwests.Session()
+        self.public = httpx_ext.Session()
         self.public.verify = False  # fix SSLError/HTTPSConnectionPool
         self.public.headers.update(
             {
@@ -163,7 +163,7 @@ class PublicRequestMixin:
                 "JSONDecodeError {0!s} while opening {1!s}".format(e, url),
                 response=response,
             )
-        except reqwests.HTTPError as e:
+        except httpx_ext.HTTPError as e:
             match getattr(self.last_public_response, "status_code", None):
                 case 401:
                     exc = ClientUnauthorizedError
@@ -181,7 +181,7 @@ class PublicRequestMixin:
                 case _:
                     exc = ClientError
             raise exc(e, response=self.last_public_response)
-        except (reqwests.ConnectError, reqwests.ReadError) as e:
+        except (httpx_ext.ConnectError, httpx_ext.ReadError) as e:
             raise ClientConnectionError("{} {}".format(e.__class__.__name__, str(e)))
         finally:
             self.last_response_ts = time.time()

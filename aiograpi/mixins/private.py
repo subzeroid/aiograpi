@@ -6,7 +6,7 @@ import time
 
 import orjson
 
-from aiograpi import config, reqwests
+from aiograpi import config, httpx_ext
 from aiograpi.exceptions import (
     AuthRequiredProxyError,
     BadPassword,
@@ -94,7 +94,7 @@ class PrivateRequestMixin:
     last_json = {}
 
     def __init__(self, *args, **kwargs):
-        self.private = reqwests.Session()
+        self.private = httpx_ext.Session()
         self.private.verify = False  # fix SSLError/HTTPSConnectionPool
         self.email = kwargs.pop("email", None)
         self.phone_number = kwargs.pop("phone_number", None)
@@ -329,9 +329,9 @@ class PrivateRequestMixin:
             if data:  # POST
                 # Client.direct_answer raw dict
                 # data = json.dumps(data)
-                self.private.headers[
-                    "Content-Type"
-                ] = "application/x-www-form-urlencoded; charset=UTF-8"
+                self.private.headers["Content-Type"] = (
+                    "application/x-www-form-urlencoded; charset=UTF-8"
+                )
                 if with_signature:
                     # Client.direct_answer doesn't need a signature
                     data = generate_signature(dumps(data))
@@ -424,7 +424,7 @@ class PrivateRequestMixin:
                 "JSONDecodeError {0!s} while opening {1!s}".format(e, response.url),
                 response=response,
             )
-        except (reqwests.ConnectError, reqwests.ConnectTimeout) as e:
+        except (httpx_ext.ConnectError, httpx_ext.ConnectTimeout) as e:
             self.logger.error(
                 (
                     "ConnectProxyError(pay attention, in 1/100 it could be ig error) "
@@ -434,14 +434,14 @@ class PrivateRequestMixin:
                 endpoint,
             )
             raise ConnectProxyError(e, response=self.last_response)
-        except reqwests.ProxyError as e:
+        except httpx_ext.ProxyError as e:
             self.logger.error(
                 "AuthRequiredProxyError in private_request (user_id=%s, endpoint=%s)",
                 self.user_id,
                 endpoint,
             )
             raise AuthRequiredProxyError(e, response=self.last_response)
-        except (reqwests.HTTPStatusError, reqwests.HTTPError) as e:
+        except (httpx_ext.HTTPStatusError, httpx_ext.HTTPError) as e:
             response = self.last_response
             try:
                 self.last_json = last_json = response.json()
@@ -547,7 +547,7 @@ class PrivateRequestMixin:
                 raise ClientRequestTimeout(e, response=response, **last_json)
             self.logger.warning("ClientUnknownError2. response json: %r", last_json)
             raise ClientUnknownError(e, response=response, **last_json)
-        except (reqwests.ConnectError, reqwests.ReadError) as e:
+        except (httpx_ext.ConnectError, httpx_ext.ReadError) as e:
             raise ClientConnectionError("{e.__class__.__name__} {e}".format(e=e))
         finally:
             self.last_response_ts = time.time()

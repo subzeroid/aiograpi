@@ -4,7 +4,7 @@ import time
 
 import orjson
 
-from aiograpi import reqwests
+from aiograpi import httpx_ext
 from aiograpi.exceptions import (
     AboutUsError,
     AccountSuspended,
@@ -68,7 +68,7 @@ class GraphQLRequestMixin:
     request_logger = logging.getLogger("graphql_request")
 
     def __init__(self, *args, **kwargs):
-        self.graphql = reqwests.Session()
+        self.graphql = httpx_ext.Session()
         self.graphql.verify = False  # fix SSLError/HTTPSConnectionPool
         self.graphql.headers.update(
             {
@@ -213,7 +213,7 @@ class GraphQLRequestMixin:
                 "JSONDecodeError {0!s} while opening {1!s}".format(e, url),
                 response=response,
             )
-        except reqwests.HTTPError as e:
+        except httpx_ext.HTTPError as e:
             match getattr(self.last_graphql_response, "status_code", None):
                 case 401:
                     exc = ClientUnauthorizedError
@@ -228,7 +228,7 @@ class GraphQLRequestMixin:
                 case _:
                     exc = ClientError
             raise exc(e, response=self.last_graphql_response)
-        except (reqwests.ConnectError, reqwests.ReadError) as e:
+        except (httpx_ext.ConnectError, httpx_ext.ReadError) as e:
             raise ClientConnectionError("{} {}".format(e.__class__.__name__, str(e)))
         finally:
             self.last_response_ts = time.time()

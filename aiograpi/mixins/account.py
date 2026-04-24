@@ -2,7 +2,7 @@ from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import Dict
 
-from aiograpi import reqwests
+from aiograpi import httpx_ext
 from aiograpi.exceptions import ClientLoginRequired, ResetPasswordError
 from aiograpi.extractors import extract_account, extract_user_short
 from aiograpi.types import Account, UserShort
@@ -23,7 +23,7 @@ class AccountMixin:
         Dict
             Jsonified response from Instagram
         """
-        response = await reqwests.request(
+        response = await httpx_ext.request(
             "post",
             "https://www.instagram.com/accounts/account_recovery_send_ajax/",
             data={"email_or_username": username, "recaptcha_challenge_field": ""},

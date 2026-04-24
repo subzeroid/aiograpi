@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Dict
 from urllib.parse import urlparse
 
-from aiograpi import reqwests
+from aiograpi import httpx_ext
 from aiograpi.exceptions import ClientError, TrackNotFound
 
 
@@ -34,7 +34,7 @@ class TrackMixin:
             raise Exception("The URL must contain the path to the file (m4a or mp3).")
         filename = "%s.%s" % (filename, fname.rsplit(".", 1)[1]) if filename else fname
         path = Path(folder) / filename
-        response = await reqwests.get(url, timeout=self.request_timeout)
+        response = await httpx_ext.get(url, timeout=self.request_timeout)
         response.raise_for_status()
         with open(path, "wb") as f:
             f.write(response.read())

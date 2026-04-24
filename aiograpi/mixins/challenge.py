@@ -7,7 +7,7 @@ import time
 from enum import Enum
 from typing import Dict
 
-from aiograpi import reqwests
+from aiograpi import httpx_ext
 from aiograpi.exceptions import (
     ChallengeError,
     ChallengeRedirection,
@@ -118,7 +118,7 @@ class ChallengeResolveMixin:
         challenge_url = "https://i.instagram.com%s" % challenge_url
         enc_password = "#PWD_INSTAGRAM_BROWSER:0:%s:" % str(int(time.time()))
         instagram_ajax = hashlib.sha256(enc_password.encode()).hexdigest()[:12]
-        session = reqwests.Session()
+        session = httpx_ext.Session()
         session.proxy = self.private.proxy
         session.headers.update(
             {
