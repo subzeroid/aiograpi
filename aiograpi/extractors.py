@@ -1,11 +1,12 @@
 import datetime
-import logging
-
-import orjson
+import html
+import json
+import re
+from copy import deepcopy
 
 from .types import (
-    About,
     Account,
+    Broadcast,
     Collection,
     Comment,
     DirectMedia,
@@ -23,44 +24,38 @@ from .types import (
     ReplyMessage,
     Resource,
     Story,
+    StoryHashtag,
     StoryLink,
+    StoryLocation,
     StoryMedia,
     StoryMention,
     Track,
     User,
     UserShort,
     Usertag,
+    Viewer,
 )
 from .utils import InstagramIdCodec, json_value
 
-# from copy import deepcopy
-
-
 MEDIA_TYPES_GQL = {"GraphImage": 1, "GraphVideo": 2, "GraphSidecar": 8, "StoryVideo": 2}
 
-logger = logging.getLogger(__name__)
 
-
-def extract_media_v1(media):
+def extract_media_v1(data):
     """Extract media from Private API"""
-    # media = deepcopy(data)
-    if versions := media.get("video_versions", []):
+    media = deepcopy(data)
+    if "video_versions" in media:
         # Select Best Quality by Resolutiuon
-        media["video_url"] = sorted(versions, key=lambda o: o["height"] * o["width"])[
-            -1
-        ]["url"]
-    # if media.get("is_reel_media"):
-    #    media["media_type"] = 2
-    #    media["product_type"] = "clips"
-    if media.get("media_type") == 2 and not media.get("product_type"):
+        media["video_url"] = sorted(
+            media["video_versions"], key=lambda o: o["height"] * o["width"]
+        )[-1]["url"]
+    if media["media_type"] == 2 and not media.get("product_type"):
         media["product_type"] = "feed"
     if "image_versions2" in media:
-        media["image_versions"] = media["image_versions2"]["candidates"]
         media["thumbnail_url"] = sorted(
-            media["image_versions"],
+            media["image_versions2"]["candidates"],
             key=lambda o: o["height"] * o["width"],
         )[-1]["url"]
-    if media.get("media_type") == 8:
+    if media["media_type"] == 8:
         # remove thumbnail_url and video_url for albums
         # see resources
         media.pop("thumbnail_url", "")
@@ -77,12 +72,9 @@ def extract_media_v1(media):
     )
     media["like_count"] = media.get("like_count", 0)
     media["has_liked"] = media.get("has_liked", False)
-    media["taken_at_ts"] = media.get("taken_at")
-    media["sponsor_tags"] = [tag["sponsor"] for tag in media.get("sponsor_tags", [])]
+    media["sponsor_tags"] = [tag["sponsor"] for tag in media.get("sponsor_tags") or []]
     media["play_count"] = media.get("play_count", 0)
-    media["pk"] = str(media["pk"])
-    for tag in media["sponsor_tags"]:
-        tag["pk"] = str(tag["pk"])
+    media["coauthor_producers"] = media.get("coauthor_producers", [])
     return Media(
         caption_text=(media.get("caption") or {}).get("text", ""),
         resources=[
@@ -92,15 +84,18 @@ def extract_media_v1(media):
     )
 
 
-def extract_media_v1_xma(media):
+def extract_media_v1_xma(data):
     """Extract media from Private API"""
-    # media = deepcopy(data)
+    media = deepcopy(data)
+    if not media.get("target_url"):
+        return None
+
     # media["media_type"] = 10
-    media["video_url"] = media.get("target_url", "")
+    media["video_url"] = media.get("target_url")
     media["title"] = media.get("title_text", "")
     media["preview_url"] = media.get("preview_url", "")
     media["preview_url_mime_type"] = media.get("preview_url_mime_type", "")
-    media["header_icon_url"] = media.get("header_icon_url", "")
+    media["header_icon_url"] = media.get("header_icon_url") or None
     media["header_icon_width"] = media.get("header_icon_width", 0)
     media["header_icon_height"] = media.get("header_icon_height", 0)
     media["header_title_text"] = media.get("header_title_text", "")
@@ -111,9 +106,9 @@ def extract_media_v1_xma(media):
     )
 
 
-def extract_media_gql(media):
+def extract_media_gql(data):
     """Extract media from GraphQL"""
-    # media = deepcopy(data)
+    media = deepcopy(data)
     user = extract_user_short(media["owner"])
     # if "full_name" in user:
     #     user = extract_user_short(user)
@@ -125,14 +120,15 @@ def extract_media_gql(media):
         media["media_type"] = 0
     if media.get("media_type") == 2 and not media.get("product_type"):
         media["product_type"] = "feed"
-    if "thumbnail_src" in media:
+    sorted_resources = sorted(
+        # display_resources - user feed, thumbnail_resources - hashtag feed
+        media.get("display_resources", media.get("thumbnail_resources", [])),
+        key=lambda o: o["config_width"] * o["config_height"],
+    )
+    if sorted_resources:
+        media["thumbnail_url"] = sorted_resources[-1]["src"]
+    elif "thumbnail_src" in media:
         media["thumbnail_url"] = media["thumbnail_src"]
-    else:
-        media["thumbnail_url"] = sorted(
-            # display_resources - user feed, thumbnail_resources - hashtag feed
-            media.get("display_resources", media.get("thumbnail_resources")),
-            key=lambda o: o["config_width"] * o["config_height"],
-        )[-1]["src"]
     if media.get("media_type") == 8:
         # remove thumbnail_url and video_url for albums
         # see resources
@@ -142,12 +138,9 @@ def extract_media_gql(media):
     media_id = media.get("id")
     media["pk"] = media_id
     media["id"] = f"{media_id}_{user.pk}"
-    media["image_versions"] = media["display_resources"]
-    taken_at = media.get("taken_at_timestamp")
     return Media(
         code=media.get("shortcode"),
-        taken_at=taken_at,
-        taken_at_ts=taken_at,
+        taken_at=media.get("taken_at_timestamp"),
         location=extract_location(location) if location else None,
         user=user,
         view_count=media.get("video_view_count", 0),
@@ -178,22 +171,26 @@ def extract_media_gql(media):
 
 
 def extract_resource_v1(data):
-    if versions := data.get("video_versions", []):
-        data["video_url"] = sorted(versions, key=lambda o: o["height"] * o["width"])[
+    if "video_versions" in data:
+        data["video_url"] = sorted(
+            data["video_versions"], key=lambda o: o["height"] * o["width"]
+        )[-1]["url"]
+    candidates = data.get("image_versions2", {}).get("candidates", [])
+    data["thumbnail_url"] = (
+        sorted(
+            candidates,
+            key=lambda o: o["height"] * o["width"],
+        )[
             -1
         ]["url"]
-    data["pk"] = str(data["pk"])
-    data["image_versions"] = data["image_versions2"]["candidates"]
-    data["thumbnail_url"] = sorted(
-        data["image_versions"],
-        key=lambda o: o["height"] * o["width"],
-    )[-1]["url"]
+        if candidates
+        else None
+    )
     return Resource(**data)
 
 
 def extract_resource_gql(data):
     data["media_type"] = MEDIA_TYPES_GQL[data["__typename"]]
-    data["image_versions"] = data["display_resources"]
     return Resource(pk=data["id"], thumbnail_url=data["display_url"], **data)
 
 
@@ -205,13 +202,28 @@ def extract_usertag(data):
 
 def extract_user_short(data):
     """Extract User Short info"""
-    data["pk"] = str(data.get("id", data.get("pk", None)))
+    data["pk"] = data.get("id", data.get("pk", None))
     assert data["pk"], f'User without pk "{data}"'
     return UserShort(**data)
 
 
+def extract_viewer(data):
+    """Extract Viewer info"""
+    user = data.pop("user")
+    user["pk"] = user.get("id", user.get("pk", None))
+    assert user["pk"], f'User without pk "{user}"'
+    return Viewer(**user, **data)
+
+
+def extract_broadcast_channel(data):
+    """Extract broadcast channel infos"""
+    channels = data.get("pinned_channels_info", {}).get("pinned_channels_list", [])
+    return [Broadcast(**channel) for channel in channels]
+
+
 def extract_user_gql(data):
     """For Public GraphQL API"""
+    data["broadcast_channel"] = extract_broadcast_channel(data)
     return User(
         pk=data["id"],
         media_count=data["edge_owner_to_timeline_media"]["count"],
@@ -226,69 +238,24 @@ def extract_user_gql(data):
 
 def extract_user_v1(data):
     """For Private API"""
+    data["broadcast_channel"] = extract_broadcast_channel(data)
     data["external_url"] = data.get("external_url") or None
     versions = data.get("hd_profile_pic_versions")
     pic_hd = versions[-1] if versions else data.get("hd_profile_pic_url_info", {})
     data["profile_pic_url_hd"] = pic_hd.get("url")
-    data["pk"] = str(data["pk"])
-    data["city_id"] = None
-    if cid := data.get("city_id"):
-        data["city_id"] = str(cid)
-    if "interop_messaging_user_fbid" in data:
-        data["interop_messaging_user_fbid"] = str(data["interop_messaging_user_fbid"])
     return User(**data)
-
-
-def _extract_about_lispy(c, data):
-    params = {}
-    try:
-        params["country"] = c.split('"')[1]
-    except IndexError:
-        logger.warn("Problem with about. data - %r", data)
-    try:
-        s = str(data).split("space_evenly")[1].split("stretch")
-        try:
-            params["username"] = s[1].split("center")[1].split(": '")[1].split("',")[0]
-        except IndexError:
-            pass
-        try:
-            params["date"] = s[4].split("&")[1].split("'")[2]
-        except IndexError:
-            pass
-    except IndexError:
-        pass
-    return About(**params)
-
-
-def extract_about_v1(data):
-    c = json_value(data, "layout", "bloks_payload", "data", 0, "data")
-    params = {}
-    if c:
-        if "initial_lispy" in c:
-            # old version
-            return _extract_about_lispy(c["initial_lispy"], data)
-        params["country"] = c["initial"]
-    date_finded = False
-    dumps = orjson.dumps(data).decode()
-    params["is_verified"] = '"Verified"' in dumps
-    ddata = orjson.dumps(data).decode().split('")":')
-    for i, v in enumerate(ddata):
-        if '"bold"}' in v:
-            params["username"] = v.strip().split(",")[0][1:-1]
-        if date_finded:
-            params["date"] = v.strip().split(",")[0][1:-1]
-        if "Former usernames" in v:
-            params["former_usernames"] = ddata[i + 2].strip().split(",")[0][1:-1]
-        date_finded = '"Date joined"' in v
-    return About(**params)
 
 
 def extract_location(data):
     """Extract location info"""
     if not data:
         return None
+    if "place" in data and isinstance(data["place"], dict):
+        place_location = data["place"].get("location")
+        if place_location:
+            data = place_location
     data["pk"] = data.get("id", data.get("pk", data.get("location_id", None)))
-    data["external_id"] = str(data.get("external_id", data.get("facebook_places_id")))
+    data["external_id"] = data.get("external_id", data.get("facebook_places_id"))
     data["external_id_source"] = data.get(
         "external_id_source", data.get("external_source")
     )
@@ -297,7 +264,7 @@ def extract_location(data):
     data["zip"] = data.get("zip", data.get("location_zip"))
     address_json = data.get("address_json", "{}")
     if isinstance(address_json, str):
-        address = orjson.loads(address_json)
+        address = json.loads(address_json)
         if isinstance(address, dict) and address:
             data["address"] = address.get("street_address")
             data["city"] = address.get("city_name")
@@ -309,7 +276,6 @@ def extract_comment(data):
     """Extract comment"""
     data["has_liked"] = data.get("has_liked_comment")
     data["like_count"] = data.get("comment_like_count")
-    data["user"]["pk"] = str(data["user"]["pk"])
     return Comment(**data)
 
 
@@ -329,7 +295,6 @@ def extract_collection(data):
 
 def extract_media_oembed(data):
     """Return short version of Media"""
-    data["author_id"] = str(data["author_id"])
     return MediaOembed(**data)
 
 
@@ -341,11 +306,39 @@ def extract_direct_thread(data):
         item["thread_id"] = data["id"]
         data["messages"].append(extract_direct_message(item))
     data["users"] = [extract_user_short(u) for u in data["users"]]
-    if "inviter" in data:
-        data["inviter"] = extract_user_short(data["inviter"])
+    inviter = data.get("inviter")
+    if inviter:
+        data["inviter"] = extract_user_short(inviter)
+    else:
+        data["inviter"] = None
     data["left_users"] = data.get("left_users", [])
+    data.setdefault("is_close_friend_thread", False)
+    data["last_activity_at"] = datetime.datetime.fromtimestamp(
+        data["last_activity_at"] // 1_000_000
+    )
 
-    data["last_activity_at"] = datetime.datetime.fromtimestamp(data["last_activity_at"] / 1_000_000)
+    # Convert last_seen_at timestamps
+    last_seen_at = data.get("last_seen_at", {})
+    for user_id, seen_info in last_seen_at.items():
+        if "timestamp" in seen_info:
+            seen_info["timestamp"] = datetime.datetime.fromtimestamp(
+                int(seen_info["timestamp"]) // 1_000_000
+            )
+        if "created_at" in seen_info:
+            seen_info["created_at"] = datetime.datetime.fromtimestamp(
+                int(seen_info["created_at"]) // 1_000_000
+            )
+        # Convert disappearing messages seen state timestamps
+        disappearing_state = seen_info.get("disappearing_messages_seen_state")
+        if disappearing_state:
+            if "timestamp" in disappearing_state:
+                disappearing_state["timestamp"] = datetime.datetime.fromtimestamp(
+                    int(disappearing_state["timestamp"]) // 1_000_000
+                )
+            if "created_at" in disappearing_state:
+                disappearing_state["created_at"] = datetime.datetime.fromtimestamp(
+                    int(disappearing_state["created_at"]) // 1_000_000
+                )
 
     return DirectThread(**data)
 
@@ -358,6 +351,61 @@ def extract_direct_short_thread(data):
 
 def extract_direct_response(data):
     return DirectResponse(**data)
+
+
+def _convert_direct_visual_media_timestamps(visual_media):
+    if not visual_media:
+        return
+
+    if "media" in visual_media and visual_media["media"]:
+        media = visual_media["media"]
+        if (
+            "expiring_media_action_summary" in media
+            and media["expiring_media_action_summary"]
+        ):
+            media["expiring_media_action_summary"]["timestamp"] = (
+                datetime.datetime.fromtimestamp(
+                    int(media["expiring_media_action_summary"]["timestamp"])
+                    // 1_000_000
+                )
+            )
+
+        if "image_versions2" in media and media["image_versions2"]:
+            candidates = media["image_versions2"].get("candidates", [])
+            for candidate in candidates:
+                if (
+                    "url_expiration_timestamp_us" in candidate
+                    and candidate["url_expiration_timestamp_us"]
+                ):
+                    candidate["url_expiration_timestamp_us"] = (
+                        datetime.datetime.fromtimestamp(
+                            int(candidate["url_expiration_timestamp_us"]) // 1_000_000
+                        )
+                    )
+
+        if "video_versions" in media and media["video_versions"]:
+            for video_version in media["video_versions"]:
+                if (
+                    "url_expiration_timestamp_us" in video_version
+                    and video_version["url_expiration_timestamp_us"]
+                ):
+                    video_version["url_expiration_timestamp_us"] = (
+                        datetime.datetime.fromtimestamp(
+                            int(video_version["url_expiration_timestamp_us"])
+                            // 1_000_000
+                        )
+                    )
+
+    if (
+        "expiring_media_action_summary" in visual_media
+        and visual_media["expiring_media_action_summary"]
+    ):
+        visual_media["expiring_media_action_summary"]["timestamp"] = (
+            datetime.datetime.fromtimestamp(
+                int(visual_media["expiring_media_action_summary"]["timestamp"])
+                // 1_000_000
+            )
+        )
 
 
 def extract_reply_message(data):
@@ -375,8 +423,11 @@ def extract_reply_message(data):
             # Instagram ¯\_(ツ)_/¯
             clip = clip.get("clip")
         data["clip"] = extract_media_v1(clip)
+    visual_media = data.get("visual_media", {})
+    if visual_media:
+        _convert_direct_visual_media_timestamps(visual_media)
 
-    data["timestamp"] = datetime.datetime.fromtimestamp(int(data["timestamp"]) / 1_000_000)
+    data["timestamp"] = datetime.datetime.fromtimestamp(data["timestamp"] // 1_000_000)
     data["user_id"] = str(data["user_id"])
 
     return ReplyMessage(**data)
@@ -402,25 +453,51 @@ def extract_direct_message(data):
             # Instagram ¯\_(ツ)_/¯
             clip = clip.get("clip")
         data["clip"] = extract_media_v1(clip)
-    xma_media_share = data.get("xma_media_share", {})
-    if xma_media_share:
-        data["xma_share"] = extract_media_v1_xma(xma_media_share[0])
+    # Handle xma_clip (new Instagram API format for clip/reel shares)
+    xma_clip = data.get("xma_clip", {})
+    if xma_clip:
+        xma_share = extract_media_v1_xma(xma_clip[0])
+        if xma_share:
+            data["xma_share"] = xma_share
+    #  Handle xma_media_share (only if xma_share not already set above by xma_clip)
+    if "xma_share" not in data or data["xma_share"] is None:
+        xma_media_share = data.get("xma_media_share", {})
+        if xma_media_share:
+            xma_share = extract_media_v1_xma(xma_media_share[0])
+            if xma_share:
+                data["xma_share"] = xma_share
 
+    # Convert main timestamp
     data["timestamp"] = datetime.datetime.fromtimestamp(
-        int(data["timestamp"]) / 1_000_000
+        int(data["timestamp"]) // 1_000_000
     )
     data["user_id"] = str(data.get("user_id", ""))
+    data["client_context"] = data.get("client_context", "")
+
+    # Convert reaction timestamps
+    reactions = data.get("reactions", {})
+    if reactions and "emojis" in reactions:
+        for emoji_reaction in reactions["emojis"]:
+            if "timestamp" in emoji_reaction:
+                emoji_reaction["timestamp"] = datetime.datetime.fromtimestamp(
+                    int(emoji_reaction["timestamp"]) // 1_000_000
+                )
+
+    # Convert visual media timestamps
+    visual_media = data.get("visual_media", {})
+    if visual_media:
+        _convert_direct_visual_media_timestamps(visual_media)
 
     return DirectMessage(**data)
 
 
-def extract_direct_media(media):
-    # media = deepcopy(data)
-    if versions := media.get("video_versions", []):
+def extract_direct_media(data):
+    media = deepcopy(data)
+    if "video_versions" in media:
         # Select Best Quality by Resolutiuon
-        media["video_url"] = sorted(versions, key=lambda o: o["height"] * o["width"])[
-            -1
-        ]["url"]
+        media["video_url"] = sorted(
+            media["video_versions"], key=lambda o: o["height"] * o["width"]
+        )[-1]["url"]
     if "image_versions2" in media:
         media["thumbnail_url"] = sorted(
             media["image_versions2"]["candidates"],
@@ -428,6 +505,8 @@ def extract_direct_media(media):
         )[-1]["url"]
     if "user" in media:
         media["user"] = extract_user_short(media.get("user"))
+    if "audio" in media:
+        media["audio_url"] = media["audio"].get("audio_src")
     return DirectMedia(**media)
 
 
@@ -444,66 +523,61 @@ def extract_hashtag_gql(data):
 
 
 def extract_hashtag_v1(data):
-    if hashtag_id := data.get("id"):
-        data["id"] = str(hashtag_id)
     data["allow_following"] = data.get("allow_following") == 1
     data["profile_pic_url"] = data.get("profile_pic_url") or None
     return Hashtag(**data)
 
 
-def extract_story_v1(story):
+def extract_story_v1(data):
     """Extract story from Private API"""
-    # story = deepcopy(data)
-    if versions := story.get("video_versions", []):
+    story = deepcopy(data)
+    story["pk"] = str(story.get("pk"))
+    if "video_versions" in story:
         # Select Best Quality by Resolutiuon
-        story["video_url"] = sorted(versions, key=lambda o: o["height"] * o["width"])[
-            -1
-        ]["url"]
-    # if story.get("is_reel_media"):
-    #    story["media_type"] = 2
-    #    story["product_type"] = "clips"
-    if story.get("media_type") == 2 and not story.get("product_type"):
+        story["video_url"] = sorted(
+            story["video_versions"], key=lambda o: o["height"] * o["width"]
+        )[-1]["url"]
+    if story["media_type"] == 2 and not story.get("product_type"):
         story["product_type"] = "story"
     if "image_versions2" in story:
         story["thumbnail_url"] = sorted(
             story["image_versions2"]["candidates"],
             key=lambda o: o["height"] * o["width"],
         )[-1]["url"]
-    story["user"]["pk"] = str(story["user"]["pk"])
-    mentions = []
-    for mention in story.get("reel_mentions", []):
-        mention["user"]["pk"] = str(mention["user"]["pk"])
-        mentions.append(StoryMention(**mention))
-    story["mentions"] = mentions
-    story["pk"] = str(story["pk"])
-    story["locations"] = story.pop("story_locations", [])
-    story["hashtags"] = story.pop("story_hashtags", [])
-    for sht in story["hashtags"]:
-        sht["hashtag"] = extract_hashtag_v1(sht["hashtag"])
-    story["stickers"] = story.pop("story_link_stickers", [])
+    story["mentions"] = [
+        StoryMention(**mention) for mention in story.get("reel_mentions", [])
+    ]
+    story["locations"] = [
+        StoryLocation(**location) for location in story.get("story_locations", [])
+    ]
+    story["hashtags"] = [
+        StoryHashtag(**hashtag) for hashtag in story.get("story_hashtags", [])
+    ]
+    story["stickers"] = data.get("story_link_stickers") or []
     feed_medias = []
-    story_feed_medias = story.pop("story_feed_media", [])
+    story_feed_medias = data.get("story_feed_media") or []
     for feed_media in story_feed_medias:
-        feed_media["media_pk"] = str(feed_media["media_id"])
+        feed_media["media_pk"] = int(feed_media["media_id"])
         feed_medias.append(StoryMedia(**feed_media))
     story["medias"] = feed_medias
     story["links"] = []
+    for sticker in story.get("story_link_stickers", []):
+        story_link = sticker.get("story_link") or {}
+        story_link_url = story_link.get("url")
+        if story_link_url:
+            story["links"].append(StoryLink(**{"webUri": story_link_url}))
     for cta in story.get("story_cta", []):
         for link in cta.get("links", []):
             story["links"].append(StoryLink(**link))
     story["user"] = extract_user_short(story.get("user"))
-    tags = []
-    for tag in story.get("sponsor_tags", []):
-        sponsor = tag["sponsor"]
-        sponsor["pk"] = str(sponsor["pk"])
-        tags.append(sponsor)
-    story["sponsor_tags"] = tags
+    story["sponsor_tags"] = [tag["sponsor"] for tag in story.get("sponsor_tags", [])]
+    story["is_paid_partnership"] = story.get("is_paid_partnership")
     return Story(**story)
 
 
-def extract_story_gql(story):
+def extract_story_gql(data):
     """Extract story from Public API"""
-    # story = deepcopy(data)
+    story = deepcopy(data)
     if "video_resources" in story:
         # Select Best Quality by Resolutiuon
         story["video_url"] = sorted(
@@ -533,28 +607,37 @@ def extract_story_gql(story):
     if story_cta_url:
         story["links"] = [StoryLink(**{"webUri": story_cta_url})]
     story["user"] = extract_user_short(story.get("owner"))
-    story["pk"] = int(story["id"])
+    story["pk"] = str(story["id"])
     story["id"] = f"{story['id']}_{story['owner']['id']}"
     story["code"] = InstagramIdCodec.encode(story["pk"])
-    story["taken_at"] = story["taken_at_ts"] = story["taken_at_timestamp"]
+    story["taken_at"] = story["taken_at_timestamp"]
     story["media_type"] = 2 if story["is_video"] else 1
+    story["sponsor_tags"] = [
+        extract_user_short(edge["node"]["sponsor"])
+        for edge in story.get("edge_media_to_sponsor_user", {}).get("edges", [])
+    ]
     return Story(**story)
 
 
-def extract_highlight_v1(highlight):
-    # highlight = deepcopy(data)
+def extract_highlight_v1(data):
+    highlight = deepcopy(data)
     highlight["pk"] = highlight["id"].split(":")[1]
     highlight["items"] = [extract_story_v1(item) for item in highlight.get("items", [])]
-    highlight["user"]["pk"] = str(highlight["user"]["pk"])
     return Highlight(**highlight)
 
 
 def extract_guide_v1(data):
-    item = data.get("summary") or {}
-    if media := item.get("cover_media"):
-        item["cover_media"] = extract_media_v1(media)
+    item = deepcopy(data.get("summary") or {})
+    item["cover_media"] = extract_media_v1(item["cover_media"])
     return Guide(**item)
 
 
 def extract_track(data):
+    data["cover_artwork_uri"] = data.get("cover_artwork_uri") or None
+    data["cover_artwork_thumbnail_uri"] = (
+        data.get("cover_artwork_thumbnail_uri") or None
+    )
+    items = re.findall(r"<BaseURL>(.+?)</BaseURL>", data["dash_manifest"])
+    data["uri"] = html.unescape(items[0]) if items else None
+    data["territory_validity_periods"] = data.get("territory_validity_periods") or {}
     return Track(**data)

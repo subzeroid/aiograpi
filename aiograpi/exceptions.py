@@ -20,7 +20,7 @@ class ClientError(Exception):
 
 
 class ClientUnknownError(ClientError):
-    ...
+    pass
 
 
 class WrongCursorError(ClientError):
@@ -28,15 +28,15 @@ class WrongCursorError(ClientError):
 
 
 class ClientStatusFail(ClientError):
-    ...
+    pass
 
 
 class ClientErrorWithTitle(ClientError):
-    ...
+    pass
 
 
 class ResetPasswordError(ClientError):
-    ...
+    pass
 
 
 class GenericRequestError(ClientError):
@@ -88,11 +88,7 @@ class ClientLoginRequired(ClientError):
 
 
 class ReloginAttemptExceeded(ClientError):
-    ...
-
-
-class IsRegulatedC18Error(ClientBadRequestError):
-    """Instagram has limited access to users by age (18+)"""
+    pass
 
 
 class PrivateError(ClientError):
@@ -104,43 +100,43 @@ class NotFoundError(PrivateError):
 
 
 class FeedbackRequired(PrivateError):
-    ...
+    pass
 
 
 class ChallengeError(PrivateError):
-    ...
+    pass
 
 
 class ChallengeRedirection(ChallengeError):
-    ...
+    pass
 
 
 class ChallengeRequired(ChallengeError):
-    ...
+    pass
 
 
 class ChallengeSelfieCaptcha(ChallengeError):
-    ...
+    pass
 
 
 class ChallengeUnknownStep(ChallengeError):
-    ...
+    pass
 
 
 class SelectContactPointRecoveryForm(ChallengeError):
-    ...
+    pass
 
 
 class RecaptchaChallengeForm(ChallengeError):
-    ...
+    pass
 
 
 class SubmitPhoneNumberForm(ChallengeError):
-    ...
+    pass
 
 
 class LegacyForceSetNewPasswordForm(ChallengeError):
-    ...
+    pass
 
 
 class LoginRequired(PrivateError):
@@ -156,169 +152,167 @@ class LoginRequired(PrivateError):
 
 
 class SentryBlock(PrivateError):
-    ...
+    pass
 
 
 class RateLimitError(PrivateError):
-    ...
+    pass
 
 
 class ProxyAddressIsBlocked(PrivateError):
-    """Instagram has blocked your IP address,
-    use a quality proxy provider (not free, not shared)
-    """
+    """Instagram has blocked your IP address, use a quality proxy provider (not free, not shared)"""
 
 
 class BadPassword(PrivateError):
-    ...
+    pass
 
 
 class BadCredentials(PrivateError):
-    ...
+    pass
 
 
 class PleaseWaitFewMinutes(PrivateError):
-    ...
+    pass
 
 
 class UnknownError(PrivateError):
-    ...
+    pass
 
 
 class TrackNotFound(NotFoundError):
-    ...
+    pass
 
 
 class MediaError(PrivateError):
-    ...
+    pass
 
 
 class MediaNotFound(NotFoundError, MediaError):
-    ...
+    pass
 
 
 class StoryNotFound(NotFoundError, MediaError):
-    ...
+    pass
 
 
 class UserError(PrivateError):
-    ...
+    pass
 
 
 class UserNotFound(NotFoundError, UserError):
-    ...
+    pass
 
 
 class CollectionError(PrivateError):
-    ...
+    pass
 
 
 class CollectionNotFound(NotFoundError, CollectionError):
-    ...
+    pass
 
 
 class DirectError(PrivateError):
-    ...
+    pass
 
 
 class DirectThreadNotFound(NotFoundError, DirectError):
-    ...
+    pass
 
 
 class DirectMessageNotFound(NotFoundError, DirectError):
-    ...
+    pass
 
 
 class VideoTooLongException(PrivateError):
-    ...
+    pass
 
 
 class VideoNotDownload(PrivateError):
-    ...
+    pass
 
 
 class VideoNotUpload(PrivateError):
-    ...
+    pass
 
 
 class VideoConfigureError(VideoNotUpload):
-    ...
+    pass
 
 
 class VideoConfigureStoryError(VideoConfigureError):
-    ...
+    pass
 
 
 class PhotoNotUpload(PrivateError):
-    ...
+    pass
 
 
 class PhotoConfigureError(PhotoNotUpload):
-    ...
+    pass
 
 
 class PhotoConfigureStoryError(PhotoConfigureError):
-    ...
+    pass
 
 
 class IGTVNotUpload(PrivateError):
-    ...
+    pass
 
 
 class IGTVConfigureError(IGTVNotUpload):
-    ...
+    pass
 
 
 class ClipNotUpload(PrivateError):
-    ...
+    pass
 
 
 class ClipConfigureError(ClipNotUpload):
-    ...
+    pass
 
 
 class AlbumNotDownload(PrivateError):
-    ...
+    pass
 
 
 class AlbumUnknownFormat(PrivateError):
-    ...
+    pass
 
 
 class AlbumConfigureError(PrivateError):
-    ...
+    pass
 
 
 class HashtagError(PrivateError):
-    ...
+    pass
 
 
 class HashtagNotFound(NotFoundError, HashtagError):
-    ...
+    pass
 
 
 class HashtagPageWarning(ClientForbiddenError, HashtagError):
-    ...
+    pass
 
 
 class LocationError(PrivateError):
-    ...
+    pass
 
 
 class LocationNotFound(NotFoundError, LocationError):
-    ...
+    pass
 
 
 class TwoFactorRequired(PrivateError):
-    ...
+    pass
 
 
 class HighlightNotFound(NotFoundError, PrivateError):
-    ...
+    pass
 
 
 class InvalidNonce(PrivateError):
-    ...
+    pass
 
 
 class NoteNotFound(NotFoundError):
@@ -326,15 +320,15 @@ class NoteNotFound(NotFoundError):
 
 
 class ConsentRequired(PrivateError):
-    ...
+    pass
 
 
 class GeoBlockRequired(PrivateError):
-    ...
+    pass
 
 
 class CheckpointRequired(PrivateError):
-    ...
+    pass
 
 
 class PrivateAccount(PrivateError):
@@ -362,27 +356,27 @@ class CommentsDisabled(PrivateError):
 
 
 class ShareDecodeError(PrivateError):
-    ...
+    pass
 
 
 class AccountSuspended(ClientError):
-    ...
+    pass
 
 
 class TermsUnblock(ClientError):
-    ...
+    pass
 
 
 class TermsAccept(ClientError):
-    ...
+    pass
 
 
 class AboutUsError(ClientError):
-    ...
+    pass
 
 
 class ProxyError(ClientError):
-    ...
+    pass
 
 
 class ConnectProxyError(ProxyError):
@@ -400,8 +394,41 @@ class UnsupportedError(ClientError):
 
 
 class UnsupportedSettingValue(UnsupportedError):
-    ...
+    pass
 
 
 class PreLoginRequired(ClientError):
     message = "Login required"
+
+
+class ValidationError(AssertionError):
+    pass
+
+
+class EmailInvalidError(ClientError):
+    pass
+
+
+class EmailNotAvailableError(ClientError):
+    pass
+
+
+class EmailVerificationSendError(ClientError):
+    pass
+
+
+class AgeEligibilityError(ClientError):
+    pass
+
+
+class CaptchaChallengeRequired(ClientError):
+    """Captcha challenge required, and no solver is configured or available."""
+
+    def __init__(
+        self,
+        message="Captcha challenge required, but no solver configured or available.",
+        challenge_details=None,
+        **kwargs,
+    ):
+        self.challenge_details = challenge_details if challenge_details else {}
+        super().__init__(message, **kwargs)
