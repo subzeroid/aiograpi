@@ -140,3 +140,6 @@ dmypy.json
 
 # Superpowers specs/plans (local only)
 docs/superpowers/
+
+# Port-time scratch tooling (smoke helpers, etc.)
+util/
