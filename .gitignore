@@ -137,3 +137,6 @@ dmypy.json
 # PyCharm
 .idea
 *.iml
+
+# Superpowers specs/plans (local only)
+docs/superpowers/
