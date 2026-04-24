@@ -375,6 +375,10 @@ class AboutUsError(ClientError):
     pass
 
 
+class IsRegulatedC18Error(ClientBadRequestError):
+    """Instagram has limited access to users by age (18+)"""
+
+
 class ProxyError(ClientError):
     pass
 

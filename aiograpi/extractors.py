@@ -1,10 +1,14 @@
 import datetime
 import html
 import json
+import logging
 import re
 from copy import deepcopy
 
+import orjson
+
 from .types import (
+    About,
     Account,
     Broadcast,
     Collection,
@@ -36,6 +40,8 @@ from .types import (
     Viewer,
 )
 from .utils import InstagramIdCodec, json_value
+
+logger = logging.getLogger(__name__)
 
 MEDIA_TYPES_GQL = {"GraphImage": 1, "GraphVideo": 2, "GraphSidecar": 8, "StoryVideo": 2}
 
@@ -641,3 +647,47 @@ def extract_track(data):
     data["uri"] = html.unescape(items[0]) if items else None
     data["territory_validity_periods"] = data.get("territory_validity_periods") or {}
     return Track(**data)
+
+
+def _extract_about_lispy(c, data):
+    params = {}
+    try:
+        params["country"] = c.split('"')[1]
+    except IndexError:
+        logger.warn("Problem with about. data - %r", data)
+    try:
+        s = str(data).split("space_evenly")[1].split("stretch")
+        try:
+            params["username"] = s[1].split("center")[1].split(": '")[1].split("',")[0]
+        except IndexError:
+            pass
+        try:
+            params["date"] = s[4].split("&")[1].split("'")[2]
+        except IndexError:
+            pass
+    except IndexError:
+        pass
+    return About(**params)
+
+
+def extract_about_v1(data):
+    c = json_value(data, "layout", "bloks_payload", "data", 0, "data")
+    params = {}
+    if c:
+        if "initial_lispy" in c:
+            # old version
+            return _extract_about_lispy(c["initial_lispy"], data)
+        params["country"] = c["initial"]
+    date_finded = False
+    dumps = orjson.dumps(data).decode()
+    params["is_verified"] = '"Verified"' in dumps
+    ddata = orjson.dumps(data).decode().split('")":')
+    for i, v in enumerate(ddata):
+        if '"bold"}' in v:
+            params["username"] = v.strip().split(",")[0][1:-1]
+        if date_finded:
+            params["date"] = v.strip().split(",")[0][1:-1]
+        if "Former usernames" in v:
+            params["former_usernames"] = ddata[i + 2].strip().split(",")[0][1:-1]
+        date_finded = '"Date joined"' in v
+    return About(**params)
