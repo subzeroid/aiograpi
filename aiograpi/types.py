@@ -17,14 +17,6 @@ class TypesBaseModel(BaseModel):
     )  # (jarrodnorwell) fixed city_id issue
 
 
-def validate_external_url(cls, v):
-    if v is None or (v.startswith("http") and "://" in v) or isinstance(v, str):
-        return v
-    raise ValidationError(
-        "external_url must be a URL or string"
-    )  # Corrected 'been' to 'be'
-
-
 class Resource(TypesBaseModel):
     pk: str
     video_url: Optional[HttpUrl] = None  # for Video and IGTV
