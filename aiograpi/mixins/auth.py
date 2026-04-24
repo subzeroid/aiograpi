@@ -8,8 +8,9 @@ import random
 import re
 import time
 import uuid
+from copy import deepcopy
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, Union
 from uuid import uuid4
 
 from pydantic import ValidationError
@@ -22,10 +23,28 @@ from aiograpi.exceptions import (
     PrivateError,
     ReloginAttemptExceeded,
     TwoFactorRequired,
+    UnknownError,
 )
 from aiograpi.utils import dumps, gen_token, generate_jazoest
 
 # from aiograpi.zones import CET
+TIMELINE_FEED_REASONS = (
+    "cold_start_fetch",
+    "warm_start_fetch",
+    "pagination",
+    "pull_to_refresh",
+    "auto_refresh",
+)
+REELS_TRAY_REASONS = ("cold_start", "pull_to_refresh")
+try:
+    from typing import Literal
+
+    TIMELINE_FEED_REASON = Literal[TIMELINE_FEED_REASONS]
+    REELS_TRAY_REASON = Literal[REELS_TRAY_REASONS]
+except ImportError:
+    # python <= 3.8
+    TIMELINE_FEED_REASON = str
+    REELS_TRAY_REASON = str
 
 
 class PreLoginFlowMixin:
@@ -172,19 +191,23 @@ class PostLoginFlowMixin:
         # chance = random.randint(1, 100) % 2 == 0
         # reason = "pull_to_refresh" if chance else "cold_start"
         check_flow.append(await self.get_reels_tray_feed("cold_start"))
-        check_flow.append(await self.get_timeline_feed(["cold_start_fetch"]))
+        check_flow.append(await self.get_timeline_feed("cold_start_fetch"))
         return all(check_flow)
 
     async def get_timeline_feed(
-        self, options: List[Dict] = ["pull_to_refresh"]
+        self,
+        reason: TIMELINE_FEED_REASON = "pull_to_refresh",
+        max_id: str = None,
     ) -> Dict:
         """
         Get your timeline feed
 
         Parameters
         ----------
-        options: List, optional
-            Configurable options
+        reason: str, optional
+            Reason to refresh the feed (cold_start_fetch, paginating, pull_to_refresh); Default "pull_to_refresh"
+        max_id: str, optional
+            Cursor for the next feed chunk (next cursor can be found in response["next_max_id"])
 
         Returns
         -------
@@ -192,32 +215,37 @@ class PostLoginFlowMixin:
             A dictionary of response from the call
         """
         headers = {
-            "x-ig-accept-hint": "feed",
             "X-Ads-Opt-Out": "0",
             "X-DEVICE-ID": self.uuid,
             "X-CM-Bandwidth-KBPS": "-1.000",  # str(random.randint(2000, 5000)),
             "X-CM-Latency": str(random.randint(1, 5)),
         }
         data = {
-            "feed_view_info": "[]",
+            "has_camera_permission": "1",
+            "feed_view_info": "[]",  # e.g. [{"media_id":"2634223601739446191_7450075998","version":24,
+            # "media_pct":1.0,"time_info":{"10":63124,"25":63124,"50":63124,"75":63124},"latest_timestamp":1628253523186}]
             "phone_id": self.phone_id,
-            "battery_level": random.randint(25, 100),
+            "reason": reason,
+            "battery_level": 100,  # Random battery level is not simulating real bahaviour
             "timezone_offset": str(self.timezone_offset),
-            "_csrftoken": self.token,
+            # "_csrftoken": self.token, No longer in data
             "device_id": self.uuid,
             "request_id": self.request_id,
             "_uuid": self.uuid,
             "is_charging": random.randint(0, 1),
+            "is_dark_mode": 1,  # Random dark mode is not simulating real bahaviour
             "will_sound_on": random.randint(0, 1),
             "session_id": self.client_session_id,
             "bloks_versioning_id": self.bloks_versioning_id,
         }
-        if "pull_to_refresh" in options:
-            data["reason"] = "pull_to_refresh"
+        if reason in ["pull_to_refresh", "auto_refresh"]:
             data["is_pull_to_refresh"] = "1"
-        elif "cold_start_fetch" in options:
-            data["reason"] = "cold_start_fetch"
+        else:
             data["is_pull_to_refresh"] = "0"
+
+        if max_id:
+            data["max_id"] = max_id
+            data["reason"] = "pagination"
         # if "push_disabled" in options:
         #     data["push_disabled"] = "true"
         # if "recovered_from_crash" in options:
@@ -226,14 +254,16 @@ class PostLoginFlowMixin:
             "feed/timeline/", json.dumps(data), with_signature=False, headers=headers
         )
 
-    async def get_reels_tray_feed(self, reason: str = "pull_to_refresh") -> Dict:
+    async def get_reels_tray_feed(
+        self, reason: REELS_TRAY_REASON = "pull_to_refresh"
+    ) -> Dict:
         """
         Get your reels tray feed
 
         Parameters
         ----------
         reason: str, optional
-            Default "pull_to_refresh"
+            Reason to refresh reels tray fee (cold_start, pull_to_refresh); Default "pull_to_refresh"
 
         Returns
         -------
@@ -246,11 +276,16 @@ class PostLoginFlowMixin:
             "timezone_offset": str(self.timezone_offset),
             "tray_session_id": self.tray_session_id,
             "request_id": self.request_id,
-            "latest_preloaded_reel_ids": "[]",
+            # "latest_preloaded_reel_ids": "[]",  # Long JSON array with reel data
+            # Example: [{"reel_id":"6009504750","media_count":"15","timestamp":1628253494,"media_ids":"..."}]
             "page_size": 50,
             # "_csrftoken": self.token,
             "_uuid": self.uuid,
         }
+        if reason == "cold_start":
+            data["reel_tray_impressions"] = {}
+        else:
+            data["reel_tray_impressions"] = {self.user_id: str(time.time())}
         return await self.private_request("feed/reels_tray/", data)
 
 
@@ -274,12 +309,45 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
     country_code = 1  # Phone code, default USA
     locale = "en_US"
     timezone_offset: int = -14400  # New York, GMT-4 in seconds
-    ig_u_rur = ""  # e.g. CLN,49897488153,1666640702:01...834e2d1f731e20
+    public_request_retries_count = 3
+    public_request_retries_timeout = 2
+    session_retry_total = 3
+    session_retry_backoff_factor = 2
+    session_retry_statuses = [429, 500, 502, 503, 504]
+    # Example: CLN,49897488153,1666640702:01f7bdb93090f4f773516fc2cf1424178a58a2295b4c754090ba02cb0a834e2d1f731e20
+    ig_u_rur = ""
     ig_www_claim = ""  # e.g. hmac.AR2uidim8es5kYgDiNxY0UG_ZhffFFSt8TGCV5eA1VYYsMNx
 
     def __init__(self):
+        self.bloks_versioning_id = (
+            "ce555e5500576acd8e84a66018f54a05720f2dce29f0bb5a1f97f0c10d6fac48"
+        )
         self.user_agent = None
         self.settings = None
+        self.override_app_version = False
+
+    def _clear_session_state(
+        self,
+        *,
+        clear_private_cookies: bool = False,
+        clear_public_cookies: bool = False,
+        clear_authorization_data: bool = False,
+        clear_authorization_header: bool = False,
+        clear_last_login: bool = False,
+        reset_relogin_attempt: bool = False,
+    ) -> None:
+        if clear_authorization_data:
+            self.authorization_data = {}
+        if clear_last_login:
+            self.last_login = None
+        if reset_relogin_attempt:
+            self.relogin_attempt = 0
+        if clear_authorization_header:
+            self.private.headers.pop("Authorization", None)
+        if clear_private_cookies:
+            self.private.cookies.clear()
+        if clear_public_cookies:
+            self.public.cookies.clear()
 
     def init(self) -> bool:
         """
@@ -292,30 +360,51 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         """
         if "cookies" in self.settings:
             self.private.set_cookies(self.settings["cookies"])
+        else:
+            self._clear_session_state(clear_private_cookies=True)
         self.authorization_data = self.settings.get("authorization_data", {})
         self.last_login = self.settings.get("last_login")
-        self.set_timezone_offset(
-            self.settings.get("timezone_offset", self.timezone_offset)
+        timezone_offset = self.settings.get("timezone_offset", self.timezone_offset)
+        locale = self.settings.get("locale", self.locale)
+        country = self.settings.get("country", self.country)
+        country_code = self.settings.get("country_code", self.country_code)
+        self.set_retry_config(
+            request_timeout=self.settings.get("request_timeout", self.request_timeout),
+            public_request_retries_count=self.settings.get(
+                "public_request_retries_count", self.public_request_retries_count
+            ),
+            public_request_retries_timeout=self.settings.get(
+                "public_request_retries_timeout", self.public_request_retries_timeout
+            ),
+            session_retry_total=self.settings.get(
+                "session_retry_total", self.session_retry_total
+            ),
+            session_retry_backoff_factor=self.settings.get(
+                "session_retry_backoff_factor", self.session_retry_backoff_factor
+            ),
+            session_retry_statuses=self.settings.get(
+                "session_retry_statuses", self.session_retry_statuses
+            ),
         )
+
+        self.set_timezone_offset(timezone_offset)
         self.set_device(self.settings.get("device_settings"))
-        # self.bloks_versioning_id = hashlib.sha256(
-        #     json.dumps(self.device_settings)
-        # ).hexdigest()
-        # this param is constant and will change by Instagram app version
-        self.bloks_versioning_id = (
-            "ce555e5500576acd8e84a66018f54a05720f2dce29f0bb5a1f97f0c10d6fac48"
-        )
         self.set_user_agent(self.settings.get("user_agent"))
         self.set_uuids(self.settings.get("uuids") or {})
-        self.set_locale(self.settings.get("locale", self.locale))
-        self.set_country(self.settings.get("country", self.country))
-        self.set_country_code(self.settings.get("country_code", self.country_code))
+        self.set_locale(locale)
+        self.set_country(country)
+        self.set_country_code(country_code)
         self.mid = self.settings.get("mid", self.cookie_dict.get("mid"))
         self.set_ig_u_rur(self.settings.get("ig_u_rur"))
         self.set_ig_www_claim(self.settings.get("ig_www_claim"))
         # init headers
         headers = self.base_headers
-        headers.update({"Authorization": self.authorization})
+        if self.authorization:
+            headers.update({"Authorization": self.authorization})
+        else:
+            self.private.headers.pop("Authorization", None)
+        if not self.ig_u_rur:
+            self.private.headers.pop("IG-U-RUR", None)
         self.private.headers.update(headers)
         return True
 
@@ -334,9 +423,11 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
             A boolean value
         """
         assert isinstance(sessionid, str) and len(sessionid) > 30, "Invalid sessionid"
+        user_match = re.search(r"^\d+", sessionid)
+        assert user_match, "Invalid sessionid"
         self.settings["cookies"] = {"sessionid": sessionid}
         self.init()
-        user_id = re.search(r"^\d+", sessionid).group()
+        user_id = user_match.group()
         self.authorization_data = {
             "ds_user_id": user_id,
             "sessionid": sessionid,
@@ -349,13 +440,13 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
             # ClientUnauthorizedError
             user = await self.user_short_gql(int(user_id))
         self.username = user.username
-        self.cookie_dict["ds_user_id"] = user.pk
+        self.private.set_cookies({"ds_user_id": str(user.pk)})
         return True
 
     async def login(
         self,
-        username: str,
-        password: str,
+        username: Union[str, None] = None,
+        password: Union[str, None] = None,
         relogin: bool = False,
         verification_code: str = "",
     ) -> bool:
@@ -378,18 +469,19 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         bool
             A boolean value
         """
-
-        if not self.username or not self.password:
-            if username is None or password is None:
-                raise BadCredentials("Both username and password must be provided.")
-
+        if username and password:
             self.username = username
             self.password = password
+        if self.username is None or self.password is None:
+            raise BadCredentials("Both username and password must be provided.")
 
         if relogin:
-            self.authorization_data = {}
-            self.private.headers.pop("Authorization", None)
-            self.private.cookies.clear()
+            self._clear_session_state(
+                clear_authorization_data=True,
+                clear_authorization_header=True,
+                clear_private_cookies=True,
+                clear_public_cookies=True,
+            )
             if self.relogin_attempt > 1:
                 raise ReloginAttemptExceeded()
             self.relogin_attempt += 1
@@ -404,14 +496,14 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
             self.logger.warning("Ignore 429: Continue login")
             # The instagram application ignores this error
             # and continues to log in (repeat this behavior)
-        enc_password = await self.password_encrypt(password)
+        enc_password = await self.password_encrypt(self.password)
         data = {
             "jazoest": generate_jazoest(self.phone_id),
             "country_codes": '[{"country_code":"%d","source":["default"]}]'
             % int(self.country_code),
             "phone_id": self.phone_id,
             "enc_password": enc_password,
-            "username": username,
+            "username": self.username,
             "adid": self.advertising_id,
             "guid": self.uuid,
             "device_id": self.android_device_id,
@@ -436,31 +528,46 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
                 "phone_id": self.phone_id,
                 "_csrftoken": self.token,
                 "two_factor_identifier": two_factor_identifier,
-                "username": username,
+                "username": self.username,
                 "trust_this_device": "0",
                 "guid": self.uuid,
                 "device_id": self.android_device_id,
                 "waterfall_id": str(uuid4()),
                 "verification_method": "3",
             }
-            logged = await self.private_request(
-                "accounts/two_factor_login/", data, login=True
-            )
+            try:
+                logged = await self.private_request(
+                    "accounts/two_factor_login/", data, login=True
+                )
+            except UnknownError as exc:
+                message = getattr(exc, "message", "") or ""
+                if message.strip().lower() == "invalid parameters":
+                    raise TwoFactorRequired(
+                        "Instagram rejected accounts/two_factor_login/ with "
+                        "'Invalid Parameters'. This account may require a newer "
+                        "Bloks-based two-factor verification flow that is not "
+                        "supported automatically yet. Complete verification in the "
+                        "Instagram app or refresh the session manually, then retry.",
+                        response=getattr(exc, "response", None),
+                        **(self.last_json if isinstance(self.last_json, dict) else {}),
+                    ) from exc
+                raise
             self.authorization_data = self.parse_authorization(
                 self.last_response.headers.get("ig-set-authorization")
             )
         if logged:
             await self.login_flow()
             self.last_login = time.time()
+            self.relogin_attempt = 0
             return True
         return False
 
-    async def one_tap_app_login(self, user_id: int, nonce: str) -> bool:
+    async def one_tap_app_login(self, user_id: str, nonce: str) -> bool:
         """One tap login emulation
 
         Parameters
         ----------
-        user_id: int
+        user_id: str
             User ID
         nonce: str
             Login nonce (from Instagram, e.g. in /logout/)
@@ -568,6 +675,12 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
             "country_code": self.country_code,
             "locale": self.locale,
             "timezone_offset": self.timezone_offset,
+            "request_timeout": self.request_timeout,
+            "public_request_retries_count": self.public_request_retries_count,
+            "public_request_retries_timeout": self.public_request_retries_timeout,
+            "session_retry_total": self.session_retry_total,
+            "session_retry_backoff_factor": self.session_retry_backoff_factor,
+            "session_retry_statuses": self.session_retry_statuses,
         }
 
     def set_settings(self, settings: Dict) -> bool:
@@ -578,11 +691,13 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         -------
         Bool
         """
-        self.settings = settings
+        self.settings = deepcopy(settings)
         self.init()
         return True
 
-    def load_settings(self, path: Path) -> Dict:
+    def load_settings(
+        self, path: Union[str, Path], override_app_version: bool = False
+    ) -> Dict:
         """
         Load session settings
 
@@ -590,18 +705,23 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         ----------
         path: Path
             Path to storage file
+        override_app_version: bool, optional
+            Mismatched app_version/version_code/bloks_versioning_id may
+            increase risk. If True, override with a known version from
+            APP_SETTINGS (in memory). Call dump_settings() to persist.
+
 
         Returns
         -------
         Dict
             Current session settings as a Dict
         """
+        self.override_app_version = override_app_version
         with open(path, "r") as fp:
             self.set_settings(json.load(fp))
             return self.settings
-        return None
 
-    def dump_settings(self, path: Path) -> bool:
+    def dump_settings(self, path: Union[str, Path]) -> bool:
         """
         Serialize and save session settings
 
@@ -618,6 +738,45 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
             json.dump(self.get_settings(), fp, indent=4)
         return True
 
+    def set_retry_config(
+        self,
+        request_timeout: Union[int, float, None] = None,
+        public_request_retries_count: int = None,
+        public_request_retries_timeout: Union[int, float] = None,
+        session_retry_total: int = None,
+        session_retry_backoff_factor: Union[int, float] = None,
+        session_retry_statuses: list = None,
+    ) -> bool:
+        if request_timeout is not None:
+            self.request_timeout = request_timeout
+        if public_request_retries_count is not None:
+            self.public_request_retries_count = public_request_retries_count
+        if public_request_retries_timeout is not None:
+            self.public_request_retries_timeout = public_request_retries_timeout
+        if session_retry_total is not None:
+            self.session_retry_total = session_retry_total
+        if session_retry_backoff_factor is not None:
+            self.session_retry_backoff_factor = session_retry_backoff_factor
+        if session_retry_statuses is not None:
+            self.session_retry_statuses = list(session_retry_statuses)
+
+        # aiograpi divergence: httpx_ext.Session does not expose
+        # urllib3-style HTTPAdapter retries. Config values are stored for
+        # API parity / introspection; retry logic lives at the call site.
+
+        if self.settings is not None:
+            self.settings.update(
+                {
+                    "request_timeout": self.request_timeout,
+                    "public_request_retries_count": self.public_request_retries_count,
+                    "public_request_retries_timeout": self.public_request_retries_timeout,
+                    "session_retry_total": self.session_retry_total,
+                    "session_retry_backoff_factor": self.session_retry_backoff_factor,
+                    "session_retry_statuses": self.session_retry_statuses,
+                }
+            )
+        return True
+
     def set_device(self, device: Dict = None, reset: bool = False) -> bool:
         """
         Helper to set a device for login
@@ -632,22 +791,77 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         bool
             A boolean value
         """
-        self.device_settings = device or {
-            "app_version": "269.0.0.18.75",
-            "android_version": 26,
-            "android_release": "8.0.0",
-            "dpi": "480dpi",
-            "resolution": "1080x1920",
-            "manufacturer": "OnePlus",
-            "device": "devitron",
-            "model": "6T Dev",
-            "cpu": "qcom",
-            "version_code": "314665256",
-        }
-        self.settings["device_settings"] = self.device_settings
+        device = device or {}
+        self.device_settings = dict(config.DEVICE_SETTINGS)
+        self.device_settings.update(device)
+        seed = None
+        if self.settings:
+            uuids = self.settings.get("uuids") or {}
+            seed = uuids.get("uuid")
+        self.set_app(seed=seed)
         if reset:
             self.set_uuids({})
-            # self.settings = self.get_settings()
+        return True
+
+    def set_app(self, app: Union[str, Dict] = None, seed: str = None) -> bool:
+        """
+        Helper to set app version settings
+
+        Parameters
+        ----------
+        app: Union[str, Dict], optional
+            App version string or settings dict
+        seed: str, optional
+            Seed used for stable app selection
+
+        Returns
+        -------
+        bool
+            A boolean value
+        """
+        app_keys = ("app_version", "version_code", "bloks_versioning_id")
+        if not getattr(self, "device_settings", None):
+            self.device_settings = dict(config.DEVICE_SETTINGS)
+        if not config.APP_SETTINGS:
+            raise ValueError("APP_SETTINGS is empty")
+        override_app_version = bool(getattr(self, "override_app_version", False))
+
+        def apply_settings(app_settings: Dict) -> None:
+            for key in app_keys:
+                val = app_settings.get(key)
+                if val:
+                    self.device_settings[key] = val
+
+        def pick_by_seed() -> Dict:
+            app_values = list(config.APP_SETTINGS.values())
+            if seed:
+                digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()
+                idx = int(digest, 16) % len(app_values)
+                return app_values[idx]
+            return random.choice(app_values)
+
+        if app:
+            if isinstance(app, str):
+                matched = config.APP_SETTINGS.get(app)
+                if not matched:
+                    raise ValueError(f"Unknown app_version: {app}")
+                apply_settings(matched)
+            else:
+                apply_settings(dict(app))
+        else:
+            app_version = self.device_settings.get("app_version")
+            matched = config.APP_SETTINGS.get(app_version) if app_version else None
+            if matched:
+                apply_settings(matched)
+            else:
+                if override_app_version or not app_version:
+                    apply_settings(pick_by_seed())
+
+        if override_app_version:
+            self.set_user_agent()
+        self.bloks_versioning_id = self.device_settings.get("bloks_versioning_id")
+        if self.settings is not None:
+            self.settings["device_settings"] = self.device_settings
         return True
 
     def set_user_agent(self, user_agent: str = "", reset: bool = False) -> bool:
@@ -666,8 +880,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         """
         data = dict(self.device_settings, locale=self.locale)
         self.user_agent = user_agent or config.USER_AGENT_BASE.format(**data)
-        # changed in base_headers:
-        # self.private.headers.update({"User-Agent": self.user_agent})
+        # self.private.headers.update({"User-Agent": self.user_agent})  # changed in base_headers
         self.settings["user_agent"] = self.user_agent
         if reset:
             self.set_uuids({})
@@ -856,10 +1069,22 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         result = await self.private_request(
             "accounts/logout/", {"one_tap_app_login": True}
         )
-        return result["status"] == "ok"
+        if result["status"] == "ok":
+            self._clear_session_state(
+                clear_authorization_data=True,
+                clear_last_login=True,
+                reset_relogin_attempt=True,
+                clear_authorization_header=True,
+                clear_private_cookies=True,
+                clear_public_cookies=True,
+            )
+            return True
+        return False
 
     def parse_authorization(self, authorization) -> dict:
         """Parse authorization header"""
+        if not authorization:
+            return {}
         try:
             b64part = authorization.rsplit(":", 1)[-1]
             if not b64part:
@@ -880,7 +1105,8 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         return ""
 
     def dump_instaman(self):
-        """IAM format"""
+        # Example format: helen9151hernandez:AgcXb0GJhAP|Instagram 200.0.0.24.121 Android...
+        # Long string with user credentials and device info
         uuids = ";".join(
             [
                 self.android_device_id.replace("android-", ""),
