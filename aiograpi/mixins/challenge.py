@@ -31,7 +31,8 @@ class ChallengeChoice(Enum):
 
 def extract_messages(challenge):
     messages = []
-    for item in challenge["extraData"].get("content"):
+    extra_data = challenge.get("extraData") or {}
+    for item in extra_data.get("content") or []:
         message = item.get("title", item.get("text"))
         if message:
             dot = "" if message.endswith(".") else "."
@@ -49,12 +50,22 @@ class ChallengeResolveMixin:
         super().__init__(*args, **kwargs)
 
     async def challenge_code_or_raised(
-        self, choice: ChallengeChoice, wait_seconds: int = 5, attempts: int = 24
+        self,
+        choice: ChallengeChoice,
+        wait_seconds: int = 5,
+        attempts: int = 24,
+        challenge_url: str = None,
+        sessionid: str = None,
     ) -> str:
         error_context = dict(self.last_json)
         error_context.pop("message", None)
+        kwargs = {}
+        if challenge_url:
+            kwargs["challenge_url"] = challenge_url
+        if sessionid:
+            kwargs["sessionid"] = sessionid
         for attempt in range(attempts):
-            code = await self.challenge_code_handler(self.username, choice)
+            code = await self.challenge_code_handler(self.username, choice, **kwargs)
             if code:
                 print(
                     f'Code entered "{code}" for {self.username} '
@@ -150,176 +161,179 @@ class ChallengeResolveMixin:
         enc_password = "#PWD_INSTAGRAM_BROWSER:0:%s:" % str(int(time.time()))
         instagram_ajax = hashlib.sha256(enc_password.encode()).hexdigest()[:12]
         session = httpx_ext.Session()
-        session.proxy = self.private.proxy
-        session.headers.update(
-            {
-                "User-Agent": "Mozilla/5.0 (Linux; Android 8.0.0; MI 5s Build/OPR1.170623.032; wv) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/80.0.3987.149 "
-                "Mobile Safari/537.36 %s" % self.user_agent,
-                "upgrade-insecure-requests": "1",
-                "sec-fetch-dest": "document",
-                "accept": (
-                    "text/html,application/xhtml+xml,application/xml;q=0.9,"
-                    "image/webp,image/apng,*/*;q=0.8,"
-                    "application/signed-exchange;v=b3;q=0.9"
-                ),
-                "x-requested-with": "com.instagram.android",
-                "sec-fetch-site": "none",
-                "sec-fetch-mode": "navigate",
-                "sec-fetch-user": "?1",
-                "accept-encoding": "gzip, deflate",
-                "accept-language": "en-US,en;q=0.9,en-US;q=0.8,en;q=0.7",
-                "pragma": "no-cache",
-                "cache-control": "no-cache",
-            }
-        )
-        for key, value in self.private.cookies_dict().items():
-            if key in ["mid", "csrftoken"]:
-                session.cookies.set(key, value)
-        await asyncio.sleep(WAIT_SECONDS)
-        result = await session.get(challenge_url)  # render html form
-        session.headers.update(
-            {
-                "x-ig-www-claim": "0",
-                "x-instagram-ajax": instagram_ajax,
-                "content-type": "application/x-www-form-urlencoded",
-                "accept": "*/*",
-                "sec-fetch-dest": "empty",
-                "x-requested-with": "XMLHttpRequest",
-                "x-csrftoken": session.cookies_dict().get("csrftoken"),
-                "x-ig-app-id": self.private.headers.get("X-IG-App-ID"),
-                "sec-fetch-site": "same-origin",
-                "sec-fetch-mode": "cors",
-                "referer": challenge_url,
-            }
-        )
-        await asyncio.sleep(WAIT_SECONDS)
-        choice = ChallengeChoice.EMAIL
-        result = await session.post(challenge_url, data={"choice": choice.value})
-        result = result.json()
-        for retry in range(8):
-            await asyncio.sleep(WAIT_SECONDS)
-            try:
-                # FORM TO ENTER CODE
-                result = await self.handle_challenge_result(result)
-                break
-            except SelectContactPointRecoveryForm as e:
-                if choice == ChallengeChoice.SMS:  # last iteration
-                    raise e
-                choice = ChallengeChoice.SMS
-                result = await session.post(
-                    challenge_url, data={"choice": choice.value}
-                )
-                result = result.json()
-                continue  # next choice attempt
-            except SubmitPhoneNumberForm as e:
-                result = await session.post(
-                    challenge_url,
-                    data={
-                        "phone_number": e.challenge["fields"]["phone_number"],
-                        "challenge_context": e.challenge["challenge_context"],
-                    },
-                )
-                result = result.json()
-                break
-            except ChallengeRedirection:
-                return True  # instagram redirect
-        if result.get("challengeType") not in (
-            "VerifyEmailCodeForm",
-            "VerifySMSCodeForm",
-            "VerifySMSCodeFormForSMSCaptcha",
-        ):
-            raise ChallengeError(
-                "Unexpected contact-form challenge step after verification selection: "
-                f"{result}"
+        try:
+            session.proxy = self.private.proxy
+            session.headers.update(
+                {
+                    "User-Agent": "Mozilla/5.0 (Linux; Android 8.0.0; MI 5s Build/OPR1.170623.032; wv) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/80.0.3987.149 "
+                    "Mobile Safari/537.36 %s" % self.user_agent,
+                    "upgrade-insecure-requests": "1",
+                    "sec-fetch-dest": "document",
+                    "accept": (
+                        "text/html,application/xhtml+xml,application/xml;q=0.9,"
+                        "image/webp,image/apng,*/*;q=0.8,"
+                        "application/signed-exchange;v=b3;q=0.9"
+                    ),
+                    "x-requested-with": "com.instagram.android",
+                    "sec-fetch-site": "none",
+                    "sec-fetch-mode": "navigate",
+                    "sec-fetch-user": "?1",
+                    "accept-encoding": "gzip, deflate",
+                    "accept-language": "en-US,en;q=0.9,en-US;q=0.8,en;q=0.7",
+                    "pragma": "no-cache",
+                    "cache-control": "no-cache",
+                }
             )
-        for retry_code in range(5):
-            code = None
-            for attempt in range(1, 11):
-                code = await self.challenge_code_handler(
-                    self.username,
-                    choice,
-                    challenge_url=challenge_url,
-                    sessionid=self.sessionid,
-                )
-                if code:
+            for key, value in self.private.cookies_dict().items():
+                if key in ["mid", "csrftoken"]:
+                    session.cookies.set(key, value)
+            await asyncio.sleep(WAIT_SECONDS)
+            result = await session.get(challenge_url)  # render html form
+            session.headers.update(
+                {
+                    "x-ig-www-claim": "0",
+                    "x-instagram-ajax": instagram_ajax,
+                    "content-type": "application/x-www-form-urlencoded",
+                    "accept": "*/*",
+                    "sec-fetch-dest": "empty",
+                    "x-requested-with": "XMLHttpRequest",
+                    "x-csrftoken": session.cookies_dict().get("csrftoken"),
+                    "x-ig-app-id": self.private.headers.get("X-IG-App-ID"),
+                    "sec-fetch-site": "same-origin",
+                    "sec-fetch-mode": "cors",
+                    "referer": challenge_url,
+                }
+            )
+            await asyncio.sleep(WAIT_SECONDS)
+            choice = ChallengeChoice.EMAIL
+            result = await session.post(challenge_url, data={"choice": choice.value})
+            result = result.json()
+            for retry in range(8):
+                await asyncio.sleep(WAIT_SECONDS)
+                try:
+                    # FORM TO ENTER CODE
+                    result = await self.handle_challenge_result(result)
                     break
-                await asyncio.sleep(WAIT_SECONDS * attempt)
-            if not code:
-                raise ChallengeRequired(
-                    "Challenge code required to continue contact-form verification. "
-                    "Provide it via challenge_code_handler or retry after manual verification.",
-                    **{
-                        key: value
-                        for key, value in self.last_json.items()
-                        if key != "message"
-                    },
+                except SelectContactPointRecoveryForm as e:
+                    if choice == ChallengeChoice.SMS:  # last iteration
+                        raise e
+                    choice = ChallengeChoice.SMS
+                    result = await session.post(
+                        challenge_url, data={"choice": choice.value}
+                    )
+                    result = result.json()
+                    continue  # next choice attempt
+                except SubmitPhoneNumberForm as e:
+                    result = await session.post(
+                        challenge_url,
+                        data={
+                            "phone_number": e.challenge["fields"]["phone_number"],
+                            "challenge_context": e.challenge["challenge_context"],
+                        },
+                    )
+                    result = result.json()
+                    break
+                except ChallengeRedirection:
+                    return True  # instagram redirect
+            if result.get("challengeType") not in (
+                "VerifyEmailCodeForm",
+                "VerifySMSCodeForm",
+                "VerifySMSCodeFormForSMSCaptcha",
+            ):
+                raise ChallengeError(
+                    "Unexpected contact-form challenge step after verification selection: "
+                    f"{result}"
                 )
-            # SEND CODE
+            for retry_code in range(5):
+                code = None
+                for attempt in range(1, 11):
+                    code = await self.challenge_code_handler(
+                        self.username,
+                        choice,
+                        challenge_url=challenge_url,
+                        sessionid=self.sessionid,
+                    )
+                    if code:
+                        break
+                    await asyncio.sleep(WAIT_SECONDS * attempt)
+                if not code:
+                    raise ChallengeRequired(
+                        "Challenge code required to continue contact-form verification. "
+                        "Provide it via challenge_code_handler or retry after manual verification.",
+                        **{
+                            key: value
+                            for key, value in self.last_json.items()
+                            if key != "message"
+                        },
+                    )
+                # SEND CODE
+                await asyncio.sleep(WAIT_SECONDS)
+                result = (
+                    await session.post(challenge_url, data={"security_code": code})
+                ).json()
+                result = result.get("challenge", result)
+                if (
+                    "Please check the code we sent you and try again"
+                    not in (result.get("errors") or [""])[0]
+                ):
+                    break
+            # FORM TO APPROVE CONTACT DATA
+            challenge_type = result.get("challengeType")
+            if challenge_type == "LegacyForceSetNewPasswordForm":
+                await self.challenge_resolve_new_password_form(result)
+            if result.get("challengeType") != "ReviewContactPointChangeForm":
+                raise ChallengeError(
+                    "Unexpected contact-form challenge step after security code "
+                    f"submission: {result}"
+                )
+            details = []
+            extra_data = result.get("extraData") or {}
+            content = extra_data.get("content") or []
+            for data in content:
+                for entry in data.get("labeled_list_entries", []):
+                    val = entry.get("list_item_text")
+                    if not val:
+                        continue
+                    if "@" not in val:
+                        val = val.replace(" ", "").replace("-", "")
+                    details.append(val)
+            # CHECK ACCOUNT DATA
+            for detail in [self.username, self.email, self.phone_number]:
+                if detail and detail not in details:
+                    raise ChallengeError(
+                        f'ChallengeResolve: Data invalid: "{detail}" not in {details}'
+                    )
+            navigation = result.get("navigation") or {}
+            forward = navigation.get("forward")
+            if not forward:
+                raise ChallengeError(
+                    "Contact-form challenge response did not provide a forward navigation target."
+                )
             await asyncio.sleep(WAIT_SECONDS)
             result = (
-                await session.post(challenge_url, data={"security_code": code})
-            ).json()
-            result = result.get("challenge", result)
-            if (
-                "Please check the code we sent you and try again"
-                not in (result.get("errors") or [""])[0]
-            ):
-                break
-        # FORM TO APPROVE CONTACT DATA
-        challenge_type = result.get("challengeType")
-        if challenge_type == "LegacyForceSetNewPasswordForm":
-            await self.challenge_resolve_new_password_form(result)
-        if result.get("challengeType") != "ReviewContactPointChangeForm":
-            raise ChallengeError(
-                "Unexpected contact-form challenge step after security code "
-                f"submission: {result}"
-            )
-        details = []
-        extra_data = result.get("extraData") or {}
-        content = extra_data.get("content") or []
-        for data in content:
-            for entry in data.get("labeled_list_entries", []):
-                val = entry.get("list_item_text")
-                if not val:
-                    continue
-                if "@" not in val:
-                    val = val.replace(" ", "").replace("-", "")
-                details.append(val)
-        # CHECK ACCOUNT DATA
-        for detail in [self.username, self.email, self.phone_number]:
-            if detail and detail not in details:
-                raise ChallengeError(
-                    f'ChallengeResolve: Data invalid: "{detail}" not in {details}'
+                await session.post(
+                    "https://i.instagram.com%s" % forward,
+                    data={
+                        "choice": 0,  # I AGREE
+                        "enc_new_password1": enc_password,
+                        "new_password1": "",
+                        "enc_new_password2": enc_password,
+                        "new_password2": "",
+                    },
                 )
-        navigation = result.get("navigation") or {}
-        forward = navigation.get("forward")
-        if not forward:
-            raise ChallengeError(
-                "Contact-form challenge response did not provide a forward navigation target."
-            )
-        await asyncio.sleep(WAIT_SECONDS)
-        result = (
-            await session.post(
-                "https://i.instagram.com%s" % forward,
-                data={
-                    "choice": 0,  # I AGREE
-                    "enc_new_password1": enc_password,
-                    "new_password1": "",
-                    "enc_new_password2": enc_password,
-                    "new_password2": "",
-                },
-            )
-        ).json()
-        if (
-            result.get("type") != "CHALLENGE_REDIRECTION"
-            or result.get("status") != "ok"
-        ):
-            raise ChallengeError(
-                "Unexpected final response after contact-form approval: " f"{result}"
-            )
-        await session._close()
-        return True
+            ).json()
+            if (
+                result.get("type") != "CHALLENGE_REDIRECTION"
+                or result.get("status") != "ok"
+            ):
+                raise ChallengeError(
+                    "Unexpected final response after contact-form approval: "
+                    f"{result}"
+                )
+            return True
+        finally:
+            await session._close()
 
     async def challenge_resolve_new_password_form(self, result):
         msg = " ".join(
@@ -512,7 +526,11 @@ class ChallengeResolveMixin:
                         f"(sms) not available to this account {self.last_json}"
                     )
             code = await self.challenge_code_or_raised(
-                choice, wait_seconds=5, attempts=24
+                choice,
+                wait_seconds=5,
+                attempts=24,
+                challenge_url=challenge_url,
+                sessionid=self.sessionid,
             )
             await self._send_private_request(challenge_url, {"security_code": code})
             # assert 'logged_in_user' in client.last_json
@@ -610,7 +628,11 @@ class ChallengeResolveMixin:
                     f"not available to this account {self.last_json}"
                 )
             code = await self.challenge_code_or_raised(
-                choice, wait_seconds=5, attempts=24
+                choice,
+                wait_seconds=5,
+                attempts=24,
+                challenge_url=challenge_url,
+                sessionid=self.sessionid,
             )
             await self._send_private_request(challenge_url, {"security_code": code})
 
