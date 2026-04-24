@@ -128,7 +128,7 @@ def prepare_image(
     """
     min_size = kwargs.pop("min_size", (320, 167))
     if is_remote(img):
-        res = httpx.get(img, timeout=5)
+        res = httpx.get(img, timeout=5, follow_redirects=True)
         im = Image.open(io.BytesIO(res.content))
     else:
         im = Image.open(img)
@@ -210,7 +210,7 @@ def prepare_video(
 
     if is_remote(vid):
         # Download remote file
-        res = httpx.get(vid, timeout=5)
+        res = httpx.get(vid, timeout=5, follow_redirects=True)
         temp_video_file.write(res.content)
         video_src_filename = temp_video_file.name
     else:

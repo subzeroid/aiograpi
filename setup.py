@@ -24,6 +24,7 @@ requirements = [
     "moviepy==1.0.3",
     "pycryptodomex==3.23.0",
     "zstandard==0.25.0",
+    "Pillow>=8.1.1",
 ]
 
 setup(
