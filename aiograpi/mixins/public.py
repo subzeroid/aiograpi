@@ -33,11 +33,10 @@ class PublicRequestMixin:
     GRAPHQL_PUBLIC_API_URL = "https://www.instagram.com/graphql/query/"
     last_public_response = None
     last_public_json = {}
-    request_logger = logging.getLogger("public_request")
+    public_request_logger = logging.getLogger("public_request")
+    public_request_retries_count = 3
+    public_request_retries_timeout = 2
     last_response_ts = 0
-    # Need some timeout for avoid sockets and memory leaks.
-    # Remember - igerl timeout 45sec
-    max_read_timeout = 46
 
     def __init__(self, *args, **kwargs):
         self.public = httpx_ext.Session()
@@ -55,6 +54,22 @@ class PublicRequestMixin:
                 ),
             }
         )
+        self.public_request_retries_count = kwargs.pop(
+            "public_request_retries_count",
+            getattr(
+                self,
+                "public_request_retries_count",
+                self.public_request_retries_count,
+            ),
+        )
+        self.public_request_retries_timeout = kwargs.pop(
+            "public_request_retries_timeout",
+            getattr(
+                self,
+                "public_request_retries_timeout",
+                self.public_request_retries_timeout,
+            ),
+        )
         super().__init__(*args, **kwargs)
 
     async def public_request(
@@ -63,9 +78,10 @@ class PublicRequestMixin:
         data=None,
         params=None,
         headers=None,
+        update_headers=None,
         return_json=False,
-        retries_count=1,
-        retries_timeout=2,
+        retries_count=None,
+        retries_timeout=None,
     ):
         kwargs = dict(
             data=data,
@@ -73,15 +89,25 @@ class PublicRequestMixin:
             headers=headers,
             return_json=return_json,
         )
-        if retries_count > 10:
-            raise Exception("Retries count is too high")
-        if retries_timeout > 600:
-            raise Exception("Retries timeout is too high")
+        retries_count = (
+            self.public_request_retries_count
+            if retries_count is None
+            else retries_count
+        )
+        retries_timeout = (
+            self.public_request_retries_timeout
+            if retries_timeout is None
+            else retries_timeout
+        )
+        assert retries_count <= 10, "Retries count is too high"
+        assert retries_timeout <= 600, "Retries timeout is too high"
         for iteration in range(retries_count):
             try:
                 if self.delay_range:
                     await random_delay(delay_range=self.delay_range)
-                return await self._send_public_request(url, **kwargs)
+                return await self._send_public_request(
+                    url, update_headers=update_headers, **kwargs
+                )
             except (
                 ClientLoginRequired,
                 ClientNotFoundError,
@@ -108,12 +134,19 @@ class PublicRequestMixin:
                 continue
 
     async def _send_public_request(
-        self, url, data=None, params=None, headers=None, return_json=False
+        self,
+        url,
+        data=None,
+        params=None,
+        headers=None,
+        return_json=False,
+        update_headers=None,
     ):
         self.last_public_response = None
         self.public_requests_count += 1
         if headers:
-            self.public.headers.update(headers)
+            if update_headers in [None, True]:
+                self.public.headers.update(headers)
         if self.last_response_ts and (time.time() - self.last_response_ts) < 1.0:
             await asyncio.sleep(1.0)
         try:
@@ -121,10 +154,10 @@ class PublicRequestMixin:
                 response = await self.public.post(url, data=data, params=params)
             else:
                 response = await self.public.get(url, params=params)
-            self.request_logger.debug(
+            self.public_request_logger.debug(
                 "public_request %s: %s", response.status_code, response.url
             )
-            self.request_logger.info(
+            self.public_request_logger.info(
                 "[%s] [%s] %s %s",
                 self.public.proxy,
                 response.status_code,
@@ -153,7 +186,7 @@ class PublicRequestMixin:
             elif "/about-us" in url:
                 raise AboutUsError(e, response=response)
 
-            self.request_logger.error(
+            self.public_request_logger.error(
                 "Status %s: JSONDecodeError in public_request (url=%s) >>> %s",
                 response.status_code,
                 url,
@@ -199,6 +232,19 @@ class PublicRequestMixin:
             return response
         return response.get("graphql") or response
 
+    async def public_a1_request_user_info_by_username(
+        self, username, data=None, params=None
+    ):
+        params = params or {}
+        url = (
+            self.PUBLIC_API_URL + f"api/v1/users/web_profile_info/?username={username}"
+        )
+        headers = {"x-ig-app-id": "936619743392459"}
+        response = await self.public_request(
+            url, data=data, params=params, headers=headers, return_json=True
+        )
+        return response.get("user") or response
+
     async def public_graphql_request(
         self,
         variables,
@@ -208,14 +254,11 @@ class PublicRequestMixin:
         params=None,
         headers=None,
     ):
-        if not (query_id or query_hash):
-            raise Exception("Must provide valid one of: query_id, query_hash")
+        assert query_id or query_hash, "Must provide valid one of: query_id, query_hash"
         default_params = {"variables": json.dumps(variables, separators=(",", ":"))}
         if query_id:
-            # 17851374694183129
             default_params["query_id"] = query_id
         if query_hash:
-            # 7dd9a7e2160524fd85f50317462cff9f
             default_params["query_hash"] = query_hash
         if params:
             params.update(default_params)
@@ -237,6 +280,16 @@ class PublicRequestMixin:
                         body_json.get("status", None), body_json.get("message", None)
                     ),
                     response=body_json,
+                )
+
+            if "data" not in body_json:
+                errors = body_json.get("errors") or []
+                summary = errors[0].get("summary") if errors else None
+                description = errors[0].get("description") if errors else None
+                raise ClientGraphqlError(
+                    "Missing 'data' in GraphQL response. Summary: '{}'. Description: '{}'".format(
+                        summary, description
+                    )
                 )
 
             return body_json["data"]
