@@ -89,6 +89,9 @@ class PrivateRequestMixin:
     last_response_ts = 0
     read_timeout = 25
     request_timeout = 1
+    session_retry_total = 3
+    session_retry_backoff_factor = 2
+    session_retry_statuses = [429, 500, 502, 503, 504]
     domain = config.API_DOMAIN
     last_response = None
     last_json = {}
@@ -98,7 +101,32 @@ class PrivateRequestMixin:
         self.private.verify = False  # fix SSLError/HTTPSConnectionPool
         self.email = kwargs.pop("email", None)
         self.phone_number = kwargs.pop("phone_number", None)
-        self.request_timeout = kwargs.pop("request_timeout", self.request_timeout)
+        self.request_timeout = kwargs.pop(
+            "request_timeout", getattr(self, "request_timeout", self.request_timeout)
+        )
+        # Session retry config kept for API parity with instagrapi.
+        # httpx_ext.Session does not expose urllib3-style HTTPAdapter
+        # retries, so these values are stored but not actively wired into
+        # the transport. Callers relying on them should implement custom
+        # retry logic at the call site.
+        self.session_retry_total = kwargs.pop(
+            "session_retry_total",
+            getattr(self, "session_retry_total", self.session_retry_total),
+        )
+        self.session_retry_backoff_factor = kwargs.pop(
+            "session_retry_backoff_factor",
+            getattr(
+                self,
+                "session_retry_backoff_factor",
+                self.session_retry_backoff_factor,
+            ),
+        )
+        self.session_retry_statuses = list(
+            kwargs.pop(
+                "session_retry_statuses",
+                getattr(self, "session_retry_statuses", self.session_retry_statuses),
+            )
+        )
         super().__init__(*args, **kwargs)
 
     async def small_delay(self):
@@ -465,7 +493,18 @@ class PrivateRequestMixin:
                 raise ClientForbiddenError(e, response=response, **last_json)
             elif response.status_code == 400:
                 error_type = last_json.get("error_type")
-                if message == "challenge_required":
+                if last_json.get("two_factor_info"):
+                    if not last_json.get("message"):
+                        last_json["message"] = "Two-factor authentication required"
+                        if last_json.get("error_type") != "two_factor_required":
+                            self.logger.info(
+                                "Changing error_type from %s to two_factor_required "
+                                "due to presence of two_factor_info",
+                                last_json.get("error_type"),
+                            )
+                        last_json["error_type"] = "two_factor_required"
+                    raise TwoFactorRequired(**last_json)
+                elif message == "challenge_required":
                     raise ChallengeRequired(**last_json)
                 elif message == "feedback_required":
                     raise FeedbackRequired(
@@ -486,6 +525,16 @@ class PrivateRequestMixin:
                 elif error_type == "rate_limit_error":
                     raise RateLimitError(**last_json)
                 elif error_type == "bad_password":
+                    msg = last_json.get("message", "").strip()
+                    if msg:
+                        if not msg.endswith("."):
+                            msg = "%s." % msg
+                        msg = "%s " % msg
+                    last_json["message"] = (
+                        "%sIf you are sure that the password is correct, "
+                        "then change your IP address, because it is added "
+                        "to the blacklist of the Instagram Server"
+                    ) % msg
                     raise BadPassword(**last_json)
                 elif error_type == "two_factor_required":
                     if not last_json.get("message"):
@@ -610,6 +659,14 @@ class PrivateRequestMixin:
                 await random_delay(delay_range=self.delay_range)
             self.private_requests_count += 1
             await self._send_private_request(endpoint, **kwargs)
+        except ClientRequestTimeout:
+            self.logger.info(
+                "Wait 60 seconds and try one more time (ClientRequestTimeout)"
+            )
+            await asyncio.sleep(60)
+            return await self._send_private_request(endpoint, **kwargs)
+        # except BadPassword as e:
+        #     raise e
         except Exception as e:
             if self.handle_exception:
                 self.handle_exception(self, e)
