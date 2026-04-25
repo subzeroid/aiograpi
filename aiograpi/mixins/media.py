@@ -1,19 +1,23 @@
 import asyncio
 import json
 import random
+from copy import deepcopy
 from datetime import datetime
 from typing import Dict, List, Tuple
 from urllib.parse import urlparse
 
+from aiograpi import httpx_ext
 from aiograpi.exceptions import (
     ClientError,
     ClientLoginRequired,
     ClientNotFoundError,
+    ClientUnauthorizedError,
     MediaNotFound,
     PreLoginRequired,
     PrivateError,
 )
 from aiograpi.extractors import (
+    extract_direct_message,
     extract_location,
     extract_media_gql,
     extract_media_oembed,
@@ -29,6 +33,44 @@ class MediaMixin:
     """
     Helpers for media
     """
+
+    _medias_cache = {}  # pk -> object
+
+    def _extract_configured_media_or_raise(
+        self, configured, exception_cls, context: str
+    ):
+        media = None
+        if isinstance(configured, dict):
+            media = configured.get("media")
+        if media is None:
+            media = (
+                self.last_json.get("media")
+                if isinstance(self.last_json, dict)
+                else None
+            )
+        if media is None:
+            raise exception_cls(
+                f"{context} configure succeeded without media payload",
+                response=self.last_response,
+                **(self.last_json if isinstance(self.last_json, dict) else {}),
+            )
+        return extract_media_v1(media)
+
+    def _extract_configured_direct_message_or_raise(
+        self, configured, exception_cls, context: str
+    ):
+        message_metadata = []
+        if isinstance(configured, dict):
+            message_metadata = configured.get("message_metadata") or []
+        if not message_metadata and isinstance(self.last_json, dict):
+            message_metadata = self.last_json.get("message_metadata") or []
+        if not message_metadata:
+            raise exception_cls(
+                f"{context} configure succeeded without message_metadata payload",
+                response=self.last_response,
+                **(self.last_json if isinstance(self.last_json, dict) else {}),
+            )
+        return extract_direct_message(message_metadata[0])
 
     async def media_id(self, media_pk: str) -> str:
         """
@@ -121,7 +163,7 @@ class MediaMixin:
         B-fKL9qpeab -> 2278584739065882267
         CCQQsCXjOaBfS3I2PpqsNkxElV9DXj61vzo5xs0 -> 2346448800803776129
         """
-        return InstagramIdCodec.decode(code[:11])
+        return str(InstagramIdCodec.decode(code[:11]))
 
     async def media_pk_from_url(self, url: str) -> str:
         """
@@ -144,6 +186,19 @@ class MediaMixin:
         """
         path = urlparse(url).path
         parts = [p for p in path.split("/") if p]
+        if parts[:2] == ["share", "p"] and len(parts) >= 3:
+            response = await httpx_ext.request(
+                "GET",
+                url,
+                proxy=self.public.proxy,
+                timeout=self.request_timeout,
+                follow_redirects=False,
+            )
+            location = response.headers.get("Location") or response.headers.get(
+                "location"
+            )
+            if location:
+                return await self.media_pk_from_url(location)
         return await self.media_pk_from_code(parts.pop())
 
     async def media_info_a1(self, media_pk: str, max_id: str = None) -> Media:
@@ -199,9 +254,12 @@ class MediaMixin:
             "parent_comment_count": 24,
             "has_threaded_comments": False,
         }
-        data = await self.public_graphql_request(
-            variables, query_hash="477b65a610463740ccdb83135b2014db"
-        )
+        try:
+            data = await self.public_graphql_request(
+                variables, query_hash="477b65a610463740ccdb83135b2014db"
+            )
+        except (ClientLoginRequired, ClientUnauthorizedError):
+            return await self.media_info_a1(media_pk)
         if not data.get("shortcode_media"):
             raise MediaNotFound(media_pk=media_pk, **data)
         if data["shortcode_media"]["location"] and self.authorization:
@@ -236,7 +294,7 @@ class MediaMixin:
             raise e
         return extract_media_v1(result["items"].pop())
 
-    async def media_info(self, media_pk: str) -> Media:
+    async def media_info(self, media_pk: str, use_cache: bool = True) -> Media:
         """
         Get Media Information from PK
 
@@ -244,6 +302,8 @@ class MediaMixin:
         ----------
         media_pk: str
             Unique identifier of the media
+        use_cache: bool, optional
+            Whether or not to use information from cache, default value is True
 
         Returns
         -------
@@ -251,20 +311,24 @@ class MediaMixin:
             An object of Media type
         """
         media_pk = await self.media_pk(media_pk)
-        try:
+        if not use_cache or media_pk not in self._medias_cache:
             try:
-                media = await self.media_info_gql(media_pk)
-            except ClientLoginRequired as e:
-                if not self.inject_sessionid_to_public():
-                    raise e
-                media = await self.media_info_gql(media_pk)  # retry
-        except Exception as e:
-            if not isinstance(e, ClientError):
-                self.logger.exception(e)  # Register unknown error
-            # Restricted Video: This video is not available in your country.
-            # Or private account
-            media = await self.media_info_v1(media_pk)
-        return media
+                try:
+                    media = await self.media_info_gql(media_pk)
+                except ClientLoginRequired as e:
+                    if not self.inject_sessionid_to_public():
+                        raise e
+                    media = await self.media_info_gql(media_pk)  # retry
+            except Exception as e:
+                if not isinstance(e, ClientError):
+                    self.logger.exception(e)  # Register unknown error
+                # Restricted Video: This video is not available in your country.
+                # Or private account
+                media = await self.media_info_v1(media_pk)
+            self._medias_cache[media_pk] = media
+        return deepcopy(
+            self._medias_cache[media_pk]
+        )  # return copy of cache (dict changes protection)
 
     async def media_delete(self, media_id: str) -> bool:
         """
@@ -286,6 +350,7 @@ class MediaMixin:
         result = await self.private_request(
             f"media/{media_id}/delete/", self.with_default_data({"media_id": media_id})
         )
+        self._medias_cache.pop(await self.media_pk(media_id), None)
         return result.get("did_delete")
 
     async def media_edit(
@@ -320,7 +385,7 @@ class MediaMixin:
         if not self.user_id:
             raise PreLoginRequired
         media_id = await self.media_id(media_id)
-        media = await self.media_info(media_id)
+        media = await self.media_info(media_id)  # from cache
         usertags = [
             {"user_id": tag.user.pk, "position": [tag.x, tag.y]} for tag in usertags
         ]
@@ -343,6 +408,7 @@ class MediaMixin:
                 "title": title,
                 "igtv_ads_toggled_on": "0",
             }
+        self._medias_cache.pop(await self.media_pk(media_id), None)  # clean cache
         result = await self.private_request(
             f"media/{media_id}/edit_media/",
             self.with_default_data(data),
@@ -363,7 +429,7 @@ class MediaMixin:
         UserShort
             An object of UserShort
         """
-        return (await self.media_info(media_pk)).user
+        return (await self.media_info_v1(media_pk)).user
 
     async def media_oembed(self, url: str) -> Dict:
         """
@@ -556,7 +622,7 @@ class MediaMixin:
                     "id": f"uservideo_{user_id}",
                     # "count": amount,
                     "max_id": next_max_id,
-                }
+                },
                 # "min_timestamp": min_timestamp,
                 # "rank_token": self.rank_token,
                 # "ranked_content": "true",
@@ -765,9 +831,9 @@ class MediaMixin:
             A list of objects of Media
         """
         default_nav = self.base_headers["X-IG-Nav-Chain"]
-        self.base_headers[
-            "X-IG-Nav-Chain"
-        ] = "MainFeedFragment:feed_timeline:12:main_home::,UserDetailFragment:profile:13:button::"
+        self.base_headers["X-IG-Nav-Chain"] = (
+            "MainFeedFragment:feed_timeline:12:main_home::,UserDetailFragment:profile:13:button::"
+        )
         medias = await self.private_request(
             f"feed/user/{user_id}/",
             params={
@@ -1040,6 +1106,7 @@ class MediaMixin:
         List[UserShort]
             List of objects of User type
         """
+        media_id = await self.media_id(media_id)
         result = await self.private_request(f"media/{media_id}/likers/")
         return [extract_user_short(u) for u in result["users"]]
 
@@ -1217,6 +1284,61 @@ class MediaMixin:
             medias = await self.usertag_medias_v1(user_id, amount)
         return medias
 
+    async def media_configure_to_cutout_sticker(
+        self,
+        upload_id: str,
+        source_type: str = "library",
+        manual_box: List[float] = None,
+        use_ai_detection: bool = False,
+        extra_data: Dict[str, str] = None,
+    ) -> Media:
+        """
+        Configure an uploaded photo as a Cutout Sticker.
+
+        Parameters
+        ----------
+        upload_id: str
+            Upload ID from `photo_rupload`
+        source_type: str, optional
+            Source type (default "library")
+        manual_box: List[float], optional
+            Bounding box [x, y, w, h] normalized (0.0 to 1.0).
+            Pass [0.0, 0.0, 1.0, 1.0] to select the full image (Bypass AI).
+        use_ai_detection: bool, optional
+            If True, asks Instagram to detect the subject (Server-side AI).
+        extra_data: Dict[str, str], optional
+            Dict of extra parameters
+
+        Returns
+        -------
+        Media
+            An object of Media type (The created sticker)
+        """
+        url = "media/configure_to_cutout_sticker/"
+        data = {
+            "upload_id": upload_id,
+            "source_type": source_type,
+            "sticker_type": "cutout_sticker",
+            "_uuid": self.uuid,
+            "_uid": self.user_id,
+        }
+        if extra_data:
+            data.update(extra_data)
+
+        if manual_box:
+            data["cutout_sticker_data"] = json.dumps(
+                {"manual_mask": {"box": manual_box}}
+            )
+        elif use_ai_detection:
+            data["detect_subject"] = "true"
+
+        result = await self.private_request(url, data)
+        return self._extract_configured_media_or_raise(
+            result,
+            PrivateError,
+            "Cutout sticker upload",
+        )
+
     async def media_pin(self, media_pk: str, revert: bool = False):
         """
         Pin post to user profile
@@ -1261,3 +1383,173 @@ class MediaMixin:
         }
         result = await self.private_request("clips/template/", data=data)
         return result
+
+    async def media_create_livestream(self, title="Instagram Live"):
+        """
+        Create a new live broadcast.
+
+        Parameters
+        ----------
+        title : str
+            The title of the live broadcast.
+
+        Returns
+        -------
+        dict
+            Information about the streaming server and the stream key.
+        """
+        data = {
+            "_uuid": self.uuid,
+            "_uid": self.user_id,
+            "preview_height": 1920,
+            "preview_width": 1080,
+            "broadcast_message": title,
+            "broadcast_type": "RTMP",
+            "internal_only": 0,
+            "_csrftoken": self.token,
+        }
+        try:
+            response = await self.private_request("live/create/", data=data)
+            broadcast_id = response["broadcast_id"]
+            upload_url = response["upload_url"].split(str(broadcast_id))
+            if len(upload_url) >= 2:
+                stream_server = upload_url[0]
+                stream_key = f"{broadcast_id}{upload_url[1]}"
+                return {
+                    "broadcast_id": broadcast_id,
+                    "stream_server": stream_server,
+                    "stream_key": stream_key,
+                }
+        except Exception as e:
+            self.logger.error(f"Error creating live broadcast: {e}")
+            raise
+
+    async def media_start_livestream(self, broadcast_id):
+        """
+        Start a live broadcast.
+
+        Parameters
+        ----------
+        broadcast_id : str
+            The ID of the live broadcast.
+
+        Returns
+        -------
+        bool
+            True if the broadcast started successfully, False otherwise.
+        """
+        data = {
+            "_uuid": self.uuid,
+            "_uid": self.user_id,
+            "should_send_notifications": 1,
+            "_csrftoken": self.token,
+        }
+        try:
+            response = await self.private_request(
+                f"live/{broadcast_id}/start/", data=data
+            )
+            return response.get("status") == "ok"
+        except Exception as e:
+            self.logger.error(f"Error starting live broadcast: {e}")
+            return False
+
+    async def media_end_livestream(self, broadcast_id):
+        """
+        End a live broadcast.
+
+        Parameters
+        ----------
+        broadcast_id : str
+            The ID of the live broadcast.
+
+        Returns
+        -------
+        bool
+            True if the broadcast ended successfully, False otherwise.
+        """
+        data = {
+            "_uuid": self.uuid,
+            "_uid": self.user_id,
+            "_csrftoken": self.token,
+        }
+        try:
+            response = await self.private_request(
+                f"live/{broadcast_id}/end_broadcast/", data=data
+            )
+            return response.get("status") == "ok"
+        except Exception as e:
+            self.logger.error(f"Error ending live broadcast: {e}")
+            return False
+
+    async def media_get_livestream_info(self, broadcast_id):
+        """
+        Retrieve information about the live broadcast.
+
+        Parameters
+        ----------
+        broadcast_id : str
+            The ID of the live broadcast.
+
+        Returns
+        -------
+        dict
+            Information about the live broadcast.
+        """
+        try:
+            response = await self.private_request(f"live/{broadcast_id}/info/")
+            return response
+        except Exception as e:
+            self.logger.error(f"Error retrieving live info: {e}")
+            raise
+
+    async def media_get_livestream_comments(self, broadcast_id):
+        """
+        Retrieve comments from the live broadcast.
+
+        Parameters
+        ----------
+        broadcast_id : str
+            The ID of the live broadcast.
+
+        Returns
+        -------
+        list
+            A list of comments.
+        """
+        try:
+            response = await self.private_request(f"live/{broadcast_id}/get_comment/")
+            if "comments" in response:
+                return [
+                    {"username": c["user"]["username"], "text": c["text"]}
+                    for c in response["comments"]
+                ]
+            return []
+        except Exception as e:
+            self.logger.error(f"Error retrieving live comments: {e}")
+            raise
+
+    async def media_get_livestream_viewers(self, broadcast_id):
+        """
+        Retrieve the list of viewers of the live broadcast.
+
+        Parameters
+        ----------
+        broadcast_id : str
+            The ID of the live broadcast.
+
+        Returns
+        -------
+        list
+            A list of viewers.
+        """
+        try:
+            response = await self.private_request(
+                f"live/{broadcast_id}/get_viewer_list/"
+            )
+            return [
+                {"username": user["username"], "pk": user["pk"]}
+                for user in response.get("users", [])
+            ]
+        except Exception as e:
+            self.logger.error(f"Error retrieving live viewers: {e}")
+            raise
