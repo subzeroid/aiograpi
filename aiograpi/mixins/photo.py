@@ -13,7 +13,7 @@ from aiograpi.exceptions import (
     PhotoConfigureStoryError,
     PhotoNotUpload,
 )
-from aiograpi.extractors import extract_media_v1
+from aiograpi.image_util import prepare_image
 from aiograpi.types import (
     Location,
     Media,
@@ -23,6 +23,7 @@ from aiograpi.types import (
     StoryLocation,
     StoryMedia,
     StoryMention,
+    StoryPoll,
     StorySticker,
     Usertag,
 )
@@ -39,7 +40,9 @@ class DownloadPhotoMixin:
     Helpers for downloading photo
     """
 
-    async def photo_download(self, media_pk: int, folder: Path = "") -> Path:
+    async def photo_download(
+        self, media_pk: int, folder: Path = "", overwrite: bool = True
+    ) -> Path:
         """
         Download photo using media pk
 
@@ -48,8 +51,11 @@ class DownloadPhotoMixin:
         media_pk: int
             Unique Media ID
         folder: Path, optional
-            Directory in which you want to download the album, default is "" and will download the files to working
+            Directory in which you want to download the photo, default is "" and will download the files to working
                 directory
+        overwrite: bool, optional
+            Whether to overwrite an existing file. When False and the target path already exists, skip download and
+                return the existing path.
 
         Returns
         -------
@@ -62,10 +68,16 @@ class DownloadPhotoMixin:
         filename = "{username}_{media_pk}".format(
             username=media.user.username, media_pk=media_pk
         )
-        return await self.photo_download_by_url(media.thumbnail_url, filename, folder)
+        return await self.photo_download_by_url(
+            media.thumbnail_url, filename, folder, overwrite=overwrite
+        )
 
     async def photo_download_by_url(
-        self, url: str, filename: str = "", folder: Path = ""
+        self,
+        url: str,
+        filename: str = "",
+        folder: Path = "",
+        overwrite: bool = True,
     ) -> Path:
         """
         Download photo using URL
@@ -77,8 +89,11 @@ class DownloadPhotoMixin:
         filename: str, optional
             Filename for the media
         folder: Path, optional
-            Directory in which you want to download the album, default is "" and will download the files to working
+            Directory in which you want to download the photo, default is "" and will download the files to working
                 directory
+        overwrite: bool, optional
+            Whether to overwrite an existing file. When False and the target path already exists, skip download and
+                return the existing path.
 
         Returns
         -------
@@ -89,6 +104,8 @@ class DownloadPhotoMixin:
         fname = urlparse(url).path.rsplit("/", 1)[1]
         filename = "%s.%s" % (filename, fname.rsplit(".", 1)[1]) if filename else fname
         path = Path(folder) / filename
+        if path.exists() and not overwrite:
+            return path.resolve()
         response = await self.public.get(url)
         response.raise_for_status()
         with open(path, "wb") as f:
@@ -120,7 +137,11 @@ class UploadPhotoMixin:
     """
 
     async def photo_rupload(
-        self, path: Path, upload_id: str = "", to_album: bool = False
+        self,
+        path: Path,
+        upload_id: str = "",
+        to_album: bool = False,
+        for_story: bool = False,
     ) -> tuple:
         """
         Upload photo to Instagram
@@ -132,6 +153,8 @@ class UploadPhotoMixin:
         upload_id: str, optional
             Unique upload_id (String). When None, then generate automatically. Example from video.video_configure
         to_album: bool, optional
+        for_story: bool, optional
+            Useful for resize util only
 
         Returns
         -------
@@ -140,6 +163,17 @@ class UploadPhotoMixin:
         """
         if not isinstance(path, Path):
             raise Exception(f"Path must been Path, now {path} ({type(path)})")
+        valid_extensions = [".jpg", ".jpeg", ".png", ".webp"]
+        if path.suffix.lower() not in valid_extensions:
+            raise ValueError(
+                "Invalid file format. Only JPG/JPEG/PNG/WEBP files are supported."
+            )
+        image_type = "image/jpeg"
+        if path.suffix.lower() == ".png":
+            image_type = "image/png"
+        elif path.suffix.lower() == ".webp":
+            image_type = "image/webp"
+
         # upload_id = 516057248854759
         upload_id = upload_id or str(int(time.time() * 1000))
         if not path:
@@ -161,14 +195,21 @@ class UploadPhotoMixin:
         }
         if to_album:
             rupload_params["is_sidecar"] = "1"
-        with open(path, "rb") as fp:
-            photo_data = fp.read()
-            photo_len = str(len(photo_data))
+        if for_story:
+            photo_data, photo_size = prepare_image(
+                str(path),
+                max_side=1080,
+                aspect_ratios=(9 / 16, 90 / 47),
+                max_size=(1080, 1920),
+            )
+        else:
+            photo_data, photo_size = prepare_image(str(path), max_side=1080)
+        photo_len = str(len(photo_data))
         headers = {
             "Accept-Encoding": "gzip",
             "X-Instagram-Rupload-Params": json.dumps(rupload_params),
             "X_FB_PHOTO_WATERFALL_ID": waterfall_id,
-            "X-Entity-Type": "image/jpeg",
+            "X-Entity-Type": image_type,
             "Offset": "0",
             "X-Entity-Name": upload_name,
             "X-Entity-Length": photo_len,
@@ -226,6 +267,12 @@ class UploadPhotoMixin:
             An object of Media class
         """
         path = Path(path)
+        valid_extensions = [".jpg", ".jpeg", ".png", ".webp"]
+        if path.suffix.lower() not in valid_extensions:
+            raise ValueError(
+                "Invalid file format. Only JPG/JPEG/PNG/WEBP files are supported."
+            )
+
         upload_id, width, height = await self.photo_rupload(path, upload_id)
         for attempt in range(10):
             self.logger.debug(f"Attempt #{attempt} to configure Photo: {path}")
@@ -239,9 +286,12 @@ class UploadPhotoMixin:
                 location,
                 extra_data=extra_data,
             ):
-                media = self.last_json.get("media")
                 await self.expose()
-                return extract_media_v1(media)
+                return self._extract_configured_media_or_raise(
+                    self.last_json,
+                    PhotoConfigureError,
+                    "Photo upload",
+                )
         raise PhotoConfigureError(response=self.last_response, **self.last_json)
 
     async def photo_configure(
@@ -287,7 +337,14 @@ class UploadPhotoMixin:
             "camera_model": self.device.get("model", ""),
             "camera_make": self.device.get("manufacturer", ""),
             "scene_type": "?",
-            "nav_chain": "8rL:self_profile:4,ProfileMediaTabFragment:self_profile:5,UniversalCreationMenuFragment:universal_creation_menu:7,ProfileMediaTabFragment:self_profile:8,MediaCaptureFragment:tabbed_gallery_camera:9,Dd3:photo_filter:10,FollowersShareFragment:metadata_followers_share:11",
+            "nav_chain": (
+                "8rL:self_profile:4,ProfileMediaTabFragment:self_profile:5,"
+                "UniversalCreationMenuFragment:universal_creation_menu:7,"
+                "ProfileMediaTabFragment:self_profile:8,"
+                "MediaCaptureFragment:tabbed_gallery_camera:9,"
+                "Dd3:photo_filter:10,"
+                "FollowersShareFragment:metadata_followers_share:11"
+            ),
             "date_time_original": date_time_original(time.localtime()),
             "date_time_digitalized": date_time_original(time.localtime()),
             "creation_logger_session_id": self.client_session_id,
@@ -324,6 +381,7 @@ class UploadPhotoMixin:
         hashtags: List[StoryHashtag] = [],
         stickers: List[StorySticker] = [],
         medias: List[StoryMedia] = [],
+        polls: List[StoryPoll] = [],
         extra_data: Dict[str, str] = {},
     ) -> Story:
         """
@@ -349,6 +407,8 @@ class UploadPhotoMixin:
             List of stickers to be tagged on this upload, default is empty list.
         medias: List[StoryMedia], optional
             List of medias to be tagged on this upload, default is empty list.
+        polls: List[StoryPoll], optional
+            List of polls to be included on this upload, default is empty list.
         extra_data: Dict[str, str], optional
             Dict of extra data, if you need to add your params, like {"share_to_facebook": 1}.
 
@@ -358,7 +418,9 @@ class UploadPhotoMixin:
             An object of Media class
         """
         path = Path(path)
-        upload_id, width, height = await self.photo_rupload(path, upload_id)
+        upload_id, width, height = await self.photo_rupload(
+            path, upload_id, for_story=True
+        )
         for attempt in range(10):
             self.logger.debug(f"Attempt #{attempt} to configure Photo: {path}")
             await asyncio.sleep(3)
@@ -373,10 +435,15 @@ class UploadPhotoMixin:
                 hashtags,
                 stickers,
                 medias,
+                polls,
                 extra_data=extra_data,
             ):
-                media = self.last_json.get("media")
                 await self.expose()
+                media = self._extract_configured_media_or_raise(
+                    self.last_json,
+                    PhotoConfigureStoryError,
+                    "Photo story upload",
+                )
                 return Story(
                     links=links,
                     mentions=mentions,
@@ -384,9 +451,43 @@ class UploadPhotoMixin:
                     locations=locations,
                     stickers=stickers,
                     medias=medias,
-                    **extract_media_v1(media).dict(),
+                    polls=polls,
+                    **media.dict(),
                 )
         raise PhotoConfigureStoryError(response=self.last_response, **self.last_json)
+
+    async def photo_upload_to_cutout_sticker(
+        self,
+        path: Path,
+        bypass_ai: bool = True,
+    ) -> Media:
+        """
+        Upload photo and create a Cutout Sticker.
+
+        Parameters
+        ----------
+        path: Path
+            Path to the photo file (JPG/PNG)
+        bypass_ai: bool, optional
+            If True (default), selects full image (manual box [0,0,1,1]).
+            If False, relies on Instagram AI cropping (Server-side SAM).
+
+        Returns
+        -------
+        Media
+            An object of Media type (The created sticker)
+        """
+        path = Path(path)
+        upload_id, width, height = await self.photo_rupload(path)
+
+        manual_box = [0.0, 0.0, 1.0, 1.0] if bypass_ai else None
+        use_ai = not bypass_ai
+
+        return await self.media_configure_to_cutout_sticker(
+            upload_id,
+            manual_box=manual_box,
+            use_ai_detection=use_ai,
+        )
 
     async def photo_configure_to_story(
         self,
@@ -400,6 +501,7 @@ class UploadPhotoMixin:
         hashtags: List[StoryHashtag] = [],
         stickers: List[StorySticker] = [],
         medias: List[StoryMedia] = [],
+        polls: List[StoryPoll] = [],
         extra_data: Dict[str, str] = {},
     ) -> Dict:
         """
@@ -427,6 +529,8 @@ class UploadPhotoMixin:
             List of stickers to be tagged on this upload, default is empty list.
         medias: List[StoryMedia], optional
             List of medias to be tagged on this upload, default is empty list.
+        polls: List[StoryPoll], optional
+            List of polls to be included on this upload, default is empty list.
         extra_data: Dict[str, str], optional
             Dict of extra data, if you need to add your params, like {"share_to_facebook": 1}.
 
@@ -442,10 +546,13 @@ class UploadPhotoMixin:
         hashtags = hashtags.copy()
         stickers = stickers.copy()
         medias = medias.copy()
+        polls = polls.copy()
         story_sticker_ids = []
         data = {
-            # REMOVEIT
-            "text_metadata": '[{"font_size":40.0,"scale":1.0,"width":611.0,"height":169.0,"x":0.51414347,"y":0.8487708,"rotation":0.0}]',
+            "text_metadata": (
+                '[{"font_size":40.0,"scale":1.0,"width":611.0,"height":169.0,'
+                '"x":0.51414347,"y":0.8487708,"rotation":0.0}]'
+            ),  # REMOVEIT
             "supported_capabilities_new": json.dumps(config.SUPPORTED_CAPABILITIES),
             "has_original_sound": "1",
             "camera_session_id": self.client_session_id,
@@ -496,23 +603,23 @@ class UploadPhotoMixin:
         tap_models = []
         static_models = []
         if mentions:
-            reel_mentions = [
-                {
-                    "x": 0.5002546,
-                    "y": 0.8583542,
-                    "z": 0,
-                    "width": 0.4712963,
-                    "height": 0.0703125,
-                    "rotation": 0.0,
-                    "type": "mention",
-                    "user_id": str(mention.user.pk),
-                    "is_sticker": False,
-                    "display_type": "mention_username",
-                }
-                for mention in mentions
-            ]
-            data["reel_mentions"] = json.dumps(reel_mentions)
-            tap_models.extend(reel_mentions)
+            for mention in mentions:
+                reel_mentions = [
+                    {
+                        "x": mention.x,
+                        "y": mention.y,
+                        "z": 0,
+                        "width": mention.width,
+                        "height": mention.height,
+                        "rotation": 0.0,
+                        "type": "mention",
+                        "user_id": str(mention.user.pk),
+                        "is_sticker": False,
+                        "display_type": "mention_username",
+                    }
+                ]
+                data["reel_mentions"] = json.dumps(reel_mentions)
+                tap_models.extend(reel_mentions)
         if hashtags:
             story_sticker_ids.append("hashtag_sticker")
             for mention in hashtags:
@@ -623,12 +730,42 @@ class UploadPhotoMixin:
                 }
                 tap_models.append(item)
             data["reshared_media_id"] = str(feed_media.media_pk)
+        if polls:
+            story_sticker_ids.append("polling_sticker_v2")
+            for poll in polls:
+                poll_extra = poll.extra or {}
+                tap_models.append(
+                    {
+                        "x": round(poll.x, 7),
+                        "y": round(poll.y, 7),
+                        "z": poll.z,
+                        "width": round(poll.width, 7),
+                        "height": round(poll.height, 7),
+                        "rotation": poll.rotation,
+                        "type": poll.type,
+                        "poll_type": poll.poll_type,
+                        "is_sticker": True,
+                        "tap_state": 0,
+                        "tap_state_str_id": "polling_sticker_v2",
+                        "is_multi_option_poll": poll.is_multi_option,
+                        "is_shared_result": poll.is_shared_result,
+                        "viewer_can_vote": poll.viewer_can_vote,
+                        "finished": poll.finished,
+                        "color": poll.color,
+                        "question": poll.question,
+                        "tallies": [
+                            {"count": 0, "font_size": 39.0, "text": o}
+                            for o in poll.options
+                        ],
+                        **poll_extra,
+                    }
+                )
         if tap_models:
             data["tap_models"] = dumps(tap_models)
         if static_models:
             data["static_models"] = dumps(static_models)
         if story_sticker_ids:
-            data["story_sticker_ids"] = story_sticker_ids[0]
+            data["story_sticker_ids"] = ",".join(story_sticker_ids)
         return await self.private_request(
             "media/configure_to_story/", self.with_default_data(data)
         )

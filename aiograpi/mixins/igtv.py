@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import json
 import random
 import time
@@ -8,7 +9,6 @@ from uuid import uuid4
 
 from aiograpi import config
 from aiograpi.exceptions import ClientError, IGTVConfigureError, IGTVNotUpload
-from aiograpi.extractors import extract_media_v1
 from aiograpi.types import Location, Media, Usertag
 from aiograpi.utils import date_time_original
 
@@ -194,9 +194,12 @@ class UploadIGTVMixin:
                 raise e
             else:
                 if configured:
-                    media = self.last_json.get("media")
                     await self.expose()
-                    return extract_media_v1(media)
+                    return self._extract_configured_media_or_raise(
+                        configured,
+                        IGTVConfigureError,
+                        "IGTV upload",
+                    )
         raise IGTVConfigureError(response=self.last_response, **self.last_json)
 
     async def igtv_configure(
@@ -295,16 +298,21 @@ def analyze_video(path: Path, thumbnail: Path = None) -> tuple:
     try:
         import moviepy.editor as mp
     except ImportError:
-        raise Exception("Please install moviepy>=1.0.3 and retry")
+        try:
+            import moviepy as mp
+        except ImportError:
+            raise Exception("Please install moviepy>=1.0.3 and retry")
 
-    print(f'Analizing IGTV file "{path}"')
-    video = mp.VideoFileClip(str(path))
-    width, height = video.size
-    if not thumbnail:
-        thumbnail = f"{path}.jpg"
-        print(f'Generating thumbnail "{thumbnail}"...')
-        video.save_frame(thumbnail, t=(video.duration / 2))
-        crop_thumbnail(thumbnail)
+    print(f'Analyzing IGTV file "{path}"')
+    with contextlib.ExitStack() as stack:
+        video = mp.VideoFileClip(str(path))
+        stack.enter_context(contextlib.closing(video))
+        width, height = video.size
+        if not thumbnail:
+            thumbnail = f"{path}.jpg"
+            print(f'Generating thumbnail "{thumbnail}"...')
+            video.save_frame(thumbnail, t=(video.duration / 2))
+            crop_thumbnail(thumbnail)
     return thumbnail, width, height, video.duration
 
 

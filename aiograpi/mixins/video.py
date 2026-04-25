@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import random
 import time
 from pathlib import Path
@@ -13,7 +14,6 @@ from aiograpi.exceptions import (
     VideoNotDownload,
     VideoNotUpload,
 )
-from aiograpi.extractors import extract_direct_message, extract_media_v1
 from aiograpi.types import (
     DirectMessage,
     Location,
@@ -24,6 +24,7 @@ from aiograpi.types import (
     StoryLocation,
     StoryMedia,
     StoryMention,
+    StoryPoll,
     StorySticker,
     Usertag,
 )
@@ -35,7 +36,9 @@ class DownloadVideoMixin:
     Helpers for downloading video
     """
 
-    async def video_download(self, media_pk: int, folder: Path = "") -> Path:
+    async def video_download(
+        self, media_pk: int, folder: Path = "", overwrite: bool = True
+    ) -> Path:
         """
         Download video using media pk
 
@@ -44,7 +47,10 @@ class DownloadVideoMixin:
         media_pk: int
             Unique Media ID
         folder: Path, optional
-            Directory in which you want to download the album, default is "" and will download the files to working dir.
+            Directory in which you want to download the video, default is "" and will download the files to working dir.
+        overwrite: bool, optional
+            Whether to overwrite an existing file. When False and the target path already exists, skip download and
+                return the existing path.
 
         Returns
         -------
@@ -57,10 +63,16 @@ class DownloadVideoMixin:
         filename = "{username}_{media_pk}".format(
             username=media.user.username, media_pk=media_pk
         )
-        return await self.video_download_by_url(media.video_url, filename, folder)
+        return await self.video_download_by_url(
+            media.video_url, filename, folder, overwrite=overwrite
+        )
 
     async def video_download_by_url(
-        self, url: str, filename: str = "", folder: Path = ""
+        self,
+        url: str,
+        filename: str = "",
+        folder: Path = "",
+        overwrite: bool = True,
     ) -> Path:
         """
         Download video using URL
@@ -72,8 +84,11 @@ class DownloadVideoMixin:
         filename: str, optional
             Filename for the media
         folder: Path, optional
-            Directory in which you want to download the album, default is "" and will download the files to working
+            Directory in which you want to download the video, default is "" and will download the files to working
                 directory
+        overwrite: bool, optional
+            Whether to overwrite an existing file. When False and the target path already exists, skip download and
+                return the existing path.
 
         Returns
         -------
@@ -84,9 +99,24 @@ class DownloadVideoMixin:
         fname = urlparse(url).path.rsplit("/", 1)[1]
         filename = "%s.%s" % (filename, fname.rsplit(".", 1)[1]) if filename else fname
         path = Path(folder) / filename
+        if path.exists() and not overwrite:
+            return path.resolve()
         response = await self.public.get(url)
         response.raise_for_status()
-        content_length = int(response.headers.get("Content-Length"))
+        try:
+            content_length = int(response.headers.get("Content-Length"))
+        except TypeError:
+            print(
+                """
+                The program detected an mis-formatted link, and hence can't download it.
+                This problem occurs when the URL is passed into
+                    'video_download_by_url()' or the 'clip_download_by_url()'.
+                The raw URL needs to be re-formatted into one that is recognizable by the methods.
+                Use this code: url=self.cl.media_info(self.cl.media_pk_from_url('insert the url here')).video_url
+                You can remove the 'self' from the code above if needed.
+                """
+            )
+            raise Exception("The program detected an mis-formatted link.")
         file_length = len(response.content)
         if content_length != file_length:
             raise VideoNotDownload(
@@ -290,10 +320,46 @@ class UploadVideoMixin:
                 raise e
             else:
                 if configured:
-                    media = configured.get("media")
                     await self.expose()
-                    return extract_media_v1(media)
+                    return self._extract_configured_media_or_raise(
+                        configured,
+                        VideoConfigureError,
+                        "Video upload",
+                    )
         raise VideoConfigureError(response=self.last_response, **self.last_json)
+
+    async def video_upload_to_cutout_sticker(
+        self, path: Path, bypass_ai: bool = True
+    ) -> Media:
+        """
+        Upload video and create a Cutout Sticker.
+
+        Parameters
+        ----------
+        path: Path
+            Path to the video file
+        bypass_ai: bool, optional
+            If True (default), selects full image/video area.
+            If False, relies on Instagram AI cropping.
+
+        Returns
+        -------
+        Media
+            An object of Media type (The created sticker)
+        """
+        path = Path(path)
+        # video_rupload returns (upload_id, width, height, duration, thumbnail)
+        res = await self.video_rupload(path)
+        upload_id = res[0]
+
+        manual_box = [0.0, 0.0, 1.0, 1.0] if bypass_ai else None
+        use_ai = not bypass_ai
+
+        return await self.media_configure_to_cutout_sticker(
+            upload_id,
+            manual_box=manual_box,
+            use_ai_detection=use_ai,
+        )
 
     async def video_configure(
         self,
@@ -336,7 +402,7 @@ class UploadVideoMixin:
         Dict
             A dictionary of response from the call
         """
-        await self.photo_rupload(Path(thumbnail), upload_id)
+        await self.photo_rupload(Path(thumbnail), upload_id, for_story=True)
         usertags = [
             {"user_id": tag.user.pk, "position": [tag.x, tag.y]} for tag in usertags
         ]
@@ -374,6 +440,7 @@ class UploadVideoMixin:
         hashtags: List[StoryHashtag] = [],
         stickers: List[StorySticker] = [],
         medias: List[StoryMedia] = [],
+        polls: List[StoryPoll] = [],
         extra_data: Dict[str, str] = {},
     ) -> Story:
         """
@@ -399,6 +466,8 @@ class UploadVideoMixin:
             List of stickers to be tagged on this upload, default is empty list.
         medias: List[StoryMedia], optional
             List of medias to be tagged on this upload, default is empty list.
+        polls: List[StoryPoll], optional
+            List of polls to be included on this upload, default is empty list.
         extra_data: Dict[str, str], optional
             Dict of extra data, if you need to add your params, like {"share_to_facebook": 1}.
 
@@ -430,6 +499,7 @@ class UploadVideoMixin:
                     hashtags,
                     stickers,
                     medias,
+                    polls,
                     extra_data=extra_data,
                 )
             except Exception as e:
@@ -442,8 +512,12 @@ class UploadVideoMixin:
                     continue
                 raise e
             if configured:
-                media = configured.get("media")
                 await self.expose()
+                media = self._extract_configured_media_or_raise(
+                    configured,
+                    VideoConfigureStoryError,
+                    "Video story upload",
+                )
                 return Story(
                     links=links,
                     mentions=mentions,
@@ -451,7 +525,8 @@ class UploadVideoMixin:
                     locations=locations,
                     stickers=stickers,
                     medias=medias,
-                    **extract_media_v1(media).dict(),
+                    polls=polls,
+                    **media.dict(),
                 )
         raise VideoConfigureStoryError(response=self.last_response, **self.last_json)
 
@@ -469,6 +544,7 @@ class UploadVideoMixin:
         hashtags: List[StoryHashtag] = [],
         stickers: List[StorySticker] = [],
         medias: List[StoryMedia] = [],
+        polls: List[StoryPoll] = [],
         thread_ids: List[int] = [],
         extra_data: Dict[str, str] = {},
     ) -> Dict:
@@ -501,6 +577,8 @@ class UploadVideoMixin:
             List of stickers to be tagged on this upload, default is empty list.
         medias: List[StoryMedia], optional
             List of medias to be tagged on this upload, default is empty list.
+        polls: List[StoryPoll], optional
+            List of polls to be included on this upload, default is empty list.
         thread_ids: List[int], optional
             List of Direct Message Thread ID (to send a story to a thread)
         extra_data: Dict[str, str], optional
@@ -518,14 +596,17 @@ class UploadVideoMixin:
         hashtags = hashtags.copy()
         stickers = stickers.copy()
         medias = medias.copy()
+        polls = polls.copy()
         thread_ids = thread_ids.copy()
         story_sticker_ids = []
         data = {
-            # USE extra_data TO EXTEND THE SETTINGS OF THE LOADED STORY, USE FOR EXAMPLE THE PROPERTIES SPECIFIED IN THE COMMENT:
+            # USE extra_data TO EXTEND THE SETTINGS OF THE LOADED STORY,
+            #   USE FOR EXAMPLE THE PROPERTIES SPECIFIED IN THE COMMENT:
             # ---------------------------------
             # When send to DIRECT:
             # "allow_multi_configures": "1",
-            # "client_context":"6823316152962778207",  <-- token = random.randint(6800011111111111111, 6800099999999999999) from direct.py
+            # "client_context":"6823316152962778207",
+            #      ^----- token = random.randint(6800011111111111111, 6800099999999999999) from direct.py
             # "is_shh_mode":"0",
             # "mutation_token":"6824688191453546273",
             # "nav_chain":"1qT:feed_timeline:1,1qT:feed_timeline:7,ReelViewerFragment:reel_feed_timeline:21,5HT:attribution_quick_camera_fragment:22,4ji:reel_composer_preview:23,8wg:direct_story_audience_picker:24,4ij:reel_composer_camera:25,ReelViewerFragment:reel_feed_timeline:26",
@@ -760,6 +841,36 @@ class UploadVideoMixin:
                 }
                 tap_models.append(item)
             data["reshared_media_id"] = str(feed_media.media_pk)
+        if polls:
+            story_sticker_ids.append("polling_sticker_v2")
+            for poll in polls:
+                poll_extra = poll.extra or {}
+                tap_models.append(
+                    {
+                        "x": round(poll.x, 7),
+                        "y": round(poll.y, 7),
+                        "z": poll.z,
+                        "width": round(poll.width, 7),
+                        "height": round(poll.height, 7),
+                        "rotation": poll.rotation,
+                        "type": poll.type,
+                        "poll_type": poll.poll_type,
+                        "is_sticker": True,
+                        "tap_state": 0,
+                        "tap_state_str_id": "polling_sticker_v2",
+                        "is_multi_option_poll": poll.is_multi_option,
+                        "is_shared_result": poll.is_shared_result,
+                        "viewer_can_vote": poll.viewer_can_vote,
+                        "finished": poll.finished,
+                        "color": poll.color,
+                        "question": poll.question,
+                        "tallies": [
+                            {"count": 0, "font_size": 39.0, "text": o}
+                            for o in poll.options
+                        ],
+                        **poll_extra,
+                    }
+                )
         if thread_ids:
             # Send to direct thread
             token = self.generate_mutation_token()
@@ -770,7 +881,12 @@ class UploadVideoMixin:
                     "client_context": token,
                     "is_shh_mode": "0",
                     "mutation_token": token,
-                    "nav_chain": "1qT:feed_timeline:1,1qT:feed_timeline:7,ReelViewerFragment:reel_feed_timeline:21,5HT:attribution_quick_camera_fragment:22,4ji:reel_composer_preview:23,8wg:direct_story_audience_picker:24,4ij:reel_composer_camera:25,ReelViewerFragment:reel_feed_timeline:26",
+                    "nav_chain": (
+                        "1qT:feed_timeline:1,1qT:feed_timeline:7,ReelViewerFragment:reel_feed_timeline:21,"
+                        "5HT:attribution_quick_camera_fragment:22,4ji:reel_composer_preview:23,"
+                        "8wg:direct_story_audience_picker:24,4ij:reel_composer_camera:25,"
+                        "ReelViewerFragment:reel_feed_timeline:26"
+                    ),
                     "recipient_users": "[]",
                     "send_attribution": "direct_story_audience_picker",
                     "thread_ids": dumps([str(tid) for tid in thread_ids]),
@@ -782,7 +898,7 @@ class UploadVideoMixin:
         if static_models:
             data["static_models"] = dumps(static_models)
         if story_sticker_ids:
-            data["story_sticker_ids"] = story_sticker_ids[0]
+            data["story_sticker_ids"] = ",".join(story_sticker_ids)
         return await self.private_request(
             "media/configure_to_story/?video=1", self.with_default_data(data)
         )
@@ -852,7 +968,11 @@ class UploadVideoMixin:
                     continue
                 raise e
             if configured and thread_ids:
-                return extract_direct_message(configured.get("message_metadata", [])[0])
+                return self._extract_configured_direct_message_or_raise(
+                    configured,
+                    VideoConfigureStoryError,
+                    "Video direct upload",
+                )
         raise VideoConfigureStoryError(response=self.last_response, **self.last_json)
 
 
@@ -876,15 +996,18 @@ def analyze_video(path: Path, thumbnail: Path = None) -> tuple:
     try:
         import moviepy.editor as mp
     except ImportError:
-        raise Exception("Please install moviepy>=1.0.3 and retry")
+        try:
+            import moviepy as mp
+        except ImportError:
+            raise Exception("Please install moviepy>=1.0.3 and retry")
 
-    print(f'Analizing video file "{path}"')
-    video = mp.VideoFileClip(str(path))
-    width, height = video.size
-    if not thumbnail:
-        thumbnail = f"{path}.jpg"
-        print(f'Generating thumbnail "{thumbnail}"...')
-        video.save_frame(thumbnail, t=(video.duration / 2))
-    # duration = round(video.duration + 0.001, 3)
-    video.close()
+    print(f'Analyzing video file "{path}"')
+    with contextlib.ExitStack() as stack:
+        video = mp.VideoFileClip(str(path))
+        stack.enter_context(contextlib.closing(video))
+        width, height = video.size
+        if not thumbnail:
+            thumbnail = f"{path}.jpg"
+            print(f'Generating thumbnail "{thumbnail}"...')
+            video.save_frame(thumbnail, t=(video.duration / 2))
     return width, height, video.duration, thumbnail

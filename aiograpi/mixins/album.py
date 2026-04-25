@@ -9,7 +9,6 @@ from aiograpi.exceptions import (
     AlbumNotDownload,
     AlbumUnknownFormat,
 )
-from aiograpi.extractors import extract_media_v1
 from aiograpi.types import Location, Media, Usertag
 from aiograpi.utils import date_time_original, dumps
 
@@ -19,7 +18,9 @@ class DownloadAlbumMixin:
     Helper class to download album
     """
 
-    async def album_download(self, media_pk: int, folder: Path = "") -> List[Path]:
+    async def album_download(
+        self, media_pk: int, folder: Path = "", overwrite: bool = True
+    ) -> List[Path]:
         """
         Download your album
 
@@ -28,7 +29,10 @@ class DownloadAlbumMixin:
         media_pk: int
             PK for the album you want to download
         folder: Path, optional
-            Directory in which you want to download the album, default is "" and will download the files to working directory.
+            Directory in which you want to download the album, default is ""
+            and will download the files to working directory.
+        overwrite: bool, optional
+            Whether to overwrite existing files. When False, existing files are returned as-is and not downloaded again.
 
         Returns
         -------
@@ -43,13 +47,19 @@ class DownloadAlbumMixin:
             if resource.media_type == 1:
                 paths.append(
                     await self.photo_download_by_url(
-                        resource.thumbnail_url, filename, folder
+                        resource.thumbnail_url,
+                        filename,
+                        folder,
+                        overwrite=overwrite,
                     )
                 )
             elif resource.media_type == 2:
                 paths.append(
                     await self.video_download_by_url(
-                        resource.video_url, filename, folder
+                        resource.video_url,
+                        filename,
+                        folder,
+                        overwrite=overwrite,
                     )
                 )
             else:
@@ -59,7 +69,7 @@ class DownloadAlbumMixin:
         return paths
 
     async def album_download_by_urls(
-        self, urls: List[str], folder: Path = ""
+        self, urls: List[str], folder: Path = "", overwrite: bool = True
     ) -> List[Path]:
         """
         Download your album using specified URLs
@@ -69,7 +79,10 @@ class DownloadAlbumMixin:
         urls: List[str]
             List of URLs to download media from
         folder: Path, optional
-            Directory in which you want to download the album, default is "" and will download the files to working directory.
+            Directory in which you want to download the album, default is ""
+            and will download the files to working directory.
+        overwrite: bool, optional
+            Whether to overwrite existing files. When False, existing files are returned as-is and not downloaded again.
 
         Returns
         -------
@@ -80,9 +93,17 @@ class DownloadAlbumMixin:
         for url in urls:
             file_name = urlparse(url).path.rsplit("/", 1)[1]
             if file_name.lower().endswith((".jpg", ".jpeg")):
-                paths.append(await self.photo_download_by_url(url, file_name, folder))
+                paths.append(
+                    await self.photo_download_by_url(
+                        url, file_name, folder, overwrite=overwrite
+                    )
+                )
             elif file_name.lower().endswith(".mp4"):
-                paths.append(await self.video_download_by_url(url, file_name, folder))
+                paths.append(
+                    await self.video_download_by_url(
+                        url, file_name, folder, overwrite=overwrite
+                    )
+                )
             else:
                 raise AlbumUnknownFormat()
         return paths
@@ -161,10 +182,12 @@ class UploadAlbumMixin:
         Media
             An object of Media class
         """
+        if not paths:
+            raise AlbumUnknownFormat("Album upload requires at least one media path.")
         children = []
         for path in paths:
             path = Path(path)
-            if path.suffix.lower() in (".jpg", ".jpeg"):
+            if path.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp"):
                 upload_id, width, height = await self.photo_rupload(path, to_album=True)
                 children.append(
                     {
@@ -208,7 +231,9 @@ class UploadAlbumMixin:
                 )
                 await self.photo_rupload(thumbnail, upload_id)
             else:
-                raise AlbumUnknownFormat()
+                raise AlbumUnknownFormat(
+                    f'Unsupported album media format "{path.suffix}" for "{path.name}".'
+                )
 
         for attempt in range(50):
             self.logger.debug(f"Attempt #{attempt} to configure Album: {paths}")
@@ -228,9 +253,12 @@ class UploadAlbumMixin:
                 raise e
             else:
                 if configured:
-                    media = configured.get("media")
                     await self.expose()
-                    return extract_media_v1(media)
+                    return self._extract_configured_media_or_raise(
+                        configured,
+                        configure_exception or AlbumConfigureError,
+                        "Album upload",
+                    )
         raise (configure_exception or AlbumConfigureError)(
             response=self.last_response, **self.last_json
         )
