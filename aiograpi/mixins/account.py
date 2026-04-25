@@ -1,3 +1,4 @@
+import json
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import Dict
@@ -6,7 +7,7 @@ from aiograpi import httpx_ext
 from aiograpi.exceptions import ClientLoginRequired, ResetPasswordError
 from aiograpi.extractors import extract_account, extract_user_short
 from aiograpi.types import Account, UserShort
-from aiograpi.utils import dumps, gen_token
+from aiograpi.utils import dumps, gen_token, generate_signature
 
 
 class AccountMixin:
@@ -56,6 +57,107 @@ class AccountMixin:
         """
         result = await self.private_request("accounts/current_user/?edit=true")
         return extract_account(result["user"])
+
+    async def change_password(
+        self,
+        old_password: str,
+        new_password: str,
+    ) -> bool:
+        """
+        Change password
+
+        Parameters
+        ----------
+        new_password: str
+            New password
+        old_password: str
+            Old password
+
+        Returns
+        -------
+        bool
+            A boolean value
+        """
+        try:
+            enc_old_password = await self.password_encrypt(old_password)
+            enc_new_password = await self.password_encrypt(new_password)
+            data = {
+                "enc_old_password": enc_old_password,
+                "enc_new_password1": enc_new_password,
+                "enc_new_password2": enc_new_password,
+            }
+            self.with_action_data(
+                {
+                    "_uid": self.user_id,
+                    "_uuid": self.uuid,
+                    "_csrftoken": self.token,
+                }
+            )
+            result = await self.private_request("accounts/change_password/", data=data)
+            return result
+        except Exception as e:
+            self.logger.exception(e)
+            return False
+
+    async def remove_bio_links(self, link_ids: list) -> dict:
+        signed_body = {
+            "signed_body": "SIGNATURE."
+            + json.dumps(
+                {"_uid": self.user_id, "_uuid": self.uuid, "link_ids": link_ids}
+            )
+        }
+        return await self.private_request(
+            "accounts/remove_bio_links/", data=signed_body, with_signature=False
+        )
+
+    async def set_external_url(self, external_url) -> dict:
+        """
+        Set new biography
+        """
+        data = dumps(
+            {
+                "updated_links": dumps(
+                    [{"url": external_url, "title": "", "link_type": "external"}]
+                ),
+                "_uid": self.user_id,
+                "_uuid": self.uuid,
+            }
+        )
+        return await self.private_request(
+            "accounts/update_bio_links/",
+            data=generate_signature(data),
+            with_signature=False,
+        )
+
+    async def account_set_private(self) -> bool:
+        """
+        Sets your account private
+
+        Returns
+        -------
+        Account
+            An object of Account class
+        """
+        assert self.user_id, "Login required"
+        user_id = str(self.user_id)
+        data = self.with_action_data({"_uid": user_id, "_uuid": self.uuid})
+        result = await self.private_request("accounts/set_private/", data)
+        return result["status"] == "ok"
+
+    async def account_set_public(self) -> bool:
+        """
+        Sets your account public
+
+        Returns
+        -------
+        Account
+            An object of Account class
+        """
+        assert self.user_id, "Login required"
+        user_id = str(self.user_id)
+        data = self.with_action_data({"_uid": user_id, "_uuid": self.uuid})
+        result = await self.private_request("accounts/set_public/", data)
+        return result["status"] == "ok"
 
     async def account_security_info(self) -> dict:
         """
