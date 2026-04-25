@@ -429,6 +429,10 @@ def extract_reply_message(data):
             # Instagram ¯\_(ツ)_/¯
             clip = clip.get("clip")
         data["clip"] = extract_media_v1(clip)
+    generic_xma = data.get("generic_xma", [])
+    if generic_xma:
+        items = [extract_media_v1_xma(item) for item in generic_xma]
+        data["generic_xma"] = [item for item in items if item]
     visual_media = data.get("visual_media", {})
     if visual_media:
         _convert_direct_visual_media_timestamps(visual_media)
@@ -472,6 +476,10 @@ def extract_direct_message(data):
             xma_share = extract_media_v1_xma(xma_media_share[0])
             if xma_share:
                 data["xma_share"] = xma_share
+    generic_xma = data.get("generic_xma", [])
+    if generic_xma:
+        items = [extract_media_v1_xma(item) for item in generic_xma]
+        data["generic_xma"] = [item for item in items if item]
 
     # Convert main timestamp
     data["timestamp"] = datetime.datetime.fromtimestamp(

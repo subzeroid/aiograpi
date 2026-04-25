@@ -854,6 +854,7 @@ class ReplyMessage(TypesBaseModel):
     story_share: Optional[dict] = None
     felix_share: Optional[dict] = None
     xma_share: Optional[MediaXma] = None
+    generic_xma: Optional[List[MediaXma]] = None
     clip: Optional[Media] = None
     placeholder: Optional[dict] = None
 
@@ -878,6 +879,7 @@ class DirectMessage(TypesBaseModel):
     story_share: Optional[dict] = None
     felix_share: Optional[dict] = None
     xma_share: Optional[MediaXma] = None
+    generic_xma: Optional[List[MediaXma]] = None
     clip: Optional[Media] = None
     placeholder: Optional[dict] = None
     client_context: Optional[str] = None
