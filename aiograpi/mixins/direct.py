@@ -992,7 +992,7 @@ class DirectMixin:
             user_ids and thread_ids
         ), "Specify user_ids or thread_ids, but not both"
         story_id = await self.media_id(story_id)
-        story_pk = await self.media_pk(story_id)
+        story_pk = self.media_pk(story_id)
         token = self.generate_mutation_token()
         data = {
             "action": "send_item",

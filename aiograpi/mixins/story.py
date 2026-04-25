@@ -117,7 +117,7 @@ class StoryMixin:
         if not self.user_id:
             raise PreLoginRequired
         media_id = await self.media_id(story_pk)
-        self._stories_cache.pop(await self.media_pk(media_id), None)
+        self._stories_cache.pop(self.media_pk(media_id), None)
         return await self.media_delete(media_id)
 
     async def users_stories_gql(
@@ -325,7 +325,7 @@ class StoryMixin:
     ) -> tuple[List[Viewer], str]:
         unique_set: set = set()
         viewers: List[Viewer] = []
-        story_pk = await self.media_pk(story_pk)
+        story_pk = self.media_pk(story_pk)
         params = {
             "supported_capabilities_new": json.dumps(config.SUPPORTED_CAPABILITIES)
         }

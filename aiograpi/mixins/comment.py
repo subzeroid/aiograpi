@@ -57,7 +57,7 @@ class CommentMixin:
         # page_info = edge_threaded_comments["page_info"]
         # end_cursor = page_info["end_cursor"] if page_info["has_next_page"] else None
 
-        media_pk = str(await self.media_pk(media_pk))
+        media_pk = str(self.media_pk(media_pk))
         variables = {
             "after": end_cursor or None,
             "before": None,
@@ -145,10 +145,10 @@ class CommentMixin:
         Tuple[List[dict], str]
             A list of objects of Comment
         """
-        media_pk = str(await self.media_pk(media_pk))
+        media_pk = str(self.media_pk(media_pk))
         comments = []
 
-        # shortcode = await self.media_code_from_pk(media_pk)
+        # shortcode = self.media_code_from_pk(media_pk)
         # variables = {
         #     "shortcode": shortcode,
         #     "child_comment_count": 50,
@@ -227,7 +227,7 @@ class CommentMixin:
         List[dict]
             A list of objects of Comment
         """
-        media_pk = await self.media_pk(media_pk)
+        media_pk = self.media_pk(media_pk)
         end_cursor = ""
         comments = []
         i = 0

@@ -196,7 +196,7 @@ class InsightsMixin:
         """
         if not self.user_id:
             raise PreLoginRequired
-        media_pk = await self.media_pk(media_pk)
+        media_pk = self.media_pk(media_pk)
         data = {
             "surface": "post",
             "doc_id": 3221905377882880,

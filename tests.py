@@ -1688,26 +1688,22 @@ class ClientMediaTestCase(ClientPrivateTestCase):
 
     async def test_media_pk(self):
         self.assertEqual(
-            await self.cl.media_pk("2154602296692269830_25025320"),
+            self.cl.media_pk("2154602296692269830_25025320"),
             "2154602296692269830",
         )
 
     async def test_media_pk_from_code(self):
         self.assertEqual(
-            await self.cl.media_pk_from_code("B-fKL9qpeab"), "2278584739065882267"
+            self.cl.media_pk_from_code("B-fKL9qpeab"), "2278584739065882267"
         )
         self.assertEqual(
-            await self.cl.media_pk_from_code("B8jnuB2HAbyc0q001y3F9CHRSoqEljK_dgkJjo0"),
+            self.cl.media_pk_from_code("B8jnuB2HAbyc0q001y3F9CHRSoqEljK_dgkJjo0"),
             "2243811726252050162",
         )
 
     async def test_code_from_media_pk(self):
-        self.assertEqual(
-            await self.cl.media_code_from_pk(2278584739065882267), "B-fKL9qpeab"
-        )
-        self.assertEqual(
-            await self.cl.media_code_from_pk(2243811726252050162), "B8jnuB2HAby"
-        )
+        self.assertEqual(self.cl.media_code_from_pk(2278584739065882267), "B-fKL9qpeab")
+        self.assertEqual(self.cl.media_code_from_pk(2243811726252050162), "B8jnuB2HAby")
 
     async def test_media_pk_from_url(self):
         self.assertEqual(
@@ -1938,7 +1934,7 @@ class ClientCompareExtractTestCase(ClientPrivateTestCase):
 
     async def test_two_extract_media_photo(self):
         media_v1, media_gql = await self.media_info(
-            await self.cl.media_pk_from_code("B3mr1-OlWMG")
+            self.cl.media_pk_from_code("B3mr1-OlWMG")
         )
         self.assertTrue(media_v1.pop("thumbnail_url").startswith("https://"))
         self.assertTrue(media_gql.pop("thumbnail_url").startswith("https://"))
@@ -1946,7 +1942,7 @@ class ClientCompareExtractTestCase(ClientPrivateTestCase):
 
     async def test_two_extract_media_video(self):
         media_v1, media_gql = await self.media_info(
-            await self.cl.media_pk_from_code("B3rFQPblq40")
+            self.cl.media_pk_from_code("B3rFQPblq40")
         )
         self.assertTrue(media_v1.pop("video_url").startswith("https://"))
         self.assertTrue(media_gql.pop("video_url").startswith("https://"))
@@ -1956,7 +1952,7 @@ class ClientCompareExtractTestCase(ClientPrivateTestCase):
 
     async def test_two_extract_media_album(self):
         media_v1, media_gql = await self.media_info(
-            await self.cl.media_pk_from_code("BjNLpA1AhXM")
+            self.cl.media_pk_from_code("BjNLpA1AhXM")
         )
         for res in media_v1["resources"]:
             self.assertTrue(res.pop("thumbnail_url").startswith("https://"))
@@ -1970,7 +1966,7 @@ class ClientCompareExtractTestCase(ClientPrivateTestCase):
 
     async def test_two_extract_media_igtv(self):
         media_v1, media_gql = await self.media_info(
-            await self.cl.media_pk_from_code("ByYn5ZNlHWf")
+            self.cl.media_pk_from_code("ByYn5ZNlHWf")
         )
         self.assertTrue(media_v1.pop("video_url").startswith("https://"))
         self.assertTrue(media_gql.pop("video_url").startswith("https://"))

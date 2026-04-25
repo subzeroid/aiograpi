@@ -99,7 +99,7 @@ class MediaMixin:
         return media_id
 
     @staticmethod
-    async def media_pk(media_id: str) -> str:
+    def media_pk(media_id: str) -> str:
         """
         Get short media id
 
@@ -122,7 +122,7 @@ class MediaMixin:
             media_pk, _ = media_id.split("_")
         return str(media_pk)
 
-    async def media_code_from_pk(self, media_pk: str) -> str:
+    def media_code_from_pk(self, media_pk: str) -> str:
         """
         Get Code from Media PK
 
@@ -143,7 +143,7 @@ class MediaMixin:
         """
         return InstagramIdCodec.encode(media_pk)
 
-    async def media_pk_from_code(self, code: str) -> str:
+    def media_pk_from_code(self, code: str) -> str:
         """
         Get Media PK from Code
 
@@ -199,7 +199,7 @@ class MediaMixin:
             )
             if location:
                 return await self.media_pk_from_url(location)
-        return await self.media_pk_from_code(parts.pop())
+        return self.media_pk_from_code(parts.pop())
 
     async def media_info_a1(self, media_pk: str, max_id: str = None) -> Media:
         """
@@ -217,8 +217,8 @@ class MediaMixin:
         Media
             An object of Media type
         """
-        media_pk = await self.media_pk(media_pk)
-        shortcode = await self.media_code_from_pk(media_pk)
+        media_pk = self.media_pk(media_pk)
+        shortcode = self.media_code_from_pk(media_pk)
         """Use Client.media_info
         """
         params = {"max_id": max_id} if max_id else None
@@ -243,8 +243,8 @@ class MediaMixin:
         Media
             An object of Media type
         """
-        media_pk = await self.media_pk(media_pk)
-        shortcode = await self.media_code_from_pk(media_pk)
+        media_pk = self.media_pk(media_pk)
+        shortcode = self.media_code_from_pk(media_pk)
         """Use Client.media_info
         """
         variables = {
@@ -310,7 +310,7 @@ class MediaMixin:
         Media
             An object of Media type
         """
-        media_pk = await self.media_pk(media_pk)
+        media_pk = self.media_pk(media_pk)
         if not use_cache or media_pk not in self._medias_cache:
             try:
                 try:
@@ -350,7 +350,7 @@ class MediaMixin:
         result = await self.private_request(
             f"media/{media_id}/delete/", self.with_default_data({"media_id": media_id})
         )
-        self._medias_cache.pop(await self.media_pk(media_id), None)
+        self._medias_cache.pop(self.media_pk(media_id), None)
         return result.get("did_delete")
 
     async def media_edit(
@@ -408,7 +408,7 @@ class MediaMixin:
                 "title": title,
                 "igtv_ads_toggled_on": "0",
             }
-        self._medias_cache.pop(await self.media_pk(media_id), None)  # clean cache
+        self._medias_cache.pop(self.media_pk(media_id), None)  # clean cache
         result = await self.private_request(
             f"media/{media_id}/edit_media/",
             self.with_default_data(data),
@@ -465,7 +465,7 @@ class MediaMixin:
         """
         if not self.user_id:
             raise PreLoginRequired
-        media_id = await self.media_pk(media_id)
+        media_id = self.media_pk(media_id)
         data = {
             "inventory_source": "media_or_ad",
             "media_id": media_id,
@@ -1077,7 +1077,7 @@ class MediaMixin:
         List[dict]
             A list of objects of Likers
         """
-        media_pk = await self.media_pk(media_pk)
+        media_pk = self.media_pk(media_pk)
         end_cursor = ""
         likers = []
         while True:
