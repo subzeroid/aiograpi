@@ -274,7 +274,9 @@ class HighlightMixin:
         -------
         Highlight
         """
-        return self.highlight_edit(highlight_pk, removed_media_ids=removed_media_ids)
+        return await self.highlight_edit(
+            highlight_pk, removed_media_ids=removed_media_ids
+        )
 
     async def highlight_delete(self, highlight_pk: str) -> bool:
         """

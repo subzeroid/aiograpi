@@ -39,7 +39,7 @@ class DownloadIGTVMixin:
         -------
         str
         """
-        return self.video_download(media_pk, folder)
+        return await self.video_download(media_pk, folder)
 
     async def igtv_download_by_url(
         self, url: str, filename: str = "", folder: Path = ""
