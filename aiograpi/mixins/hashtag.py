@@ -1,10 +1,10 @@
 import base64
+import json
 from typing import List, Tuple
-
-import orjson
 
 from aiograpi.exceptions import (
     ClientError,
+    ClientLoginRequired,
     ClientUnauthorizedError,
     HashtagNotFound,
     PreLoginRequired,
@@ -179,7 +179,7 @@ class HashtagMixin:
             params = {"max_id": end_cursor} if end_cursor else {}
             try:
                 data = await self.public_a1_request(url, params=params)
-            except ClientUnauthorizedError:
+            except (ClientUnauthorizedError, ClientLoginRequired):
                 self.inject_sessionid_to_public()
                 data = await self.public_a1_request(url, params=params)
 
@@ -232,7 +232,11 @@ class HashtagMixin:
         return medias
 
     async def hashtag_medias_v1_chunk(
-        self, name: str, tab_key: str = "", max_id: str = None
+        self,
+        name: str,
+        max_amount: int = 27,
+        tab_key: str = "",
+        max_id: str = None,
     ) -> Tuple[List[Media], str]:
         """
         Get chunk of medias for a hashtag and max_id (cursor) by Private Mobile API
@@ -257,11 +261,10 @@ class HashtagMixin:
             "top",
             "recent",
             "clips",
-            "top_recent",
-        ), 'You must specify one of the options for "tab_key" ("top", "recent", "clips", "top_recent")'
+        ), 'You must specify one of the options for "tab_key" ("top", "recent", "clips")'
         media_recency_filter = {
             "top": "default",
-            "top_recent": "top_recent_posts",
+            "recent": "top_recent_posts",
         }
         data = {
             "media_recency_filter": media_recency_filter.get(tab_key, tab_key),
@@ -270,16 +273,13 @@ class HashtagMixin:
             "include_persistent": "false",
             "rank_token": self.rank_token,
         }
-        page_id = 0
         if max_id:
             try:
-                [max_id, nm_ids, page_id] = orjson.loads(base64.b64decode(max_id))
+                [page_id, nm_ids] = json.loads(base64.b64decode(max_id))
             except Exception:
                 raise WrongCursorError()
-            data["max_id"] = max_id
-            if page_id:
-                data["page"] = page_id
-            data["next_media_ids"] = orjson.dumps(nm_ids).decode()
+            data["max_id"] = page_id
+            data["next_media_ids"] = dumps(nm_ids)
         medias = []
         result = await self.private_request(
             f"tags/{name}/sections/",
@@ -289,17 +289,15 @@ class HashtagMixin:
         )
         next_max_id = None
         if result.get("next_max_id"):
-            next_max_id = result.get("next_max_id")
-            next_page_id = page_id + 1
+            np = result.get("next_max_id")
             ids = result.get("next_media_ids")
-            items = [next_max_id, ids, next_page_id]
-            next_max_id = base64.b64encode(dumps(items).encode()).decode()
+            next_max_id = base64.b64encode(json.dumps([np, ids]).encode()).decode()
         for section in result["sections"]:
             layout_content = section.get("layout_content") or {}
             nodes = layout_content.get("medias") or []
             for node in nodes:
-                # if max_amount and len(medias) >= max_amount:
-                #     break
+                if max_amount and len(medias) >= max_amount:
+                    break
                 media = extract_media_v1(node["media"])
                 # check contains hashtag in caption
                 # if f"#{name}" not in media.caption_text:
@@ -333,7 +331,9 @@ class HashtagMixin:
         medias = []
         max_id = None
         while True:
-            items, max_id = await self.hashtag_medias_v1_chunk(name, tab_key, max_id)
+            items, max_id = await self.hashtag_medias_v1_chunk(
+                name, amount, tab_key, max_id
+            )
             medias.extend(items)
             if amount and len(medias) >= amount:
                 break
@@ -359,9 +359,7 @@ class HashtagMixin:
         List[Media]
             List of objects of Media
         """
-        return await self.hashtag_medias_a1(
-            name, amount, tab_key="edge_hashtag_to_top_posts"
-        )
+        return await self.hashtag_medias_a1(name, amount, tab_key="top")
 
     async def hashtag_medias_top_v1(self, name: str, amount: int = 9) -> List[Media]:
         """
@@ -421,9 +419,7 @@ class HashtagMixin:
         List[Media]
             List of objects of Media
         """
-        return await self.hashtag_medias_a1(
-            name, amount, tab_key="edge_hashtag_to_media"
-        )
+        return await self.hashtag_medias_a1(name, amount, tab_key="recent")
 
     async def hashtag_medias_recent_v1(
         self, name: str, amount: int = 27

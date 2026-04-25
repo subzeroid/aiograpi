@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List, Tuple, Union
 
 from aiograpi.extractors import (
     extract_hashtag_v1,
@@ -90,3 +90,31 @@ class FbSearchMixin:
         for item in result.get("hashtags", []):
             hashtags.append(extract_hashtag_v1(item["hashtag"]))
         return hashtags
+
+    async def fbsearch_recent(
+        self,
+    ) -> List[Tuple[int, Union[UserShort, Hashtag, Dict]]]:
+        """
+        Retrieves recently searched results
+
+        Returns
+        -------
+        List[Tuple[int, Union[UserShort, Hashtag, Dict]]]
+            Returns list of Tuples where first value is timestamp of searh, second is retrived result
+        """
+        result = await self.private_request("fbsearch/recent_searches/")
+        assert result.get("status", "") == "ok", "Failed to retrieve recent searches"
+
+        data = []
+        for item in result.get("recent", []):
+            if "user" in item.keys():
+                data.append(
+                    (item.get("client_time", None), extract_user_short(item["user"]))
+                )
+            if "hashtag" in item.keys():
+                hashtag = item.get("hashtag")
+                hashtag["media_count"] = hashtag.pop("formatted_media_count")
+                data.append((item.get("client_time", None), Hashtag(**hashtag)))
+            if "keyword" in item.keys():
+                data.append((item.get("client_time", None), item["keyword"]))
+        return data

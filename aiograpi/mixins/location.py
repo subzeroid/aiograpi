@@ -46,6 +46,49 @@ class LocationMixin:
             locations.append(extract_location(venue))
         return locations
 
+    async def location_search_name(self, name: str) -> List[Location]:
+        """
+        Get locations using a location name.
+
+        Parameters
+        ----------
+        name: str
+            Name you want to search for
+
+        Returns
+        -------
+        List[Location]
+            List of objects of Location
+        """
+        result = await self.top_search(name)
+        locations = []
+        for place in result.get("places", []):
+            location = extract_location(place)
+            if location:
+                locations.append(location)
+        return locations
+
+    async def location_search_pk(self, location_pk: int) -> Location:
+        """
+        Resolve a location using its exact pk.
+
+        Parameters
+        ----------
+        location_pk: int
+            Unique identifier for a location
+
+        Returns
+        -------
+        Location
+            An object of Location
+        """
+        location_pk = str(location_pk)
+        info = await self.location_info(location_pk)
+        for location in await self.location_search_name(info.name):
+            if str(location.pk) == location_pk:
+                return location
+        return info
+
     async def location_complete(self, location: Location) -> Location:
         """
         Smart complete of location
@@ -67,10 +110,14 @@ class LocationMixin:
             info = await self.location_info(location.pk)
             location.lat = info.lat
             location.lng = info.lng
-        if not location.external_id and location.lat:
+        if location.pk and not location.external_id:
+            resolved = await self.location_search_pk(location.pk)
+            location.external_id = resolved.external_id
+            location.external_id_source = resolved.external_id_source
+        elif not location.external_id and location.lat:
             # search extrernal_id and external_id_source
             try:
-                venue = await self.location_search(location.lat, location.lng)[0]
+                venue = (await self.location_search(location.lat, location.lng))[0]
                 location.external_id = venue.external_id
                 location.external_id_source = venue.external_id_source
             except IndexError:
@@ -98,9 +145,11 @@ class LocationMixin:
         """
         if not location:
             return "{}"
-        if not location.external_id and location.lat:
+        if location.pk and not location.external_id:
+            location = await self.location_search_pk(location.pk)
+        elif not location.external_id and location.lat:
             try:
-                location = await self.location_search(location.lat, location.lng)[0]
+                location = (await self.location_search(location.lat, location.lng))[0]
             except IndexError:
                 pass
         data = {
@@ -272,6 +321,7 @@ class LocationMixin:
     async def location_medias_v1_chunk(
         self,
         location_pk: int,
+        max_amount: int = 63,
         tab_key: str = "",
         max_id: str = None,
     ) -> Tuple[List[Media], str]:
@@ -283,7 +333,7 @@ class LocationMixin:
         location_pk: int
             Unique identifier for a location
         max_amount: int, optional
-            Maximum number of media to return, default is 27
+            Maximum number of media to return, default is 63
         tab_key: str, optional
             Tab Key, default value is ""
         max_id: str
@@ -305,12 +355,12 @@ class LocationMixin:
         }
         if max_id:
             try:
-                [page_id, nm_ids, nm_id] = json.loads(base64.b64decode(max_id))
+                [m_id, page_id, nm_ids] = json.loads(base64.b64decode(max_id))
             except Exception:
                 raise WrongCursorError()
+            data["max_id"] = m_id
             data["page"] = page_id
-            data["next_media_ids"] = json.dumps(nm_ids)
-            data["max_id"] = json.dumps(nm_id)
+            data["next_media_ids"] = nm_ids
         medias = []
         result = await self.private_request(
             f"locations/{location_pk}/sections/",
@@ -320,9 +370,9 @@ class LocationMixin:
         if result.get("next_page"):
             np = result.get("next_page")
             ids = result.get("next_media_ids")
-            nm_id = result.get("next_max_id")
+            next_m_id = result.get("next_max_id")
             next_max_id = base64.b64encode(
-                json.dumps([np, ids, nm_id]).encode()
+                json.dumps([next_m_id, np, ids]).encode()
             ).decode()
         for section in result.get("sections") or []:
             layout_content = section.get("layout_content") or {}
@@ -356,9 +406,7 @@ class LocationMixin:
             raise Exception(
                 f'You must specify one of the options for "tab_key" {tab_keys_a1}'
             )
-        medias, _ = await self.location_medias_v1_chunk(
-            location_pk=location_pk, tab_key=tab_key
-        )
+        medias, _ = await self.location_medias_v1_chunk(location_pk, amount, tab_key)
         if amount:
             medias = medias[:amount]
         return medias

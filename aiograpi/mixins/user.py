@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Dict, List, Tuple
 
@@ -5,6 +6,7 @@ from orjson import JSONDecodeError
 
 from aiograpi.exceptions import (
     ClientError,
+    ClientGraphqlError,
     ClientJSONDecodeError,
     ClientLoginRequired,
     ClientNotFoundError,
@@ -29,12 +31,63 @@ from aiograpi.types import (
     User,
     UserShort,
 )
-from aiograpi.utils import dumps, json_value
+from aiograpi.utils import dumps, generate_jazoest, json_value
+
+MAX_USER_COUNT = 200
+INFO_FROM_MODULES = ("self_profile", "feed_timeline", "reel_feed_timeline")
+GRAPHQL_WEB_API_URL = "https://www.instagram.com/api/graphql"
+GQL_STUFF = {
+    "av": "17841464591314721",
+    "__d": "www",
+    "__user": "0",
+    "__a": "1",
+    "__req": "q",
+    "__hs": "19768.HYP:instagram_web_pkg.2.1..0.1",
+    "dpr": "2",
+    "__ccg": "UNKNOWN",
+    "__rev": "1011444902",
+    "__s": "x82a1q:agr3gd:4nh4nl",
+    "__hsi": "7335888108907652597",
+    "__dyn": (
+        "7xeUjG1mxu1syUbFp40NonwgU7SbzEdF8aUco2qwJxS0k24o0B-"
+        "q1ew65xO0FE2awt81s8hwGwQwoEcE7O2l0Fwqo31w9O7U2cxe0E"
+        "UjwGzEaE7622362W2K0zK5o4q3y1Sx-0iS2Sq2-azqwt8dUaob8"
+        "2cwMwrUdUbGwmk0KU6O1FwlE6PhA6bxy4VUKUnAwHw"
+    ),
+    "__csr": (
+        "g9cj5kxfs8lifTitQDqhdhalmDEAJaKBRJFdkAGHBkPy9HgCA-A"
+        "rtucm5bCBBGpyAoz-mLJpXJufKWGQ9hHhAhnKECuFUZ3Q8Jkmmp"
+        "eWyGAzkEj_CjyoZUgK-E8bwYzaxy00ktMGx20XU3gw4KAo3MChU"
+        "jw3N80poolwiA1d7G2yu2ucxi1nwEw16OE1JsS043Etw63wkSEgg1Mu00yiU"
+    ),
+    "__comet_req": "7",
+    "lsd": "6b2800R9u4biJOYjcdXFEI",
+    "__spin_r": "1011444902",
+    "__spin_b": "trunk",
+    "__spin_t": "1708019550",
+    "fb_api_caller_class": "RelayModern",
+    "fb_api_req_friendly_name": "PolarisProfilePageContentQuery",
+    "server_timestamps": "true",
+}
 
 logger = logging.getLogger(__name__)
 
+try:
+    from typing import Literal
+
+    INFO_FROM_MODULE = Literal[INFO_FROM_MODULES]
+except Exception:
+    INFO_FROM_MODULE = str
+
 
 class UserMixin:
+    """
+    Helpers to manage user
+    """
+
+    _users_following = {}  # user_pk -> dict(user_pk -> "short user object")
+    _users_followers = {}  # user_pk -> dict(user_pk -> "short user object")
+
     async def user_id_from_username(self, username: str) -> str:
         """
         Get full media id
@@ -75,13 +128,62 @@ class UserMixin:
             "user_id": str(user_id),
             "include_reel": True,
         }
-        data = await self.public_graphql_request(
-            variables, query_hash="ad99dd9d3646cc3c0dda65debcd266a7"
-        )
-        if not data["user"]:
-            raise UserNotFound(user_id=user_id, **data)
-        user = extract_user_short(data["user"]["reel"]["user"])
+        try:
+            data = await self.public_graphql_request(
+                variables, query_hash="ad99dd9d3646cc3c0dda65debcd266a7"
+            )
+            if not data["user"]:
+                raise UserNotFound(user_id=user_id, **data)
+            user = extract_user_short(data["user"]["reel"]["user"])
+        except ClientGraphqlError:
+            user = extract_user_short(await self.user_web_profile_info_gql(user_id))
         return user
+
+    async def user_web_profile_info_gql(self, user_id: str) -> dict:
+        user_id = str(user_id)
+        if not self.inject_sessionid_to_public():
+            raise ClientLoginRequired("Session is required for web profile GraphQL")
+        doc_id = "26762473490008061"
+        variables = {
+            "enable_integrity_filters": True,
+            "id": user_id,
+            "render_surface": "PROFILE",
+            "__relay_internal__pv__PolarisCannesGuardianExperienceEnabledrelayprovider": True,
+            "__relay_internal__pv__PolarisCASB976ProfileEnabledrelayprovider": False,
+            "__relay_internal__pv__PolarisRepostsConsumptionEnabledrelayprovider": False,
+        }
+        headers = {
+            "Origin": "https://www.instagram.com",
+            "Authority": "www.instagram.com",
+            "Sec-Fetch-Site": "same-origin",
+            "X-FB-Friendly-Name": "PolarisProfilePageContentQuery",
+        }
+        body = await self.public_request(
+            GRAPHQL_WEB_API_URL,
+            data={
+                "variables": dumps(variables),
+                "doc_id": doc_id,
+                "fb_dtsg": await self.fb_dtsg,
+                "jazoest": generate_jazoest(self.phone_id),
+                **GQL_STUFF,
+            },
+            headers=headers,
+            update_headers=False,
+            return_json=True,
+        )
+        if errs := body.get("errors"):
+            if "data" not in body:
+                summary = errs[0].get("summary")
+                description = errs[0].get("description")
+                raise ClientGraphqlError(
+                    "GraphQL user profile fallback failed. Summary: '{}'. Description: '{}'".format(
+                        summary, description
+                    )
+                )
+        data = body.get("data")
+        if not data or not data.get("user"):
+            raise UserNotFound(user_id=user_id, **body)
+        return data["user"]
 
     async def username_from_user_id_gql(self, user_id: str) -> str:
         """
@@ -159,8 +261,36 @@ class UserMixin:
             An object of User type
         """
         username = str(username).lower()
-        resp = await self.public_a1_request(f"/{username}/")
-        return extract_user_gql(resp["user"])
+        temporary_public_headers = {
+            "Host": "www.instagram.com",
+            "X-Requested-With": "XMLHttpRequest",
+            "Sec-Ch-Prefers-Color-Scheme": "dark",
+            "Sec-Ch-Ua-Platform": '"Linux"',
+            "X-Ig-App-Id": "936619743392459",
+            "Sec-Ch-Ua-Model": '""',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/122.0.6261.112 Safari/537.36"
+            ),
+            "Accept": "*/*",
+            "X-Asbd-Id": "129477",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Dest": "empty",
+            "Referer": "https://www.instagram.com/",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Priority": "u=1, i",
+        }
+        return extract_user_gql(
+            json.loads(
+                await self.public_request(
+                    f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}",
+                    headers=temporary_public_headers,
+                )
+            )["data"]["user"]
+        )
 
     async def user_info_by_username_v1(self, username: str) -> User:
         """
@@ -244,7 +374,12 @@ class UserMixin:
         except JSONDecodeError as e:
             raise ClientJSONDecodeError(e, user_id=user_id)
 
-    async def user_info_v1(self, user_id: str) -> User:
+    async def user_info_v1(
+        self,
+        user_id: str,
+        from_module: INFO_FROM_MODULE = "self_profile",
+        is_app_start: bool = False,
+    ) -> User:
         """
         Get user object from user id
 
@@ -252,6 +387,11 @@ class UserMixin:
         ----------
         user_id: str
             User id of an instagram account
+        from_module: str
+            Which module triggered request: self_profile, feed_timeline,
+            reel_feed_timeline. Default: self_profile
+        is_app_start: bool
+            Boolean value specifying if profile is being retrieved on app launch
 
         Returns
         -------
@@ -260,7 +400,19 @@ class UserMixin:
         """
         user_id = str(user_id)
         try:
-            result = await self.private_request(f"users/{user_id}/info/")
+            params = {
+                "is_prefetch": "false",
+                "entry_point": "self_profile",
+                "from_module": from_module,
+                "is_app_start": is_app_start,
+            }
+            assert (
+                from_module in INFO_FROM_MODULES
+            ), f'Unsupported send_attribute="{from_module}" {INFO_FROM_MODULES}'
+            if from_module != "self_profile":
+                params["entry_point"] = "profile"
+
+            result = await self.private_request(f"users/{user_id}/info/", params=params)
         except ClientNotFoundError as e:
             raise UserNotFound(e, user_id=user_id, **self.last_json)
         except ClientError as e:
@@ -393,7 +545,12 @@ class UserMixin:
         """
 
         try:
-            result = await self.private_request(f"friendships/show/{user_id}/")
+            params = {
+                "is_external_deeplink_profile_view": "false",
+            }
+            result = await self.private_request(
+                f"friendships/show/{user_id}/", params=params
+            )
             assert result.get("status", "") == "ok"
 
             return Relationship(user_id=user_id, **result)
@@ -529,7 +686,7 @@ class UserMixin:
         return await self.search_following_v1(user_id, query)
 
     async def user_following_gql_chunk(
-        self, user_id: str, end_cursor: str = None
+        self, user_id: str, max_amount: int = 0, end_cursor: str = None
     ) -> Tuple[List[UserShort], str]:
         """
         Get user's following information by Public Graphql API and end_cursor
@@ -538,6 +695,8 @@ class UserMixin:
         ----------
         user_id: str
             User id of an instagram account
+        max_amount: int, optional
+            Maximum number of users to return, default is 0 - Inf
         end_cursor: str, optional
             The cursor from which it is worth continuing
             to receive the list of following
@@ -547,37 +706,38 @@ class UserMixin:
         Tuple[List[UserShort], str]
             List of objects of User type with cursor
         """
-        self.inject_sessionid_to_public()
         users = []
-        user_id = str(user_id)
         variables = {
             "id": user_id,
             "include_reel": True,
             "fetch_mutual": False,
-            "first": 50,
+            "first": 24,
         }
-        if end_cursor:
-            variables["after"] = end_cursor
-        data = await self.public_graphql_request(
-            variables, query_hash="c56ee0ae1f89cdbd1c89e2bc6b8f3d18"
-        )
-        if not data["user"] and not users:
+        self.inject_sessionid_to_public()
+        while True:
             if end_cursor:
-                logger.warn("Strange UserNotFound. Request: %r", variables)
-            raise UserNotFound(user_id=user_id, **data)
-        page = json_value(data, "user", "edge_follow")
-        page_info = json_value(page, "page_info", default={})
-        edges = json_value(page, "edges", default=[])
-        for edge in edges:
-            users.append(extract_user_short(edge["node"]))
-        end_cursor = page_info.get("end_cursor")
+                variables["after"] = end_cursor
+            data = await self.public_graphql_request(
+                variables, query_hash="58712303d941c6855d4e888c5f0cd22f"
+            )
+            if not data["user"] and not users:
+                raise UserNotFound(user_id=user_id, **data)
+            page_info = json_value(data, "user", "edge_follow", "page_info", default={})
+            edges = json_value(data, "user", "edge_follow", "edges", default=[])
+            for edge in edges:
+                users.append(extract_user_short(edge["node"]))
+            end_cursor = page_info.get("end_cursor")
+            if not page_info.get("has_next_page") or not end_cursor:
+                break
+            if max_amount and len(users) >= max_amount:
+                break
         return users, end_cursor
 
     async def user_following_gql(
         self, user_id: str, amount: int = 0
     ) -> List[UserShort]:
         """
-        Get user's following information by Public Graphql API
+        Get user's following users information by Public Graphql API
 
         Parameters
         ----------
@@ -591,20 +751,57 @@ class UserMixin:
         List[UserShort]
             List of objects of User type
         """
-        end_cursor = ""
-        users = []
-        while True:
-            items, end_cursor = await self.user_following_gql_chunk(
-                str(user_id), end_cursor=end_cursor
-            )
-            users.extend(items)
-            if not end_cursor or len(items) == 0:
-                break
-            if amount and len(users) >= amount:
-                break
+        users, _ = await self.user_following_gql_chunk(str(user_id), amount)
         if amount:
             users = users[:amount]
         return users
+
+    async def user_following_v1_chunk(
+        self, user_id: str, max_amount: int = 0, max_id: str = ""
+    ) -> Tuple[List[UserShort], str]:
+        """
+        Get user's following users information by Private Mobile API and max_id (cursor)
+
+        Parameters
+        ----------
+        user_id: str
+            User id of an instagram account
+        max_amount: int, optional
+            Maximum number of users to return, default is 0 - Inf
+        max_id: str, optional
+            Max ID, default value is empty String
+
+        Returns
+        -------
+        Tuple[List[UserShort], str]
+            Tuple of List of users and max_id
+        """
+        unique_set = set()
+        users = []
+        while True:
+            params = {
+                "count": max_amount or MAX_USER_COUNT,
+                "rank_token": self.rank_token,
+                "search_surface": "follow_list_page",
+                "query": "",
+                "enable_groups": "true",
+            }
+            if max_id:
+                params["max_id"] = max_id
+            result = await self.private_request(
+                f"friendships/{user_id}/following/",
+                params=params,
+            )
+            for user in result["users"]:
+                user = extract_user_short(user)
+                if user.pk in unique_set:
+                    continue
+                unique_set.add(user.pk)
+                users.append(user)
+            max_id = result.get("next_max_id")
+            if not max_id or (max_amount and len(users) >= max_amount):
+                break
+        return users, max_id
 
     async def user_following_v1(self, user_id: str, amount: int = 0) -> List[UserShort]:
         """
@@ -622,69 +819,10 @@ class UserMixin:
         List[UserShort]
             List of objects of User type
         """
-        unique_set = set()
-        max_id = ""
-        users = []
-        while True:
-            items, max_id = await self.user_following_v1_chunk(
-                str(user_id), max_id=max_id
-            )
-            for user in items:
-                if user.pk in unique_set:
-                    continue
-                unique_set.add(user.pk)
-                users.append(user)
-            if not max_id or len(items) == 0:
-                break
-            if amount and len(users) >= amount:
-                break
+        users, _ = await self.user_following_v1_chunk(str(user_id), amount)
         if amount:
             users = users[:amount]
         return users
-
-    async def user_following_v1_chunk(
-        self, user_id: str, max_id: str = ""
-    ) -> Tuple[List[UserShort], str]:
-        """
-        Get user's following users information by Private Mobile API and max_id (cursor)
-
-        Parameters
-        ----------
-        user_id: str
-            User id of an instagram account
-        max_id: str, optional
-            Max ID, default value is empty String
-
-        Returns
-        -------
-        Tuple[List[UserShort], str]
-            Tuple of List of users and max_id
-        """
-        # if max_amount and max_amount > 100:
-        #     max_amount = 100
-        unique_set = set()
-        users = []
-
-        result = await self.private_request(
-            f"friendships/{user_id}/following/",
-            params={
-                "max_id": max_id,
-                # "count": max_amount,
-                "rank_token": self.rank_token,
-                "search_surface": "follow_list_page",
-                # "includes_hashtags": "true",
-                "enable_groups": "true",
-                "query": "",
-            },
-        )
-        max_id = result.get("next_max_id") or result.get("max_id")
-        for user in result.get("users") or []:
-            user = extract_user_short(user)
-            if user.pk in unique_set:
-                continue
-            unique_set.add(user.pk)
-            users.append(user)
-        return users, max_id
 
     async def user_following(
         self, user_id: str, amount: int = 0
@@ -711,7 +849,7 @@ class UserMixin:
         return following
 
     async def user_followers_gql_chunk(
-        self, user_id: str, end_cursor: str = None
+        self, user_id: str, max_amount: int = 0, end_cursor: str = None
     ) -> Tuple[List[UserShort], str]:
         """
         Get user's followers information by Public Graphql API and end_cursor
@@ -720,6 +858,8 @@ class UserMixin:
         ----------
         user_id: str
             User id of an instagram account
+        max_amount: int, optional
+            Maximum number of users to return, default is 0 - Inf
         end_cursor: str, optional
             The cursor from which it is worth continuing
             to receive the list of followers
@@ -729,31 +869,34 @@ class UserMixin:
         Tuple[List[UserShort], str]
             List of objects of User type with cursor
         """
-        self.inject_sessionid_to_public()
-        users = []
         user_id = str(user_id)
+        users = []
         variables = {
             "id": user_id,
             "include_reel": True,
             "fetch_mutual": False,
-            "first": 50,
+            "first": 12,
         }
-        if end_cursor:
-            variables["after"] = end_cursor
-        data = await self.public_graphql_request(
-            variables, query_hash="5aefa9893005572d237da5068082d8d5"
-        )
-        if not data["user"] and not users:
+        self.inject_sessionid_to_public()
+        while True:
             if end_cursor:
-                logger.warn("Strange UserNotFound. Request: %r", variables)
-            raise UserNotFound(user_id=user_id, **data)
-        page_info = json_value(
-            data, "user", "edge_followed_by", "page_info", default={}
-        )
-        edges = json_value(data, "user", "edge_followed_by", "edges", default=[])
-        for edge in edges:
-            users.append(extract_user_short(edge["node"]))
-        end_cursor = page_info.get("end_cursor")
+                variables["after"] = end_cursor
+            data = await self.public_graphql_request(
+                variables, query_hash="37479f2b8209594dde7facb0d904896a"
+            )
+            if not data["user"] and not users:
+                raise UserNotFound(user_id=user_id, **data)
+            page_info = json_value(
+                data, "user", "edge_followed_by", "page_info", default={}
+            )
+            edges = json_value(data, "user", "edge_followed_by", "edges", default=[])
+            for edge in edges:
+                users.append(extract_user_short(edge["node"]))
+            end_cursor = page_info.get("end_cursor")
+            if not page_info.get("has_next_page") or not end_cursor:
+                break
+            if max_amount and len(users) >= max_amount:
+                break
         return users, end_cursor
 
     async def user_followers_gql(
@@ -774,23 +917,13 @@ class UserMixin:
         List[UserShort]
             List of objects of User type
         """
-        end_cursor = ""
-        users = []
-        while True:
-            items, end_cursor = await self.user_followers_gql_chunk(
-                str(user_id), end_cursor=end_cursor
-            )
-            users.extend(items)
-            if not end_cursor or len(items) == 0:
-                break
-            if amount and len(users) >= amount:
-                break
+        users, _ = await self.user_followers_gql_chunk(str(user_id), amount)
         if amount:
             users = users[:amount]
         return users
 
     async def user_followers_v1_chunk(
-        self, user_id: str, max_id: str = ""
+        self, user_id: str, max_amount: int = 0, max_id: str = ""
     ) -> Tuple[List[UserShort], str]:
         """
         Get user's followers information by Private Mobile API and max_id (cursor)
@@ -799,6 +932,8 @@ class UserMixin:
         ----------
         user_id: str
             User id of an instagram account
+        max_amount: int, optional
+            Maximum number of users to return, default is 0 - Inf
         max_id: str, optional
             Max ID, default value is empty String
 
@@ -807,28 +942,31 @@ class UserMixin:
         Tuple[List[UserShort], str]
             Tuple of List of users and max_id
         """
-        # if max_amount and max_amount > 100:
-        #     max_amount = 100
         unique_set = set()
         users = []
-        result = await self.private_request(
-            f"friendships/{user_id}/followers/",
-            params={
-                "max_id": max_id,
-                # "count": max_amount,
+        while True:
+            params = {
+                "count": max_amount or MAX_USER_COUNT,
                 "rank_token": self.rank_token,
                 "search_surface": "follow_list_page",
                 "query": "",
                 "enable_groups": "true",
-            },
-        )
-        for user in result.get("users") or []:
-            user = extract_user_short(user)
-            if user.pk in unique_set:
-                continue
-            unique_set.add(user.pk)
-            users.append(user)
-        max_id = result.get("next_max_id") or result.get("max_id")
+            }
+            if max_id:
+                params["max_id"] = max_id
+            result = await self.private_request(
+                f"friendships/{user_id}/followers/",
+                params=params,
+            )
+            for user in result["users"]:
+                user = extract_user_short(user)
+                if user.pk in unique_set:
+                    continue
+                unique_set.add(user.pk)
+                users.append(user)
+            max_id = result.get("next_max_id")
+            if not max_id or (max_amount and len(users) >= max_amount):
+                break
         return users, max_id
 
     async def user_followers_v1(self, user_id: str, amount: int = 0) -> List[UserShort]:
@@ -847,22 +985,7 @@ class UserMixin:
         List[UserShort]
             List of objects of User type
         """
-        unique_set = set()
-        max_id = ""
-        users = []
-        while True:
-            items, max_id = await self.user_followers_v1_chunk(
-                str(user_id), max_id=max_id
-            )
-            for user in items:
-                if user.pk in unique_set:
-                    continue
-                unique_set.add(user.pk)
-                users.append(user)
-            if not max_id or len(items) == 0:
-                break
-            if amount and len(users) >= amount:
-                break
+        users, _ = await self.user_followers_v1_chunk(str(user_id), amount)
         if amount:
             users = users[:amount]
         return users
@@ -945,6 +1068,67 @@ class UserMixin:
         if self.user_id in self._users_following:
             self._users_following[self.user_id].pop(user_id, None)
         return result["friendship_status"]["following"] is False
+
+    async def user_block(self, user_id: str, surface: str = "profile") -> bool:
+        """
+        Block a User
+
+        Parameters
+        ----------
+        user_id: str
+            User ID of an Instagram account
+        surface: str, (optional)
+            Surface of block (deafult "profile", also can be "direct_thread_info")
+
+        Returns
+        -------
+        bool
+            A boolean value
+        """
+        data = {
+            "surface": surface,
+            "is_auto_block_enabled": "false",
+            "user_id": user_id,
+            "_uid": self.user_id,
+            "_uuid": self.uuid,
+        }
+        if surface == "direct_thread_info":
+            data["client_request_id"] = self.request_id
+
+        result = await self.private_request(f"friendships/block/{user_id}/", data)
+        assert result.get("status", "") == "ok"
+
+        return result.get("friendship_status", {}).get("blocking") is True
+
+    async def user_unblock(self, user_id: str, surface: str = "profile") -> bool:
+        """
+        Unlock a User
+
+        Parameters
+        ----------
+        user_id: str
+            User ID of an Instagram account
+        surface: str, (optional)
+            Surface of block (deafult "profile", also can be "direct_thread_info")
+
+        Returns
+        -------
+        bool
+            A boolean value
+        """
+        data = {
+            "container_module": surface,
+            "user_id": user_id,
+            "_uid": self.user_id,
+            "_uuid": self.uuid,
+        }
+        if surface == "direct_thread_info":
+            data["client_request_id"] = self.request_id
+
+        result = await self.private_request(f"friendships/unblock/{user_id}/", data)
+        assert result.get("status", "") == "ok"
+
+        return result.get("friendship_status", {}).get("blocking") is False
 
     async def user_remove_follower(self, user_id: str) -> bool:
         """
@@ -1229,6 +1413,93 @@ class UserMixin:
             A boolean value
         """
         return await self.enable_stories_notifications(user_id, True)
+
+    async def close_friend_add(self, user_id: str):
+        """
+        Add to Close Friends List
+
+        Parameters
+        ----------
+        user_id: str
+            Unique identifier of a User
+        Returns
+        -------
+        bool
+            A boolean value
+        """
+        assert self.user_id, "Login required"
+        user_id = str(user_id)
+        data = {
+            "block_on_empty_thread_creation": "false",
+            "module": "CLOSE_FRIENDS_V2_SEARCH",
+            "source": "audience_manager",
+            "_uid": self.user_id,
+            "_uuid": self.uuid,
+            "remove": [],
+            "add": [user_id],
+        }
+        result = await self.private_request("friendships/set_besties/", data)
+        return json_value(result, "friendship_statuses", user_id, "is_bestie")
+
+    async def close_friend_remove(self, user_id: str):
+        """
+        Remove from Close Friends List
+
+        Parameters
+        ----------
+        user_id: str
+            Unique identifier of a User
+        Returns
+        -------
+        bool
+            A boolean value
+        """
+        assert self.user_id, "Login required"
+        user_id = str(user_id)
+        data = {
+            "block_on_empty_thread_creation": "false",
+            "module": "CLOSE_FRIENDS_V2_SEARCH",
+            "source": "audience_manager",
+            "_uid": self.user_id,
+            "_uuid": self.uuid,
+            "remove": [user_id],
+            "add": [],
+        }
+        result = await self.private_request("friendships/set_besties/", data)
+        return json_value(result, "friendship_statuses", user_id, "is_bestie") is False
+
+    async def creator_info(
+        self, user_id: str, entry_point: str = "direct_thread"
+    ) -> Tuple[UserShort, Dict]:
+        """
+        Retrieves Creator's information
+
+        Parameters
+        ----------
+        user_id: str
+            Unique identifier of a User
+        entry_point: str, optional
+            Entry point for retrieving, default - direct_thread
+            When passing self_profile, own user_id must be provided
+
+        Returns
+        -------
+        Tuple[UserShort, Dict]
+            Retrieved User and his Creator's Info
+        """
+        assert self.user_id, "Login required"
+        params = {
+            "entry_point": entry_point,
+            "surface_type": "android",
+            "user_id": user_id,
+        }
+
+        result = await self.private_request("creator/creator_info/", params=params)
+        assert result.get("status", "") == "ok"
+
+        creator_info = result.get("user", {}).pop("creator_info", {})
+        user = extract_user_short(result.get("user", {}))
+        return (user, creator_info)
 
     async def user_guides_v1(self, user_id: int) -> List[Guide]:
         """

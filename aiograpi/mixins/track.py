@@ -4,6 +4,9 @@ from urllib.parse import urlparse
 
 from aiograpi import httpx_ext
 from aiograpi.exceptions import ClientError, TrackNotFound
+from aiograpi.extractors import extract_track
+from aiograpi.types import Track
+from aiograpi.utils import json_value
 
 
 class TrackMixin:
@@ -54,7 +57,7 @@ class TrackMixin:
             raise e
         return result
 
-    async def track_info_by_canonical_id(self, music_canonical_id: str) -> Dict:
+    async def track_info_by_canonical_id(self, music_canonical_id: str) -> Track:
         """
         Get Track by music_canonical_id
 
@@ -65,8 +68,8 @@ class TrackMixin:
 
         Returns
         -------
-        Dict
-            Raw insta response json
+        Track
+            An object of Track type
         """
         data = {
             "tab_type": "clips",
@@ -74,7 +77,9 @@ class TrackMixin:
             "_uuid": self.uuid,
             "music_canonical_id": str(music_canonical_id),
         }
-        return await self._track_request(data)
+        result = await self._track_request(data)
+        track = json_value(result, "metadata", "music_info", "music_asset_info")
+        return extract_track(track)
 
     async def track_info_by_id(self, track_id: str, max_id: str = "") -> Dict:
         """

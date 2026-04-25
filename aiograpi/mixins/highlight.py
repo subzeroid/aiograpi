@@ -9,7 +9,7 @@ from aiograpi import config
 from aiograpi.exceptions import HighlightNotFound
 from aiograpi.extractors import extract_highlight_v1
 from aiograpi.types import Highlight
-from aiograpi.utils import dumps
+from aiograpi.utils import dumps, vassert
 
 
 class HighlightMixin:
@@ -31,7 +31,7 @@ class HighlightMixin:
         --------
         https://www.instagram.com/stories/highlights/17895485201104054/ -> 17895485201104054
         """
-        assert "/highlights/" in url, 'URL must contain "/highlights/"'
+        vassert("/highlights/" in url, "URL must contain '/highlights/'")
         path = urlparse(url).path
         parts = [p for p in path.split("/") if p and p.isdigit()]
         return str(parts[0])
@@ -59,7 +59,9 @@ class HighlightMixin:
             "supported_capabilities_new": json.dumps(config.SUPPORTED_CAPABILITIES),
             "phone_id": self.phone_id,
             "battery_level": random.randint(25, 100),
+            "panavision_mode": "",
             "is_charging": random.randint(0, 1),
+            "is_dark_mode": random.randint(0, 1),
             "will_sound_on": random.randint(0, 1),
         }
         result = await self.private_request(
@@ -109,10 +111,9 @@ class HighlightMixin:
         }
         result = await self.private_request("feed/reels_media/", data)
         data = result["reels"]
-        if str(highlight_pk) not in (k.split(":")[-1] for k in data.keys()):
+        if highlight_id not in data:
             raise HighlightNotFound(highlight_pk=highlight_pk, **data)
-        item = next(item for item in data.values() if isinstance(item, dict))
-        return extract_highlight_v1(item)
+        return extract_highlight_v1(data[highlight_id])
 
     async def highlight_info(self, highlight_pk: str) -> Highlight:
         """
