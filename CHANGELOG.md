@@ -6,6 +6,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.3.0] — 2026-04-26
+
+### Breaking
+
+Six more pure helpers go synchronous — same principle as the media-pk
+helpers in `0.2.0` (`async def` is reserved for IO). Drop the `await`
+from any caller; old code raises `TypeError` or quietly returns a
+coroutine that never runs.
+
+| Method | What it does |
+|---|---|
+| `Client.share_info(code)` | base64-decode + split |
+| `Client.share_code_from_url(url)` | urlparse + split |
+| `Client.share_info_by_url(url)` | composes the two above |
+| `Client.highlight_pk_from_url(url)` | urlparse + filter digits |
+| `Client.handle_challenge_result(d)` | dict inspection + `raise` |
+| `Client.challenge_resolve_new_password_form(r)` | extract_messages + `raise` |
+
+`handle_challenge_result` is also a latent-bug fix: tests in
+`ChallengeRegressionTestCase` already call it without `await` inside
+`assertRaises`. With the previous async signature those `assertRaises`
+caught a coroutine warning, not the typed exception. They now work as
+written when the regression class is unskipped.
+
+### Fixed
+
+- `Client.igtv_download(...)` and `Client.highlight_remove_stories(...)`
+  were returning a coroutine instead of awaiting the inner async call.
+  Callers `await client.igtv_download(...)` got a wrapped coroutine
+  that was never scheduled. Both now correctly `await`.
+
+### Added
+
+- `CHANGELOG.md`.
+- CI: `.github/workflows/publish.yml` — push a version tag and the
+  workflow builds, publishes to PyPI via trusted publishing (no API
+  token in secrets), and creates a GitHub release. One-time PyPI
+  setup needed (pending publisher).
+- `docs/usage-guide/captcha.md`, `docs/usage-guide/explore.md`,
+  `docs/usage-guide/fundraiser.md` — pages for the new mixins.
+- `docs/usage-guide/highlight.md`, `docs/usage-guide/notes.md`,
+  `docs/usage-guide/totp.md`, `docs/usage-guide/challenge_resolver.md`,
+  `docs/usage-guide/best-practices.md` — orphan files now in nav.
+
+### Changed
+
+- `mkdocs build --strict` is now clean. `superpowers/` (gitignored
+  local plans/specs) excluded from the build.
+- `DirectExtractorRegressionTestCase` forces `TZ=UTC` in
+  `setUp`/`tearDown` so the timestamp tests pass on non-UTC hosts
+  (upstream test bug — it relied on CI being UTC).
+
 ## [0.2.0] — 2026-04-26
 
 ### Breaking
@@ -83,6 +135,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.3.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.3.0
 [0.2.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.2.0
 [0.1.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.1.1
 [0.0.4]: https://github.com/subzeroid/aiograpi/releases/tag/0.0.4
