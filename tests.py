@@ -134,7 +134,7 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.TestCase):
         totp_seed = settings.pop("totp_seed", None)
         cl = Client(settings=settings, proxy=acc["proxy"])
         if totp_seed:
-            totp_code = await cl.totp_generate_code(totp_seed)
+            totp_code = cl.totp_generate_code(totp_seed)
             cl.login(
                 acc["username"],
                 acc["password"],
@@ -1575,7 +1575,7 @@ class ClientStoryTestCase(ClientPrivateTestCase):
 class TOTPTestCase(ClientPrivateTestCase):
     def test_totp_code(self):
         seed = await self.cl.totp_generate_seed()
-        code = await self.cl.totp_generate_code(seed)
+        code = self.cl.totp_generate_code(seed)
         self.assertIsInstance(code, str)
         self.assertTrue(code.isdigit())
         self.assertEqual(len(code), 6)

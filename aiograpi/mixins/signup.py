@@ -1,13 +1,24 @@
 import asyncio
 import base64
-from datetime import datetime
+import random
+import secrets
+import time
 from uuid import uuid4
 
-from aiograpi.exceptions import InvalidNonce
+from aiograpi.exceptions import (
+    AgeEligibilityError,
+    CaptchaChallengeRequired,
+    ClientError,
+    EmailInvalidError,
+    EmailNotAvailableError,
+    EmailVerificationSendError,
+    InvalidNonce,
+)
 from aiograpi.extractors import extract_user_short
 from aiograpi.mixins.challenge import ChallengeChoice
 from aiograpi.types import UserShort
-from aiograpi.utils import generate_jazoest
+
+CHOICE_EMAIL = 1
 
 
 class SignUpMixin:
@@ -28,9 +39,7 @@ class SignUpMixin:
     ) -> UserShort:
         if not (email or phone_number):
             raise Exception("Use email or phone_number")
-        check = await self.check_username(username)
-        if not check.get("available"):
-            raise Exception(f"Username is't available ({check})")
+        await self.get_signup_config()
         kwargs = {
             "username": username,
             "password": password,
@@ -40,16 +49,29 @@ class SignUpMixin:
             "day": day,
         }
         if email:
-            kwargs["email"] = email
             check = await self.check_email(email)
             if not check.get("valid"):
-                raise Exception(f"Email not valid ({check})")
+                raise EmailInvalidError(
+                    f"Email not valid: {check.get('error_title', check)}"
+                )
             if not check.get("available"):
-                raise Exception(f"Email not available ({check})")
-            config = await self.get_signup_config()
+                raise EmailNotAvailableError(
+                    f"Email not available: {check.get('feedback_message', check)}"
+                )
             sent = await self.send_verify_email(email)
             if not sent.get("email_sent"):
-                raise Exception("Email not sent ({sent})")
+                raise EmailVerificationSendError(
+                    f"Failed to send verification email: {sent}"
+                )
+
+            # Date of Birth (DOB) Age Eligibility Check
+            if year and month and day:
+                age_check_result = await self.check_age_eligibility(year, month, day)
+                if not age_check_result.get("eligible"):
+                    raise AgeEligibilityError(
+                        f"Account not eligible based on age criteria: {age_check_result}"
+                    )
+
             # send code confirmation
             code = ""
             for attempt in range(1, 11):
@@ -64,10 +86,11 @@ class SignUpMixin:
                 f"({attempt} attempts, by {self.wait_seconds} seconds)"
             )
             confirmation_result = await self.check_confirmation_code(email, code)
+            kwargs["email"] = email
             kwargs["email_code"] = confirmation_result.get("signup_code")
+
         if phone_number:
             kwargs["phone_number"] = phone_number
-            config = await self.get_signup_config()
             check = await self.check_phone_number(phone_number)
             if check.get("status") != "ok":
                 raise Exception(f"Phone number not valid ({check})")
@@ -90,9 +113,8 @@ class SignUpMixin:
                 f"({attempt} attempts, by {self.wait_seconds} seconds)"
             )
             kwargs["phone_code"] = code
+
         retries = 0
-        if "tos_version" in config:
-            kwargs["tos_version"] = config["tos_version"]
         while retries < 3:
             data = await self.accounts_create(**kwargs)
             if data.get("error_type") == "invalid_nonce":
@@ -122,7 +144,7 @@ class SignUpMixin:
         )
 
     async def check_email(self, email) -> dict:
-        """Check available (free, not registred) email"""
+        """Check available (free, not registered) email"""
         return await self.private_request(
             "users/check_email/",
             {
@@ -161,10 +183,11 @@ class SignUpMixin:
         )
 
     async def check_age_eligibility(self, year, month, day):
-        return await self.private.post(
+        return await self.private_request(
             "consent/check_age_eligibility/",
             data={"_csrftoken": self.token, "day": day, "year": year, "month": month},
-        ).json()
+            with_signature=False,
+        )
 
     async def accounts_create(
         self,
@@ -180,28 +203,29 @@ class SignUpMixin:
         day: int = None,
         **kwargs,
     ) -> dict:
-        timestamp = datetime.now().strftime("%s")
+        timestamp = str(int(time.time()))
         self.username = username
         self.password = password
         data = {
-            "jazoest": generate_jazoest(self.phone_id),
+            "is_secondary_account_creation": "true",
+            "jazoest": str(random.randint(22300, 22399)),
+            "tos_version": "row",
             "suggestedUsername": "",
-            "do_not_auto_login_if_credentials_match": "true",  # C#
+            "sn_result": "",
+            "do_not_auto_login_if_credentials_match": "false",
             "phone_id": self.phone_id,
             "enc_password": await self.password_encrypt(password),
             "username": username,
             "first_name": str(full_name),
             "adid": self.adid,
             "guid": self.uuid,
-            "year": str(year),
-            "month": str(month),
-            "day": str(day),
+            "day": day,
+            "month": month,
+            "year": year,
             "device_id": self.android_device_id,
             "_uuid": self.uuid,
             "waterfall_id": self.waterfall_id,
-            "one_tap_opt_in": "true",  # C#
-            "_csrftoken": self.token,  # C#
-            # "sn_result": "GOOGLE_PLAY_UNAVAILABLE:SERVICE_INVALID",  #C#
+            "one_tap_opt_in": "true",
             **kwargs,
         }
         if self.user_id:
@@ -209,35 +233,33 @@ class SignUpMixin:
             data["logged_in_user_id"] = str(self.user_id)
         if email and not phone_number:  # EMAIL
             endpoint = "accounts/create/"
-            # $"{emailOrPhoneNumber}|{DateTimeHelper.ToUnixTime(DateTime.UtcNow)}|{Encoding.UTF8.GetString(b)}";
-            nonce = f'{email}|{timestamp}|\xb9F"\x8c\xa2I\xaaz|\xf6xz\x86\x92\x91Y\xa5\xaa#f*o%\x7f'
-            sn_nonce = base64.encodebytes(nonce.encode()).decode().strip()
+            nonce_bytes = secrets.token_bytes(24)
+            nonce = f"{email}|{timestamp}|".encode() + nonce_bytes
+            sn_nonce = base64.encodebytes(nonce).decode().strip()
             data = dict(
                 data,
                 **{
                     "email": email,
-                    "is_secondary_account_creation": "true",  # C#
                     "force_sign_up_code": email_code,
                     "sn_nonce": sn_nonce,
-                    "qs_stamp": "",  # C#
+                    "qs_stamp": "",
                 },
             )
         else:  # PHONE
             endpoint = "accounts/create_validated/"
-            # $"{emailOrPhoneNumber}|{DateTimeHelper.ToUnixTime(DateTime.UtcNow)}|{Encoding.UTF8.GetString(b)}";
-            nonce = f'{phone_number}|{timestamp}|\xb9F"\x8c\xa2I\xaaz|\xf6xz\x86\x92\x91Y\xa5\xaa#f*o%\x7f'
-            sn_nonce = base64.encodebytes(nonce.encode()).decode().strip()
+            nonce_bytes = secrets.token_bytes(24)
+            nonce = f"{phone_number}|{timestamp}|".encode() + nonce_bytes
+            sn_nonce = base64.encodebytes(nonce).decode().strip()
             data = dict(
                 data,
                 **{
                     "phone_number": phone_number,
-                    "is_secondary_account_creation": "true"
-                    if data.get("logged_in_user_id")
-                    else "false",
+                    "is_secondary_account_creation": (
+                        "true" if data.get("logged_in_user_id") else "false"
+                    ),
                     "verification_code": phone_code,
                     "force_sign_up_code": "",
                     "has_sms_consent": "true",
-                    # "sn_nonce": sn_nonce
                 },
             )
         return await self.private_request(endpoint, data)
@@ -266,10 +288,45 @@ class SignUpMixin:
         )
         return resp.json()
 
-    async def challenge_captcha(self, data):
-        g_recaptcha_response = await self.captcha_resolve()
+    async def challenge_captcha(self, challenge_json_data):
+        api_path = challenge_json_data.get("api_path")
+        site_key = challenge_json_data.get("fields", {}).get("sitekey")
+        challenge_type = challenge_json_data.get("challengeType")  # For logging/context
+
+        if not site_key or not api_path:
+            self.logger.error(
+                f"Malformed captcha challenge data from Instagram: site_key={site_key}, api_path={api_path}"
+            )
+            raise ClientError(
+                "Malformed captcha challenge data from Instagram (missing site_key or api_path)."
+            )
+
+        challenge_post_url = f"https://i.instagram.com{api_path}"
+        captcha_details_for_solver = {
+            "site_key": site_key,
+            "challenge_type": challenge_type,
+            "raw_challenge_json": challenge_json_data,
+            "page_url": "https://www.instagram.com/accounts/emailsignup/",
+        }
+
+        try:
+            g_recaptcha_response = await self.captcha_resolve(
+                **captcha_details_for_solver
+            )
+        except CaptchaChallengeRequired:
+            self.logger.warning(
+                "Captcha solution was required by Instagram but not provided/resolved by any configured handler."
+            )
+            raise  # Re-raise for the user of aiograpi to handle or be informed.
+        except Exception as e:
+            self.logger.error(
+                f"An unexpected error occurred during the captcha resolution process: {e}",
+                exc_info=True,
+            )
+            raise ClientError(f"Captcha resolution process failed: {e}")
+
         resp = await self.private.post(
-            f"https://i.instagram.com{data['api_path']}",
+            challenge_post_url,
             data={"g-recaptcha-response": g_recaptcha_response},
         )
         return resp.json()
@@ -297,7 +354,7 @@ class SignUpMixin:
         return resp.json()
 
     async def check_phone_number(self, phone_number: str):
-        resp = await self.private_request(
+        return await self.private_request(
             "accounts/check_phone_number/",
             data={
                 "phone_id": self.phone_id,
@@ -308,10 +365,9 @@ class SignUpMixin:
                 "prefill_shown": "False",
             },
         )
-        return resp
 
     async def send_signup_sms_code(self, phone_number: str):
-        resp = await self.private_request(
+        return await self.private_request(
             "accounts/send_signup_sms_code/",
             data={
                 "phone_id": self.phone_id,
@@ -322,4 +378,3 @@ class SignUpMixin:
                 "waterfall_id": self.waterfall_id,
             },
         )
-        return resp

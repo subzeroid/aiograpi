@@ -129,7 +129,8 @@ class TOTPMixin:
         )
         return result["status"] == "ok"
 
-    async def totp_generate_code(self, seed: str) -> str:
+    @staticmethod
+    def totp_generate_code(seed: str) -> str:
         """
         Generate 2FA TOTP code
 
