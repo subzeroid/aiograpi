@@ -1,4 +1,6 @@
 import logging
+from copy import deepcopy
+from typing import Optional
 from urllib.parse import urlparse
 
 from aiograpi.mixins.account import AccountMixin
@@ -10,7 +12,9 @@ from aiograpi.mixins.clip import DownloadClipMixin, UploadClipMixin
 from aiograpi.mixins.collection import CollectionMixin
 from aiograpi.mixins.comment import CommentMixin
 from aiograpi.mixins.direct import DirectMixin
+from aiograpi.mixins.explore import ExploreMixin
 from aiograpi.mixins.fbsearch import FbSearchMixin
+from aiograpi.mixins.fundraiser import FundraiserMixin
 from aiograpi.mixins.graphql import GraphQLRequestMixin
 from aiograpi.mixins.hashtag import HashtagMixin
 from aiograpi.mixins.highlight import HighlightMixin
@@ -37,6 +41,9 @@ from aiograpi.mixins.totp import TOTPMixin
 from aiograpi.mixins.track import TrackMixin
 from aiograpi.mixins.user import UserMixin
 from aiograpi.mixins.video import DownloadVideoMixin, UploadVideoMixin
+
+# Used as fallback logger if another is not provided.
+DEFAULT_LOGGER = logging.getLogger("aiograpi")
 
 
 class Client(
@@ -73,28 +80,35 @@ class Client(
     CommentMixin,
     StoryMixin,
     PasswordMixin,
+    SignUpMixin,
     DownloadClipMixin,
     UploadClipMixin,
     ReelsMixin,
+    ExploreMixin,
     BloksMixin,
     TOTPMixin,
-    SignUpMixin,
+    FundraiserMixin,
 ):
     proxy = None
-    logger = logging.getLogger("aiograpi")
 
     def __init__(
-        self, settings: dict = {}, proxy: str = None, delay_range: list = None, **kwargs
+        self,
+        settings: Optional[dict] = None,
+        proxy: Optional[str] = None,
+        delay_range: Optional[list] = None,
+        logger=DEFAULT_LOGGER,
+        **kwargs,
     ):
         super().__init__(**kwargs)
-        self.settings = settings
+        self.settings = deepcopy(settings or {})
+        self.logger = logger
         self.delay_range = delay_range
         self.set_proxy(proxy)
         self.init()
 
-    def set_proxy(self, dsn: str):
+    def set_proxy(self, dsn: Optional[str]):
         if not dsn:
-            self.public.proxy = self.private.proxy = None
+            self.public.proxy = self.private.proxy = self.graphql.proxy = None
             return False
         assert isinstance(
             dsn, str
