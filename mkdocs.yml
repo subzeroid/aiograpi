@@ -11,9 +11,12 @@ nav:
     - Fundamentals: usage-guide/fundamentals.md
     - Interactions: usage-guide/interactions.md
     - Handle Exceptions: usage-guide/handle_exception.md
+    - Captcha: usage-guide/captcha.md
     - Collection: usage-guide/collection.md
     - Comment: usage-guide/comment.md
     - Direct: usage-guide/direct.md
+    - Explore: usage-guide/explore.md
+    - Fundraiser: usage-guide/fundraiser.md
     - Hashtag: usage-guide/hashtag.md
     - Insight: usage-guide/insight.md
     - Location: usage-guide/location.md
