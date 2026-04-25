@@ -180,7 +180,11 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
         import ssl
 
         ctx = ssl._create_unverified_context()
-        with urllib.request.urlopen(TEST_ACCOUNTS_URL, context=ctx) as resp:
+        req = urllib.request.Request(
+            self.test_accounts_url(),
+            headers={"User-Agent": "Mozilla/5.0 aiograpi-tests"},
+        )
+        with urllib.request.urlopen(req, context=ctx) as resp:
             data = json.loads(resp.read())
         last_exc = None
         for attempt, acc in enumerate(data[:5], start=1):
