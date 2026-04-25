@@ -213,7 +213,7 @@ class ChallengeResolveMixin:
                 await asyncio.sleep(WAIT_SECONDS)
                 try:
                     # FORM TO ENTER CODE
-                    result = await self.handle_challenge_result(result)
+                    result = self.handle_challenge_result(result)
                     break
                 except SelectContactPointRecoveryForm as e:
                     if choice == ChallengeChoice.SMS:  # last iteration
@@ -281,7 +281,7 @@ class ChallengeResolveMixin:
             # FORM TO APPROVE CONTACT DATA
             challenge_type = result.get("challengeType")
             if challenge_type == "LegacyForceSetNewPasswordForm":
-                await self.challenge_resolve_new_password_form(result)
+                self.challenge_resolve_new_password_form(result)
             if result.get("challengeType") != "ReviewContactPointChangeForm":
                 raise ChallengeError(
                     "Unexpected contact-form challenge step after security code "
@@ -335,7 +335,7 @@ class ChallengeResolveMixin:
         finally:
             await session._close()
 
-    async def challenge_resolve_new_password_form(self, result):
+    def challenge_resolve_new_password_form(self, result):
         msg = " ".join(
             [
                 "Log into your Instagram account from smartphone and change password!",
@@ -344,7 +344,7 @@ class ChallengeResolveMixin:
         )
         raise LegacyForceSetNewPasswordForm(msg)
 
-    async def handle_challenge_result(self, challenge: Dict):
+    def handle_challenge_result(self, challenge: Dict):
         """
         Handle challenge result
 

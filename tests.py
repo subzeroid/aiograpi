@@ -4222,7 +4222,7 @@ class TOTPTestCase(ClientPrivateTestCase):
 
 class ClientHighlightTestCase(ClientPrivateTestCase):
     async def test_highlight_pk_from_url(self):
-        highlight_pk = await self.cl.highlight_pk_from_url(
+        highlight_pk = self.cl.highlight_pk_from_url(
             "https://www.instagram.com/stories/highlights/17983407089364361/"
         )
         self.assertEqual(highlight_pk, "17983407089364361")
@@ -4239,23 +4239,23 @@ class ClientHighlightTestCase(ClientPrivateTestCase):
 class ClientShareTestCase(ClientPrivateTestCase):
     async def test_share_code_from_url(self):
         url = "https://www.instagram.com/s/aGlnaGxpZ2h0OjE3OTMzOTExODE2NTY4Njcx?utm_medium=share_sheet"
-        code = await self.cl.share_code_from_url(url)
+        code = self.cl.share_code_from_url(url)
         self.assertEqual(code, "aGlnaGxpZ2h0OjE3OTMzOTExODE2NTY4Njcx")
 
     async def test_share_info_by_url(self):
         url = "https://www.instagram.com/s/aGlnaGxpZ2h0OjE3OTMzOTExODE2NTY4Njcx?utm_medium=share_sheet"
-        share = await self.cl.share_info_by_url(url)
+        share = self.cl.share_info_by_url(url)
         self.assertIsInstance(share, Share)
         self.assertEqual(share.pk, "17933911816568671")
         self.assertEqual(share.type, "highlight")
 
     async def test_share_info(self):
-        share = await self.cl.share_info("aGlnaGxpZ2h0OjE3OTMzOTExODE2NTY4Njcx")
+        share = self.cl.share_info("aGlnaGxpZ2h0OjE3OTMzOTExODE2NTY4Njcx")
         self.assertIsInstance(share, Share)
         self.assertEqual(share.pk, "17933911816568671")
         self.assertEqual(share.type, "highlight")
         # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb1 in position 6: invalid start byte
-        share = await self.cl.share_info("aGlnaGxpsdsdZ2h0OjE3OTg4MDg5NjI5MzgzNzcw")
+        share = self.cl.share_info("aGlnaGxpsdsdZ2h0OjE3OTg4MDg5NjI5MzgzNzcw")
         self.assertIsInstance(share, Share)
         self.assertEqual(share.pk, "17988089629383770")
         self.assertEqual(share.type, "highlight")

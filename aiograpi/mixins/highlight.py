@@ -13,7 +13,7 @@ from aiograpi.utils import dumps, vassert
 
 
 class HighlightMixin:
-    async def highlight_pk_from_url(self, url: str) -> str:
+    def highlight_pk_from_url(self, url: str) -> str:
         """
         Get Highlight PK from URL
 

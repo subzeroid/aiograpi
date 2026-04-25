@@ -6,7 +6,7 @@ from aiograpi.types import Share
 
 
 class ShareMixin:
-    async def share_info(self, code: str) -> Share:
+    def share_info(self, code: str) -> Share:
         """
         Get Share object by code
 
@@ -34,7 +34,7 @@ class ShareMixin:
             raise ShareDecodeError(e)
         return Share(type=data[0], pk=data[1])
 
-    async def share_info_by_url(self, url: str) -> Share:
+    def share_info_by_url(self, url: str) -> Share:
         """
         Get Share object by URL
 
@@ -48,9 +48,9 @@ class ShareMixin:
         Share
             Share object
         """
-        return await self.share_info(await self.share_code_from_url(url))
+        return self.share_info(self.share_code_from_url(url))
 
-    async def share_code_from_url(self, url: str) -> str:
+    def share_code_from_url(self, url: str) -> str:
         """
         Get Share code from URL
 
