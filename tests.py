@@ -2564,6 +2564,27 @@ class ClientDirectMessageTypesTestCase(ClientPrivateTestCase):
 
 
 class DirectExtractorRegressionTestCase(unittest.TestCase):
+    def setUp(self):
+        # extract_direct_message uses datetime.fromtimestamp (local TZ),
+        # but the assertions are written in UTC. Force UTC so the test
+        # passes regardless of the host system's timezone.
+        import time
+
+        self._old_tz = os.environ.get("TZ")
+        os.environ["TZ"] = "UTC"
+        if hasattr(time, "tzset"):
+            time.tzset()
+
+    def tearDown(self):
+        import time
+
+        if self._old_tz is None:
+            os.environ.pop("TZ", None)
+        else:
+            os.environ["TZ"] = self._old_tz
+        if hasattr(time, "tzset"):
+            time.tzset()
+
     def test_xma_share_without_target_url_is_ignored(self):
         message = extract_direct_message(
             {
