@@ -464,6 +464,49 @@ class CommentMixin:
         """
         return await self.comment_like(comment_pk, revert=True)
 
+    async def comment_pin(self, media_id: str, comment_pk: int, revert: bool = False):
+        """
+        Pin a comment on a media
+
+        Parameters
+        ----------
+        media_id: str
+            Unique identifier of a Media
+        comment_pk: int
+           Unique identifier of a Comment
+        revert: bool, optional
+            Unpin when True
+        Returns
+        -------
+        bool
+           A boolean value
+        """
+        data = self.with_action_data({"_uid": self.user_id, "_uuid": self.uuid})
+        name = "unpin" if revert else "pin"
+
+        result = await self.private_request(
+            f"media/{media_id}/{name}_comment/{comment_pk}", data
+        )
+        return result["status"] == "ok"
+
+    async def comment_unpin(self, media_id: str, comment_pk: int):
+        """
+        Unpin a comment on a media
+
+        Parameters
+        ----------
+        media_id: str
+            Unique identifier of a Media
+        comment_pk: int
+           Unique identifier of a Comment
+
+        Returns
+        -------
+        bool
+           A boolean value
+        """
+        return await self.comment_pin(media_id, comment_pk, True)
+
     async def comment_bulk_delete(self, media_id: str, comment_pks: List[int]) -> bool:
         """
         Delete a comment on a media
