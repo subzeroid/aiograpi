@@ -1,21 +1,30 @@
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import List
 from urllib.parse import urlparse
 
 from aiograpi import config
 from aiograpi.exceptions import (
+    ClientGraphqlError,
     ClientNotFoundError,
     PreLoginRequired,
     PrivateError,
     StoryNotFound,
     UserNotFound,
 )
-from aiograpi.extractors import extract_story_gql, extract_story_v1, extract_user_short
-from aiograpi.types import Story, UserShort
+from aiograpi.extractors import (
+    extract_story_gql,
+    extract_story_v1,
+    extract_user_short,
+    extract_viewer,
+)
+from aiograpi.types import Story, UserShort, Viewer
 
 
 class StoryMixin:
+    _stories_cache = {}  # pk -> object
+
     def story_pk_from_url(self, url: str) -> str:
         """
         Get Story (media) PK from URL
@@ -60,13 +69,16 @@ class StoryMixin:
         """
         story_id = await self.media_id(story_pk)
         story_pk, user_id = story_id.split("_")
+
         stories = await self.user_stories_v1(user_id)
         for story in stories:
-            if story_pk == story.pk:
-                return story
-        raise StoryNotFound(story_pk=story_pk, **self.last_json)
+            self._stories_cache[story.pk] = story
+        if story_pk not in self._stories_cache:
+            raise StoryNotFound(story_pk=story_pk, **self.last_json)
+        story = self._stories_cache[story_pk]
+        return deepcopy(story)
 
-    async def story_info(self, story_pk: str) -> Story:
+    async def story_info(self, story_pk: str, use_cache: bool = True) -> Story:
         """
         Get Story by pk or id
 
@@ -74,13 +86,19 @@ class StoryMixin:
         ----------
         story_pk: str
             Unique identifier of the story
+        use_cache: bool, optional
+            Whether or not to use information from cache,
+            default value is True
 
         Returns
         -------
         Story
             An object of Story type
         """
-        return await self.story_info_v1(story_pk)
+        if not use_cache or story_pk not in self._stories_cache:
+            story = await self.story_info_v1(story_pk)
+            self._stories_cache[story_pk] = story
+        return deepcopy(self._stories_cache[story_pk])
 
     async def story_delete(self, story_pk: str) -> bool:
         """
@@ -99,6 +117,7 @@ class StoryMixin:
         if not self.user_id:
             raise PreLoginRequired
         media_id = await self.media_id(story_pk)
+        self._stories_cache.pop(await self.media_pk(media_id), None)
         return await self.media_delete(media_id)
 
     async def users_stories_gql(
@@ -146,9 +165,7 @@ class StoryMixin:
             users.append(user)
         return users
 
-    async def user_stories_gql(
-        self, user_id: str, amount: int = None
-    ) -> List[UserShort]:
+    async def user_stories_gql(self, user_id: str, amount: int = None) -> List[Story]:
         """
         Get a user's stories (Public API)
 
@@ -163,8 +180,9 @@ class StoryMixin:
         List[UserShort]
             A list of objects of UserShort for each user_id
         """
-        user = await self.users_stories_gql([user_id], amount=amount)[0]
-        stories = user.stories
+        users = await self.users_stories_gql([user_id], amount=amount)
+        user = users[0]
+        stories = deepcopy(user.stories)
         if amount:
             stories = stories[:amount]
         return stories
@@ -220,7 +238,14 @@ class StoryMixin:
             return []
         except PrivateError as e:
             raise e
-        except Exception:
+        except Exception as e:
+            if not self.user_id:
+                if isinstance(e, ClientGraphqlError):
+                    raise
+                raise ClientGraphqlError(
+                    "Anonymous story fetch failed via public API "
+                    "and private fallback requires login"
+                ) from e
             return await self.user_stories_v1(user_id, amount)
 
     async def story_seen(self, story_pks: List[str], skipped_story_pks: List[str] = []):
@@ -259,7 +284,7 @@ class StoryMixin:
         """
         story_pk = str(story_pk)
         story = await self.story_info(story_pk)
-        url = story.thumbnail_url if story.media_type == 1 else story.video_url
+        url = str(story.thumbnail_url if story.media_type == 1 else story.video_url)
         return await self.story_download_by_url(url, filename, folder)
 
     async def story_download_by_url(
@@ -295,7 +320,35 @@ class StoryMixin:
             f.write(response.read())
         return path.resolve()
 
-    async def story_viewers(self, story_pk: str, amount: int = 0) -> List[UserShort]:
+    async def story_viewers_chunk(
+        self, story_pk: str, max_amount: int = 0, max_id: str = ""
+    ) -> tuple[List[Viewer], str]:
+        unique_set: set = set()
+        viewers: List[Viewer] = []
+        story_pk = await self.media_pk(story_pk)
+        params = {
+            "supported_capabilities_new": json.dumps(config.SUPPORTED_CAPABILITIES)
+        }
+
+        while True:
+            if max_id:
+                params["max_id"] = max_id
+            result = await self.private_request(
+                f"media/{story_pk}/list_reel_media_viewer/", params=params
+            )
+            for item in result["viewers"]:
+                viewer = extract_viewer(item)
+                if viewer.pk in unique_set:
+                    continue
+                unique_set.add(viewer.pk)
+                viewers.append(viewer)
+
+            max_id = result.get("next_max_id")
+            if not max_id or (max_amount and len(viewers) >= max_amount):
+                break
+        return viewers, max_id
+
+    async def story_viewers(self, story_pk: str, amount: int = 0) -> List[Viewer]:
         """
         List of story viewers (Private API)
 
@@ -307,35 +360,13 @@ class StoryMixin:
 
         Returns
         -------
-        List[UserShort]
-            A list of objects of UserShort
+        List[Viewer]
+            A list of objects of Viewer
         """
-        users = []
-        next_max_id = None
-        story_pk = await self.media_pk(story_pk)
-        params = {
-            "supported_capabilities_new": json.dumps(config.SUPPORTED_CAPABILITIES)
-        }
-        while True:
-            try:
-                if next_max_id:
-                    params["max_id"] = next_max_id
-                result = await self.private_request(
-                    f"media/{story_pk}/list_reel_media_viewer/", params=params
-                )
-                for item in result["users"]:
-                    users.append(extract_user_short(item))
-                if amount and len(users) >= amount:
-                    break
-                next_max_id = result.get("next_max_id") or result.get("max_id")
-                if not next_max_id:
-                    break
-            except Exception as e:
-                self.logger.exception(e)
-                break
+        viewers, _ = await self.story_viewers_chunk(story_pk, amount)
         if amount:
-            users = users[: int(amount)]
-        return users
+            viewers = viewers[:amount]
+        return viewers
 
     async def story_like(self, story_id: str, revert: bool = False) -> bool:
         """
