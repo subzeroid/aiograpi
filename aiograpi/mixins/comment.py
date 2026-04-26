@@ -291,6 +291,37 @@ class CommentMixin:
         max_id = result.get("next_max_id") or result.get("max_id", "")
         return comments, min_id, max_id
 
+    async def media_comment_infos(self, media_ids: List[str]) -> dict:
+        """
+        Bulk-fetch comment summaries for one or more media items.
+
+        ``GET /media/comment_infos/`` returns a small comments digest
+        (typically counts + a couple of preview comments) for each media
+        id. Useful for batched feed-cell hydration.
+
+        Parameters
+        ----------
+        media_ids: list[str]
+            Media identifiers in the canonical ``"<media_pk>_<user_pk>"``
+            form (e.g. ``"3391854975572247874_56502266920"``). A single
+            comma-joined string is also accepted.
+
+        Returns
+        -------
+        dict
+            Parsed JSON response. Shape varies — TODO: consider extracting
+            a pydantic model.
+        """
+        if isinstance(media_ids, (list, tuple)):
+            joined = ",".join(str(m) for m in media_ids)
+        else:
+            joined = str(media_ids)
+        params = {
+            "can_support_carousel_mentions": "false",
+            "media_ids": joined,
+        }
+        return await self.private_request("media/comment_infos/", params=params)
+
     async def media_comments_v1_chunk(
         self, media_id: str, min_id: str = "", max_id: str = ""
     ) -> Tuple[List[Comment], str, str]:
