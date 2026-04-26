@@ -292,6 +292,17 @@ class UserMixin:
             )["data"]["user"]
         )
 
+    def _inject_sessionid_for_v2_gql(self) -> None:
+        """The new doc_id endpoints require logged-in cookies. Bridge the
+        private session's sessionid into the public session so
+        public_doc_id_graphql_request carries it."""
+        try:
+            self.inject_sessionid_to_public()
+        except Exception:
+            # Caller may be anonymous / pre-login — let the request go and
+            # IG will reject with 403 if it actually needs auth.
+            pass
+
     async def user_info_v2_gql(self, user_id: str) -> User:
         """
         Get user object via the new PolarisProfilePageContentQuery doc_id.
@@ -322,6 +333,7 @@ class UserMixin:
             "__relay_internal__pv__PolarisCASB976ProfileEnabledrelayprovider": False,
             "__relay_internal__pv__PolarisRepostsConsumptionEnabledrelayprovider": False,
         }
+        self._inject_sessionid_for_v2_gql()
         data = await self.public_doc_id_graphql_request("25980296051578533", variables)
         user_data = (data or {}).get("user")
         if user_data is None:
@@ -349,6 +361,7 @@ class UserMixin:
             An object of User type.
         """
         username = str(username).lower()
+        self._inject_sessionid_for_v2_gql()
         data = await self.public_doc_id_graphql_request(
             "26347858941511777", {"hasQuery": True, "query": username}
         )

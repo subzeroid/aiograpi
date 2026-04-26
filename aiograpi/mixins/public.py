@@ -336,9 +336,19 @@ class PublicRequestMixin:
             "doc_id": doc_id,
             "server_timestamps": "true",
         }
-        merged_headers = {"accept": "*/*"}
-        if referer:
-            merged_headers["referer"] = referer
+        # IG rejects bare /graphql/query/ POSTs — needs the iPhone web-app
+        # signalling headers it sees from m.instagram.com (instaloader does
+        # the same: see _default_http_header(empty_session_only=True)).
+        merged_headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.8",
+            "Referer": referer or "https://www.instagram.com/",
+            "User-Agent": (
+                "Instagram 273.0.0.16.70 (iPhone15,2; iOS 17_5_1; en_US; en-US; "
+                "scale=3.00; 1290x2796; 470085518)"
+            ),
+        }
         if headers:
             merged_headers.update(headers)
         body_json = await self.public_request(
