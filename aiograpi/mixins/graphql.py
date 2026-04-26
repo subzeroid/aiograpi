@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import time
 
@@ -24,6 +25,7 @@ from aiograpi.exceptions import (
 from aiograpi.utils import random_delay
 
 GRAPHQL_API_URL = "https://www.instagram.com/api/graphql"
+PRIVATE_GRAPHQL_QUERY_URL = "https://i.instagram.com/graphql/query"
 
 GQL_STUFF = {
     "av": "17841464591314721",
@@ -232,3 +234,191 @@ class GraphQLRequestMixin:
             raise ClientConnectionError("{} {}".format(e.__class__.__name__, str(e)))
         finally:
             self.last_response_ts = time.time()
+
+    async def private_graphql_query_request(
+        self,
+        friendly_name: str,
+        root_field_name: str,
+        variables: dict = None,
+        client_doc_id: str = None,
+        priority: str = None,
+        extra_headers: dict = None,
+    ) -> dict:
+        """
+        POST a doc_id-based GraphQL query to the private
+        ``i.instagram.com/graphql/query`` surface used by the IG mobile app.
+
+        Newer mobile-side GraphQL endpoints (FollowersList, FollowingList,
+        ClipsProfileQuery, MemoriesPogQuery, ...) live behind the private
+        domain and are addressed by ``X-FB-Friendly-Name`` and a numeric
+        ``client_doc_id``. The call uses the authenticated mobile session
+        (``self.private``) so all standard private headers/cookies apply.
+
+        Parameters
+        ----------
+        friendly_name: str
+            Value sent as ``X-FB-Friendly-Name`` and
+            ``fb_api_req_friendly_name`` (e.g. ``"FollowersList"``).
+        root_field_name: str
+            Value for ``X-Root-Field-Name`` header (e.g.
+            ``"xdt_api__v1__friendships__followers"``).
+        variables: dict, optional
+            Query variables, JSON-encoded into the ``variables`` form field.
+        client_doc_id: str, optional
+            Numeric doc id of the registered query. Sent both in the form
+            payload and as ``X-Client-Doc-Id`` header when provided.
+        priority: str, optional
+            Optional ``Priority`` header (e.g. ``"u=3, i"``).
+        extra_headers: dict, optional
+            Additional headers merged on top of the defaults.
+
+        Returns
+        -------
+        dict
+            The parsed JSON response from Instagram. May contain a top-level
+            ``data`` key for canonical responses or a streaming envelope —
+            callers should be tolerant of both. Returned as raw ``dict``
+            because shapes vary widely between friendly_names — TODO:
+            consider extracting per-query pydantic models.
+        """
+        data = {
+            "method": "post",
+            "pretty": "false",
+            "format": "json",
+            "server_timestamps": "true",
+            "locale": "user",
+            "fb_api_req_friendly_name": friendly_name,
+            "enable_canonical_naming": "true",
+            "enable_canonical_variable_overrides": "true",
+            "enable_canonical_naming_ambiguous_type_prefixing": "true",
+            "variables": json.dumps(variables or {}, separators=(",", ":")),
+        }
+        if client_doc_id:
+            data["client_doc_id"] = client_doc_id
+        headers = {
+            "X-FB-Friendly-Name": friendly_name,
+            "X-Root-Field-Name": root_field_name,
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        }
+        if client_doc_id:
+            headers["X-Client-Doc-Id"] = str(client_doc_id)
+        if priority:
+            headers["Priority"] = priority
+        if extra_headers:
+            headers.update(extra_headers)
+        # Merge base headers from private session, then our overrides.
+        merged = dict(self.base_headers)
+        merged.update(headers)
+        if self.authorization:
+            merged.setdefault("Authorization", self.authorization)
+        response = await self.private.post(
+            PRIVATE_GRAPHQL_QUERY_URL,
+            data=data,
+            headers=merged,
+            timeout=self.read_timeout,
+        )
+        response.raise_for_status()
+        try:
+            body = response.json()
+        except orjson.JSONDecodeError:
+            # Streamed line-delimited JSON envelope (similar to
+            # _send_private_request fallback for stream endpoints).
+            text = response.text.strip()
+            rows = [
+                orjson.loads(item if item.endswith('"}') else f'{item}"}}')
+                for item in text.split('"}\n')
+                if item
+            ]
+            body = {"stream_rows": rows}
+        self.last_json = body
+        return body
+
+    async def private_graphql_memories_pog(
+        self,
+        client_doc_id: str = "4160563056814166588457451196",
+        direct_region_hint: str = None,
+    ) -> dict:
+        """
+        Private-side ``MemoriesPogQuery`` GraphQL query.
+
+        Returns the "story memories" pog (the round avatar in the home
+        feed that surfaces older stories). Root field
+        ``xdt_get_story_memories_pog``.
+
+        Parameters
+        ----------
+        client_doc_id: str, optional
+            Defaults to the value observed in the wild — bump when IG
+            rotates the registered query.
+        direct_region_hint: str, optional
+            Optional ``ig-u-ig-direct-region-hint`` header override.
+        """
+        extra_headers = None
+        if direct_region_hint:
+            extra_headers = {"ig-u-ig-direct-region-hint": direct_region_hint}
+        return await self.private_graphql_query_request(
+            friendly_name="MemoriesPogQuery",
+            root_field_name="xdt_get_story_memories_pog",
+            variables={"request": {"user_id": 0}},
+            client_doc_id=client_doc_id,
+            extra_headers=extra_headers,
+        )
+
+    async def private_graphql_realtime_region_hint(
+        self,
+        client_doc_id: str = "52232106018313849661757113193",
+    ) -> dict:
+        """
+        Private-side ``IGRealtimeRegionHintQuery`` GraphQL query.
+
+        Returns the realtime/MQTT region hint the IG mobile app uses to
+        pick the lowest-latency endpoint for direct messaging. Root field
+        ``xdt_igd_msg_region``.
+
+        Parameters
+        ----------
+        client_doc_id: str, optional
+            Defaults to the value observed in the wild.
+        """
+        return await self.private_graphql_query_request(
+            friendly_name="IGRealtimeRegionHintQuery",
+            root_field_name="xdt_igd_msg_region",
+            variables={},
+            client_doc_id=client_doc_id,
+            priority="u=3, i",
+        )
+
+    async def private_graphql_top_audio_trends_eligible_categories(
+        self,
+        client_doc_id: str = "10243243298540497152200027985",
+    ) -> dict:
+        """
+        Private-side ``GetTopAudioTrendsEligibleCategories`` GraphQL query.
+
+        Returns the list of audio-trend tabs the user is eligible to see
+        on the music/audio surface. Root field
+        ``xdt_top_audio_trends_eligible_tabs``.
+        """
+        return await self.private_graphql_query_request(
+            friendly_name="GetTopAudioTrendsEligibleCategories",
+            root_field_name="xdt_top_audio_trends_eligible_tabs",
+            variables={},
+            client_doc_id=client_doc_id,
+        )
+
+    async def private_graphql_update_inbox_tray_last_seen(
+        self,
+        client_doc_id: str = "41048505499858972910914091441",
+    ) -> dict:
+        """
+        Private-side ``UpdateInboxTrayLastSeenTimestamp`` GraphQL mutation.
+
+        Marks the direct-inbox tray as seen at the current timestamp.
+        Root field ``__typename``.
+        """
+        return await self.private_graphql_query_request(
+            friendly_name="UpdateInboxTrayLastSeenTimestamp",
+            root_field_name="__typename",
+            variables={},
+            client_doc_id=client_doc_id,
+        )
