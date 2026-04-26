@@ -373,6 +373,89 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.media_info_a1.assert_called_once_with("2110901750722920960")
 
 
+class CaptchaHandlerMixinRegressionTestCase(unittest.TestCase):
+    """CaptchaHandlerMixin is opt-in (not wired into Client by default).
+    Test it standalone."""
+
+    def setUp(self):
+        from aiograpi.exceptions import CaptchaChallengeRequired, ClientError
+        from aiograpi.mixins.captcha import CaptchaHandlerMixin
+
+        self.CaptchaChallengeRequired = CaptchaChallengeRequired
+        self.ClientError = ClientError
+
+        class CaptchaClient(CaptchaHandlerMixin):
+            pass
+
+        self.client = CaptchaClient()
+
+    def test_no_handler_raises_captcha_required(self):
+        with self.assertRaises(self.CaptchaChallengeRequired) as cm:
+            self.client.captcha_resolve(site_key="K", page_url="U")
+        self.assertIn("No captcha handler is configured", str(cm.exception))
+
+    def test_handler_returns_token(self):
+        self.client.set_captcha_handler(lambda details: "solved-token-123")
+        token = self.client.captcha_resolve(site_key="K", page_url="U")
+        self.assertEqual(token, "solved-token-123")
+
+    def test_handler_receives_normalized_details(self):
+        captured = {}
+
+        def handler(details):
+            captured.update(details)
+            return "tok"
+
+        self.client.set_captcha_handler(handler)
+        self.client.captcha_resolve(
+            site_key="SK",
+            page_url="https://example",
+            challenge_type="recaptcha",
+            raw_challenge_json={"x": 1},
+        )
+        self.assertEqual(
+            captured,
+            {
+                "site_key": "SK",
+                "page_url": "https://example",
+                "challenge_type": "recaptcha",
+                "raw_challenge_json": {"x": 1},
+            },
+        )
+
+    def test_handler_returning_empty_string_raises(self):
+        self.client.set_captcha_handler(lambda details: "")
+        with self.assertRaises(self.CaptchaChallengeRequired) as cm:
+            self.client.captcha_resolve(site_key="K", page_url="U")
+        self.assertIn("did not return a valid token", str(cm.exception))
+
+    def test_handler_raising_unexpected_exception_wraps_it(self):
+        def boom(details):
+            raise RuntimeError("solver down")
+
+        self.client.set_captcha_handler(boom)
+        with self.assertRaises(self.CaptchaChallengeRequired) as cm:
+            self.client.captcha_resolve(site_key="K", page_url="U")
+        self.assertIn("solver down", str(cm.exception))
+
+    def test_handler_can_propagate_captcha_required(self):
+        def explicit_raise(details):
+            raise self.CaptchaChallengeRequired(
+                message="manual reject", challenge_details=details
+            )
+
+        self.client.set_captcha_handler(explicit_raise)
+        with self.assertRaises(self.CaptchaChallengeRequired) as cm:
+            self.client.captcha_resolve(site_key="K")
+        self.assertIn("manual reject", str(cm.exception))
+
+    def test_set_handler_to_none_clears_it(self):
+        self.client.set_captcha_handler(lambda d: "t")
+        self.client.set_captcha_handler(None)
+        with self.assertRaises(self.CaptchaChallengeRequired):
+            self.client.captcha_resolve(site_key="K")
+
+
 class NoteMixinRegressionTestCase(unittest.TestCase):
     def test_get_note_helpers_by_user(self):
         client = Client()

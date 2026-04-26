@@ -91,6 +91,7 @@ jobs:
             tests.py::ExtractorsRegressionTestCase \
             tests.py::DirectExtractorRegressionTestCase \
             tests.py::PublicRegressionTestCase \
+            tests.py::CaptchaHandlerMixinRegressionTestCase \
             tests.py::NoteMixinRegressionTestCase \
             tests.py::LocationMixinRegressionTestCase \
             tests.py::ChallengeRegressionTestCase \
