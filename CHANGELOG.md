@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.6.2] — 2026-04-27
+
+### Fixed
+
+The 3 chapi-ported endpoints that were returning HTTP 400 in the
+0.6.1 live verification (`private_graphql_followers_list`,
+`private_graphql_following_list`, `private_graphql_clips_profile`)
+now work end-to-end. Two distinct issues:
+
+- **`client_doc_id` is mandatory**, not optional. Without it IG
+  returns 400 (it can't resolve which registered query to execute).
+  These methods now default `client_doc_id` to the captures shipped
+  in `chapi/client.py`. Callers can still override per-call when IG
+  rotates a doc_id. Defaults baked in:
+
+  | Method | Default client_doc_id |
+  |---|---|
+  | `private_graphql_followers_list` | `28479704798344003308647327139` |
+  | `private_graphql_following_list` | `16104639289023609826830352479` |
+  | `private_graphql_clips_profile` | `209049231614685382737238866578` |
+  | `private_graphql_inbox_tray_for_user` | `2035639076042015234490020607` |
+
+- **`private_graphql_clips_profile` was asking for streaming.** With
+  `should_stream_response` / `use_stream` / `use_defer` /
+  `stream_use_customized_batch = True` IG returns a multi-document
+  NDJSON envelope that `response.json()` can't parse
+  (`JSONDecodeError: "unexpected content after document"`). All four
+  flags now default to `False`. If you want raw streamed chunks,
+  read `response.text` and split on document boundaries yourself.
+
+### Live verification status (0.6.2)
+
+13/13 chapi methods now PASS through the live smoke. All required
+checks remain ✅.
+
 ## [0.6.1] — 2026-04-27
 
 ### Fixed
@@ -343,6 +378,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.6.2]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.2
 [0.6.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.1
 [0.6.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.0
 [0.5.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.5.0
