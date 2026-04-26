@@ -1686,7 +1686,7 @@ class UserMixin:
         self,
         user_id: str,
         rank_token: str,
-        client_doc_id: str = None,
+        client_doc_id: str = "28479704798344003308647327139",
         max_id: int = None,
         priority: str = None,
         exclude_field_is_favorite: bool = None,
@@ -1751,7 +1751,7 @@ class UserMixin:
         self,
         user_id: str,
         rank_token: str,
-        client_doc_id: str = None,
+        client_doc_id: str = "16104639289023609826830352479",
         max_id: int = None,
         priority: str = None,
         exclude_field_is_favorite: bool = None,
@@ -1793,7 +1793,7 @@ class UserMixin:
     async def private_graphql_clips_profile(
         self,
         target_user_id: str,
-        client_doc_id: str = None,
+        client_doc_id: str = "209049231614685382737238866578",
         priority: str = None,
         initial_stream_count: int = 6,
         page_size: int = 12,
@@ -1825,7 +1825,12 @@ class UserMixin:
         """
         inner_data = {
             "target_user_id": str(target_user_id),
-            "should_stream_response": True,
+            # IG returns a multi-document NDJSON envelope when these are
+            # True; turn them off so the response is a single JSON we can
+            # parse with response.json(). Set them back to True if you
+            # want raw streamed media chunks (you'll need to parse it
+            # yourself from the raw .text).
+            "should_stream_response": False,
             "sort_by_views": False,
             "max_id": None,
             "include_feed_video": True,
@@ -1836,8 +1841,8 @@ class UserMixin:
         if no_of_medias_in_each_chunk:
             inner_data["no_of_medias_in_each_chunk"] = no_of_medias_in_each_chunk
         variables = {
-            "use_stream": True,
-            "use_defer": True,
+            "use_stream": False,
+            "use_defer": False,
             "enable_video_versions_in_light_media": True,
             "exclude_caption_user_field": False,
             "enable_thumbnails_in_light_media": False,
@@ -1846,7 +1851,7 @@ class UserMixin:
             "exclude_main_user_field": False,
             "enable_likers_in_full_media": False,
             "data": inner_data,
-            "stream_use_customized_batch": True,
+            "stream_use_customized_batch": False,
         }
         if initial_stream_count:
             variables["initial_stream_count"] = initial_stream_count
@@ -1861,7 +1866,7 @@ class UserMixin:
     async def private_graphql_inbox_tray_for_user(
         self,
         user_id: str,
-        client_doc_id: str = None,
+        client_doc_id: str = "2035639076042015234490020607",
         priority: str = None,
     ) -> dict:
         """
