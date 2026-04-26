@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.4.0] — 2026-04-26
+
+### Added
+
+- **PEP 561 type marker (`py.typed`).** mypy / pyright will now pick
+  up aiograpi's type annotations from the installed package.
+- **Migration guide** at `docs/migration.md` — for users coming from
+  `0.0.x` or the third-party `aiograpi-fixed` namespace fork.
+- **CaptchaHandlerMixin tests** — `CaptchaHandlerMixinRegressionTestCase`
+  with 7 unit tests. The mixin was at 0% coverage (opt-in, not auto-wired
+  into `Client`); now at 95.8%.
+
+### Changed
+
+- **CI: split tests into `unit-test` (network-free, runs everywhere)
+  and `live-test` (gated to canonical-repo pushes).** `unit-test` runs
+  ~107 regression tests on Python 3.10/3.11/3.12 — covers parsing,
+  mocked plumbing, captcha handler — without needing
+  `TEST_ACCOUNTS_URL`. `live-test` keeps the existing
+  `ClientMediaTestCase` / `ClientUserTestCase` / `ClientHighlightTestCase`
+  but only on `subzeroid/aiograpi` pushes (not on PRs from forks
+  where the secret isn't available).
+
+No runtime / API changes.
+
 ## [0.3.1] — 2026-04-26
 
 ### Tests
@@ -155,6 +180,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.4.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.4.0
 [0.3.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.3.1
 [0.3.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.3.0
 [0.2.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.2.0
