@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.5.0] — 2026-04-26
+
+### Added
+
+Phase 2 Tier 2 — porting the still-relevant pieces from instaloader's
+recent fixes; rest is N/A or already covered.
+
+- `Client.public_doc_id_graphql_request(doc_id, variables)` — POSTs to
+  `/graphql/query/` with the new doc_id-based scheme. Replaces the legacy
+  `query_hash` / `query_id` path for endpoints IG migrated.
+- `Client.user_info_v2_gql(user_id)` — fetches a profile via the new
+  `PolarisProfilePageContentQuery` (doc_id `25980296051578533`).
+- `Client.user_info_by_username_v2_gql(username)` — resolves
+  username → user_id via the FB search query
+  (doc_id `26347858941511777`), then chains to `user_info_v2_gql`.
+  Logged-in-friendly alternative to `user_info_by_username_gql`,
+  which still uses the increasingly-flaky
+  `api/v1/users/web_profile_info/` endpoint.
+- `aiograpi.exceptions.CommentUnavailable` — distinguishes
+  "comment is unavailable" from generic `UnknownError`.
+
+### Sources
+
+- instaloader #2652 — "Fix obtaining Profiles (when logged in) by
+  migrating to new GraphQL endpoints" (Mar 2026).
+- instaloader #2533 — "Fix anonymous fetch of profile posts": the
+  underlying primitive (`public_doc_id_graphql_request`) is what's
+  needed. Fallback in `user_medias_chunk` is deferred; existing
+  `query_hash="e7e2f4da4b..."` still works.
+- aiodns >=4.0.0 — **N/A** for aiograpi (we use httpx, not aiohttp).
+
+No breaking changes; existing methods unchanged.
+
 ## [0.4.1] — 2026-04-26
 
 ### Fixed
@@ -205,6 +238,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.5.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.5.0
 [0.4.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.4.1
 [0.4.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.4.0
 [0.3.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.3.1
