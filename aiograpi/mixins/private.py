@@ -21,6 +21,7 @@ from aiograpi.exceptions import (
     ClientRequestTimeout,
     ClientStatusFail,
     ClientThrottledError,
+    ClientUnauthorizedError,
     ClientUnknownError,
     CommentsDisabled,
     ConnectProxyError,
@@ -583,12 +584,26 @@ class PrivateRequestMixin:
                     message or "Empty response message. Maybe enabled Two-factor auth?",
                 )
                 raise ClientBadRequestError(e, response=response, **last_json)
+            elif response.status_code == 401:
+                self.logger.warning("Status 401: Unauthorized")
+                raise ClientUnauthorizedError(e, response=response, **last_json)
             elif response.status_code == 429:
                 self.logger.warning("Status 429: Too many requests")
                 if "Please wait a few minutes before you try again" in message:
                     raise PleaseWaitFewMinutes(e, response=response, **last_json)
                 raise ClientThrottledError(e, response=response, **last_json)
             elif response.status_code == 404:
+                # IG sometimes returns 404 with body b"Not Found" as a
+                # masked challenge (often on /media/.../comments/).
+                # Surface it as ChallengeRequired so callers can resolve
+                # rather than confusingly retrying a "missing endpoint".
+                if response.content == b"Not Found":
+                    self.logger.warning(
+                        "Status 404 with body 'Not Found' — likely a masked "
+                        "challenge on %s",
+                        endpoint,
+                    )
+                    raise ChallengeRequired(**last_json)
                 self.logger.warning("Status 404: Endpoint %s does not exists", endpoint)
                 raise ClientNotFoundError(e, response=response, **last_json)
             elif response.status_code == 408:

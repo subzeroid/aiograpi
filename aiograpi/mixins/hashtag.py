@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 from typing import List, Tuple
 
 from aiograpi.exceptions import (
@@ -17,6 +18,8 @@ from aiograpi.extractors import (
 )
 from aiograpi.types import Hashtag, Media
 from aiograpi.utils import dumps
+
+logger = logging.getLogger(__name__)
 
 
 class HashtagMixin:
@@ -190,7 +193,11 @@ class HashtagMixin:
                 for node in nodes:
                     if max_amount and len(medias) >= max_amount:
                         break
-                    media = extract_media_v1(node["media"])
+                    try:
+                        media = extract_media_v1(node["media"])
+                    except (KeyError, AttributeError, TypeError) as exc:
+                        logger.warning("Skipping malformed hashtag node: %s", exc)
+                        continue
                     # media_pk = node["media"]["id"]
                     # if media_pk in unique_set:
                     #     continue
@@ -298,7 +305,11 @@ class HashtagMixin:
             for node in nodes:
                 if max_amount and len(medias) >= max_amount:
                     break
-                media = extract_media_v1(node["media"])
+                try:
+                    media = extract_media_v1(node["media"])
+                except (KeyError, AttributeError, TypeError) as exc:
+                    logger.warning("Skipping malformed hashtag node: %s", exc)
+                    continue
                 # check contains hashtag in caption
                 # if f"#{name}" not in media.caption_text:
                 #     continue
