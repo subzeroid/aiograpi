@@ -91,6 +91,152 @@ class FbSearchMixin:
             hashtags.append(extract_hashtag_v1(item["hashtag"]))
         return hashtags
 
+    async def fbsearch_item(
+        self,
+        item_id: str,
+        search_surface: str,
+        query: str,
+        timezone_offset: int = 0,
+        count: int = 30,
+        reels_page_index: int = None,
+        has_more_reels: str = None,
+        reels_max_id: str = None,
+        next_max_id: str = None,
+        rank_token: str = None,
+        page_index: int = None,
+        page_token: str = None,
+        paging_token: str = None,
+    ) -> dict:
+        """
+        Generic fbsearch tab endpoint ``GET /fbsearch/{item_id}/``.
+
+        IG hosts every search-results-page tab (top, users, hashtags, reels,
+        clips, popular, ...) under a per-tab path. ``item_id`` is the tab
+        slug (e.g. ``"top_serp"``, ``"clips_serp_page"``, ``"user_serp"``)
+        and ``search_surface`` selects the analytics/ranking surface.
+
+        Parameters
+        ----------
+        item_id: str
+            Tab path segment, e.g. ``"top_serp"`` or ``"clips_serp_page"``.
+        search_surface: str
+            Surface tag, e.g. ``"top_serp"``, ``"user_serp"``,
+            ``"clips_serp_page"``, ``"popular_serp"``.
+        query: str
+            User-entered search string. Hashtag queries should include the
+            leading ``#``.
+        timezone_offset: int, default 0
+        count: int, default 30
+        reels_page_index, has_more_reels, reels_max_id, next_max_id,
+        rank_token, page_index, page_token, paging_token:
+            Optional pagination cursors returned by previous calls.
+
+        Returns
+        -------
+        dict
+            Parsed JSON response. Shape varies per tab — TODO: consider
+            extracting tab-specific pydantic models.
+        """
+        params = {
+            "search_surface": search_surface,
+            "query": query,
+        }
+        if timezone_offset:
+            params["timezone_offset"] = timezone_offset
+        if count:
+            params["count"] = count
+        if reels_page_index is not None:
+            params["reels_page_index"] = reels_page_index
+        if has_more_reels:
+            params["has_more_reels"] = has_more_reels
+        if reels_max_id:
+            params["reels_max_id"] = reels_max_id
+        if next_max_id:
+            params["next_max_id"] = next_max_id
+        if rank_token:
+            params["rank_token"] = rank_token
+        if page_index is not None:
+            params["page_index"] = page_index
+        if page_token:
+            params["page_token"] = page_token
+        if paging_token:
+            params["paging_token"] = paging_token
+        return await self.private_request(f"fbsearch/{item_id}/", params=params)
+
+    async def fbsearch_keyword_typeahead(
+        self,
+        query: str,
+        timezone_offset: int = 0,
+        count: int = 30,
+    ) -> dict:
+        """
+        Typeahead/autocomplete suggestions for a search query.
+
+        ``GET /fbsearch/keyword_typeahead/`` — returns blended suggestions
+        (users, hashtags, places, keywords) the typeahead UI shows while
+        the user is still typing.
+
+        Parameters
+        ----------
+        query: str
+            Partial query string.
+        timezone_offset: int, default 0
+        count: int, default 30
+
+        Returns
+        -------
+        dict
+            Parsed JSON response.
+        """
+        params = {
+            "search_surface": "typeahead_search_page",
+            "query": query,
+            "context": "blended",
+        }
+        if timezone_offset:
+            params["timezone_offset"] = timezone_offset
+        if count:
+            params["count"] = count
+        return await self.private_request("fbsearch/keyword_typeahead/", params=params)
+
+    async def fbsearch_typeahead_stream(
+        self,
+        query: str,
+        timezone_offset: int = 0,
+        count: int = 30,
+    ) -> dict:
+        """
+        Streaming variant of ``fbsearch_keyword_typeahead``.
+
+        ``GET /fbsearch/typeahead_stream/`` — returns the same blended
+        typeahead payload but as a server-side streamed response. The
+        helper transparently aggregates the streamed chunks into a single
+        dict (see ``private_request`` ``stream_rows`` fallback).
+
+        Parameters
+        ----------
+        query: str
+            Partial query string.
+        timezone_offset: int, default 0
+        count: int, default 30
+
+        Returns
+        -------
+        dict
+            Parsed JSON response. May contain ``stream_rows`` for
+            chunked envelopes.
+        """
+        params = {
+            "search_surface": "typeahead_search_page",
+            "query": query,
+            "context": "blended",
+        }
+        if timezone_offset:
+            params["timezone_offset"] = timezone_offset
+        if count:
+            params["count"] = count
+        return await self.private_request("fbsearch/typeahead_stream/", params=params)
+
     async def fbsearch_recent(
         self,
     ) -> List[Tuple[int, Union[UserShort, Hashtag, Dict]]]:
