@@ -67,6 +67,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=find_packages(),
+    package_data={"aiograpi": ["py.typed"]},
     python_requires=">=3.10",
     include_package_data=True,
     classifiers=[
