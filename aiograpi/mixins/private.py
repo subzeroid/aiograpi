@@ -24,6 +24,7 @@ from aiograpi.exceptions import (
     ClientUnauthorizedError,
     ClientUnknownError,
     CommentsDisabled,
+    CommentUnavailable,
     ConnectProxyError,
     ConsentRequired,
     FeedbackRequired,
@@ -551,6 +552,8 @@ class PrivateRequestMixin:
                     raise InvalidTargetUser(e, response=response, **last_json)
                 elif "Invalid media_id" in message:
                     raise InvalidMediaId(e, response=response, **last_json)
+                elif "comment is unavailable" in message.lower():
+                    raise CommentUnavailable(e, response=response, **last_json)
                 elif (
                     "Media is unavailable" in message
                     or "Media not found or unavailable" in message

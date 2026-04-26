@@ -373,6 +373,45 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.media_info_a1.assert_called_once_with("2110901750722920960")
 
 
+class PolarisProfileNormalizationTestCase(unittest.TestCase):
+    """Pure-function tests for _normalize_polaris_profile (PolarisProfilePageContentQuery
+    response → legacy v1 shape understood by extract_user_v1)."""
+
+    def test_pk_filled_from_id_when_missing(self):
+        client = Client()
+        out = client._normalize_polaris_profile({"id": "12345"})
+        self.assertEqual(out["pk"], "12345")
+
+    def test_pk_preserved_when_present(self):
+        client = Client()
+        out = client._normalize_polaris_profile({"pk": "999", "id": "12345"})
+        self.assertEqual(out["pk"], "999")
+
+    def test_is_business_filled_from_is_business_account(self):
+        client = Client()
+        out = client._normalize_polaris_profile({"is_business_account": True})
+        self.assertTrue(out["is_business"])
+
+    def test_category_filled_from_category_name(self):
+        client = Client()
+        out = client._normalize_polaris_profile({"category_name": "Photographer"})
+        self.assertEqual(out["category"], "Photographer")
+
+    def test_friendship_status_flattened(self):
+        client = Client()
+        out = client._normalize_polaris_profile(
+            {"friendship_status": {"following": True, "followed_by": False}}
+        )
+        self.assertTrue(out["followed_by_viewer"])
+        self.assertFalse(out["follows_viewer"])
+
+    def test_missing_friendship_status_defaults(self):
+        client = Client()
+        out = client._normalize_polaris_profile({})
+        self.assertFalse(out["followed_by_viewer"])
+        self.assertFalse(out["follows_viewer"])
+
+
 class CaptchaHandlerMixinRegressionTestCase(unittest.TestCase):
     """CaptchaHandlerMixin is opt-in (not wired into Client by default).
     Test it standalone."""

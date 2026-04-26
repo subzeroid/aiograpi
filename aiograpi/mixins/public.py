@@ -305,6 +305,59 @@ class PublicRequestMixin:
                 "Error: '{}'. Message: '{}'".format(e, message), response=e.response
             )
 
+    async def public_doc_id_graphql_request(
+        self,
+        doc_id: str,
+        variables: dict,
+        referer: str = None,
+        headers: dict = None,
+    ) -> dict:
+        """
+        POST a doc_id-based GraphQL query to www.instagram.com/graphql/query/.
+
+        Newer IG GraphQL endpoints (e.g. PolarisProfilePageContentQuery) are
+        addressed by ``doc_id`` rather than the legacy ``query_hash`` /
+        ``query_id`` scheme. Returns the parsed ``data`` payload.
+
+        Parameters
+        ----------
+        doc_id: str
+            doc_id of the registered query (e.g. "25980296051578533").
+        variables: dict
+            Query variables — will be JSON-encoded compactly into the
+            ``variables`` form field.
+        referer: str, optional
+            Value for the ``Referer`` request header.
+        headers: dict, optional
+            Extra request headers merged on top of the public session's.
+        """
+        data = {
+            "variables": json.dumps(variables, separators=(",", ":")),
+            "doc_id": doc_id,
+            "server_timestamps": "true",
+        }
+        merged_headers = {"accept": "*/*"}
+        if referer:
+            merged_headers["referer"] = referer
+        if headers:
+            merged_headers.update(headers)
+        body_json = await self.public_request(
+            self.GRAPHQL_PUBLIC_API_URL,
+            data=data,
+            headers=merged_headers,
+            return_json=True,
+        )
+        if "data" not in body_json:
+            errors = body_json.get("errors") or []
+            summary = errors[0].get("summary") if errors else None
+            description = errors[0].get("description") if errors else None
+            raise ClientGraphqlError(
+                "Missing 'data' in doc_id GraphQL response (doc_id={}). "
+                "Summary: '{}'. Description: '{}'".format(doc_id, summary, description),
+                response=body_json,
+            )
+        return body_json["data"]
+
 
 class TopSearchesPublicMixin:
     async def top_search(self, query):

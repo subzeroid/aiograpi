@@ -292,6 +292,93 @@ class UserMixin:
             )["data"]["user"]
         )
 
+    async def user_info_v2_gql(self, user_id: str) -> User:
+        """
+        Get user object via the new PolarisProfilePageContentQuery doc_id.
+
+        IG migrated logged-in profile fetches off ``api/v1/users/web_profile_info/``
+        to a doc_id-based GraphQL endpoint. This method posts to that endpoint
+        and normalizes the response into the same legacy shape that
+        :func:`extract_user_v1` understands.
+
+        Use this when ``user_info_by_username_gql`` starts returning
+        unauthorized / empty for logged-in callers.
+
+        Parameters
+        ----------
+        user_id: str
+            Numeric user id ("pk").
+
+        Returns
+        -------
+        User
+            An object of User type.
+        """
+        variables = {
+            "id": str(user_id),
+            "render_surface": "PROFILE",
+            # Relay provider flags carried over from PolarisProfilePageContentQuery.
+            "__relay_internal__pv__PolarisCannesGuardianExperienceEnabledrelayprovider": True,
+            "__relay_internal__pv__PolarisCASB976ProfileEnabledrelayprovider": False,
+            "__relay_internal__pv__PolarisRepostsConsumptionEnabledrelayprovider": False,
+        }
+        data = await self.public_doc_id_graphql_request("25980296051578533", variables)
+        user_data = (data or {}).get("user")
+        if user_data is None:
+            raise UserNotFound("User not found", user_id=user_id)
+        return extract_user_v1(self._normalize_polaris_profile(user_data))
+
+    async def user_info_by_username_v2_gql(self, username: str) -> User:
+        """
+        Get user object via the new doc_id-based GraphQL endpoints.
+
+        Two-step: first resolve username → user_id via the FB search query
+        (doc_id 26347858941511777), then fetch the profile via
+        :meth:`user_info_v2_gql`. Provides a logged-in-friendly alternative
+        to :meth:`user_info_by_username_gql` (which uses the increasingly
+        flaky ``api/v1/users/web_profile_info/`` endpoint).
+
+        Parameters
+        ----------
+        username: str
+            User name of an instagram account.
+
+        Returns
+        -------
+        User
+            An object of User type.
+        """
+        username = str(username).lower()
+        data = await self.public_doc_id_graphql_request(
+            "26347858941511777", {"hasQuery": True, "query": username}
+        )
+        users = (data or {}).get("xdt_api__v1__fbsearch__non_profiled_serp", {}).get(
+            "users"
+        ) or []
+        for user in users:
+            if (user.get("username") or "").lower() == username:
+                return await self.user_info_v2_gql(user.get("pk") or user.get("id"))
+        raise UserNotFound("User not found", username=username)
+
+    @staticmethod
+    def _normalize_polaris_profile(user_data: dict) -> dict:
+        """Map PolarisProfilePageContentQuery fields onto the legacy v1 shape
+        understood by :func:`extract_user_v1`."""
+        normalized = dict(user_data)
+        if "pk" not in normalized and "id" in normalized:
+            normalized["pk"] = normalized["id"]
+        if "is_business" not in normalized and "is_business_account" in normalized:
+            normalized["is_business"] = normalized["is_business_account"]
+        if "category" not in normalized and "category_name" in normalized:
+            normalized["category"] = normalized["category_name"]
+        # PolarisProfilePageContentQuery puts viewer-relationship flags
+        # under friendship_status; aiograpi User doesn't track them, but
+        # flatten anyway in case future fields land.
+        friendship = normalized.get("friendship_status") or {}
+        normalized.setdefault("followed_by_viewer", friendship.get("following", False))
+        normalized.setdefault("follows_viewer", friendship.get("followed_by", False))
+        return normalized
+
     async def user_info_by_username_v1(self, username: str) -> User:
         """
         Get user object from user name
