@@ -2568,10 +2568,7 @@ class DirectExtractorRegressionTestCase(unittest.TestCase):
         self.assertFalse(thread.is_close_friend_thread)
 
 
-@unittest.skip(
-    "aiograpi: sync regression/unit test from upstream — needs manual async rewrite"
-)
-class DirectMixinRegressionTestCase(unittest.TestCase):
+class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     def build_client(self):
         client = Client()
         client.settings = {}
@@ -2579,57 +2576,48 @@ class DirectMixinRegressionTestCase(unittest.TestCase):
         client.last_json = {}
         return client
 
-    def test_direct_send_video_uses_direct_story_flow_for_thread_ids(self):
+    async def test_direct_send_video_uses_direct_story_flow_for_thread_ids(self):
         client = self.build_client()
         expected = Mock(spec=DirectMessage)
 
-        with mock.patch.object(
-            client, "video_upload_to_direct", return_value=expected
-        ) as video_upload:
-            result = client.direct_send_video("clip.mp4", thread_ids=[123])
+        client.video_upload_to_direct = AsyncMock(return_value=expected)
+        result = await client.direct_send_video("clip.mp4", thread_ids=[123])
 
         self.assertIs(result, expected)
-        video_upload.assert_called_once_with(Path("clip.mp4"), thread_ids=[123])
+        client.video_upload_to_direct.assert_called_once_with(
+            Path("clip.mp4"), thread_ids=[123]
+        )
 
-    def test_direct_send_video_resolves_existing_thread_for_user_ids(self):
+    async def test_direct_send_video_resolves_existing_thread_for_user_ids(self):
         client = self.build_client()
         expected = Mock(spec=DirectMessage)
 
-        with mock.patch.object(
-            client,
-            "direct_thread_by_participants",
-            return_value={"thread_v2_id": "340282366841710300949128149448121770626"},
-        ) as thread_lookup:
-            with mock.patch.object(
-                client, "video_upload_to_direct", return_value=expected
-            ) as video_upload:
-                result = client.direct_send_video("clip.mp4", user_ids=[42])
+        client.direct_thread_by_participants = AsyncMock(
+            return_value={"thread_v2_id": "340282366841710300949128149448121770626"}
+        )
+        client.video_upload_to_direct = AsyncMock(return_value=expected)
+        result = await client.direct_send_video("clip.mp4", user_ids=[42])
 
         self.assertIs(result, expected)
-        thread_lookup.assert_called_once_with([42])
-        video_upload.assert_called_once_with(
+        client.direct_thread_by_participants.assert_called_once_with([42])
+        client.video_upload_to_direct.assert_called_once_with(
             Path("clip.mp4"),
             thread_ids=[340282366841710300949128149448121770626],
         )
 
-    def test_direct_send_video_raises_when_existing_thread_is_missing(self):
+    async def test_direct_send_video_raises_when_existing_thread_is_missing(self):
         client = self.build_client()
 
-        with mock.patch.object(
-            client, "direct_thread_by_participants", return_value={}
-        ) as thread_lookup:
-            with mock.patch.object(client, "video_upload_to_direct") as video_upload:
-                with self.assertRaises(DirectThreadNotFound):
-                    client.direct_send_video("clip.mp4", user_ids=[42])
+        client.direct_thread_by_participants = AsyncMock(return_value={})
+        client.video_upload_to_direct = AsyncMock()
+        with self.assertRaises(DirectThreadNotFound):
+            await client.direct_send_video("clip.mp4", user_ids=[42])
 
-        thread_lookup.assert_called_once_with([42])
-        video_upload.assert_not_called()
+        client.direct_thread_by_participants.assert_called_once_with([42])
+        client.video_upload_to_direct.assert_not_called()
 
 
-@unittest.skip(
-    "aiograpi: sync regression/unit test from upstream — needs manual async rewrite"
-)
-class UserMixinRegressionTestCase(unittest.TestCase):
+class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     def build_private_client(self):
         client = Client()
         client.settings = {}
@@ -2664,7 +2652,7 @@ class UserMixinRegressionTestCase(unittest.TestCase):
         user.update(overrides)
         return {"data": {"user": user}}
 
-    def test_user_short_gql_falls_back_to_web_profile_graphql(self):
+    async def test_user_short_gql_falls_back_to_web_profile_graphql(self):
         client = Client()
         web_user = {
             "id": "25025320",
@@ -2674,20 +2662,17 @@ class UserMixinRegressionTestCase(unittest.TestCase):
             "profile_pic_url": "https://example.com/pic.jpg",
         }
 
-        with mock.patch.object(
-            client,
-            "public_graphql_request",
-            side_effect=ClientGraphqlError("Incorrect Query"),
-        ):
-            with mock.patch.object(
-                client, "user_web_profile_info_gql", return_value=web_user
-            ) as fallback:
-                user = client.user_short_gql("25025320", use_cache=False)
+        client.public_graphql_request = AsyncMock(
+            side_effect=ClientGraphqlError("Incorrect Query")
+        )
+        client.user_web_profile_info_gql = AsyncMock(return_value=web_user)
+        # user_short_gql in aiograpi has no use_cache kwarg; signature differs
+        user = await client.user_short_gql("25025320")
 
         self.assertEqual(user.username, "instagram")
-        fallback.assert_called_once_with("25025320")
+        client.user_web_profile_info_gql.assert_called_once_with("25025320")
 
-    def test_user_info_by_username_gql_parses_web_profile_without_update_headers_kwarg(
+    async def test_user_info_by_username_gql_parses_web_profile_without_update_headers_kwarg(
         self,
     ):
         class DummyClient(UserMixin):
@@ -2696,7 +2681,7 @@ class UserMixinRegressionTestCase(unittest.TestCase):
             def __init__(self):
                 self.public_request_calls = []
 
-            def public_request(self, url, headers=None, **kwargs):
+            async def public_request(self, url, headers=None, **kwargs):
                 self.public_request_calls.append(
                     {"url": url, "headers": headers, "kwargs": kwargs}
                 )
@@ -2704,72 +2689,44 @@ class UserMixinRegressionTestCase(unittest.TestCase):
 
         client = DummyClient()
         client.response_body = self.build_web_profile_user()
-        user = client.user_info_by_username_gql("Example")
+        user = await client.user_info_by_username_gql("Example")
         self.assertEqual(user.pk, "123")
         self.assertEqual(user.username, "example")
         self.assertEqual(len(client.public_request_calls), 1)
         self.assertEqual(client.public_request_calls[0]["kwargs"], {})
         self.assertIn(
-            "web_profile_info/?username=example", client.public_request_calls[0]["url"]
+            "web_profile_info/?username=example",
+            client.public_request_calls[0]["url"],
         )
 
+    @unittest.skip(
+        "aiograpi: tests urllib3 RetryError handling; aiograpi has no urllib3 "
+        "retry stack and the user_info_by_username fallback catches generic "
+        "Exception, so RetryError is not a meaningful sentinel here"
+    )
     def test_user_info_by_username_suppresses_traceback_for_public_retry_error(self):
-        client = Client()
-        client._usernames_cache = {}
-        client._users_cache = {}
-        client.logger = Mock()
-        fallback_user = User(
-            pk="123",
-            username="example",
-            full_name="Example",
-            is_private=False,
-            is_verified=False,
-            profile_pic_url="https://example.com/pic.jpg",
-            media_count=0,
-            follower_count=0,
-            following_count=0,
-            is_business=False,
-        )
+        pass
 
-        with mock.patch.object(
-            client,
-            "user_info_by_username_gql",
-            side_effect=RetryError("too many 429 error responses"),
-        ):
-            with mock.patch.object(
-                client, "user_info_by_username_v1", return_value=fallback_user
-            ) as fallback:
-                with mock.patch.object(
-                    client, "user_info", return_value=fallback_user
-                ) as user_info:
-                    user = client.user_info_by_username("Example", use_cache=False)
-
-        self.assertEqual(user.pk, "123")
-        fallback.assert_called_once_with("example")
-        user_info.assert_called_once_with("123")
-        client.logger.exception.assert_not_called()
-        client.logger.warning.assert_called_once()
-
-    def test_user_info_by_username_gql_handles_missing_pinned_channels_info(self):
+    async def test_user_info_by_username_gql_handles_missing_pinned_channels_info(self):
         class DummyClient(UserMixin):
             response_body = None
 
-            def public_request(self, url, headers=None, **kwargs):
+            async def public_request(self, url, headers=None, **kwargs):
                 return json.dumps(self.response_body)
 
         client = DummyClient()
         client.response_body = self.build_web_profile_user()
         client.response_body["data"]["user"].pop("pinned_channels_info")
 
-        user = client.user_info_by_username_gql("Example")
+        user = await client.user_info_by_username_gql("Example")
 
         self.assertEqual(user.broadcast_channel, [])
 
-    def test_user_info_by_username_gql_handles_bio_links_without_link_id(self):
+    async def test_user_info_by_username_gql_handles_bio_links_without_link_id(self):
         class DummyClient(UserMixin):
             response_body = None
 
-            def public_request(self, url, headers=None, **kwargs):
+            async def public_request(self, url, headers=None, **kwargs):
                 return json.dumps(self.response_body)
 
         client = DummyClient()
@@ -2777,56 +2734,47 @@ class UserMixinRegressionTestCase(unittest.TestCase):
             bio_links=[{"url": "https://example.com", "title": "Example"}]
         )
 
-        user = client.user_info_by_username_gql("Example")
+        user = await client.user_info_by_username_gql("Example")
 
         self.assertEqual(len(user.bio_links), 1)
         self.assertIsNone(user.bio_links[0].link_id)
         self.assertEqual(user.bio_links[0].url, "https://example.com")
 
-    def test_user_followers_v1_chunk_omits_empty_max_id_on_first_page(self):
+    async def test_user_followers_v1_chunk_omits_empty_max_id_on_first_page(self):
         client = self.build_private_client()
 
-        with mock.patch.object(
-            client,
-            "private_request",
-            return_value={"users": [], "next_max_id": None},
-        ) as private_request:
-            client.user_followers_v1_chunk("123")
+        client.private_request = AsyncMock(
+            return_value={"users": [], "next_max_id": None}
+        )
+        await client.user_followers_v1_chunk("123")
 
-        params = private_request.call_args.kwargs["params"]
+        params = client.private_request.call_args.kwargs["params"]
         self.assertNotIn("max_id", params)
 
-    def test_user_followers_v1_chunk_sends_non_empty_max_id_on_next_page(self):
+    async def test_user_followers_v1_chunk_sends_non_empty_max_id_on_next_page(self):
         client = self.build_private_client()
 
-        with mock.patch.object(
-            client,
-            "private_request",
-            return_value={"users": [], "next_max_id": None},
-        ) as private_request:
-            client.user_followers_v1_chunk("123", max_id="cursor")
+        client.private_request = AsyncMock(
+            return_value={"users": [], "next_max_id": None}
+        )
+        await client.user_followers_v1_chunk("123", max_id="cursor")
 
-        params = private_request.call_args.kwargs["params"]
+        params = client.private_request.call_args.kwargs["params"]
         self.assertEqual(params["max_id"], "cursor")
 
-    def test_user_following_v1_chunk_omits_empty_max_id_on_first_page(self):
+    async def test_user_following_v1_chunk_omits_empty_max_id_on_first_page(self):
         client = self.build_private_client()
 
-        with mock.patch.object(
-            client,
-            "private_request",
-            return_value={"users": [], "next_max_id": None},
-        ) as private_request:
-            client.user_following_v1_chunk("123")
+        client.private_request = AsyncMock(
+            return_value={"users": [], "next_max_id": None}
+        )
+        await client.user_following_v1_chunk("123")
 
-        params = private_request.call_args.kwargs["params"]
+        params = client.private_request.call_args.kwargs["params"]
         self.assertNotIn("max_id", params)
 
 
-@unittest.skip(
-    "aiograpi: sync regression/unit test from upstream — needs manual async rewrite"
-)
-class TimelineRegressionTestCase(unittest.TestCase):
+class TimelineRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     @staticmethod
     def build_media_payload(pk="1", code="abc"):
         return {
@@ -2860,23 +2808,23 @@ class TimelineRegressionTestCase(unittest.TestCase):
             },
         }
 
-    def test_reels_timeline_media_returns_empty_for_unsupported_collection(self):
+    async def test_reels_timeline_media_returns_empty_for_unsupported_collection(self):
         client = Client()
         client.logger = Mock()
-        client.private_request = Mock()
+        client.private_request = AsyncMock()
 
-        result = client.reels_timeline_media(123456789)
+        result = await client.reels_timeline_media(123456789)
 
         self.assertEqual(result, [])
         client.private_request.assert_not_called()
         client.logger.warning.assert_called_once()
 
-    def test_reels_timeline_media_uses_paging_info_max_id_for_pagination(self):
+    async def test_reels_timeline_media_uses_paging_info_max_id_for_pagination(self):
         client = Client()
         client.logger = Mock()
         first_media = self.build_media_payload(pk="1", code="abc")
         second_media = self.build_media_payload(pk="2", code="def")
-        client.private_request = Mock(
+        client.private_request = AsyncMock(
             side_effect=[
                 {
                     "items": [{"media": first_media}],
@@ -2889,7 +2837,7 @@ class TimelineRegressionTestCase(unittest.TestCase):
             ]
         )
 
-        result = client.reels_timeline_media("reels", amount=2)
+        result = await client.reels_timeline_media("reels", amount=2)
 
         self.assertEqual(len(result), 2)
         self.assertEqual(client.private_request.call_count, 2)
@@ -2900,10 +2848,7 @@ class TimelineRegressionTestCase(unittest.TestCase):
         self.assertEqual(second_call.kwargs["params"]["max_id"], "next-page")
 
 
-@unittest.skip(
-    "aiograpi: sync regression/unit test from upstream — needs manual async rewrite"
-)
-class StoryConfigureRegressionTestCase(unittest.TestCase):
+class StoryConfigureRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     def build_client(self):
         client = Client()
         client.settings = {}
@@ -2916,34 +2861,34 @@ class StoryConfigureRegressionTestCase(unittest.TestCase):
         client.with_default_data = lambda data: data
         return client
 
-    def test_photo_story_sticker_ids_include_all_stickers(self):
+    async def test_photo_story_sticker_ids_include_all_stickers(self):
         client = self.build_client()
-
-        with mock.patch.object(client, "private_request") as private_request:
-            private_request.side_effect = [
+        client.private_request = AsyncMock(
+            side_effect=[
                 {"status": "ok"},
                 {"status": "ok"},
             ]
-            client.photo_configure_to_story(
-                upload_id="1",
-                width=720,
-                height=1280,
-                caption="",
-                links=[StoryLink(webUri="https://example.com")],
-                hashtags=[
-                    StoryHashtag(
-                        hashtag=Hashtag(id="1", name="example"),
-                        x=0.2,
-                        y=0.3,
-                        width=0.5,
-                        height=0.2,
-                    )
-                ],
-            )
+        )
+        await client.photo_configure_to_story(
+            upload_id="1",
+            width=720,
+            height=1280,
+            caption="",
+            links=[StoryLink(webUri="https://example.com")],
+            hashtags=[
+                StoryHashtag(
+                    hashtag=Hashtag(id="1", name="example"),
+                    x=0.2,
+                    y=0.3,
+                    width=0.5,
+                    height=0.2,
+                )
+            ],
+        )
 
-        validate_args, _ = private_request.call_args_list[0]
+        validate_args, _ = client.private_request.call_args_list[0]
         self.assertEqual(validate_args[1]["url"], "https://example.com/")
-        configure_args, _ = private_request.call_args_list[1]
+        configure_args, _ = client.private_request.call_args_list[1]
         self.assertEqual(
             configure_args[1]["story_sticker_ids"],
             "hashtag_sticker,link_sticker_default",
