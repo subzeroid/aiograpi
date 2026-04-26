@@ -29,7 +29,7 @@ requirements = [
 
 setup(
     name="aiograpi",
-    version="0.6.0",
+    version="0.6.1",
     author="Mr.Robot",
     author_email="mr.robot@example.org",
     license="MIT",

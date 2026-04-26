@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.6.1] — 2026-04-27
+
+### Fixed
+
+`Client.user_info_v2_gql` and `Client.user_info_by_username_v2_gql`
+(added in 0.5.0) were 403'ing against
+`https://www.instagram.com/graphql/query/`. Live-tested with a
+working proxy and discovered:
+
+- `public_doc_id_graphql_request` was sending a desktop User-Agent.
+  IG rejects bare desktop POSTs to that endpoint as not-a-browser,
+  not-a-mobile-app. Now sends the iPhone Instagram-app User-Agent
+  (mirrors `instaloader._default_http_header(empty_session_only=True)`).
+- The PolarisProfilePageContentQuery and FB-search doc_ids need
+  logged-in cookies even though they go through the "public" host.
+  `user_info_v2_gql` / `user_info_by_username_v2_gql` now bridge the
+  private session's `sessionid` / `ds_user_id` into the public session
+  via `inject_sessionid_to_public()` before the request.
+
+### Added
+
+- `tests/live/smoke.py` — end-to-end live smoke. Wired into the
+  `live-test` GitHub Actions job. Required checks: anonymous
+  `public_gql`, login (TOTP), `private_v1`, `private_v2_gql`,
+  `hashtag_info_v1`, `user_medias_v1`. Optional (reports counts,
+  doesn't fail the build): all 12 chapi-ported endpoints from 0.6.0.
+
+### Live verification status (0.6.1)
+
+Tested on a TOTP-authenticated pool account through a working proxy:
+
+- ✅ all 6 required checks pass.
+- ✅ 10/12 optional chapi endpoints pass.
+- ❌ 2 chapi endpoints fail with HTTP 400 — `private_graphql_followers_list`,
+  `private_graphql_following_list`, `private_graphql_clips_profile`. Tracked
+  separately; doc_ids likely need refresh or payload tweaks.
+
 ## [0.6.0] — 2026-04-26
 
 ### Added — chapi sweep
@@ -306,6 +343,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.6.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.1
 [0.6.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.0
 [0.5.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.5.0
 [0.4.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.4.1
