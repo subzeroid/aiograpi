@@ -128,6 +128,11 @@ jobs:
         with:
           requirements: "true"
           test-requirements: "true"
+      - name: Run end-to-end smoke
+        # Required: anonymous public_gql + login(TOTP) + private_v1 +
+        # private_v2_gql + hashtag_info_v1 + user_medias_v1.
+        # Optional (reports but never fails): all chapi-ported endpoints.
+        run: python tests/live/smoke.py
       - name: Run media test
         run: pytest -sv tests.py::ClientMediaTestCase
       - name: Run user test
