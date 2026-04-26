@@ -1634,3 +1634,244 @@ class UserMixin:
         except ClientError as e:
             raise UserNotFound(e, username=username, **self.last_json)
         return result
+
+    async def feed_user_stream_item(
+        self,
+        item_id: str,
+        is_pull_to_refresh: bool = False,
+    ) -> dict:
+        """
+        Fetch the streamed feed for a user (profile grid stream).
+
+        ``POST /feed/user_stream/{item_id}/`` — returns the per-user feed
+        delivered as a streaming response. ``item_id`` is typically the
+        target user pk. Sends the standard ``_uuid`` payload IG expects on
+        POST endpoints.
+
+        Parameters
+        ----------
+        item_id: str
+            Target user pk (or other stream resource id).
+        is_pull_to_refresh: bool, default False
+            Set to True to mimic a pull-to-refresh fetch (sends
+            ``is_pull_to_refresh="true"``).
+
+        Returns
+        -------
+        dict
+            Parsed JSON response. Streaming envelopes are aggregated by
+            ``private_request`` into a ``stream_rows`` key when needed.
+        """
+        data = {
+            "_uuid": self.uuid,
+        }
+        if is_pull_to_refresh:
+            data["is_pull_to_refresh"] = "true"
+        return await self.private_request(f"feed/user_stream/{item_id}/", data=data)
+
+    async def private_graphql_followers_list(
+        self,
+        user_id: str,
+        rank_token: str,
+        client_doc_id: str = None,
+        max_id: int = None,
+        priority: str = None,
+        exclude_field_is_favorite: bool = None,
+        exclude_unused_fields: bool = None,
+    ) -> dict:
+        """
+        Private-side ``FollowersList`` GraphQL query.
+
+        Newer mobile-app surface that returns the followers list via
+        ``i.instagram.com/graphql/query`` (root field
+        ``xdt_api__v1__friendships__followers``). Prefer the higher-level
+        ``user_followers_v1`` / ``user_followers_gql`` helpers when you
+        just need a list of users — this is the raw doc-id wrapper.
+
+        Parameters
+        ----------
+        user_id: str
+            Target user pk.
+        rank_token: str
+            UUID-style rank token IG generates per follow-list session.
+        client_doc_id: str, optional
+            Numeric doc id of the registered query.
+        max_id: int, optional
+            Cursor for pagination.
+        priority: str, optional
+            ``Priority`` header value, e.g. ``"u=3, i"``.
+        exclude_field_is_favorite, exclude_unused_fields: bool, optional
+            Forwarded to the ``variables`` payload.
+
+        Returns
+        -------
+        dict
+            Raw GraphQL response.
+        """
+        request_data = {
+            "rank_token": rank_token,
+            "enableGroups": True,
+        }
+        variables = {
+            "include_unseen_count": False,
+            "query": "",
+            "include_biography": False,
+            "user_id": str(user_id),
+            "request_data": request_data,
+            "search_surface": "follow_list_page",
+        }
+        if exclude_field_is_favorite is not None:
+            variables["exclude_field_is_favorite"] = str(exclude_field_is_favorite)
+        if max_id is not None:
+            variables["max_id"] = max_id
+        if exclude_unused_fields is not None:
+            variables["exclude_unused_fields"] = str(exclude_unused_fields)
+        return await self.private_graphql_query_request(
+            friendly_name="FollowersList",
+            root_field_name="xdt_api__v1__friendships__followers",
+            variables=variables,
+            client_doc_id=client_doc_id,
+            priority=priority,
+        )
+
+    async def private_graphql_following_list(
+        self,
+        user_id: str,
+        rank_token: str,
+        client_doc_id: str = None,
+        max_id: int = None,
+        priority: str = None,
+        exclude_field_is_favorite: bool = None,
+        exclude_unused_fields: bool = None,
+    ) -> dict:
+        """
+        Private-side ``FollowingList`` GraphQL query.
+
+        Mirror of ``private_graphql_followers_list`` for the following
+        edge — root field ``xdt_api__v1__friendships__following``.
+        """
+        request_data = {
+            "search_surface": "follow_list_page",
+            "rank_token": rank_token,
+            "includes_hashtags": True,
+        }
+        variables = {
+            "include_unseen_count": False,
+            "enable_groups": True,
+            "user_id": str(user_id),
+            "request_data": request_data,
+            "include_biography": False,
+            "query": "",
+        }
+        if exclude_field_is_favorite is not None:
+            variables["exclude_field_is_favorite"] = str(exclude_field_is_favorite)
+        if max_id is not None:
+            variables["max_id"] = max_id
+        if exclude_unused_fields is not None:
+            variables["exclude_unused_fields"] = str(exclude_unused_fields)
+        return await self.private_graphql_query_request(
+            friendly_name="FollowingList",
+            root_field_name="xdt_api__v1__friendships__following",
+            variables=variables,
+            client_doc_id=client_doc_id,
+            priority=priority,
+        )
+
+    async def private_graphql_clips_profile(
+        self,
+        target_user_id: str,
+        client_doc_id: str = None,
+        priority: str = None,
+        initial_stream_count: int = 6,
+        page_size: int = 12,
+        no_of_medias_in_each_chunk: int = 6,
+    ) -> dict:
+        """
+        Private-side ``ClipsProfileQuery`` GraphQL query.
+
+        Returns the profile-grid Reels stream for ``target_user_id`` via
+        ``i.instagram.com/graphql/query`` (root field
+        ``xdt_user_clips_graphql``). For a parsed list of media use
+        ``user_clips_v1`` instead — this is the raw doc-id wrapper.
+
+        Parameters
+        ----------
+        target_user_id: str
+            Target user pk.
+        client_doc_id: str, optional
+            Numeric doc id of the registered query.
+        priority: str, optional
+        initial_stream_count: int, default 6
+        page_size: int, default 12
+        no_of_medias_in_each_chunk: int, default 6
+
+        Returns
+        -------
+        dict
+            Raw GraphQL response (often a streamed envelope).
+        """
+        inner_data = {
+            "target_user_id": str(target_user_id),
+            "should_stream_response": True,
+            "sort_by_views": False,
+            "max_id": None,
+            "include_feed_video": True,
+            "audience": None,
+        }
+        if page_size:
+            inner_data["page_size"] = page_size
+        if no_of_medias_in_each_chunk:
+            inner_data["no_of_medias_in_each_chunk"] = no_of_medias_in_each_chunk
+        variables = {
+            "use_stream": True,
+            "use_defer": True,
+            "enable_video_versions_in_light_media": True,
+            "exclude_caption_user_field": False,
+            "enable_thumbnails_in_light_media": False,
+            "enable_audience_in_light_media": False,
+            "enable_clips_metadata_in_light_media": False,
+            "exclude_main_user_field": False,
+            "enable_likers_in_full_media": False,
+            "data": inner_data,
+            "stream_use_customized_batch": True,
+        }
+        if initial_stream_count:
+            variables["initial_stream_count"] = initial_stream_count
+        return await self.private_graphql_query_request(
+            friendly_name="ClipsProfileQuery",
+            root_field_name="xdt_user_clips_graphql",
+            variables=variables,
+            client_doc_id=client_doc_id,
+            priority=priority,
+        )
+
+    async def private_graphql_inbox_tray_for_user(
+        self,
+        user_id: str,
+        client_doc_id: str = None,
+        priority: str = None,
+    ) -> dict:
+        """
+        Private-side ``InboxTrayRequestForUserQuery`` GraphQL query.
+
+        Returns the per-user direct-inbox tray digest (root field
+        ``xdt_get_inbox_tray_items``).
+
+        Parameters
+        ----------
+        user_id: str
+            Target user pk.
+        client_doc_id: str, optional
+        priority: str, optional
+        """
+        variables = {
+            "user_id": str(user_id),
+            "should_fetch_content_note_stack_video_info": False,
+        }
+        return await self.private_graphql_query_request(
+            friendly_name="InboxTrayRequestForUserQuery",
+            root_field_name="xdt_get_inbox_tray_items",
+            variables=variables,
+            client_doc_id=client_doc_id,
+            priority=priority,
+        )
