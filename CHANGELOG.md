@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.3.1] — 2026-04-26
+
+### Tests
+
+97 regression tests previously class-level `@unittest.skip`-ped are
+now runnable (and passing). All 11 affected classes are unskipped;
+only 10 individual tests stay `@unittest.skip` with concrete reasons:
+
+- 5 in `ChallengeRegressionTestCase` — contact-form tests use
+  upstream `requests.Session` / `requests.cookies.cookiejar_from_dict`
+  fixtures that don't translate cleanly to `httpx_ext.Session`.
+- 3 in `ClientTestCase` — two test urllib3 `HTTPAdapter` retry config
+  which `httpx_ext.Session` doesn't expose (see comment in
+  `aiograpi/mixins/private.py:107-129`); one needs live IG creds.
+- 1 in `UserMixinRegressionTestCase` — references urllib3 `RetryError`
+  which the user fallback no longer catches specifically.
+- 1 in `SignUpTestCase` — needs live Instagram signup + SMS.
+
+No runtime / API changes.
+
 ## [0.3.0] — 2026-04-26
 
 ### Breaking
@@ -135,6 +155,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.3.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.3.1
 [0.3.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.3.0
 [0.2.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.2.0
 [0.1.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.1.1
