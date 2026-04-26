@@ -4158,5 +4158,291 @@ class ClientCutoutStickerTestCase(ClientPrivateTestCase):
                 await self.cl.media_delete(media.id)
 
 
+class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    """
+    Regression tests for endpoints ported from the chapi async client.
+    Each test stubs out the underlying request layer so we can assert the
+    method shapes its parameters / form data the way IG expects without
+    talking to the live service.
+    """
+
+    def build_client(self):
+        client = Client()
+        client.settings = {}
+        client.authorization_data = {"ds_user_id": "1"}
+        client.uuid = "stub-uuid"
+        client.last_json = {}
+        return client
+
+    # --- fbsearch ---
+
+    async def test_fbsearch_item_passes_params_and_optional_cursors(self):
+        client = self.build_client()
+        client.private_request = AsyncMock(return_value={"items": []})
+
+        result = await client.fbsearch_item(
+            "clips_serp_page",
+            search_surface="clips_serp_page",
+            query="metallica",
+            count=20,
+            reels_max_id="r:abc",
+            paging_token='{"total_num_items":4}',
+        )
+
+        self.assertEqual(result, {"items": []})
+        client.private_request.assert_awaited_once()
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "fbsearch/clips_serp_page/")
+        params = kwargs["params"]
+        self.assertEqual(params["search_surface"], "clips_serp_page")
+        self.assertEqual(params["query"], "metallica")
+        self.assertEqual(params["count"], 20)
+        self.assertEqual(params["reels_max_id"], "r:abc")
+        self.assertEqual(params["paging_token"], '{"total_num_items":4}')
+        self.assertNotIn("rank_token", params)
+
+    async def test_fbsearch_keyword_typeahead_sets_blended_context(self):
+        client = self.build_client()
+        client.private_request = AsyncMock(return_value={"list": []})
+
+        result = await client.fbsearch_keyword_typeahead("metal", count=10)
+
+        self.assertEqual(result, {"list": []})
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "fbsearch/keyword_typeahead/")
+        self.assertEqual(
+            kwargs["params"],
+            {
+                "search_surface": "typeahead_search_page",
+                "query": "metal",
+                "context": "blended",
+                "count": 10,
+            },
+        )
+
+    async def test_fbsearch_typeahead_stream_hits_stream_endpoint(self):
+        client = self.build_client()
+        client.private_request = AsyncMock(return_value={"stream_rows": []})
+
+        await client.fbsearch_typeahead_stream("metal")
+
+        args, _ = client.private_request.call_args
+        self.assertEqual(args[0], "fbsearch/typeahead_stream/")
+
+    # --- comment ---
+
+    async def test_media_comment_infos_joins_list_into_csv(self):
+        client = self.build_client()
+        client.private_request = AsyncMock(return_value={"comments": {}})
+
+        await client.media_comment_infos(["3391_56", "3392_56"])
+
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "media/comment_infos/")
+        self.assertEqual(kwargs["params"]["media_ids"], "3391_56,3392_56")
+        self.assertEqual(kwargs["params"]["can_support_carousel_mentions"], "false")
+
+    async def test_media_comment_infos_accepts_string(self):
+        client = self.build_client()
+        client.private_request = AsyncMock(return_value={"comments": {}})
+
+        await client.media_comment_infos("3391_56,3392_56")
+
+        _, kwargs = client.private_request.call_args
+        self.assertEqual(kwargs["params"]["media_ids"], "3391_56,3392_56")
+
+    # --- user / timeline ---
+
+    async def test_feed_user_stream_item_posts_uuid(self):
+        client = self.build_client()
+        client.private_request = AsyncMock(return_value={"items": []})
+
+        await client.feed_user_stream_item("123", is_pull_to_refresh=True)
+
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "feed/user_stream/123/")
+        self.assertEqual(kwargs["data"]["_uuid"], "stub-uuid")
+        self.assertEqual(kwargs["data"]["is_pull_to_refresh"], "true")
+
+    async def test_feed_user_stream_item_omits_pull_to_refresh_by_default(self):
+        client = self.build_client()
+        client.private_request = AsyncMock(return_value={"items": []})
+
+        await client.feed_user_stream_item("999")
+
+        _, kwargs = client.private_request.call_args
+        self.assertNotIn("is_pull_to_refresh", kwargs["data"])
+
+    # --- private_graphql_query_request based wrappers ---
+
+    async def test_private_graphql_followers_list_builds_variables(self):
+        client = self.build_client()
+        captured = {}
+
+        async def fake_call(**kwargs):
+            captured.update(kwargs)
+            return {"data": {"xdt_api__v1__friendships__followers": {}}}
+
+        client.private_graphql_query_request = fake_call
+        result = await client.private_graphql_followers_list(
+            user_id=42,
+            rank_token="rank-1",
+            client_doc_id="111",
+            max_id=50,
+            priority="u=3, i",
+        )
+
+        self.assertIn("data", result)
+        self.assertEqual(captured["friendly_name"], "FollowersList")
+        self.assertEqual(
+            captured["root_field_name"],
+            "xdt_api__v1__friendships__followers",
+        )
+        self.assertEqual(captured["client_doc_id"], "111")
+        self.assertEqual(captured["priority"], "u=3, i")
+        variables = captured["variables"]
+        self.assertEqual(variables["user_id"], "42")
+        self.assertEqual(variables["max_id"], 50)
+        self.assertEqual(
+            variables["request_data"],
+            {"rank_token": "rank-1", "enableGroups": True},
+        )
+        self.assertEqual(variables["search_surface"], "follow_list_page")
+
+    async def test_private_graphql_following_list_builds_variables(self):
+        client = self.build_client()
+        captured = {}
+
+        async def fake_call(**kwargs):
+            captured.update(kwargs)
+            return {"data": {}}
+
+        client.private_graphql_query_request = fake_call
+        await client.private_graphql_following_list(user_id="77", rank_token="rank-2")
+
+        self.assertEqual(captured["friendly_name"], "FollowingList")
+        self.assertEqual(
+            captured["root_field_name"],
+            "xdt_api__v1__friendships__following",
+        )
+        self.assertEqual(captured["variables"]["user_id"], "77")
+        self.assertEqual(captured["variables"]["request_data"]["rank_token"], "rank-2")
+        self.assertTrue(captured["variables"]["request_data"]["includes_hashtags"])
+
+    async def test_private_graphql_clips_profile_includes_initial_stream_count(
+        self,
+    ):
+        client = self.build_client()
+        captured = {}
+
+        async def fake_call(**kwargs):
+            captured.update(kwargs)
+            return {"stream_rows": []}
+
+        client.private_graphql_query_request = fake_call
+        await client.private_graphql_clips_profile(
+            target_user_id="11",
+            initial_stream_count=4,
+            page_size=8,
+            no_of_medias_in_each_chunk=2,
+        )
+
+        self.assertEqual(captured["friendly_name"], "ClipsProfileQuery")
+        self.assertEqual(captured["root_field_name"], "xdt_user_clips_graphql")
+        variables = captured["variables"]
+        self.assertEqual(variables["initial_stream_count"], 4)
+        self.assertEqual(variables["data"]["target_user_id"], "11")
+        self.assertEqual(variables["data"]["page_size"], 8)
+        self.assertEqual(variables["data"]["no_of_medias_in_each_chunk"], 2)
+        self.assertTrue(variables["use_stream"])
+
+    async def test_private_graphql_inbox_tray_for_user(self):
+        client = self.build_client()
+        captured = {}
+
+        async def fake_call(**kwargs):
+            captured.update(kwargs)
+            return {"data": {}}
+
+        client.private_graphql_query_request = fake_call
+        await client.private_graphql_inbox_tray_for_user("17")
+
+        self.assertEqual(captured["friendly_name"], "InboxTrayRequestForUserQuery")
+        self.assertEqual(captured["root_field_name"], "xdt_get_inbox_tray_items")
+        self.assertEqual(captured["variables"]["user_id"], "17")
+        self.assertFalse(
+            captured["variables"]["should_fetch_content_note_stack_video_info"]
+        )
+
+    async def test_private_graphql_memories_pog_passes_region_hint(self):
+        client = self.build_client()
+        captured = {}
+
+        async def fake_call(**kwargs):
+            captured.update(kwargs)
+            return {"data": {}}
+
+        client.private_graphql_query_request = fake_call
+        await client.private_graphql_memories_pog(direct_region_hint="REGION-X")
+
+        self.assertEqual(captured["friendly_name"], "MemoriesPogQuery")
+        self.assertEqual(captured["root_field_name"], "xdt_get_story_memories_pog")
+        self.assertEqual(
+            captured["extra_headers"],
+            {"ig-u-ig-direct-region-hint": "REGION-X"},
+        )
+        self.assertEqual(captured["variables"], {"request": {"user_id": 0}})
+
+    async def test_private_graphql_realtime_region_hint_uses_priority(self):
+        client = self.build_client()
+        captured = {}
+
+        async def fake_call(**kwargs):
+            captured.update(kwargs)
+            return {"data": {}}
+
+        client.private_graphql_query_request = fake_call
+        await client.private_graphql_realtime_region_hint()
+
+        self.assertEqual(captured["friendly_name"], "IGRealtimeRegionHintQuery")
+        self.assertEqual(captured["root_field_name"], "xdt_igd_msg_region")
+        self.assertEqual(captured["priority"], "u=3, i")
+
+    async def test_private_graphql_top_audio_trends_eligible(self):
+        client = self.build_client()
+        captured = {}
+
+        async def fake_call(**kwargs):
+            captured.update(kwargs)
+            return {"data": {}}
+
+        client.private_graphql_query_request = fake_call
+        await client.private_graphql_top_audio_trends_eligible_categories()
+
+        self.assertEqual(
+            captured["friendly_name"],
+            "GetTopAudioTrendsEligibleCategories",
+        )
+        self.assertEqual(
+            captured["root_field_name"],
+            "xdt_top_audio_trends_eligible_tabs",
+        )
+        self.assertEqual(captured["variables"], {})
+
+    async def test_private_graphql_update_inbox_tray_last_seen(self):
+        client = self.build_client()
+        captured = {}
+
+        async def fake_call(**kwargs):
+            captured.update(kwargs)
+            return {"data": {}}
+
+        client.private_graphql_query_request = fake_call
+        await client.private_graphql_update_inbox_tray_last_seen()
+
+        self.assertEqual(captured["friendly_name"], "UpdateInboxTrayLastSeenTimestamp")
+        self.assertEqual(captured["root_field_name"], "__typename")
+
+
 if __name__ == "__main__":
     unittest.main()

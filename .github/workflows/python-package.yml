@@ -104,7 +104,8 @@ jobs:
             tests.py::TimelineRegressionTestCase \
             tests.py::StoryConfigureRegressionTestCase \
             tests.py::UploadRegressionTestCase \
-            tests.py::SignUpTestCase
+            tests.py::SignUpTestCase \
+            tests.py::ChapiPortedRegressionTestCase
 
   live-test:
     # Live IG tests via pooled accounts. Only on canonical-repo pushes
