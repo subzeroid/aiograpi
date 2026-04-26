@@ -6,6 +6,74 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.6.0] — 2026-04-26
+
+### Added — chapi sweep
+
+13 new IG endpoints ported from `/Users/colinfrl/work/ng/chapi`
+(standalone async client by the same team behind `hiker-next`). All
+on real Instagram — no proprietary infrastructure imported. Methods
+funnel through our existing `private_request` /
+`public_doc_id_graphql_request` stack.
+
+#### `GraphQLRequestMixin` (private mobile GraphQL)
+
+- `private_graphql_query_request(friendly_name, root_field_name, variables, client_doc_id, ...)`
+  — base helper that POSTs to `i.instagram.com/graphql/query`
+  using the private session.
+- `private_graphql_memories_pog(...)` — `MemoriesPogQuery`.
+- `private_graphql_realtime_region_hint()` — `IGRealtimeRegionHintQuery`.
+- `private_graphql_top_audio_trends_eligible_categories()` —
+  `GetTopAudioTrendsEligibleCategories`.
+- `private_graphql_update_inbox_tray_last_seen()` —
+  `UpdateInboxTrayLastSeenTimestamp` mutation.
+
+#### `UserMixin`
+
+- `feed_user_stream_item(item_id, is_pull_to_refresh)` — POST
+  `feed/user_stream/{item_id}/`.
+- `private_graphql_followers_list(user_id, rank_token, ...)` —
+  `FollowersList` private GQL.
+- `private_graphql_following_list(user_id, rank_token, ...)` —
+  `FollowingList`.
+- `private_graphql_clips_profile(target_user_id, ...)` —
+  `ClipsProfileQuery` (profile reels stream).
+- `private_graphql_inbox_tray_for_user(user_id, ...)` —
+  `InboxTrayRequestForUserQuery`.
+
+#### `CommentMixin`
+
+- `media_comment_infos(media_ids)` — GET `media/comment_infos/`
+  (bulk comments digest, accepts list or CSV).
+
+#### `FbSearchMixin`
+
+- `fbsearch_item(item_id, search_surface, query, ...)` — generic GET
+  `fbsearch/{item_id}/` for all serp tabs (top/user/clips/popular).
+- `fbsearch_keyword_typeahead(query, ...)` — GET
+  `fbsearch/keyword_typeahead/`.
+- `fbsearch_typeahead_stream(query, ...)` — GET
+  `fbsearch/typeahead_stream/`.
+
+### Tests
+
+- `ChapiPortedRegressionTestCase` — 15 unit tests covering endpoint
+  paths, params/data shaping, and friendly_name/root_field_name for
+  private GQL methods. Wired into the unit-test CI job.
+
+### Caveats
+
+- `client_doc_id` defaults are taken from chapi captures. IG rotates
+  registered queries; if a method starts failing, override
+  `client_doc_id=` per call.
+- `mobile-only` headers (`X-IG-Bandwidth-*`, `X-IG-Nav-Chain`,
+  `x-pigeon-*`, etc.) are not copied — our `_send_private_request`
+  already fills the standard mobile headers via `base_headers`. If a
+  specific endpoint demands extra headers in production, pass
+  `headers=...` per call.
+
+No breaking changes; existing methods unchanged.
+
 ## [0.5.0] — 2026-04-26
 
 ### Added
@@ -238,6 +306,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.6.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.0
 [0.5.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.5.0
 [0.4.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.4.1
 [0.4.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.4.0
