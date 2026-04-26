@@ -2895,10 +2895,7 @@ class StoryConfigureRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         )
 
 
-@unittest.skip(
-    "aiograpi: sync regression/unit test from upstream — needs manual async rewrite"
-)
-class UploadRegressionTestCase(unittest.TestCase):
+class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     def build_client(self):
         client = Client()
         client.settings = {}
@@ -2912,7 +2909,7 @@ class UploadRegressionTestCase(unittest.TestCase):
         client.set_device({})
         client.with_default_data = lambda data: data
         client.request_log = lambda response: None
-        client.expose = lambda: None
+        client.expose = AsyncMock(return_value=None)
         return client
 
     def build_media_payload(self, media_type=2):
@@ -2959,194 +2956,169 @@ class UploadRegressionTestCase(unittest.TestCase):
             }
         return payload
 
-    def test_photo_upload_raises_clear_error_when_configure_has_no_media(self):
+    async def test_photo_upload_raises_clear_error_when_configure_has_no_media(self):
         client = self.build_client()
+        client.photo_rupload = AsyncMock(return_value=("1", 720, 720))
+        client.photo_configure = AsyncMock(return_value={"status": "ok"})
 
-        with mock.patch.object(client, "photo_rupload", return_value=("1", 720, 720)):
-            with mock.patch.object(
-                client, "photo_configure", return_value={"status": "ok"}
-            ):
-                with mock.patch("time.sleep"):
-                    with self.assertRaises(PhotoConfigureError) as ctx:
-                        client.photo_upload(Path("example.jpg"), "caption")
+        with mock.patch("aiograpi.mixins.photo.asyncio.sleep", new_callable=AsyncMock):
+            with self.assertRaises(PhotoConfigureError) as ctx:
+                await client.photo_upload(Path("example.jpg"), "caption")
 
         self.assertIn("without media payload", str(ctx.exception))
 
-    def test_video_upload_raises_clear_error_when_configure_has_no_media(self):
+    async def test_video_upload_raises_clear_error_when_configure_has_no_media(self):
         client = self.build_client()
+        client.video_rupload = AsyncMock(
+            return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg"))
+        )
+        client.video_configure = AsyncMock(return_value={"status": "ok"})
 
-        with mock.patch.object(
-            client,
-            "video_rupload",
-            return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg")),
-        ):
-            with mock.patch.object(
-                client, "video_configure", return_value={"status": "ok"}
-            ):
-                with mock.patch("time.sleep"):
-                    with self.assertRaises(VideoConfigureError) as ctx:
-                        client.video_upload(Path("example.mp4"), "caption")
+        with mock.patch("aiograpi.mixins.video.asyncio.sleep", new_callable=AsyncMock):
+            with self.assertRaises(VideoConfigureError) as ctx:
+                await client.video_upload(Path("example.mp4"), "caption")
 
         self.assertIn("without media payload", str(ctx.exception))
 
-    def test_album_upload_raises_clear_error_when_configure_has_no_media(self):
+    async def test_album_upload_raises_clear_error_when_configure_has_no_media(self):
         client = self.build_client()
+        client.photo_rupload = AsyncMock(return_value=("1", 720, 720))
+        client.album_configure = AsyncMock(return_value={"status": "ok"})
 
-        with mock.patch.object(client, "photo_rupload", return_value=("1", 720, 720)):
-            with mock.patch.object(
-                client, "album_configure", return_value={"status": "ok"}
-            ):
-                with mock.patch("time.sleep"):
-                    with self.assertRaises(AlbumConfigureError) as ctx:
-                        client.album_upload([Path("one.jpg")], "caption")
+        with mock.patch("aiograpi.mixins.album.asyncio.sleep", new_callable=AsyncMock):
+            with self.assertRaises(AlbumConfigureError) as ctx:
+                await client.album_upload([Path("one.jpg")], "caption")
 
         self.assertIn("without media payload", str(ctx.exception))
 
-    def test_album_upload_rejects_empty_paths_with_clear_error(self):
+    async def test_album_upload_rejects_empty_paths_with_clear_error(self):
         client = self.build_client()
 
         with self.assertRaises(PrivateError) as ctx:
-            client.album_upload([], "caption")
+            await client.album_upload([], "caption")
 
         self.assertIn("requires at least one media path", str(ctx.exception))
 
-    def test_album_upload_rejects_unknown_format_with_filename_in_error(self):
+    async def test_album_upload_rejects_unknown_format_with_filename_in_error(self):
         client = self.build_client()
 
         with self.assertRaises(PrivateError) as ctx:
-            client.album_upload([Path("clip.mov")], "caption")
+            await client.album_upload([Path("clip.mov")], "caption")
 
         self.assertIn('Unsupported album media format ".mov"', str(ctx.exception))
         self.assertIn("clip.mov", str(ctx.exception))
 
-    def test_album_upload_accepts_png_via_photo_rupload(self):
+    async def test_album_upload_accepts_png_via_photo_rupload(self):
         client = self.build_client()
         media_payload = self.build_media_payload(media_type=8)
         media_payload["carousel_media"] = [self.build_media_payload(media_type=1)]
 
-        with mock.patch.object(
-            client,
-            "photo_rupload",
-            return_value=("1", 720, 720),
-        ) as photo_rupload:
-            with mock.patch.object(
-                client,
-                "album_configure",
-                return_value={"status": "ok", "media": media_payload},
-            ):
-                with mock.patch("time.sleep"):
-                    media = client.album_upload([Path("slide.png")], "caption")
+        client.photo_rupload = AsyncMock(return_value=("1", 720, 720))
+        client.album_configure = AsyncMock(
+            return_value={"status": "ok", "media": media_payload}
+        )
+
+        with mock.patch("aiograpi.mixins.album.asyncio.sleep", new_callable=AsyncMock):
+            media = await client.album_upload([Path("slide.png")], "caption")
 
         self.assertIsInstance(media, Media)
-        photo_rupload.assert_called_once_with(Path("slide.png"), to_album=True)
+        client.photo_rupload.assert_called_once_with(Path("slide.png"), to_album=True)
 
-    def test_photo_story_upload_raises_clear_error_when_configure_has_no_media(self):
+    async def test_photo_story_upload_raises_clear_error_when_configure_has_no_media(
+        self,
+    ):
         client = self.build_client()
+        client.photo_rupload = AsyncMock(return_value=("1", 720, 1280))
+        client.photo_configure_to_story = AsyncMock(return_value={"status": "ok"})
 
-        with mock.patch.object(client, "photo_rupload", return_value=("1", 720, 1280)):
-            with mock.patch.object(
-                client, "photo_configure_to_story", return_value={"status": "ok"}
-            ):
-                with mock.patch("time.sleep"):
-                    with self.assertRaises(PhotoConfigureStoryError) as ctx:
-                        client.photo_upload_to_story(Path("story.jpg"))
+        with mock.patch("aiograpi.mixins.photo.asyncio.sleep", new_callable=AsyncMock):
+            with self.assertRaises(PhotoConfigureStoryError) as ctx:
+                await client.photo_upload_to_story(Path("story.jpg"))
 
         self.assertIn("without media payload", str(ctx.exception))
 
-    def test_clip_upload_falls_back_to_last_json_media_payload(self):
+    async def test_clip_upload_falls_back_to_last_json_media_payload(self):
         client = self.build_client()
         client.last_json = {"media": self.build_media_payload()}
         ok_response = Mock(status_code=200)
+
+        client.private.get = AsyncMock(return_value=ok_response)
+        client.private.post = AsyncMock(return_value=ok_response)
+        client.clip_configure = AsyncMock(return_value={"status": "ok"})
 
         with mock.patch(
             "aiograpi.mixins.clip.analyze_video",
             return_value=(Path("/tmp/thumb.jpg"), 720, 1280, 5),
         ):
-            with mock.patch.object(client.private, "get", return_value=ok_response):
-                with mock.patch.object(
-                    client.private, "post", return_value=ok_response
+            with mock.patch("builtins.open", mock.mock_open(read_data=b"video-bytes")):
+                with mock.patch(
+                    "aiograpi.mixins.clip.asyncio.sleep", new_callable=AsyncMock
                 ):
-                    with mock.patch.object(
-                        client, "clip_configure", return_value={"status": "ok"}
-                    ):
-                        with mock.patch(
-                            "builtins.open", mock.mock_open(read_data=b"video-bytes")
-                        ):
-                            with mock.patch("time.sleep"):
-                                media = client.clip_upload(
-                                    Path("example.mp4"), "caption"
-                                )
+                    media = await client.clip_upload(Path("example.mp4"), "caption")
 
         self.assertIsInstance(media, Media)
         self.assertEqual(str(media.video_url), "https://example.com/video.mp4")
 
-    def test_video_story_upload_raises_clear_error_when_configure_has_no_media(self):
+    async def test_video_story_upload_raises_clear_error_when_configure_has_no_media(
+        self,
+    ):
         client = self.build_client()
+        client.video_rupload = AsyncMock(
+            return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg"))
+        )
+        client.video_configure_to_story = AsyncMock(return_value={"status": "ok"})
 
-        with mock.patch.object(
-            client,
-            "video_rupload",
-            return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg")),
-        ):
-            with mock.patch.object(
-                client, "video_configure_to_story", return_value={"status": "ok"}
-            ):
-                with mock.patch("time.sleep"):
-                    with self.assertRaises(VideoConfigureStoryError) as ctx:
-                        client.video_upload_to_story(Path("story.mp4"))
+        with mock.patch("aiograpi.mixins.video.asyncio.sleep", new_callable=AsyncMock):
+            with self.assertRaises(VideoConfigureStoryError) as ctx:
+                await client.video_upload_to_story(Path("story.mp4"))
 
         self.assertIn("without media payload", str(ctx.exception))
 
-    def test_video_direct_upload_raises_clear_error_when_configure_has_no_message(self):
+    async def test_video_direct_upload_raises_clear_error_when_configure_has_no_message(
+        self,
+    ):
         client = self.build_client()
+        client.video_rupload = AsyncMock(
+            return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg"))
+        )
+        client.video_configure_to_story = AsyncMock(return_value={"status": "ok"})
 
-        with mock.patch.object(
-            client,
-            "video_rupload",
-            return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg")),
-        ):
-            with mock.patch.object(
-                client, "video_configure_to_story", return_value={"status": "ok"}
-            ):
-                with mock.patch("time.sleep"):
-                    with self.assertRaises(VideoConfigureStoryError) as ctx:
-                        client.video_upload_to_direct(
-                            Path("story.mp4"),
-                            thread_ids=[123],
-                        )
+        with mock.patch("aiograpi.mixins.video.asyncio.sleep", new_callable=AsyncMock):
+            with self.assertRaises(VideoConfigureStoryError) as ctx:
+                await client.video_upload_to_direct(
+                    Path("story.mp4"),
+                    thread_ids=[123],
+                )
 
         self.assertIn("without message_metadata payload", str(ctx.exception))
 
-    def test_cutout_sticker_upload_raises_clear_error_when_configure_has_no_media(self):
+    async def test_cutout_sticker_upload_raises_clear_error_when_configure_has_no_media(
+        self,
+    ):
         client = self.build_client()
-
-        with mock.patch.object(
-            client, "private_request", return_value={"status": "ok"}
-        ):
-            with self.assertRaises(PrivateError) as ctx:
-                client.media_configure_to_cutout_sticker(
-                    "1", manual_box=[0.0, 0.0, 1.0, 1.0]
-                )
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+        with self.assertRaises(PrivateError) as ctx:
+            await client.media_configure_to_cutout_sticker(
+                "1", manual_box=[0.0, 0.0, 1.0, 1.0]
+            )
 
         self.assertIn("without media payload", str(ctx.exception))
 
-    def test_cutout_sticker_upload_uses_returned_media_payload(self):
+    async def test_cutout_sticker_upload_uses_returned_media_payload(self):
         client = self.build_client()
         media_payload = self.build_media_payload(media_type=1)
 
-        with mock.patch.object(
-            client,
-            "private_request",
-            return_value={"status": "ok", "media": media_payload},
-        ):
-            media = client.media_configure_to_cutout_sticker(
-                "1", manual_box=[0.0, 0.0, 1.0, 1.0]
-            )
+        client.private_request = AsyncMock(
+            return_value={"status": "ok", "media": media_payload}
+        )
+        media = await client.media_configure_to_cutout_sticker(
+            "1", manual_box=[0.0, 0.0, 1.0, 1.0]
+        )
 
         self.assertIsInstance(media, Media)
         self.assertEqual(media.media_type, 1)
 
-    def test_clip_upload_as_reel_with_music_does_not_mutate_extra_data(self):
+    async def test_clip_upload_as_reel_with_music_does_not_mutate_extra_data(self):
         client = self.build_client()
         extra_data = {"share_to_facebook": 1}
         track = Mock(
@@ -3191,6 +3163,8 @@ class UploadRegressionTestCase(unittest.TestCase):
             audio_path = Path(tmpdir) / "track.m4a"
             audio_path.write_bytes(b"audio")
             video_path = Path(tmpdir) / "output.mp4"
+            client.track_download_by_url = AsyncMock(return_value=audio_path)
+            client.clip_upload = AsyncMock(return_value="uploaded")
             with mock.patch.dict(
                 "sys.modules",
                 {
@@ -3201,27 +3175,21 @@ class UploadRegressionTestCase(unittest.TestCase):
                 with mock.patch(
                     "tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]
                 ):
-                    with mock.patch.object(
-                        client, "track_download_by_url", return_value=audio_path
-                    ):
-                        with mock.patch.object(
-                            client, "clip_upload", return_value="uploaded"
-                        ) as clip_upload:
-                            result = client.clip_upload_as_reel_with_music(
-                                Path("input.mp4"),
-                                "caption",
-                                track,
-                                extra_data=extra_data,
-                            )
+                    result = await client.clip_upload_as_reel_with_music(
+                        Path("input.mp4"),
+                        "caption",
+                        track,
+                        extra_data=extra_data,
+                    )
 
         self.assertEqual(result, "uploaded")
         self.assertEqual(extra_data, {"share_to_facebook": 1})
-        upload_extra = clip_upload.call_args.kwargs["extra_data"]
+        upload_extra = client.clip_upload.call_args.kwargs["extra_data"]
         self.assertEqual(upload_extra["share_to_facebook"], 1)
         self.assertIn("clips_audio_metadata", upload_extra)
         self.assertIn("music_params", upload_extra)
 
-    def test_clip_upload_as_reel_with_music_includes_music_canonical_id(self):
+    async def test_clip_upload_as_reel_with_music_includes_music_canonical_id(self):
         client = self.build_client()
         track = Mock(
             uri="https://example.com/track.m4a",
@@ -3266,6 +3234,8 @@ class UploadRegressionTestCase(unittest.TestCase):
             audio_path = Path(tmpdir) / "track.m4a"
             audio_path.write_bytes(b"audio")
             video_path = Path(tmpdir) / "output.mp4"
+            client.track_download_by_url = AsyncMock(return_value=audio_path)
+            client.clip_upload = AsyncMock(return_value="uploaded")
             with mock.patch.dict(
                 "sys.modules",
                 {
@@ -3276,19 +3246,13 @@ class UploadRegressionTestCase(unittest.TestCase):
                 with mock.patch(
                     "tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]
                 ):
-                    with mock.patch.object(
-                        client, "track_download_by_url", return_value=audio_path
-                    ):
-                        with mock.patch.object(
-                            client, "clip_upload", return_value="uploaded"
-                        ) as clip_upload:
-                            client.clip_upload_as_reel_with_music(
-                                Path("input.mp4"),
-                                "caption",
-                                track,
-                            )
+                    await client.clip_upload_as_reel_with_music(
+                        Path("input.mp4"),
+                        "caption",
+                        track,
+                    )
 
-        upload_extra = clip_upload.call_args.kwargs["extra_data"]
+        upload_extra = client.clip_upload.call_args.kwargs["extra_data"]
         self.assertEqual(
             upload_extra["clips_audio_metadata"]["song"]["music_canonical_id"],
             "canonical-id",
@@ -3298,7 +3262,7 @@ class UploadRegressionTestCase(unittest.TestCase):
             "canonical-id",
         )
 
-    def test_clip_upload_as_reel_with_music_cleans_temp_files_on_failure(self):
+    async def test_clip_upload_as_reel_with_music_cleans_temp_files_on_failure(self):
         client = self.build_client()
         track = Mock(
             uri="https://example.com/track.m4a",
@@ -3342,6 +3306,8 @@ class UploadRegressionTestCase(unittest.TestCase):
             audio_path = Path(tmpdir) / "track.m4a"
             audio_path.write_bytes(b"audio")
             video_path = Path(tmpdir) / "output.mp4"
+            client.track_download_by_url = AsyncMock(return_value=audio_path)
+            client.clip_upload = AsyncMock(side_effect=ClipConfigureError("boom"))
             with mock.patch.dict(
                 "sys.modules",
                 {
@@ -3352,20 +3318,12 @@ class UploadRegressionTestCase(unittest.TestCase):
                 with mock.patch(
                     "tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]
                 ):
-                    with mock.patch.object(
-                        client, "track_download_by_url", return_value=audio_path
-                    ):
-                        with mock.patch.object(
-                            client,
-                            "clip_upload",
-                            side_effect=ClipConfigureError("boom"),
-                        ):
-                            with self.assertRaises(ClipConfigureError):
-                                client.clip_upload_as_reel_with_music(
-                                    Path("input.mp4"),
-                                    "caption",
-                                    track,
-                                )
+                    with self.assertRaises(ClipConfigureError):
+                        await client.clip_upload_as_reel_with_music(
+                            Path("input.mp4"),
+                            "caption",
+                            track,
+                        )
 
             self.assertFalse(audio_path.exists())
             self.assertFalse(video_path.exists())
@@ -3462,34 +3420,34 @@ class UploadRegressionTestCase(unittest.TestCase):
 
         self.assertTrue(closed["value"])
 
-    def test_video_story_sticker_ids_include_all_stickers(self):
+    async def test_video_story_sticker_ids_include_all_stickers(self):
         client = self.build_client()
-
-        with mock.patch.object(client, "private_request") as private_request:
-            private_request.side_effect = [
+        client.private_request = AsyncMock(
+            side_effect=[
                 {"status": "ok"},
                 {"status": "ok"},
             ]
-            client.video_configure_to_story(
-                upload_id="1",
-                width=720,
-                height=1280,
-                duration=5,
-                thumbnail=Path("/tmp/placeholder.jpg"),
-                caption="",
-                links=[StoryLink(webUri="https://example.com")],
-                hashtags=[
-                    StoryHashtag(
-                        hashtag=Hashtag(id="1", name="example"),
-                        x=0.2,
-                        y=0.3,
-                        width=0.5,
-                        height=0.2,
-                    )
-                ],
-            )
+        )
+        await client.video_configure_to_story(
+            upload_id="1",
+            width=720,
+            height=1280,
+            duration=5,
+            thumbnail=Path("/tmp/placeholder.jpg"),
+            caption="",
+            links=[StoryLink(webUri="https://example.com")],
+            hashtags=[
+                StoryHashtag(
+                    hashtag=Hashtag(id="1", name="example"),
+                    x=0.2,
+                    y=0.3,
+                    width=0.5,
+                    height=0.2,
+                )
+            ],
+        )
 
-        configure_args, _ = private_request.call_args_list[1]
+        configure_args, _ = client.private_request.call_args_list[1]
         self.assertEqual(
             configure_args[1]["story_sticker_ids"],
             "hashtag_sticker,link_sticker_default",
@@ -3672,40 +3630,36 @@ class ClientLocationTestCase(ClientPrivateTestCase):
         self.assertIsInstance(medias[0], Media)
 
 
-@unittest.skip(
-    "aiograpi: sync regression/unit test from upstream — needs manual async rewrite"
-)
-class SignUpTestCase(unittest.TestCase):
-    def test_password_enrypt(self):
+class SignUpTestCase(unittest.IsolatedAsyncioTestCase):
+    # 2048-bit RSA public key generated for offline password_encrypt testing.
+    _TEST_PUBLIC_KEY_B64 = (
+        "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVG"
+        "QUFPQ0FROEFNSUlCQ2dLQ0FRRUF1eWNmK0syT1R4bWhNZXdlbVR2ago0K2k0K2lTTUJv"
+        "dmdkcVJMUHdSUlltR0pQNXVtWTdXZnZmYVlXTHVXbHZLYTlhUHVvUEJBRWtMV00vdzZO"
+        "WXhlCk0xMS82b29QVG1OaTV2YlZhQzRweWpycVdCNVg3WGZkd210aDBWK3BBUFJUUWNG"
+        "UDlJZEhlVmFnV3FLcEtCN0IKc3ZHYTZEL0tXdnYyeTJHZFYydDNjT1o3WFRNTkQ2WG1I"
+        "ZDdXZm9MTFozbWdRd2xaU0RBSjBiR2RybXJmSk1TWApxL0VHVmdicXliWURMa0ZneG1C"
+        "WUpqQjdocnQ4d2JSekQweTI0S0p5cWdJR05FdTROcFJzWFhZVm4zdFJJbndICldlR2s1"
+        "TmpiRTN3L2tYais0enprMkgySEJDMmFuSHZQYllIUE5zU21yVFBqTDVNaHVrZFo0eEFZ"
+        "azFJaXNpLzcKbXdJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t"
+    )
+
+    async def test_password_enrypt(self):
         cl = Client()
-        enc_password = cl.password_encrypt("test")
+        cl.password_publickeys = AsyncMock(return_value=(1, self._TEST_PUBLIC_KEY_B64))
+        enc_password = await cl.password_encrypt("test")
         parts = enc_password.split(":")
         self.assertEqual(parts[0], "#PWD_INSTAGRAM")
         self.assertEqual(parts[1], "4")
         self.assertTrue(int(parts[2]) > 1607612345)
         self.assertTrue(len(parts[3]) == 392)
 
+    @unittest.skip(
+        "aiograpi: requires real Instagram signup endpoints, SMS code, and a "
+        "phone number; cannot be run without live credentials and network"
+    )
     def test_signup(self):
-        cl = Client()
-        username = gen_password()
-        password = gen_password(12, symbols=True)
-        email = f"{username}@gmail.com"
-        phone_number = os.environ.get("IG_PHONE_NUMBER")
-        full_name = f"John {username}"
-        user = cl.signup(
-            username,
-            password,
-            email,
-            phone_number,
-            full_name,
-            year=random.randint(1980, 1990),
-            month=random.randint(1, 12),
-            day=random.randint(1, 30),
-        )
-        self.assertIsInstance(user, UserShort)
-        for key, val in {"username": username, "full_name": full_name}.items():
-            self.assertEqual(getattr(user, key), val)
-        self.assertTrue(user.profile_pic_url.startswith("https://"))
+        pass
 
 
 class ClientHashtagTestCase(ClientPrivateTestCase):
