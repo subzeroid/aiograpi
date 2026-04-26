@@ -9,6 +9,7 @@ exclude_docs: |
 nav:
   - Overview: index.md
   - Getting Started: getting-started.md
+  - Migration Guide: migration.md
   - Usage Guide:
     - Fundamentals: usage-guide/fundamentals.md
     - Interactions: usage-guide/interactions.md
