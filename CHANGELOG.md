@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.4.1] — 2026-04-26
+
+### Fixed
+
+Phase 2 of the modernization — porting hardening fixes that the
+`hiker-next` fork had on top of `instagrapi==2.4.4` but never made
+it back to upstream.
+
+- **`extract_story_v1`**: fall back to `InstagramIdCodec.encode(pk)`
+  for missing `code`, and `device_timestamp` / `taken_at_timestamp`
+  for missing `taken_at`. IG sometimes returns story payloads
+  without these fields; `Story.code` / `Story.taken_at` are required,
+  so missing values caused `ValidationError` on legitimate stories.
+- **`private._send_private_request`** — `401` is now explicitly
+  raised as `ClientUnauthorizedError` (the class existed but was
+  never raised; previously `401` fell through to `ClientUnknownError`).
+- **`private._send_private_request`** — `404` with body `b"Not Found"`
+  is a masked challenge (often on `/media/.../comments/`), not a
+  missing endpoint. Now raises `ChallengeRequired` so callers can
+  resolve it instead of confusingly retrying.
+- **`hashtag_medias_*_v1_chunk`** — wrap `extract_media_v1(node["media"])`
+  in `try/except (KeyError, AttributeError, TypeError)`. One malformed
+  node was crashing the whole chunk and losing the rest of the page;
+  now we log and skip the bad node.
+
 ## [0.4.0] — 2026-04-26
 
 ### Added
@@ -180,6 +205,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.4.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.4.1
 [0.4.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.4.0
 [0.3.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.3.1
 [0.3.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.3.0
