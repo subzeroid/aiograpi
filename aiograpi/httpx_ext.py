@@ -59,19 +59,23 @@ SUPPORTED_DECODERS["zstd"] = ZstdDecoder
 DEFAULT_TIMEOUT = 45
 
 
-async def request(method, url, proxy=None, **kwargs):
+async def request(method, url, proxy=None, verify=True, **kwargs):
     if "timeout" not in kwargs:
         kwargs["timeout"] = DEFAULT_TIMEOUT
     async with httpx.AsyncClient(
-        proxy=proxy, verify=False, follow_redirects=True
+        proxy=proxy, verify=verify, follow_redirects=True
     ) as client:
         return await client.request(method, url, **kwargs)
 
 
 class Session:
-    def __init__(self):
+    def __init__(self, verify=True):
+        # TLS verification ON by default — turn off only if you're sure
+        # the proxy is a known MITM (e.g. a corporate inspection
+        # gateway). With verify=False, an attacker on the network path
+        # can intercept sessionid / passwords / TOTP secrets.
         self.headers = {}
-        self.verify = False
+        self.verify = verify
         self._client = None
         self._proxy = None
 

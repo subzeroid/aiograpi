@@ -79,7 +79,8 @@ class GraphQLRequestMixin:
 
     def __init__(self, *args, **kwargs):
         self.graphql = httpx_ext.Session()
-        self.graphql.verify = False  # fix SSLError/HTTPSConnectionPool
+        # NB: TLS verification is ON. To disable for a misbehaving
+        # MITM proxy, set self.graphql.verify = False AFTER construction.
         self.graphql.headers.update(
             {
                 "Connection": "Keep-Alive",

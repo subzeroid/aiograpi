@@ -100,7 +100,8 @@ class PrivateRequestMixin:
 
     def __init__(self, *args, **kwargs):
         self.private = httpx_ext.Session()
-        self.private.verify = False  # fix SSLError/HTTPSConnectionPool
+        # NB: TLS verification is ON. To disable for a misbehaving
+        # MITM proxy, set self.private.verify = False AFTER construction.
         self.email = kwargs.pop("email", None)
         self.phone_number = kwargs.pop("phone_number", None)
         self.request_timeout = kwargs.pop(

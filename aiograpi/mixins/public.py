@@ -41,7 +41,8 @@ class PublicRequestMixin:
 
     def __init__(self, *args, **kwargs):
         self.public = httpx_ext.Session()
-        self.public.verify = False  # fix SSLError/HTTPSConnectionPool
+        # NB: TLS verification is ON. To disable for a misbehaving
+        # MITM proxy, set self.public.verify = False AFTER construction.
         self.public.headers.update(
             {
                 "Connection": "Keep-Alive",
