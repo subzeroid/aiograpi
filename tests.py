@@ -4354,7 +4354,13 @@ class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(variables["data"]["target_user_id"], "11")
         self.assertEqual(variables["data"]["page_size"], 8)
         self.assertEqual(variables["data"]["no_of_medias_in_each_chunk"], 2)
-        self.assertTrue(variables["use_stream"])
+        # Streaming flags must stay False — IG returns multi-document
+        # NDJSON when they're True, and response.json() can't parse it
+        # (regression covered in 0.6.2 changelog).
+        self.assertFalse(variables["use_stream"])
+        self.assertFalse(variables["use_defer"])
+        self.assertFalse(variables["stream_use_customized_batch"])
+        self.assertFalse(variables["data"]["should_stream_response"])
 
     async def test_private_graphql_inbox_tray_for_user(self):
         client = self.build_client()

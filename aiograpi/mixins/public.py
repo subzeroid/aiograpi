@@ -355,6 +355,7 @@ class PublicRequestMixin:
             self.GRAPHQL_PUBLIC_API_URL,
             data=data,
             headers=merged_headers,
+            update_headers=False,
             return_json=True,
         )
         if "data" not in body_json:

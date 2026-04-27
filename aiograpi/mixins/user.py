@@ -365,9 +365,13 @@ class UserMixin:
         data = await self.public_doc_id_graphql_request(
             "26347858941511777", {"hasQuery": True, "query": username}
         )
-        users = (data or {}).get("xdt_api__v1__fbsearch__non_profiled_serp", {}).get(
-            "users"
-        ) or []
+        # Defend against `{"xdt_api__v1__fbsearch__non_profiled_serp": null}` —
+        # `.get(key, {})` returns the default ONLY when key is absent;
+        # if the key is present with value `None`, the chained `.get` would
+        # crash with AttributeError. Promote None → {} explicitly.
+        users = (
+            (data or {}).get("xdt_api__v1__fbsearch__non_profiled_serp") or {}
+        ).get("users") or []
         for user in users:
             if (user.get("username") or "").lower() == username:
                 return await self.user_info_v2_gql(user.get("pk") or user.get("id"))
@@ -1734,11 +1738,11 @@ class UserMixin:
             "search_surface": "follow_list_page",
         }
         if exclude_field_is_favorite is not None:
-            variables["exclude_field_is_favorite"] = str(exclude_field_is_favorite)
+            variables["exclude_field_is_favorite"] = exclude_field_is_favorite
         if max_id is not None:
             variables["max_id"] = max_id
         if exclude_unused_fields is not None:
-            variables["exclude_unused_fields"] = str(exclude_unused_fields)
+            variables["exclude_unused_fields"] = exclude_unused_fields
         return await self.private_graphql_query_request(
             friendly_name="FollowersList",
             root_field_name="xdt_api__v1__friendships__followers",
@@ -1777,11 +1781,11 @@ class UserMixin:
             "query": "",
         }
         if exclude_field_is_favorite is not None:
-            variables["exclude_field_is_favorite"] = str(exclude_field_is_favorite)
+            variables["exclude_field_is_favorite"] = exclude_field_is_favorite
         if max_id is not None:
             variables["max_id"] = max_id
         if exclude_unused_fields is not None:
-            variables["exclude_unused_fields"] = str(exclude_unused_fields)
+            variables["exclude_unused_fields"] = exclude_unused_fields
         return await self.private_graphql_query_request(
             friendly_name="FollowingList",
             root_field_name="xdt_api__v1__friendships__following",

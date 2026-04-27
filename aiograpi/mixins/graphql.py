@@ -317,7 +317,28 @@ class GraphQLRequestMixin:
             headers=merged,
             timeout=self.read_timeout,
         )
-        response.raise_for_status()
+        self.last_response = response
+        try:
+            response.raise_for_status()
+        except httpx_ext.HTTPError as e:
+            # Map HTTP status to the canonical aiograpi exception hierarchy
+            # so callers' `except ClientBadRequestError` /
+            # `ClientUnauthorizedError` / `ClientThrottledError` clauses
+            # actually catch failures here. Mirrors _send_graphql_request.
+            match getattr(response, "status_code", None):
+                case 400:
+                    exc = ClientBadRequestError
+                case 401:
+                    exc = ClientUnauthorizedError
+                case 403:
+                    exc = ClientForbiddenError
+                case 404:
+                    exc = ClientNotFoundError
+                case 429:
+                    exc = ClientThrottledError
+                case _:
+                    exc = ClientError
+            raise exc(e, response=response)
         try:
             body = response.json()
         except orjson.JSONDecodeError:
