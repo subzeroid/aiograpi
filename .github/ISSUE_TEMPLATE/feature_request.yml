@@ -1,0 +1,30 @@
+name: Feature request
+description: A new endpoint, helper, or behavior
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the goal, not the solution. "I want to fetch followers via the new mobile-app GraphQL surface" is more useful than "add `client.foo_bar()`".
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution (optional)
+      description: If you have a specific shape in mind — method name, parameters, return type — sketch it here.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered (optional)
+      description: Other endpoints, workarounds, or upstream `instagrapi` methods you've already tried.
+
+  - type: input
+    id: doc_id
+    attributes:
+      label: doc_id / endpoint URL (if you've captured one)
+      description: From a Charles capture or instaloader/chapi reference.
+      placeholder: "doc_id 25980296051578533 — PolarisProfilePageContentQuery"

@@ -1,0 +1,91 @@
+name: Bug report
+description: aiograpi crashes, returns wrong data, or behaves differently than docs say
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Include enough detail that someone can reproduce locally.
+        If the bug is auth/challenge-related, **redact your sessionid, password, and proxy creds** before pasting.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you run, what did you expect, what did you actually see?
+      placeholder: |
+        I called `await client.user_info_by_username("instagram")` and …
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Minimum repro snippet
+      description: Smallest piece of Python that triggers the bug. Redact creds.
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Output / traceback
+      description: Full stderr and traceback. Redact tokens / sessionids / proxy URLs.
+      render: shell
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: API surface
+      description: Which aiograpi endpoint family did you hit?
+      options:
+        - private (`_v1`, `private_graphql_*`, mutations)
+        - public anonymous (`_gql`, `_a1`)
+        - public doc_id (`_v2_gql`, `public_doc_id_graphql_request`)
+        - login / challenge / TOTP
+        - upload (photo / video / album / clip / story / igtv)
+        - download
+        - not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: aiograpi version
+      description: "`pip show aiograpi | grep Version`"
+      placeholder: "0.7.1"
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.10.13"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: "macOS 15.2 / Ubuntu 24.04 / Windows 11"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: proxy
+    attributes:
+      label: Proxy in use?
+      options:
+        - "no proxy"
+        - "residential / CONNECT-tunnel"
+        - "datacenter"
+        - "corporate inspection (SSL-MITM)"
+        - "not sure"
+    validations:
+      required: true

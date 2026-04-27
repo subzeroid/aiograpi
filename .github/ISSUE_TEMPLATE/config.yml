@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/subzeroid/aiograpi/security/advisories/new
+    about: Please report security issues privately via GitHub Security Advisories, not in public issues.
+  - name: Question or discussion
+    url: https://github.com/subzeroid/aiograpi/discussions
+    about: For usage questions and open-ended discussion.
+  - name: Telegram chat
+    url: https://t.me/instagrapi
+    about: Real-time chat with maintainers and other users.
