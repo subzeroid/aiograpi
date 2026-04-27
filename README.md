@@ -59,7 +59,28 @@ For any other languages (e.g. C++, C#, F#, D, [Golang](https://github.com/subzer
 8. [Build stories](https://subzeroid.github.io/aiograpi/usage-guide/story.html) with custom background, font animation, link sticker and mention users
 9. Account [registration](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/mixins/signup.py) and captcha passing will appear
 
-### What's new in 0.6.x
+### Versioning policy — we stay in 0.x
+
+aiograpi follows [ZeroVer](https://0ver.org/). We will not ship 1.0,
+because it would be a misleading promise. Instagram's private API
+rotates `doc_id`s, deprecates endpoints, and changes response shapes
+without notice — we cannot guarantee a stable API surface across
+versions. Pretending otherwise hurts users who'd take "1.0" to mean
+"safe to pin and forget".
+
+What you can rely on instead:
+
+- **Breaking changes are flagged in the [CHANGELOG](https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md)** with a `Breaking` section
+  per affected release. No silent breakage.
+- **Deprecated methods stay around for ≥2 minor releases** with
+  `DeprecationWarning` before removal — you'll get loud warnings, not
+  surprise `AttributeError`s.
+- **Live CI smoke** runs on every push: `tests/live/smoke.py` against a
+  real account through a real proxy. If we ship something that breaks
+  the basic happy path, CI catches it.
+- **Migration Guide** at [docs/migration.md](https://subzeroid.github.io/aiograpi/migration.html) — every breaking change documented with before/after.
+
+### What's new in 0.6.x and 0.7.x
 
 - **Sync with instagrapi 2.4.4** — every mixin and infrastructure module ported, plus three new mixins:
   [`ExploreMixin`](https://subzeroid.github.io/aiograpi/usage-guide/explore.html),
