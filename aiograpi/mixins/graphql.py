@@ -10,6 +10,7 @@ from aiograpi.exceptions import (
     AboutUsError,
     AccountSuspended,
     ChallengeRequired,
+    CheckpointRequired,
     ClientBadRequestError,
     ClientConnectionError,
     ClientError,
@@ -19,8 +20,15 @@ from aiograpi.exceptions import (
     ClientNotFoundError,
     ClientThrottledError,
     ClientUnauthorizedError,
+    ConsentRequired,
+    FeedbackRequired,
+    LoginRequired,
+    PrivateAccount,
+    RateLimitError,
+    SentryBlock,
     TermsAccept,
     TermsUnblock,
+    UserNotFound,
 )
 from aiograpi.utils import random_delay
 
@@ -311,6 +319,10 @@ class GraphQLRequestMixin:
         merged.update(headers)
         if self.authorization:
             merged.setdefault("Authorization", self.authorization)
+        # Clear last_json BEFORE the request so callers inspecting it on
+        # exception don't see stale data from the previous successful call
+        # (private.py:339 does the same).
+        self.last_json = {}
         response = await self.private.post(
             PRIVATE_GRAPHQL_QUERY_URL,
             data=data,
@@ -321,10 +333,62 @@ class GraphQLRequestMixin:
         try:
             response.raise_for_status()
         except httpx_ext.HTTPError as e:
-            # Map HTTP status to the canonical aiograpi exception hierarchy
-            # so callers' `except ClientBadRequestError` /
-            # `ClientUnauthorizedError` / `ClientThrottledError` clauses
-            # actually catch failures here. Mirrors _send_graphql_request.
+            # First, attempt body-based promotion to the IG-specific
+            # exception types — `_send_private_request` does the same
+            # because IG returns recoverable account-state failures
+            # (login_required, challenge_required, rate_limit_error)
+            # as JSON 4xx bodies that the caller's relogin/challenge
+            # flow needs to recognize. Only fall back to HTTP-status
+            # mapping if the body is missing or doesn't match.
+            try:
+                body_json = response.json()
+                if isinstance(body_json, dict):
+                    self.last_json = body_json
+                    last_json = body_json
+                else:
+                    last_json = {}
+            except Exception:
+                last_json = {}
+
+            message = ""
+            error_type = None
+            if isinstance(last_json, dict):
+                message = (last_json.get("message") or "").lower()
+                error_type = last_json.get("error_type")
+
+            # Body promotions (priority over status code).
+            if message == "login_required":
+                raise LoginRequired(e, response=response, **last_json)
+            if message == "challenge_required":
+                raise ChallengeRequired(**last_json)
+            if message == "checkpoint_required":
+                raise CheckpointRequired(**last_json)
+            if message == "consent_required":
+                raise ConsentRequired(**last_json)
+            if message == "feedback_required":
+                raise FeedbackRequired(e, response=response, **last_json)
+            if error_type == "rate_limit_error":
+                raise RateLimitError(e, response=response, **last_json)
+            if message == "user_blocked":
+                raise SentryBlock(e, response=response, **last_json)
+            if "not authorized to view user" in message:
+                raise PrivateAccount(e, response=response, **last_json)
+            if (
+                "unable to fetch followers" in message
+                or "error generating user info response" in message
+            ):
+                raise UserNotFound(e, response=response, **last_json)
+
+            # 404 with body b"Not Found" is a masked challenge on the
+            # private mobile surface (mirrors private.py:598). Promote
+            # before the generic 404 → ClientNotFoundError fallback.
+            if (
+                getattr(response, "status_code", None) == 404
+                and getattr(response, "content", None) == b"Not Found"
+            ):
+                raise ChallengeRequired(**last_json)
+
+            # HTTP-status fallback.
             match getattr(response, "status_code", None):
                 case 400:
                     exc = ClientBadRequestError
@@ -338,7 +402,7 @@ class GraphQLRequestMixin:
                     exc = ClientThrottledError
                 case _:
                     exc = ClientError
-            raise exc(e, response=response)
+            raise exc(e, response=response, **last_json)
         try:
             body = response.json()
         except orjson.JSONDecodeError:
