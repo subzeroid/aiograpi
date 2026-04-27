@@ -37,7 +37,10 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          # Avoid tomllib (Python 3.11+) and tomli (extra dep) — just
+          # grep the version line. pyproject.toml's [project].version
+          # is on its own line in our file.
+          VERSION=$(grep -E '^version[[:space:]]*=' pyproject.toml | head -1 | sed -E 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
           if [ "$TAG" != "$VERSION" ]; then
             echo "::error::Tag $TAG does not match pyproject.toml version $VERSION"
             exit 1
