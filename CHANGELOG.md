@@ -6,6 +6,82 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.7.0] — 2026-04-27
+
+DX audit (`/devex-review` on 0.6.6 — overall 5.5/10) drove this
+release. Closes 4 of 5 actionable findings; the namespace refactor
+(`client.search.*` / `client.audio.*`) is deferred to its own
+milestone since it's a 200+ call-site change.
+
+### Breaking — but fixes a hidden bug
+
+- **`PreLoginRequired` guard on `private_request`.** Calling any
+  private method (most `_v1`, all `private_graphql_*`,
+  account/comment/direct mutations) without a logged-in session
+  now raises `PreLoginRequired` immediately with a clear message,
+  instead of letting the request proceed, get back a degraded
+  payload, and crash downstream in the extractor with
+  `pydantic.ValidationError: 7 validation errors for User: full_name
+  field required`.
+
+  Before:
+  ```
+  await Client().user_info_v1("25025320")
+  # → ValidationError: 7 validation errors for User
+  #     full_name: Field required ...
+  ```
+
+  After:
+  ```
+  await Client().user_info_v1("25025320")
+  # → PreLoginRequired: Authentication required: call
+  #     `await client.login(...)` (or `client.set_settings(...)`
+  #     with a valid sessionid) before this method.
+  ```
+
+  If your code was `except ValidationError`-ing to detect "not
+  logged in", switch to `except PreLoginRequired`. `login(login=True)`
+  bypasses the guard so the login flow itself can run.
+
+### Fixed
+
+- **Input validation on pure-helper methods.** `media_pk_from_code(None)`
+  / `('')` / non-string used to crash with
+  `TypeError: 'NoneType' object is not subscriptable`. Now raises
+  `ValueError("code is required and must be a non-empty string ...")`.
+  Same for `media_code_from_pk(None)` and `media_pk(None)`.
+
+### Documentation
+
+- **`docs/getting-started.md`** was 3 sentences and 5 links. Rewrote
+  with a real hello-world inline, an honest "what you'll need beyond
+  `pip install`" block (account / residential proxy / TOTP), a quick
+  anonymous-call example, and links into the rest of the docs.
+- **`docs/migration.md`** said "the current 0.3.x line"; refreshed to
+  0.7.x and prepended sections for the 0.7.0 `PreLoginRequired` break
+  and the 0.6.6 TLS-verify default.
+
+### Internal
+
+- `.mypy-baseline` 1094 → 1095 (the new `self.user_id` reference in
+  the guard adds one cross-mixin `[attr-defined]` error — same legacy
+  pattern as the existing 1094, no new debt).
+
+### Live verification
+
+13/13 chapi methods + login (TOTP) + private endpoints all PASS through
+the residential pool. Guard correctly admits authenticated calls and
+rejects pre-login ones.
+
+### Deferred to next milestone
+
+- **Namespace objects** (`client.search.*`, `client.audio.*`,
+  `client.user.followers_list_gql()`, etc.) — flat 433-method `Client`
+  surface is the biggest remaining DX friction (4 suffix families:
+  `_v1` / `_gql` / `_v2_gql` / `_a1` plus `private_graphql_*` prefix
+  that reads as "internal" but isn't). Big refactor with deprecation
+  aliases on every old name; needs its own minor.
+
 ## [0.6.6] — 2026-04-27
 
 ### Security
@@ -531,6 +607,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.7.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.0
 [0.6.6]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.6
 [0.6.5]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.5
 [0.6.4]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.4
