@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.7.1] — 2026-04-27
+
+### Documentation
+
+- README: explicit ZeroVer policy section. We will not ship 1.0
+  because Instagram's API rotates / deprecates / changes shapes
+  without notice; pretending otherwise would mislead users who'd
+  read "1.0" as "safe to pin and forget". What we commit to instead:
+  `Breaking` sections in CHANGELOG per release, deprecation cycles
+  ≥2 minors with `DeprecationWarning`, live CI smoke against a real
+  account every push, full migration guide.
+
+### CI
+
+- `.github/dependabot.yml` for GitHub Actions ecosystem. Keeps
+  `actions/*` and `pypa/gh-action-pypi-publish` SHA-pinned via
+  auto-PR. Closes the deferred MEDIUM finding from the `/cso` audit
+  (mutable tags vulnerable to upstream tag-poisoning à la
+  tj-actions/changed-files, March 2025).
+
+No runtime / API changes.
+
 ## [0.7.0] — 2026-04-27
 
 DX audit (`/devex-review` on 0.6.6 — overall 5.5/10) drove this
@@ -607,6 +629,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.7.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.1
 [0.7.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.0
 [0.6.6]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.6
 [0.6.5]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.5
