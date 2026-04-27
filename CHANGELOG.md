@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.6.6] — 2026-04-27
+
+### Security
+
+Two findings from a `/cso` audit (Chief Security Officer mode —
+infrastructure + code + supply chain).
+
+- **[CRITICAL] TLS verification enabled by default.** Every
+  `httpx_ext.Session()` shipped with `verify=False`, plus three
+  explicit `self.{private,public,graphql}.verify = False` overrides
+  in the request mixins. The historical comment was "fix
+  SSLError/HTTPSConnectionPool" — a workaround for one broken proxy
+  that became the global default. Effect: any MITM on the network
+  path (corporate inspection gateway, malicious proxy, public Wi-Fi
+  attacker, BGP hijack) could intercept `sessionid` / `password` /
+  TOTP secret in the clear. Now `verify=True` by default. To
+  re-enable for a known-MITM proxy: `client.private.verify = False`
+  (and `.public` / `.graphql`) AFTER construction.
+  Live-verified: 13/13 chapi methods + login + TOTP still PASS
+  through HikerAPI's residential pool with `verify=True`. The pool
+  proxies are CONNECT-tunnels, not SSL-MITM, so the IG cert reaches
+  the client honestly.
+- **[MEDIUM] `orjson` 3.11.4 → 3.11.8.** CVE-2025-67221 — `orjson.dumps`
+  did not bound recursion on deeply nested JSON, causing stack
+  overflow on adversarial input. Fixed in 3.11.6; bumping to current
+  latest 3.11.8 to absorb the intervening patches.
+
+### Note on outstanding findings
+
+`/cso` also flagged two MEDIUM CI/CD items: `pypa/gh-action-pypi-publish@release/v1`
+and `actions/*` / `github/codeql-action/*` are pinned on mutable tags.
+Both will be closed by enabling Dependabot for `github-actions`
+(pin to SHA + auto-PR for updates) — separate change, not blocking.
+
 ## [0.6.5] — 2026-04-27
 
 ### Fixed
@@ -497,6 +531,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.6.6]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.6
 [0.6.5]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.5
 [0.6.4]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.4
 [0.6.3]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.3
