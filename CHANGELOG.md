@@ -6,6 +6,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.7.2] — 2026-04-27
+
+### Security
+
+- **`orjson` 3.11.4 → 3.11.8 on PyPI installs.** The bug: `requirements.txt`
+  was bumped to 3.11.6 in 0.6.6 (CVE-2025-67221 — `orjson.dumps` stack
+  overflow on deeply nested JSON), and again to 3.11.8 in this release,
+  but `setup.py` had a **hard-coded duplicate** `requirements = [...]`
+  list that was never updated. So `pip install aiograpi==0.7.1` and
+  every prior release back to 0.6.6 was actually pulling the vulnerable
+  `orjson==3.11.4` despite our changelog claiming the bump. Fixed by
+  the migration to `pyproject.toml` (single source of truth — `dependencies`
+  in `[project]`).
+
+### Packaging
+
+- **Migrated to `pyproject.toml` (PEP 621).** Replaces `setup.py` —
+  no more drift between hard-coded duplicate metadata. Long description
+  now reads from `README.md` directly (PyPI showed a 700-char hand-cut
+  blurb before; now shows the full README, ~17 KB). Project URLs added:
+  Documentation, Changelog, Issues, Repository — all visible on PyPI's
+  sidebar. Python 3.12 / 3.13 added to `classifiers`. `Framework :: AsyncIO`
+  and `Operating System :: OS Independent` classifiers added.
+- `dependencies` now sourced from one place (`[project] dependencies`).
+  Old `setup.py`'s hard-coded `requirements = [...]` is gone.
+- `.github/workflows/publish.yml` Verify step reads
+  `pyproject.toml.[project].version` (was `setup.py`).
+
+### Documentation
+
+- **README refreshed.** Added Session Persistence section (logging in
+  fresh on every run flags accounts — persist + reuse). Added Typical
+  Tasks (list/download user posts, location search, followers via new
+  private GraphQL). Added badges: Python versions, License, Docs,
+  ZeroVer. Pointed to the new private-graphql.md page from the README.
+- **GH repo `homepageUrl` → docs site** (was pointing at a HikerAPI
+  promo page; users clicking "About" landed on a sales page instead
+  of `https://subzeroid.github.io/aiograpi/`).
+- **Issue + PR templates upgraded to instagrapi-style v2** —
+  observed/expected split, traceback `render: pytb`, login_method +
+  proxy + current_master dropdowns, `raw_data` field for
+  `cl.last_json`, title prefix `[BUG]` / `[Feature]`. Plus contact
+  links to Discussions / Security Advisories / HikerAPI / Telegram.
+- **`docs/usage-guide/troubleshooting.md`** added (240 lines): every
+  common error category with what / why / how to fix.
+
 ## [0.7.1] — 2026-04-27
 
 ### Documentation
@@ -629,6 +675,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.7.2]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.2
 [0.7.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.1
 [0.7.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.0
 [0.6.6]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.6

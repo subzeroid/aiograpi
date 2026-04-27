@@ -1,0 +1,99 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aiograpi"
+version = "0.7.2"
+authors = [
+    { name = "Mark Subzeroid", email = "143403577+subzeroid@users.noreply.github.com" },
+]
+description = "Asynchronous Instagram Private API wrapper"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = "MIT"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Framework :: AsyncIO",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+keywords = [
+    "instagram private api",
+    "instagram-private-api",
+    "instagram api",
+    "instagram-api",
+    "instagram",
+    "instagram-scraper",
+    "instagram-client",
+    "instagram-stories",
+    "instagram-feed",
+    "instagram-reels",
+    "instagram-insights",
+    "downloader",
+    "uploader",
+    "videos",
+    "photos",
+    "albums",
+    "igtv",
+    "reels",
+    "stories",
+    "pictures",
+    "instagram-user-photos",
+    "instagram-photos",
+    "instagram-metadata",
+    "instagram-downloader",
+    "instagram-uploader",
+    "instagram-note",
+    "asyncio",
+    "async",
+    "aiograpi",
+]
+dependencies = [
+    "httpx==0.28.1",
+    "orjson==3.11.8",
+    "pydantic==2.12.3",
+    "moviepy==1.0.3",
+    "pycryptodomex==3.23.0",
+    "zstandard==0.25.0",
+    "Pillow>=8.1.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/subzeroid/aiograpi"
+Documentation = "https://subzeroid.github.io/aiograpi/"
+Repository = "https://github.com/subzeroid/aiograpi"
+Issues = "https://github.com/subzeroid/aiograpi/issues"
+Changelog = "https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+test = [
+    "flake8==7.3.0",
+    "mypy==1.20.2",
+    "Pillow==11.3.0",
+    "isort==7.0.0",
+    "bandit==1.8.6",
+    "mike==2.1.3",
+    "markdown-include==0.8.1",
+    "mkdocs-material==9.6.22",
+    "mkdocs-minify-plugin==0.8.0",
+    "mkdocstrings==0.30.1",
+    "mkdocstrings-python==2.0.3",
+    "pytest-xdist==3.8.0",
+    "pytest~=8.4.2",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["aiograpi*"]
+
+[tool.setuptools.package-data]
+aiograpi = ["py.typed"]

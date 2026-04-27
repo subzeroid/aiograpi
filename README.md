@@ -14,10 +14,12 @@ The aiograpi more suits for testing or research than a working business!
 * [HikerAPI](https://hikerapi.com/p/KhMxYMSn) for Instagram API ⚡⚡⚡
 * [DataLikers](https://datalikers.com/p/XPhrh0Y3) for Instagram Datasets 🚀
 
-[![Package](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml/badge.svg?branch=main&1)](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml)
 [![PyPI](https://img.shields.io/pypi/v/aiograpi)](https://pypi.org/project/aiograpi/)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aiograpi)
-![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue)
+[![Python](https://img.shields.io/pypi/pyversions/aiograpi)](https://pypi.org/project/aiograpi/)
+[![License](https://img.shields.io/pypi/l/aiograpi)](LICENSE)
+[![Package](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml/badge.svg)](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml)
+[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://subzeroid.github.io/aiograpi/)
+[![ZeroVer](https://img.shields.io/badge/zer0ver-0.x.y-blue)](https://0ver.org/)
 
 
 Features:
@@ -123,8 +125,82 @@ user_id = await cl.user_id_from_username(ACCOUNT_USERNAME)
 medias = await cl.user_medias(user_id, 20)
 ```
 
+### Session Persistence
+
+Logging in fresh on every run is the fastest way to get your account flagged.
+Persist the session and reuse it:
+
+``` python
+from aiograpi import Client
+
+cl = Client()
+await cl.login(USERNAME, PASSWORD)
+cl.dump_settings("session.json")
+
+# reload later without entering credentials again
+cl = Client()
+cl.load_settings("session.json")
+await cl.login(USERNAME, PASSWORD)
+```
+
+If you want explicit control over the loaded session object:
+
+```python
+from aiograpi import Client
+
+cl = Client()
+cl.set_settings(cl.load_settings("session.json"))
+await cl.login(USERNAME, PASSWORD)
+```
+
+### Login by sessionid
+
+```python
+from aiograpi import Client
+
+cl = Client()
+await cl.login_by_sessionid("<your_sessionid>")
+```
+
+`login_by_sessionid()` is a lightweight compatibility path. For long-lived
+automation prefer the regular `login()` → `dump_settings()` →
+`load_settings()` / `set_settings()` flow.
+
+### Typical Tasks
+
+#### List and download another user's posts
+
+```python
+target_id = await cl.user_id_from_username("target_user")
+posts = await cl.user_medias(target_id, amount=10)
+for media in posts:
+    await cl.photo_download(media.pk)
+```
+
+#### Search a location by name
+
+```python
+places = await cl.location_search("Times Square")
+print(places[0].name, places[0].pk)
+```
+
+#### Followers via the new private GraphQL surface
+
+```python
+import uuid
+
+data = await cl.private_graphql_followers_list(
+    user_id="25025320",
+    rank_token=str(uuid.uuid4()),
+)
+# Raw GraphQL envelope: {"data": {...}, "status": "ok", ...}
+```
+
+See [Private GraphQL & doc_id](https://subzeroid.github.io/aiograpi/usage-guide/private-graphql.html)
+for the full new-mobile-API surface (followers, clips, search, inbox).
+
 <details>
-    <summary>Additional example</summary>
+    <summary>Additional example (story upload with mentions / hashtags / media)</summary>
 
 ```python
 from aiograpi import Client

@@ -143,3 +143,4 @@ docs/superpowers/
 
 # Port-time scratch tooling (smoke helpers, etc.)
 util/
+.gstack/
