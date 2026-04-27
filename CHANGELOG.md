@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.6.5] — 2026-04-27
+
+### Fixed
+
+`/codex challenge` (adversarial mode, 198K tokens) caught 3 edge cases
+in the bug_006 fix from 0.6.3. The HTTP-status mapping I added to
+`private_graphql_query_request` was correct but incomplete — IG's
+mobile-private-GraphQL surface returns recoverable account-state
+failures as JSON 4xx bodies, not just HTTP status codes:
+
+- **Body-based promotion** missing. `{"message":"login_required"}` /
+  `challenge_required` / `checkpoint_required` / `consent_required` /
+  `feedback_required`, `{"error_type":"rate_limit_error"}`,
+  `{"message":"unable to fetch followers"}`, `{"message":"user_blocked"}`,
+  `not authorized to view user` now correctly raise
+  `LoginRequired` / `ChallengeRequired` / `CheckpointRequired` /
+  `ConsentRequired` / `FeedbackRequired` / `RateLimitError` /
+  `UserNotFound` / `SentryBlock` / `PrivateAccount`. Without this every
+  mobile-GQL relogin/challenge/recovery flow was silently broken.
+- **404 `b"Not Found"` masked-challenge promotion** missing. The fix
+  landed in `_send_private_request:598` in 0.4.1 wasn't carried into
+  the new private GraphQL path. checkpoint/challenge looked like a
+  missing resource — now also raises `ChallengeRequired`.
+- **`self.last_json` staleness**. Cleared before the request so callers
+  inspecting it on exception don't see stale data from the prior
+  successful call (mirrors `private.py:339`).
+
+Live re-verified: 13/13 chapi methods still PASS.
+
+### Added
+
+- **`docs/usage-guide/private-graphql.md`** — single page covering the
+  two primitives (`public_doc_id_graphql_request`,
+  `private_graphql_query_request`), the 13 named convenience wrappers
+  with a "when to use what" table, doc_id rotation playbook, streaming
+  flag caveats (clips_profile NDJSON gotcha), and exception handling.
+  Wired into mkdocs nav. `mkdocs build --strict` still clean.
+
 ## [0.6.4] — 2026-04-27
 
 ### Fixed
@@ -459,6 +497,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.6.5]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.5
 [0.6.4]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.4
 [0.6.3]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.3
 [0.6.2]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.2
