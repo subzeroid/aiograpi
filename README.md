@@ -59,6 +59,31 @@ For any other languages (e.g. C++, C#, F#, D, [Golang](https://github.com/subzer
 8. [Build stories](https://subzeroid.github.io/aiograpi/usage-guide/story.html) with custom background, font animation, link sticker and mention users
 9. Account [registration](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/mixins/signup.py) and captcha passing will appear
 
+### What's new in 0.6.x
+
+- **Sync with instagrapi 2.4.4** — every mixin and infrastructure module ported, plus three new mixins:
+  [`ExploreMixin`](https://subzeroid.github.io/aiograpi/usage-guide/explore.html),
+  [`FundraiserMixin`](https://subzeroid.github.io/aiograpi/usage-guide/fundraiser.html), and opt-in
+  [`CaptchaHandlerMixin`](https://subzeroid.github.io/aiograpi/usage-guide/captcha.html).
+- **doc_id GraphQL primitive** — `Client.public_doc_id_graphql_request(doc_id, variables)` and
+  `Client.private_graphql_query_request(...)` for the new `i.instagram.com/graphql/query` surface
+  IG migrated to. New high-level methods: `user_info_v2_gql`, `user_info_by_username_v2_gql`,
+  `private_graphql_followers_list` / `following_list` / `clips_profile` / `inbox_tray_for_user`,
+  `private_graphql_memories_pog` / `realtime_region_hint` / `top_audio_trends_eligible_categories`,
+  plus `fbsearch_keyword_typeahead` / `fbsearch_typeahead_stream` / `fbsearch_item`,
+  `feed_user_stream_item`, `media_comment_infos`. All live-verified.
+- **Pure helpers go sync** (breaking from 0.0.x): `media_pk_from_code`, `media_code_from_pk`,
+  `media_pk`, `share_info`, `share_code_from_url`, `share_info_by_url`, `highlight_pk_from_url`,
+  `handle_challenge_result`, `challenge_resolve_new_password_form` no longer require `await`.
+  See [Migration Guide](https://subzeroid.github.io/aiograpi/migration.html) for the full list.
+- **PEP 561 typed** (`py.typed`) — mypy / pyright pick up annotations from the installed package.
+- **CI publish-on-tag** with PyPI trusted publishing — push a version tag, GitHub Actions builds,
+  publishes, and creates a release.
+
+Full per-release notes: [CHANGELOG.md](https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md).
+Migrating from `0.0.x` or `aiograpi-fixed`?
+See the [Migration Guide](https://subzeroid.github.io/aiograpi/migration.html).
+
 ### Installation
 
 ```
@@ -107,6 +132,7 @@ await cl.video_upload_to_story(
 
 * [Index](https://subzeroid.github.io/aiograpi/)
 * [Getting Started](https://subzeroid.github.io/aiograpi/getting-started.html)
+* [Migration Guide](https://subzeroid.github.io/aiograpi/migration.html) — for users coming from `0.0.x` or `aiograpi-fixed`
 * [Usage Guide](https://subzeroid.github.io/aiograpi/usage-guide/fundamentals.html)
 * [Interactions](https://subzeroid.github.io/aiograpi/usage-guide/interactions.html)
   * [`Media`](https://subzeroid.github.io/aiograpi/usage-guide/media.html) - Publication (also called post): Photo, Video, Album, IGTV and Reels
@@ -134,6 +160,9 @@ await cl.video_upload_to_story(
   * [`DirectMessage`](https://subzeroid.github.io/aiograpi/usage-guide/direct.html) - Message in Direct Message
   * [`Insight`](https://subzeroid.github.io/aiograpi/usage-guide/insight.html) - Insights for a post
   * [`Track`](https://subzeroid.github.io/aiograpi/usage-guide/track.html) - Music track (for Reels/Clips)
+* [Captcha](https://subzeroid.github.io/aiograpi/usage-guide/captcha.html) - Opt-in handler interface for solver integrations
+* [Explore](https://subzeroid.github.io/aiograpi/usage-guide/explore.html) - Explore page methods
+* [Fundraiser](https://subzeroid.github.io/aiograpi/usage-guide/fundraiser.html) - Fundraiser info
 * [Best Practices](https://subzeroid.github.io/aiograpi/usage-guide/best-practices.html)
 * [Development Guide](https://subzeroid.github.io/aiograpi/development-guide.html)
 * [Handle Exceptions](https://subzeroid.github.io/aiograpi/usage-guide/handle_exception.html)
@@ -144,7 +173,16 @@ await cl.video_upload_to_story(
 
 [![List of contributors](https://opencollective.com/aiograpi/contributors.svg?width=890&button=0)](https://github.com/subzeroid/aiograpi/graphs/contributors)
 
-To release, you need to call the following commands:
+### Releasing
 
-    python setup.py sdist
-    twine upload dist/*
+Releases are automated via the `publish.yml` GitHub Actions workflow with PyPI
+[trusted publishing](https://docs.pypi.org/trusted-publishers/). To cut a new release:
+
+1. Bump `version=` in `setup.py`.
+2. Add a section to `CHANGELOG.md`.
+3. Commit and push to `main`.
+4. Tag: `git tag -a 0.x.y -m "Release 0.x.y" && git push origin 0.x.y`.
+
+The workflow then builds sdist + wheel, verifies the tag matches `setup.py`,
+publishes to PyPI, and creates the GitHub release with both artefacts attached
+— no API tokens needed.
