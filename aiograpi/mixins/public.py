@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import time
+from typing import Any, Dict, Optional
 
 import orjson
 
@@ -144,16 +145,27 @@ class PublicRequestMixin:
     ):
         self.last_public_response = None
         self.public_requests_count += 1
+        # Two header modes:
+        #   update_headers in (None, True): merge into the session (legacy
+        #     behavior — persists across subsequent requests).
+        #   update_headers is False: pass per-request only, no mutation.
+        per_request_headers = None
         if headers:
             if update_headers in [None, True]:
                 self.public.headers.update(headers)
+            else:
+                per_request_headers = headers
         if self.last_response_ts and (time.time() - self.last_response_ts) < 1.0:
             await asyncio.sleep(1.0)
         try:
             if data is not None:
-                response = await self.public.post(url, data=data, params=params)
+                response = await self.public.post(
+                    url, data=data, params=params, headers=per_request_headers
+                )
             else:
-                response = await self.public.get(url, params=params)
+                response = await self.public.get(
+                    url, params=params, headers=per_request_headers
+                )
             self.public_request_logger.debug(
                 "public_request %s: %s", response.status_code, response.url
             )
@@ -308,10 +320,10 @@ class PublicRequestMixin:
     async def public_doc_id_graphql_request(
         self,
         doc_id: str,
-        variables: dict,
-        referer: str = None,
-        headers: dict = None,
-    ) -> dict:
+        variables: Dict[str, Any],
+        referer: Optional[str] = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
         """
         POST a doc_id-based GraphQL query to www.instagram.com/graphql/query/.
 

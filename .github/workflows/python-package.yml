@@ -64,6 +64,25 @@ jobs:
       - name: Run isort
         run: isort --check-only aiograpi
 
+  mypy:
+    # Mypy regression gate. Counts errors against .mypy-baseline and fails
+    # if the count goes up. Strict-pass is years away (legacy upstream port
+    # has 1000+ untyped functions); this just stops the bleeding.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+        with:
+          requirements: "true"
+          test-requirements: "true"
+      - name: Run mypy regression gate
+        run: ./scripts/check-mypy-baseline.sh
+
   unit-test:
     # Network-free regression tests. Runs on every push/PR. No
     # secrets needed — purely tests parsing, mocking, and plumbing.
