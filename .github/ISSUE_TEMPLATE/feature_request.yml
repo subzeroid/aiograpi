@@ -1,30 +1,58 @@
 name: Feature request
-description: A new endpoint, helper, or behavior
-labels: ["enhancement"]
+description: Suggest a focused addition or API improvement
+title: "[Feature] "
+labels:
+  - enhancement
 body:
   - type: textarea
     id: problem
     attributes:
-      label: What are you trying to do?
-      description: Describe the goal, not the solution. "I want to fetch followers via the new mobile-app GraphQL surface" is more useful than "add `client.foo_bar()`".
+      label: Problem to solve
+      description: What concrete use case is blocked today?
+      placeholder: I need to fetch the Reels stream for a profile, but there is no `private_graphql_clips_profile`-equivalent on the public side.
     validations:
       required: true
-
   - type: textarea
-    id: solution
+    id: proposal
     attributes:
-      label: Proposed solution (optional)
-      description: If you have a specific shape in mind — method name, parameters, return type — sketch it here.
-
+      label: Proposed API
+      description: Show the method or API shape you would like to see.
+      render: python
+      placeholder: |
+        clips = await cl.user_clips_v2_gql(user_id="25025320")
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example usage
+      description: Show a realistic example.
+      render: python
+    validations:
+      required: true
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives considered (optional)
-      description: Other endpoints, workarounds, or upstream `instagrapi` methods you've already tried.
-
-  - type: input
-    id: doc_id
+      label: Why current methods are insufficient
+      description: What have you tried already? (`user_clips_v1`, `private_graphql_clips_profile`, …)
+    validations:
+      required: true
+  - type: dropdown
+    id: endpoint_knowledge
     attributes:
-      label: doc_id / endpoint URL (if you've captured one)
-      description: From a Charles capture or instaloader/chapi reference.
-      placeholder: "doc_id 25980296051578533 — PolarisProfilePageContentQuery"
+      label: Does this require new Instagram endpoint knowledge?
+      options:
+        - "yes — I have a Charles capture / doc_id / endpoint URL"
+        - "yes — but I don't have a capture yet"
+        - "no — it's a wrapper over existing endpoints"
+        - not sure
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References, captures, doc_id, or similar implementations
+      description: Charles HAR / mitmproxy capture / instaloader / chapi / hiker-next references.
+      placeholder: |
+        doc_id 26347858941511777 — FB search non_profiled_serp
+        captured from IG iPhone app build 364.x on 2026-04-15

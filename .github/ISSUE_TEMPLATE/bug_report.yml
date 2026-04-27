@@ -1,91 +1,146 @@
 name: Bug report
-description: aiograpi crashes, returns wrong data, or behaves differently than docs say
-labels: ["bug"]
+description: Report a reproducible bug in aiograpi
+title: "[BUG] "
+labels:
+  - bug
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for the report. Include enough detail that someone can reproduce locally.
-        If the bug is auth/challenge-related, **redact your sessionid, password, and proxy creds** before pasting.
-
+        Thanks for filing a bug report. Redact `sessionid`, password, TOTP seed, and proxy creds before pasting anything.
   - type: textarea
-    id: what-happened
+    id: summary
     attributes:
-      label: What happened?
-      description: What did you run, what did you expect, what did you actually see?
-      placeholder: |
-        I called `await client.user_info_by_username("instagram")` and …
+      label: What broke?
+      description: Describe the bug in 1-3 sentences.
+      placeholder: media_pk_from_url() returns the wrong pk for instagram.com/share/p/... links
     validations:
       required: true
-
-  - type: textarea
-    id: code
-    attributes:
-      label: Minimum repro snippet
-      description: Smallest piece of Python that triggers the bug. Redact creds.
-      render: python
-    validations:
-      required: true
-
-  - type: textarea
-    id: output
-    attributes:
-      label: Output / traceback
-      description: Full stderr and traceback. Redact tokens / sessionids / proxy URLs.
-      render: shell
-    validations:
-      required: true
-
   - type: dropdown
-    id: surface
+    id: area
     attributes:
-      label: API surface
-      description: Which aiograpi endpoint family did you hit?
+      label: Affected area
       options:
-        - private (`_v1`, `private_graphql_*`, mutations)
-        - public anonymous (`_gql`, `_a1`)
-        - public doc_id (`_v2_gql`, `public_doc_id_graphql_request`)
         - login / challenge / TOTP
-        - upload (photo / video / album / clip / story / igtv)
-        - download
-        - not sure
+        - direct / messages
+        - media / posts
+        - stories
+        - upload / publishing
+        - public / web API (`_gql`, `_a1`)
+        - public doc_id (`_v2_gql`, `public_doc_id_graphql_request`)
+        - private GraphQL (`private_graphql_*`)
+        - account / settings
+        - exceptions / error handling
+        - other
     validations:
       required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction code
+      description: Smallest snippet that still reproduces. Redact creds.
+      render: python
+      placeholder: |
+        import asyncio
+        from aiograpi import Client
 
+        async def main():
+            cl = Client()
+            await cl.login("USER", "PASS")
+            ...
+
+        asyncio.run(main())
+    validations:
+      required: true
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Full traceback
+      description: Paste the full traceback if there is one. If there is no traceback, write "No traceback".
+      render: pytb
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed result
+      description: What actually happened?
+      placeholder: The method raised ClientGraphqlError with message "Missing 'data' in doc_id GraphQL response (doc_id=25980296051578533)".
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: What should have happened instead?
+    validations:
+      required: true
   - type: input
-    id: version
+    id: aiograpi_version
     attributes:
       label: aiograpi version
-      description: "`pip show aiograpi | grep Version`"
+      description: Use an exact version like 0.7.1, not "latest".
       placeholder: "0.7.1"
     validations:
       required: true
-
   - type: input
-    id: python
+    id: python_version
     attributes:
       label: Python version
-      placeholder: "3.10.13"
+      placeholder: "3.11.9"
     validations:
       required: true
-
   - type: input
     id: os
     attributes:
-      label: OS
-      placeholder: "macOS 15.2 / Ubuntu 24.04 / Windows 11"
+      label: Operating system
+      placeholder: "Ubuntu 24.04 / Windows 11 / macOS 15"
     validations:
       required: true
-
+  - type: dropdown
+    id: login_method
+    attributes:
+      label: Login method
+      options:
+        - username/password
+        - username/password + TOTP
+        - sessionid
+        - load_settings / set_settings
+        - no login required
+        - other
+    validations:
+      required: true
   - type: dropdown
     id: proxy
     attributes:
-      label: Proxy in use?
+      label: Proxy in use
+      description: Type only. Do not paste credentials.
       options:
-        - "no proxy"
-        - "residential / CONNECT-tunnel"
-        - "datacenter"
-        - "corporate inspection (SSL-MITM)"
-        - "not sure"
+        - no proxy
+        - residential / CONNECT-tunnel
+        - datacenter
+        - corporate inspection (SSL-MITM)
+        - not sure
     validations:
       required: true
+  - type: dropdown
+    id: current_master
+    attributes:
+      label: Can you reproduce on current `main`?
+      options:
+        - "yes"
+        - "no"
+        - not tested
+    validations:
+      required: true
+  - type: textarea
+    id: raw_data
+    attributes:
+      label: Raw API response or payload sample
+      description: Paste `cl.last_json`, raw response JSON, or a minimized payload sample if possible. Redact secrets.
+      render: json
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else that helps reproduce or triage the issue.

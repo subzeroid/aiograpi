@@ -1,11 +1,14 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Usage questions and how-to help
+    url: https://github.com/subzeroid/aiograpi/discussions
+    about: Ask usage questions, integration questions, and general how-to questions in Discussions instead of Issues.
   - name: Security vulnerability
     url: https://github.com/subzeroid/aiograpi/security/advisories/new
     about: Please report security issues privately via GitHub Security Advisories, not in public issues.
-  - name: Question or discussion
-    url: https://github.com/subzeroid/aiograpi/discussions
-    about: For usage questions and open-ended discussion.
+  - name: HikerAPI for data retrieval
+    url: https://hikerapi.com/p/KhMxYMSn
+    about: If your main goal is retrieving Instagram data reliably, you can try HikerAPI here (100 free requests).
   - name: Telegram chat
     url: https://t.me/instagrapi
     about: Real-time chat with maintainers and other users.
