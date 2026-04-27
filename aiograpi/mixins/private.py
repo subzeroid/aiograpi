@@ -35,6 +35,7 @@ from aiograpi.exceptions import (
     LoginRequired,
     MediaUnavailable,
     PleaseWaitFewMinutes,
+    PreLoginRequired,
     PrivateAccount,
     ProxyAddressIsBlocked,
     RateLimitError,
@@ -659,6 +660,19 @@ class PrivateRequestMixin:
         extra_sig=None,
         domain: str = None,
     ):
+        # Hard guard: every private endpoint requires a logged-in
+        # session (cookie + user_id). Without this, IG returns
+        # degraded payloads that downstream extractors then fail to
+        # validate, surfacing as a confusing pydantic ValidationError
+        # ("7 validation errors for User: full_name field required ...")
+        # instead of a clear "you forgot to call login()". `login=True`
+        # bypasses the guard so the login flow itself can run.
+        if not login and not self.user_id:
+            raise PreLoginRequired(
+                "Authentication required: call `await client.login(...)` "
+                "(or `client.set_settings(...)` with a valid sessionid) "
+                "before this method."
+            )
         if self.authorization:
             if not headers:
                 headers = {}

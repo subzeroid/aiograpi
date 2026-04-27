@@ -1,7 +1,7 @@
 # Migration Guide
 
 If you're on `aiograpi==0.0.x` (or one of the third-party forks like
-`aiograpi-fixed`), here's how to move to the current `0.3.x` line.
+`aiograpi-fixed`), here's how to move to the current `0.7.x` line.
 
 ## Why migrate
 
@@ -43,6 +43,50 @@ After the import rename, follow the version-by-version section below
 to cover the breaking changes.
 
 ## Version-by-version breaking changes
+
+### 0.7.0 — `PreLoginRequired` on private endpoints
+
+Calling any private method (anything via `private_request` — most `_v1`
+methods, `private_graphql_*`, account/comment/direct mutations) without
+a logged-in session now raises `PreLoginRequired` immediately with a
+clear message:
+
+```
+PreLoginRequired: Authentication required: call `await client.login(...)`
+(or `client.set_settings(...)` with a valid sessionid) before this method.
+```
+
+Previously these calls would hit IG anyway, get back a degraded payload,
+and then fail in the extractor with a confusing pydantic
+`ValidationError: 7 validation errors for User: full_name field required ...`.
+The new `PreLoginRequired` is the same message you'd debug your way
+toward, just delivered upfront.
+
+If your code was catching `ValidationError` to detect "not logged in",
+switch to `except PreLoginRequired`.
+
+Pure helpers (`media_pk_from_code`, `media_code_from_pk`, `media_pk`)
+also now `raise ValueError` on empty/None input instead of crashing
+with `TypeError: 'NoneType' object is not subscriptable`.
+
+### 0.6.6 — TLS verification on by default
+
+`httpx_ext.Session` and the three Client sessions
+(`client.private` / `.public` / `.graphql`) ship with `verify=True`
+now. If your proxy is a known SSL-MITM (e.g. corporate inspection
+gateway), you'll need to opt out explicitly **after** construction:
+
+```python
+client = Client()
+client.private.verify = False
+client.public.verify = False
+client.graphql.verify = False
+```
+
+Most residential / CONNECT-tunnel proxies don't terminate SSL — they
+just pass packets — so they keep working with the new default. Only
+flip `verify=False` if you actually see SSL errors and you've verified
+the proxy is trustworthy.
 
 ### 0.3.0 — six pure helpers go sync
 

@@ -117,6 +117,12 @@ class MediaMixin:
         -------
         2277033926878261772_1903424587 -> 2277033926878261772
         """
+        if not media_id:
+            raise ValueError(
+                "media_id is required (got empty/None). "
+                "Pass an Instagram media id like '2277033926878261772' "
+                "or '2277033926878261772_1903424587'."
+            )
         media_pk = str(media_id)
         if "_" in media_pk:
             media_pk, _ = media_id.split("_")
@@ -141,6 +147,11 @@ class MediaMixin:
         2110901750722920960 -> B1LbfVPlwIA
         2278584739065882267 -> B-fKL9qpeab
         """
+        if not media_pk:
+            raise ValueError(
+                "media_pk is required (got empty/None). "
+                "Pass an Instagram media pk like '2110901750722920960'."
+            )
         return InstagramIdCodec.encode(media_pk)
 
     def media_pk_from_code(self, code: str) -> str:
@@ -163,6 +174,12 @@ class MediaMixin:
         B-fKL9qpeab -> 2278584739065882267
         CCQQsCXjOaBfS3I2PpqsNkxElV9DXj61vzo5xs0 -> 2346448800803776129
         """
+        if not code or not isinstance(code, str):
+            raise ValueError(
+                "code is required and must be a non-empty string "
+                "(got %r). Pass an Instagram media shortcode like "
+                "'B-fKL9qpeab'." % (code,)
+            )
         return str(InstagramIdCodec.decode(code[:11]))
 
     async def media_pk_from_url(self, url: str) -> str:
