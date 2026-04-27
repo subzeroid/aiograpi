@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.6.4] — 2026-04-27
+
+### Fixed
+
+`/codex review` (run as an independent second opinion after the 0.6.3
+ultrareview pass) caught a regression in the bug_001 fix that landed
+in 0.6.3:
+
+- **`public._send_public_request`** applied per-call `headers` ONLY by
+  merging into `self.public.headers` when `update_headers in (None, True)`,
+  and never passed them to `.post()` / `.get()` at all. So passing
+  `update_headers=False` (which 0.6.3 did to stop session mutation)
+  silently *dropped* the iPhone UA / Referer / Accept-* overrides that
+  `public_doc_id_graphql_request` relies on. Live on the current pool
+  it kept working (sessionid cookies carried it), but on a fresh client
+  the doc_id endpoint would 403 again.
+- `_send_public_request` now supports two modes explicitly:
+  - `update_headers in (None, True)` — merge into session (legacy).
+  - `update_headers is False` — per-request only, no mutation.
+- Live re-verified: 13/13 chapi methods still PASS.
+
+### Added
+
+- **mypy regression gate** (CI job `mypy` + `scripts/check-mypy-baseline.sh`).
+  Counts errors against `.mypy-baseline` (currently 1094) and fails if
+  the count goes up; prints a notice when it goes down so the baseline
+  can be ratcheted. Strict-pass is years away — 1000+ legacy untyped
+  errors, mostly `[attr-defined]` from cross-mixin attribute refs that
+  need Protocol scaffolding — but this stops new code from making it
+  worse.
+- `mypy==1.20.2` in `requirements-test.txt`.
+- Type annotations on `public_doc_id_graphql_request` parameters and
+  return type (`Dict[str, Any]` / `Optional`). Drops 2 mypy errors.
+
+### Changed
+
+- README refresh: "What's new in 0.6.x" section, Migration Guide link,
+  doc-pages for the three new mixins, replaced stale
+  `python setup.py sdist` instructions with the current
+  trusted-publishing flow.
+
 ## [0.6.3] — 2026-04-27
 
 ### Fixed — ultrareview audit findings
@@ -418,6 +459,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.6.4]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.4
 [0.6.3]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.3
 [0.6.2]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.2
 [0.6.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.1
