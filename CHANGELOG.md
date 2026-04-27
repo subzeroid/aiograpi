@@ -6,6 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.6.3] — 2026-04-27
+
+### Fixed — ultrareview audit findings
+
+Five issues surfaced by an `/ultrareview` cloud audit of the 0.5.0–0.6.2
+diff. All non-breaking; live-verified 13/13 chapi methods still pass.
+
+- **`tests.py`** (CI-breaking) — `test_private_graphql_clips_profile_includes_initial_stream_count`
+  asserted `use_stream=True`, but 0.6.2 deliberately hard-coded the
+  streaming flags to `False`. Test was guaranteed to fail every CI
+  run on this branch and on every future PR. Flipped to `assertFalse`
+  + added coverage for `use_defer`, `stream_use_customized_batch`,
+  `data.should_stream_response`.
+- **`Client.public_doc_id_graphql_request`** was permanently mutating
+  the public session's `User-Agent` / `Accept-*` / `Referer` because
+  `public_request` defaults `update_headers=None`, which is treated
+  as `True`. A single `user_info_v2_gql` call left every subsequent
+  public request sending the iPhone IG-app UA. Now passes
+  `update_headers=False`.
+- **`Client.user_info_by_username_v2_gql`** crashed with
+  `AttributeError` instead of `UserNotFound` when IG returned
+  `{"xdt_api__v1__fbsearch__non_profiled_serp": null}`. Intermediate
+  `None` is now promoted to `{}` explicitly.
+- **`private_graphql_query_request`** leaked raw
+  `httpx.HTTPStatusError` from `raise_for_status()` instead of mapping
+  to the documented `aiograpi.exceptions` hierarchy. Every
+  `except ClientBadRequestError` / `ClientUnauthorizedError` /
+  `ClientThrottledError` clause around the eight `private_graphql_*`
+  wrappers was silently bypassed. Now wrapped in the same
+  `except httpx_ext.HTTPError` + status-code match used by
+  `_send_graphql_request`.
+- **`private_graphql_followers_list` / `private_graphql_following_list`**
+  wrapped `exclude_field_is_favorite` / `exclude_unused_fields` in
+  `str()`, so the JSON variables payload sent `"True"` / `"False"`
+  (Python repr) instead of native JSON booleans. IG's typed
+  `BooleanValue` input either rejects the string (HTTP 400) or
+  coerces it truthily (any non-empty string is truthy — passing
+  `False` would actually flip the flag *on*). Dropped the `str()`
+  wrappers.
+
 ## [0.6.2] — 2026-04-27
 
 ### Fixed
@@ -378,6 +418,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[0.6.3]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.3
 [0.6.2]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.2
 [0.6.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.1
 [0.6.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.6.0
