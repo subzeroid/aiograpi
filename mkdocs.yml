@@ -34,6 +34,7 @@ nav:
     - Account: usage-guide/account.md
     - Private GraphQL & doc_id: usage-guide/private-graphql.md
     - Best Practices: usage-guide/best-practices.md
+    - Troubleshooting: usage-guide/troubleshooting.md
   - Development Guide: development-guide.md
   - Exceptions: exceptions.md
 theme: material
