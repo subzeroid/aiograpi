@@ -261,7 +261,8 @@ def extract_location(data):
         if place_location:
             data = place_location
     data["pk"] = data.get("id", data.get("pk", data.get("location_id", None)))
-    data["external_id"] = data.get("external_id", data.get("facebook_places_id"))
+    ext = data.get("external_id") or data.get("facebook_places_id")
+    data["external_id"] = int(ext) if ext not in (None, "", "None") else None
     data["external_id_source"] = data.get(
         "external_id_source", data.get("external_source")
     )
