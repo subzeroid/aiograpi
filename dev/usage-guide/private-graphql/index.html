@@ -1356,6 +1356,14 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <td><code>Client.user_related_profiles_gql(user_id)</code></td>
 </tr>
 <tr>
+<td>HEAD a public URL (resolve short-link redirects without body)</td>
+<td><code>Client.public_head(url, follow_redirects=False)</code></td>
+</tr>
+<tr>
+<td>Audio/track clips-pivot stream</td>
+<td><code>Client.track_stream_info_by_id(track_id, max_id="")</code></td>
+</tr>
+<tr>
 <td>Followers list (mobile-app surface)</td>
 <td><code>Client.private_graphql_followers_list(user_id, rank_token)</code></td>
 </tr>
