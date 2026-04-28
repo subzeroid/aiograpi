@@ -1340,6 +1340,22 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <td><code>Client.user_web_profile_info_v1(username)</code></td>
 </tr>
 <tr>
+<td>"Suggested" profiles by user_id (chaining)</td>
+<td><code>Client.chaining(user_id)</code></td>
+</tr>
+<tr>
+<td>Suggested-profile expanded details</td>
+<td><code>Client.fetch_suggestion_details(user_id, chained_ids)</code></td>
+</tr>
+<tr>
+<td>Similar businesses by user's category</td>
+<td><code>Client.discover_recommended_accounts_for_category_v1(user_id)</code></td>
+</tr>
+<tr>
+<td>Related profiles via legacy GraphQL <code>edge_chaining</code></td>
+<td><code>Client.user_related_profiles_gql(user_id)</code></td>
+</tr>
+<tr>
 <td>Followers list (mobile-app surface)</td>
 <td><code>Client.private_graphql_followers_list(user_id, rank_token)</code></td>
 </tr>
