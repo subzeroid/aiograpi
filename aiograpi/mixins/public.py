@@ -74,6 +74,43 @@ class PublicRequestMixin:
         )
         super().__init__(*args, **kwargs)
 
+    async def public_head(self, url: str, follow_redirects: bool = False):
+        """
+        Issue a ``HEAD`` request through the public session — useful
+        for resolving short-link redirects without downloading the
+        body (e.g. ``instagram.com/share/...`` link expansion).
+
+        Bypasses :meth:`public_request`'s GET/POST machinery and goes
+        straight through ``httpx_ext.request`` so the per-call
+        ``follow_redirects`` flag actually takes effect (the Session
+        wrapper filters falsy kwargs and would drop
+        ``follow_redirects=False``).
+
+        Parameters
+        ----------
+        url: str
+            Absolute URL.
+        follow_redirects: bool, default False
+            Whether httpx should follow 3xx responses. Default
+            ``False`` means callers can read ``response.headers["location"]``
+            to inspect the redirect target without actually fetching it.
+
+        Returns
+        -------
+        httpx.Response
+            The raw response. Status code typically 200 / 301 / 302 /
+            307 / 308.
+        """
+        self.public_requests_count += 1
+        return await httpx_ext.request(
+            "HEAD",
+            url,
+            proxy=self.public.proxy,
+            verify=self.public.verify,
+            follow_redirects=follow_redirects,
+            headers=self.public.headers,
+        )
+
     async def public_request(
         self,
         url,

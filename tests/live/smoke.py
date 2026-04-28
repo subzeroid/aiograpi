@@ -150,6 +150,14 @@ async def main():
                 "user_related_profiles_gql",
                 lambda: cl.user_related_profiles_gql(instagram_pk),
             ),
+            (
+                "public_head_share_link",
+                lambda: cl.public_head("https://www.instagram.com/share/p/BALv9Ep4YH"),
+            ),
+            (
+                "track_stream_info_by_id",
+                lambda: cl.track_stream_info_by_id("18462251209012169"),
+            ),
             ("feed_user_stream_item", lambda: cl.feed_user_stream_item(instagram_pk)),
             (
                 "private_graphql_followers_list",

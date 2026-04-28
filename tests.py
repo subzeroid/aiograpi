@@ -374,6 +374,53 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIs(result, expected)
         client.media_info_a1.assert_called_once_with("2110901750722920960")
 
+    async def test_public_head_uses_httpx_ext_request_with_follow_redirects_off(
+        self,
+    ):
+        client = Client()
+        client.public.proxy = None
+        client.public.headers = {"User-Agent": "test"}
+        fake_response = Mock(status_code=302, headers={"location": "https://x"})
+
+        with mock.patch(
+            "aiograpi.mixins.public.httpx_ext.request",
+            new=AsyncMock(return_value=fake_response),
+        ) as ext_request:
+            response = await client.public_head("https://www.instagram.com/share/p/abc")
+
+        self.assertIs(response, fake_response)
+        args, kwargs = ext_request.call_args
+        self.assertEqual(args[0], "HEAD")
+        self.assertEqual(args[1], "https://www.instagram.com/share/p/abc")
+        self.assertFalse(kwargs["follow_redirects"])
+        self.assertEqual(kwargs["headers"], {"User-Agent": "test"})
+
+    async def test_public_head_passes_follow_redirects_true_when_requested(self):
+        client = Client()
+        fake_response = Mock(status_code=200, headers={})
+
+        with mock.patch(
+            "aiograpi.mixins.public.httpx_ext.request",
+            new=AsyncMock(return_value=fake_response),
+        ) as ext_request:
+            await client.public_head("https://example.com", follow_redirects=True)
+
+        kwargs = ext_request.call_args.kwargs
+        self.assertTrue(kwargs["follow_redirects"])
+
+    async def test_public_head_increments_request_counter(self):
+        client = Client()
+        client.public_requests_count = 5
+        fake_response = Mock()
+
+        with mock.patch(
+            "aiograpi.mixins.public.httpx_ext.request",
+            new=AsyncMock(return_value=fake_response),
+        ):
+            await client.public_head("https://example.com")
+
+        self.assertEqual(client.public_requests_count, 6)
+
 
 class PolarisProfileNormalizationTestCase(unittest.TestCase):
     """Pure-function tests for _normalize_polaris_profile (PolarisProfilePageContentQuery
@@ -4611,6 +4658,38 @@ class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         users = await client.fbsearch_typehead("metal")
 
         self.assertEqual(users, [])
+
+    # --- track ---
+
+    async def test_track_stream_info_by_id_uses_clips_pivot_endpoint(self):
+        client = self.build_client()
+        client.private_request = AsyncMock(return_value={"items": []})
+
+        await client.track_stream_info_by_id("18462251209012169")
+
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "clips/stream_clips_pivot_page/")
+        # _track_request passes data as positional arg #1
+        data = args[1]
+        self.assertEqual(data["pivot_page_type"], "audio")
+        self.assertEqual(data["_uuid"], "stub-uuid")
+        self.assertEqual(
+            data["music_page"],
+            {
+                "tab_type": "clips",
+                "audio_asset_id": "18462251209012169",
+                "audio_cluster_id": "18462251209012169",
+            },
+        )
+
+    async def test_track_stream_info_by_id_forwards_max_id(self):
+        client = self.build_client()
+        client.private_request = AsyncMock(return_value={"items": []})
+
+        await client.track_stream_info_by_id("18462251209012169", max_id="cursor-2")
+
+        data = client.private_request.call_args.args[1]
+        self.assertEqual(data["music_page"]["max_id"], "cursor-2")
 
     # --- comment ---
 

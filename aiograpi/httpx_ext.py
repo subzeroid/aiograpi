@@ -59,11 +59,13 @@ SUPPORTED_DECODERS["zstd"] = ZstdDecoder
 DEFAULT_TIMEOUT = 45
 
 
-async def request(method, url, proxy=None, verify=True, **kwargs):
+async def request(
+    method, url, proxy=None, verify=True, follow_redirects=True, **kwargs
+):
     if "timeout" not in kwargs:
         kwargs["timeout"] = DEFAULT_TIMEOUT
     async with httpx.AsyncClient(
-        proxy=proxy, verify=verify, follow_redirects=True
+        proxy=proxy, verify=verify, follow_redirects=follow_redirects
     ) as client:
         return await client.request(method, url, **kwargs)
 
