@@ -396,6 +396,29 @@ class CommentMixin:
         return comments
 
     async def media_comments(self, media_id: str, amount: int = 20) -> List[Comment]:
+        """
+        Fetch comments for a media via the most-likely-to-succeed path.
+
+        Tries :meth:`media_comments_gql` (public GraphQL) first; falls
+        back to a logged-in retry by injecting ``sessionid`` into the
+        public session if the first attempt raised
+        ``ClientLoginRequired``; finally falls back to
+        :meth:`media_comments_v1` (private API) on any other error.
+        Useful as a "just give me the comments" call when you don't
+        care which surface served them.
+
+        Parameters
+        ----------
+        media_id: str
+            Media pk or full media_id.
+        amount: int, default 20
+            Maximum number of comments to return. ``0`` means "all
+            available pages".
+
+        Returns
+        -------
+        List[Comment]
+        """
         try:
             try:
                 comments = await self.media_comments_gql(media_id, amount)

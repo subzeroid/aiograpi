@@ -143,6 +143,39 @@ class UserMixin:
         return user
 
     async def user_web_profile_info_gql(self, user_id: str) -> dict:
+        """
+        Fetch a user profile via the public-host PolarisProfilePageContentQuery.
+
+        ``POST /api/graphql`` with ``doc_id="26762473490008061"`` —
+        the modern web-profile GraphQL surface that replaced the old
+        ``query_hash`` profile lookups. Requires a logged-in
+        ``sessionid`` (the doc_id rejects anonymous callers).
+
+        Used as the canonical GraphQL fallback for
+        :meth:`user_short_gql` when the legacy ``query_hash`` path
+        fails.
+
+        Parameters
+        ----------
+        user_id: str
+            Target user pk.
+
+        Returns
+        -------
+        dict
+            The inner ``data["user"]`` block from the GraphQL
+            response (already unwrapped).
+
+        Raises
+        ------
+        ClientLoginRequired
+            ``sessionid`` is not available to inject.
+        UserNotFound
+            Response contained no ``user`` block.
+        ClientGraphqlError
+            GraphQL ``errors`` array was non-empty and ``data`` was
+            missing.
+        """
         user_id = str(user_id)
         if not self.inject_sessionid_to_public():
             raise ClientLoginRequired("Session is required for web profile GraphQL")

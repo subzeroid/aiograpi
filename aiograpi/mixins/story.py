@@ -323,6 +323,31 @@ class StoryMixin:
     async def story_viewers_chunk(
         self, story_pk: str, max_amount: int = 0, max_id: str = ""
     ) -> tuple[List[Viewer], str]:
+        """
+        Paginated fetch of users who have viewed a story.
+
+        ``GET /media/{story_pk}/list_reel_media_viewer/`` — only the
+        story owner can read this; for any other story it raises
+        ``ClientForbiddenError``. Returns the chunk plus the next
+        cursor so callers can drive their own pagination loop (use
+        :meth:`story_viewers` if you just want everything in one shot).
+
+        Parameters
+        ----------
+        story_pk: str
+            Target story pk.
+        max_amount: int, default 0
+            Max viewers to collect this chunk. ``0`` means "all
+            pages until IG runs out".
+        max_id: str, default ""
+            Pagination cursor from a previous call.
+
+        Returns
+        -------
+        Tuple[List[Viewer], str]
+            ``(viewers, next_max_id)``. Empty ``next_max_id`` means
+            no more pages.
+        """
         unique_set: set = set()
         viewers: List[Viewer] = []
         story_pk = self.media_pk(story_pk)
