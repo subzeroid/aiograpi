@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.1] — 2026-04-29
+
+### Added — fbsearch v2 batch
+
+Ports four `fbsearch_*` v2 SERP endpoints from `hiker-next` —
+the first batch of a five-batch audit of methods used in production
+by hapi but missing from public aiograpi (#234):
+
+- **`Client.fbsearch_accounts_v2(query, page_token=None)`** — hits
+  `fbsearch/account_serp/`, the surface IG's app uses for the
+  "Accounts" tab inside search. Returns the raw payload (`users`,
+  `has_more`, `next_page_token`).
+- **`Client.fbsearch_reels_v2(query, reels_max_id=None, rank_token=None)`**
+  — hits `fbsearch/reels_serp/`, the "Reels" tab.
+- **`Client.fbsearch_topsearch_v2(query, next_max_id=None, reels_max_id=None, rank_token=None)`**
+  — hits `fbsearch/top_serp/`, the default "Top" blended tab.
+  Defaults `rank_token` to `self.rank_token` (which is `self.uuid`)
+  if the caller doesn't provide one.
+- **`Client.fbsearch_typehead(query)`** — convenience wrapper around
+  the existing `fbsearch_typeahead_stream`. Flattens the
+  `stream_rows` envelope into a flat list of suggested user dicts.
+
+Test coverage: 8 new `ChapiPortedRegressionTestCase` cases (param
+shapes, optional-cursor omission, `rank_token` resolution,
+`stream_rows` flattening edge cases). 4 new OPTIONAL checks in
+`tests/live/smoke.py` against the HikerAPI account pool.
+
+Docs: `docs/usage-guide/private-graphql.md` updated with a row per
+new method and an example block showing top/accounts/reels +
+pagination via `page_token`.
+
 ## [0.8.0] — 2026-04-28
 
 ### Added
