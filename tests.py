@@ -47,6 +47,7 @@ from aiograpi.exceptions import (
     SubmitPhoneNumberForm,
     TwoFactorRequired,
     UnknownError,
+    UserNotFound,
     VideoConfigureError,
     VideoConfigureStoryError,
 )
@@ -2953,6 +2954,107 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         params = client.private_request.call_args.kwargs["params"]
         self.assertEqual(params["chained_ids"], "1,2,3")
+
+    async def test_user_stream_by_id_v1_posts_info_stream(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(return_value={"stream_rows": []})
+
+        await client.user_stream_by_id_v1("25025320")
+
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "users/25025320/info_stream/")
+        self.assertEqual(
+            kwargs["data"],
+            {
+                "is_prefetch": False,
+                "entry_point": "profile",
+                "from_module": "feed_timeline",
+            },
+        )
+
+    async def test_user_stream_by_id_v1_translates_404_to_user_not_found(self):
+        from aiograpi.exceptions import ClientNotFoundError
+
+        client = self.build_private_client()
+        client.private_request = AsyncMock(
+            side_effect=ClientNotFoundError(
+                "User not found", response=Mock(status_code=404)
+            )
+        )
+
+        with self.assertRaises(UserNotFound):
+            await client.user_stream_by_id_v1("25025320")
+
+    async def test_user_stream_by_id_flat_merges_stream_rows(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(
+            return_value={
+                "stream_rows": [
+                    {"user": {"pk": "25025320", "username": "instagram"}},
+                    {"user": {"full_name": "Instagram", "is_private": False}},
+                    {"user": {"is_verified": True}},
+                ]
+            }
+        )
+
+        flat = await client.user_stream_by_id_flat("25025320")
+
+        self.assertEqual(flat["pk"], "25025320")
+        self.assertEqual(flat["username"], "instagram")
+        self.assertEqual(flat["full_name"], "Instagram")
+        self.assertTrue(flat["is_verified"])
+
+    async def test_user_stream_by_id_flat_promotes_pk_id_to_pk(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(
+            return_value={
+                "stream_rows": [
+                    {"user": {"pk_id": "25025320", "username": "instagram"}},
+                ]
+            }
+        )
+
+        flat = await client.user_stream_by_id_flat("25025320")
+        self.assertEqual(flat["pk"], "25025320")
+
+    async def test_user_stream_by_username_flat_uses_username_endpoint(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(
+            return_value={
+                "stream_rows": [{"user": {"pk": "25025320", "username": "instagram"}}]
+            }
+        )
+
+        flat = await client.user_stream_by_username_flat("instagram")
+
+        endpoint = client.private_request.call_args.args[0]
+        self.assertEqual(endpoint, "users/instagram/usernameinfo_stream/")
+        self.assertEqual(flat["username"], "instagram")
+
+    async def test_user_web_profile_info_v1_unwraps_data_field(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(
+            return_value={
+                "data": {"user": {"pk": "25025320", "username": "instagram"}},
+                "status": "ok",
+            }
+        )
+
+        result = await client.user_web_profile_info_v1("instagram")
+
+        endpoint = client.private_request.call_args.args[0]
+        params = client.private_request.call_args.kwargs["params"]
+        self.assertEqual(endpoint, "users/web_profile_info/")
+        self.assertEqual(params, {"username": "instagram"})
+        self.assertEqual(result, {"user": {"pk": "25025320", "username": "instagram"}})
+
+    async def test_user_web_profile_info_v1_raises_user_not_found_on_empty_data(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(return_value={"data": {}, "status": "ok"})
+        client.last_json = {}
+
+        with self.assertRaises(UserNotFound):
+            await client.user_web_profile_info_v1("ghost")
 
 
 class TimelineRegressionTestCase(unittest.IsolatedAsyncioTestCase):

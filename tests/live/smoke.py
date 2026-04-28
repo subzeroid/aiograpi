@@ -132,6 +132,16 @@ async def main():
             ("fbsearch_reels_v2", lambda: cl.fbsearch_reels_v2("python")),
             ("fbsearch_topsearch_v2", lambda: cl.fbsearch_topsearch_v2("python")),
             ("fbsearch_typehead", lambda: cl.fbsearch_typehead("pyt")),
+            ("user_stream_by_id_v1", lambda: cl.user_stream_by_id_v1(instagram_pk)),
+            ("user_stream_by_id_flat", lambda: cl.user_stream_by_id_flat(instagram_pk)),
+            (
+                "user_stream_by_username_flat",
+                lambda: cl.user_stream_by_username_flat("instagram"),
+            ),
+            (
+                "user_web_profile_info_v1",
+                lambda: cl.user_web_profile_info_v1("instagram"),
+            ),
             ("feed_user_stream_item", lambda: cl.feed_user_stream_item(instagram_pk)),
             (
                 "private_graphql_followers_list",
