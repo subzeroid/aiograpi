@@ -8,6 +8,7 @@ markdown-include==0.8.1
 mkdocs-material==9.6.22
 mkdocs-minify-plugin==0.8.0
 mkdocstrings==0.30.1
+mkdocstrings-python==2.0.3
 ./util/mkdocs-redirects
 ./util/mkdocstrings_patch_type_aliases
 pytest-xdist==3.8.0
