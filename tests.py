@@ -4288,6 +4288,119 @@ class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         args, _ = client.private_request.call_args
         self.assertEqual(args[0], "fbsearch/typeahead_stream/")
 
+    async def test_fbsearch_accounts_v2_sets_account_serp_surface(self):
+        client = self.build_client()
+        client.timezone_offset = -14400
+        client.private_request = AsyncMock(return_value={"users": []})
+
+        await client.fbsearch_accounts_v2("metallica")
+
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "fbsearch/account_serp/")
+        params = kwargs["params"]
+        self.assertEqual(params["search_surface"], "account_serp")
+        self.assertEqual(params["query"], "metallica")
+        self.assertEqual(params["timezone_offset"], -14400)
+        self.assertNotIn("page_token", params)
+
+    async def test_fbsearch_accounts_v2_forwards_page_token(self):
+        client = self.build_client()
+        client.timezone_offset = 0
+        client.private_request = AsyncMock(return_value={"users": []})
+
+        await client.fbsearch_accounts_v2("metallica", page_token="tok-2")
+
+        params = client.private_request.call_args.kwargs["params"]
+        self.assertEqual(params["page_token"], "tok-2")
+
+    async def test_fbsearch_reels_v2_sets_clips_search_page_surface(self):
+        client = self.build_client()
+        client.timezone_offset = 0
+        client.private_request = AsyncMock(return_value={"items": []})
+
+        await client.fbsearch_reels_v2("metal", reels_max_id="r:abc", rank_token="rt-1")
+
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "fbsearch/reels_serp/")
+        params = kwargs["params"]
+        self.assertEqual(params["search_surface"], "clips_search_page")
+        self.assertEqual(params["query"], "metal")
+        self.assertEqual(params["reels_max_id"], "r:abc")
+        self.assertEqual(params["rank_token"], "rt-1")
+
+    async def test_fbsearch_reels_v2_omits_optional_cursors(self):
+        client = self.build_client()
+        client.timezone_offset = 0
+        client.private_request = AsyncMock(return_value={"items": []})
+
+        await client.fbsearch_reels_v2("metal")
+
+        params = client.private_request.call_args.kwargs["params"]
+        self.assertNotIn("reels_max_id", params)
+        self.assertNotIn("rank_token", params)
+
+    async def test_fbsearch_topsearch_v2_uses_top_serp_and_self_rank_token(self):
+        client = self.build_client()
+        client.timezone_offset = 0
+        # rank_token is a @property returning self.uuid
+        client.uuid = "self-rank"
+        client.private_request = AsyncMock(return_value={"list": []})
+
+        await client.fbsearch_topsearch_v2("metal")
+
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "fbsearch/top_serp/")
+        params = kwargs["params"]
+        self.assertEqual(params["search_surface"], "top_serp")
+        self.assertEqual(params["rank_token"], "self-rank")
+
+    async def test_fbsearch_topsearch_v2_explicit_rank_token_overrides_self(self):
+        client = self.build_client()
+        client.timezone_offset = 0
+        client.uuid = "self-rank"
+        client.private_request = AsyncMock(return_value={"list": []})
+
+        await client.fbsearch_topsearch_v2(
+            "metal",
+            next_max_id="m:1",
+            reels_max_id="r:2",
+            rank_token="caller-rank",
+        )
+
+        params = client.private_request.call_args.kwargs["params"]
+        self.assertEqual(params["rank_token"], "caller-rank")
+        self.assertEqual(params["next_max_id"], "m:1")
+        self.assertEqual(params["reels_max_id"], "r:2")
+
+    async def test_fbsearch_typehead_flattens_stream_rows(self):
+        client = self.build_client()
+        client.timezone_offset = 0
+        client.private_request = AsyncMock(
+            return_value={
+                "stream_rows": [
+                    {"users": [{"pk": "1"}, {"pk": "2"}]},
+                    {"users": [{"pk": "3"}]},
+                    {"users": []},
+                    {},  # row missing 'users' key entirely
+                ]
+            }
+        )
+
+        users = await client.fbsearch_typehead("metal")
+
+        args, _ = client.private_request.call_args
+        self.assertEqual(args[0], "fbsearch/typeahead_stream/")
+        self.assertEqual([u["pk"] for u in users], ["1", "2", "3"])
+
+    async def test_fbsearch_typehead_handles_empty_response(self):
+        client = self.build_client()
+        client.timezone_offset = 0
+        client.private_request = AsyncMock(return_value={})
+
+        users = await client.fbsearch_typehead("metal")
+
+        self.assertEqual(users, [])
+
     # --- comment ---
 
     async def test_media_comment_infos_joins_list_into_csv(self):

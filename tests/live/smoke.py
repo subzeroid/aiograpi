@@ -128,6 +128,10 @@ async def main():
                 "fbsearch_item_top",
                 lambda: cl.fbsearch_item("top_serp", "top_serp", "python"),
             ),
+            ("fbsearch_accounts_v2", lambda: cl.fbsearch_accounts_v2("python")),
+            ("fbsearch_reels_v2", lambda: cl.fbsearch_reels_v2("python")),
+            ("fbsearch_topsearch_v2", lambda: cl.fbsearch_topsearch_v2("python")),
+            ("fbsearch_typehead", lambda: cl.fbsearch_typehead("pyt")),
             ("feed_user_stream_item", lambda: cl.feed_user_stream_item(instagram_pk)),
             (
                 "private_graphql_followers_list",

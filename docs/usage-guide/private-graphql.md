@@ -26,7 +26,11 @@ query) and as **named convenience wrappers** (`user_info_v2_gql`,
 | Mark inbox tray as seen | `Client.private_graphql_update_inbox_tray_last_seen()` |
 | Search keyword typeahead | `Client.fbsearch_keyword_typeahead(query)` |
 | Search typeahead stream | `Client.fbsearch_typeahead_stream(query)` |
+| Typeahead users (flattened) | `Client.fbsearch_typehead(query)` |
 | Generic SERP fetch (top / user / clips / popular) | `Client.fbsearch_item(item_id, search_surface, query)` |
+| Accounts SERP (v2) | `Client.fbsearch_accounts_v2(query, page_token=None)` |
+| Reels SERP (v2) | `Client.fbsearch_reels_v2(query, reels_max_id=None, rank_token=None)` |
+| Top blended SERP (v2) | `Client.fbsearch_topsearch_v2(query, next_max_id=None, reels_max_id=None, rank_token=None)` |
 | Per-user feed stream | `Client.feed_user_stream_item(item_id)` |
 | Bulk comments digest | `Client.media_comment_infos(media_ids)` |
 
@@ -70,6 +74,18 @@ data = await cl.private_graphql_followers_list(
 hits = await cl.fbsearch_keyword_typeahead("python")
 for hit in hits["list"]:
     print(hit.get("title") or hit.get("user", {}).get("username"))
+
+# v2 SERP endpoints — same surfaces the IG app uses for the Top /
+# Accounts / Reels tabs. Return raw payloads (users / items /
+# pagination tokens) — caller decides what to extract.
+top = await cl.fbsearch_topsearch_v2("python")
+accounts = await cl.fbsearch_accounts_v2("python")
+reels = await cl.fbsearch_reels_v2("python")
+
+# Pagination: pass the cursor from the previous response back in.
+more_accounts = await cl.fbsearch_accounts_v2(
+    "python", page_token=accounts.get("next_page_token")
+)
 ```
 
 ## Calling unwrapped doc_ids directly
