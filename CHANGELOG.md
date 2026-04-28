@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.4] — 2026-04-29
+
+### Added — public_head + track_stream batch
+
+Batch 4/5 of the hiker-next gap audit (#237). Two utility endpoints:
+
+- **`Client.public_head(url, follow_redirects=False)`** — `HEAD`
+  request through the public session. Useful for resolving
+  `instagram.com/share/...` short-link redirects without downloading
+  the body — call with `follow_redirects=False` and read
+  `response.headers["Location"]`. Bypasses `public_request`'s
+  GET/POST machinery and goes straight through `httpx_ext.request`
+  so the per-call `follow_redirects` flag actually takes effect.
+- **`Client.track_stream_info_by_id(track_id, max_id="")`** — `POST
+  clips/stream_clips_pivot_page/`. The surface IG's app uses to
+  render the "Audio" page (clips-using-this-audio + audio-asset
+  metadata).
+
+### Internal
+
+- **`httpx_ext.request`** now forwards `follow_redirects` (default
+  `True` so existing callers are unaffected).
+- **`TrackMixin._track_request`** now accepts a `path=` kwarg
+  (default `"clips/music/"` so existing callers are unaffected).
+
+Test coverage: 5 new cases (3 `PublicRegressionTestCase` for
+`public_head` — endpoint+headers, `follow_redirects` plumbing,
+`public_requests_count` increments; 2 `ChapiPortedRegressionTestCase`
+for `track_stream_info_by_id` — payload shape, `max_id` forwarding
+into nested `music_page`). 2 new OPTIONAL checks in
+`tests/live/smoke.py`.
+
+Docs: `docs/usage-guide/private-graphql.md` "When to use what" gets
+two new rows.
+
 ## [0.8.3] — 2026-04-29
 
 ### Added — discover/related batch
