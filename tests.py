@@ -4256,6 +4256,229 @@ class SignUpTestCase(unittest.IsolatedAsyncioTestCase):
     def test_signup(self):
         pass
 
+    # --- signup endpoint smoke (verify each method hits the right URL
+    # with the right payload shape; no live network) ---
+
+    def _build_signup_client(self):
+        client = Client()
+        client.settings = {}
+        client.authorization_data = {"ds_user_id": "1"}
+        client.uuid = "stub-uuid"
+        return client
+
+    async def test_check_username_endpoint(self):
+        client = self._build_signup_client()
+        client.private_request = AsyncMock(return_value={"available": True})
+        await client.check_username("new_user")
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "users/check_username/")
+        self.assertEqual(kwargs["data"], {"username": "new_user", "_uuid": "stub-uuid"})
+
+    async def test_get_signup_config_endpoint(self):
+        client = self._build_signup_client()
+        client.private_request = AsyncMock(return_value={})
+        await client.get_signup_config()
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "consent/get_signup_config/")
+        self.assertEqual(
+            kwargs["params"],
+            {"guid": "stub-uuid", "main_account_selected": False},
+        )
+
+    async def test_check_email_endpoint(self):
+        client = self._build_signup_client()
+        client.private_request = AsyncMock(return_value={})
+        await client.check_email("a@b.com")
+        args = client.private_request.call_args.args
+        self.assertEqual(args[0], "users/check_email/")
+        # Positional data dict; key fields present.
+        self.assertEqual(args[1]["email"], "a@b.com")
+        self.assertEqual(args[1]["login_nonce_map"], "{}")
+
+    async def test_send_verify_email_endpoint(self):
+        client = self._build_signup_client()
+        client.private_request = AsyncMock(return_value={})
+        await client.send_verify_email("a@b.com")
+        args = client.private_request.call_args.args
+        self.assertEqual(args[0], "accounts/send_verify_email/")
+        self.assertEqual(args[1]["email"], "a@b.com")
+        self.assertEqual(args[1]["auto_confirm_only"], "false")
+
+    async def test_check_confirmation_code_endpoint(self):
+        client = self._build_signup_client()
+        client.private_request = AsyncMock(return_value={})
+        await client.check_confirmation_code("a@b.com", "123456")
+        args = client.private_request.call_args.args
+        self.assertEqual(args[0], "accounts/check_confirmation_code/")
+        self.assertEqual(args[1]["email"], "a@b.com")
+        self.assertEqual(args[1]["code"], "123456")
+
+    async def test_check_age_eligibility_endpoint_unsigned(self):
+        client = self._build_signup_client()
+        client.private_request = AsyncMock(return_value={"eligible": True})
+        await client.check_age_eligibility(2000, 1, 15)
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "consent/check_age_eligibility/")
+        self.assertFalse(kwargs["with_signature"])
+        self.assertEqual(kwargs["data"]["year"], 2000)
+        self.assertEqual(kwargs["data"]["month"], 1)
+        self.assertEqual(kwargs["data"]["day"], 15)
+
+    async def test_check_phone_number_replaces_spaces_with_plus(self):
+        client = self._build_signup_client()
+        client.private_request = AsyncMock(return_value={})
+        await client.check_phone_number("1 555 1234")
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "accounts/check_phone_number/")
+        self.assertEqual(kwargs["data"]["phone_number"], "1+555+1234")
+
+    async def test_send_signup_sms_code_replaces_spaces_with_plus(self):
+        client = self._build_signup_client()
+        client.private_request = AsyncMock(return_value={})
+        await client.send_signup_sms_code("1 555 1234")
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "accounts/send_signup_sms_code/")
+        self.assertEqual(kwargs["data"]["phone_number"], "1+555+1234")
+        self.assertEqual(kwargs["data"]["android_build_type"], "release")
+
+
+class NotificationMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    """Smoke coverage for the 27 NotificationMixin methods.
+
+    Each `notification_*` wrapper just delegates to
+    `notification_settings(content_type, setting_value)` after
+    validating `setting_value` against `SETTING_VALUE_ITEMS`. The
+    only true endpoint hit is `notifications/change_notification_settings/`.
+    """
+
+    def _build(self):
+        client = Client()
+        client.settings = {}
+        client.authorization_data = {"ds_user_id": "42"}
+        client.uuid = "stub-uuid"
+        return client
+
+    async def test_notification_settings_endpoint_and_payload(self):
+        client = self._build()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        ok = await client.notification_settings("likes", "off")
+
+        self.assertTrue(ok)
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "notifications/change_notification_settings/")
+        self.assertEqual(
+            kwargs["data"],
+            {
+                "content_type": "likes",
+                "setting_value": "off",
+                "_uid": "42",
+                "_uuid": "stub-uuid",
+            },
+        )
+
+    async def test_notification_settings_returns_false_when_status_not_ok(self):
+        client = self._build()
+        client.private_request = AsyncMock(return_value={"status": "fail"})
+        ok = await client.notification_settings("likes", "off")
+        self.assertFalse(ok)
+
+    async def test_notification_likes_rejects_invalid_setting_value(self):
+        from aiograpi.exceptions import UnsupportedSettingValue
+
+        client = self._build()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        with self.assertRaises(UnsupportedSettingValue):
+            await client.notification_likes(setting_value="invalid")
+
+        client.private_request.assert_not_called()
+
+    async def test_notification_mute_all_rejects_invalid_value(self):
+        from aiograpi.exceptions import UnsupportedSettingValue
+
+        client = self._build()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        with self.assertRaises(UnsupportedSettingValue):
+            await client.notification_mute_all(setting_value="never")
+
+    async def test_notification_mute_all_uses_mute_all_content_type(self):
+        client = self._build()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        await client.notification_mute_all("1_hour")
+
+        kwargs = client.private_request.call_args.kwargs
+        self.assertEqual(kwargs["data"]["content_type"], "mute_all")
+        self.assertEqual(kwargs["data"]["setting_value"], "1_hour")
+
+    async def test_each_notification_wrapper_calls_settings_with_unique_content_type(
+        self,
+    ):
+        # Walks every notification_* wrapper that takes setting_value=
+        # and verifies it dispatches to notification_settings with a
+        # unique content_type matching the method name suffix.
+        client = self._build()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        wrappers_to_content_type = {
+            "notification_likes": "likes",
+            "notification_like_and_comment_on_photo_user_tagged": (
+                "like_and_comment_on_photo_user_tagged"
+            ),
+            "notification_user_tagged": "user_tagged",
+            "notification_comments": "comments",
+            "notification_comment_likes": "comment_likes",
+            "notification_first_post": "first_post",
+            "notification_new_follower": "new_follower",
+            "notification_follow_request_accepted": "follow_request_accepted",
+            "notification_connection": "connection_notification",
+            "notification_tagged_in_bio": "tagged_in_bio",
+            "notification_pending_direct_share": "pending_direct_share",
+            "notification_direct_share_activity": "direct_share_activity",
+            "notification_direct_group_requests": "direct_group_requests",
+            "notification_video_call": "video_call",
+            "notification_rooms": "rooms",
+            "notification_live_broadcast": "live_broadcast",
+            "notification_felix_upload_result": "felix_upload_result",
+            "notification_view_count": "view_count",
+            "notification_fundraiser_creator": "fundraiser_creator",
+            "notification_fundraiser_supporter": "fundraiser_supporter",
+            "notification_reminders": "notification_reminders",
+            "notification_announcements": "announcements",
+            "notification_report_updated": "report_updated",
+            "notification_login": "login_notification",
+        }
+
+        for method_name, expected_content_type in wrappers_to_content_type.items():
+            method = getattr(client, method_name)
+            self.assertTrue(
+                callable(method),
+                f"{method_name} not present on Client",
+            )
+            client.private_request.reset_mock()
+            await method(setting_value="off")
+            kwargs = client.private_request.call_args.kwargs
+            self.assertEqual(
+                kwargs["data"]["content_type"],
+                expected_content_type,
+                f"{method_name} sent wrong content_type",
+            )
+            self.assertEqual(kwargs["data"]["setting_value"], "off")
+
+    async def test_notification_disable_calls_many_wrappers(self):
+        # notification_disable iterates a hardcoded list of
+        # notification_* wrappers calling each with "off". Smoke that
+        # it makes more than 5 private_request calls (real list is ~17).
+        client = self._build()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.notification_disable()
+
+        self.assertTrue(result)
+        self.assertGreater(client.private_request.call_count, 5)
+
 
 class ClientHashtagTestCase(ClientPrivateTestCase):
     REQUIRED_MEDIA_FIELDS = [

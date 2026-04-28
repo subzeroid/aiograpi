@@ -124,6 +124,7 @@ jobs:
             tests.py::StoryConfigureRegressionTestCase \
             tests.py::UploadRegressionTestCase \
             tests.py::SignUpTestCase \
+            tests.py::NotificationMixinRegressionTestCase \
             tests.py::ChapiPortedRegressionTestCase
 
   live-test:
