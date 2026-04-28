@@ -16,6 +16,11 @@ query) and as **named convenience wrappers** (`user_info_v2_gql`,
 |---|---|
 | Profile by `user_id`, logged-in friendly | `Client.user_info_v2_gql(user_id)` |
 | Profile by `username`, logged-in friendly | `Client.user_info_by_username_v2_gql(username)` |
+| Streamed profile envelope by `user_id` | `Client.user_stream_by_id_v1(user_id)` |
+| Streamed profile envelope by `username` | `Client.user_stream_by_username_v1(username)` |
+| Flat (merged) profile dict by `user_id` | `Client.user_stream_by_id_flat(user_id)` |
+| Flat (merged) profile dict by `username` | `Client.user_stream_by_username_flat(username)` |
+| Web-scraper-style profile via private host | `Client.user_web_profile_info_v1(username)` |
 | Followers list (mobile-app surface) | `Client.private_graphql_followers_list(user_id, rank_token)` |
 | Following list (mobile-app surface) | `Client.private_graphql_following_list(user_id, rank_token)` |
 | Profile reels stream | `Client.private_graphql_clips_profile(target_user_id)` |
