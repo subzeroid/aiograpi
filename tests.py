@@ -1309,6 +1309,162 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result, {"sessionid": "abc", "ds_user_id": "123"})
 
+    # --- request-payload helpers (auth.py with_*_data + gen_user_breadcrumb) ---
+
+    def test_with_default_data_carries_uuid_and_device_id(self):
+        client = Client()
+        client.settings = {}
+
+        result = client.with_default_data({"foo": "bar"})
+
+        self.assertEqual(result["foo"], "bar")
+        self.assertEqual(result["_uuid"], client.uuid)
+        self.assertEqual(result["device_id"], client.android_device_id)
+
+    def test_with_action_data_adds_radio_type_and_caller_keys_win(self):
+        client = Client()
+        client.settings = {}
+
+        result = client.with_action_data({"radio_type": "lte", "extra": 1})
+
+        self.assertEqual(result["radio_type"], "lte")
+        self.assertEqual(result["extra"], 1)
+        # default_data plumbing still applied
+        self.assertEqual(result["_uuid"], client.uuid)
+
+    def test_with_extra_data_adds_phone_id_uid_guid(self):
+        client = Client()
+        client.settings = {}
+        client.authorization_data = {"ds_user_id": "42"}
+
+        result = client.with_extra_data({"foo": "bar"})
+
+        self.assertEqual(result["foo"], "bar")
+        self.assertEqual(result["phone_id"], client.phone_id)
+        self.assertEqual(result["_uid"], "42")
+        self.assertEqual(result["guid"], client.uuid)
+
+    def test_gen_user_breadcrumb_is_deterministic_in_shape(self):
+        client = Client()
+        result = client.gen_user_breadcrumb(10)
+        # Two base64-encoded lines joined by \n: first is HMAC sig
+        # over the second, second is "{size} {input_lag} {input_speed} {time_ms}".
+        lines = [ln for ln in result.split("\n") if ln]
+        self.assertEqual(len(lines), 2)
+        for line in lines:
+            # Each line is repr(base64.b64encode(...)) i.e. starts with b' and ends with '
+            self.assertTrue(line.startswith("b'") and line.endswith("'"))
+
+    def test_generate_uuid_returns_valid_uuid_with_optional_prefix_suffix(self):
+        client = Client()
+        plain = client.generate_uuid()
+        prefixed = client.generate_uuid(prefix="ig:", suffix=":x")
+        # Stripped uuid is 36 chars (8-4-4-4-12 hex with hyphens).
+        self.assertEqual(len(plain), 36)
+        self.assertTrue(prefixed.startswith("ig:"))
+        self.assertTrue(prefixed.endswith(":x"))
+
+    def test_generate_android_device_id_has_android_prefix_and_16_hex(self):
+        client = Client()
+        device_id = client.generate_android_device_id()
+        self.assertTrue(device_id.startswith("android-"))
+        # 8 (prefix) + 16 (hex) = 24
+        self.assertEqual(len(device_id), len("android-") + 16)
+
+    def test_generate_mutation_token_is_19_digit_int_string(self):
+        client = Client()
+        tok = client.generate_mutation_token()
+        self.assertTrue(tok.isdigit())
+        self.assertEqual(len(tok), 19)
+
+    # --- session round-trip (set_settings / get_settings) ---
+
+    def test_get_settings_round_trips_through_set_settings(self):
+        cl1 = Client()
+        cl1.set_user_agent("UA-TEST")
+        cl1.set_locale("ru_RU")
+        snapshot = cl1.get_settings()
+
+        cl2 = Client()
+        cl2.set_settings(snapshot)
+
+        self.assertEqual(cl2.user_agent, "UA-TEST")
+        self.assertEqual(cl2.locale, "ru_RU")
+        self.assertEqual(cl2.uuid, cl1.uuid)
+
+    def test_dump_and_load_settings_round_trip_via_tempfile(self):
+        cl1 = Client()
+        cl1.set_user_agent("UA-DUMP")
+        cl1.set_locale("en_GB")
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tf:
+            path = tf.name
+        try:
+            self.assertTrue(cl1.dump_settings(path))
+
+            cl2 = Client()
+            loaded = cl2.load_settings(path)
+            cl2.set_settings(loaded)
+
+            self.assertEqual(cl2.user_agent, "UA-DUMP")
+            self.assertEqual(cl2.locale, "en_GB")
+            self.assertEqual(cl2.uuid, cl1.uuid)
+        finally:
+            os.unlink(path)
+
+    # --- proxy plumbing ---
+
+    def test_set_proxy_propagates_to_all_three_sessions(self):
+        client = Client()
+        proxy = "http://user:pass@host:1234"
+
+        ok = client.set_proxy(proxy)
+
+        self.assertTrue(ok)
+        self.assertEqual(client.public.proxy, proxy)
+        self.assertEqual(client.private.proxy, proxy)
+        self.assertEqual(client.graphql.proxy, proxy)
+
+    def test_set_proxy_with_empty_clears_all_three_sessions(self):
+        client = Client()
+        client.set_proxy("http://user:pass@host:1234")
+
+        client.set_proxy("")
+
+        self.assertIsNone(client.public.proxy)
+        self.assertIsNone(client.private.proxy)
+        self.assertIsNone(client.graphql.proxy)
+
+    # --- private.py: with_query_params ---
+
+    def test_with_query_params_serializes_to_compact_json_under_query_params_key(
+        self,
+    ):
+        from aiograpi.mixins.private import PrivateRequestMixin
+
+        result = PrivateRequestMixin.with_query_params(
+            {"foo": "bar"}, {"target_id": "1", "next_max_id": "abc"}
+        )
+        self.assertEqual(result["foo"], "bar")
+        # Compact JSON: no spaces between separators.
+        self.assertIn("query_params", result)
+        self.assertNotIn(" ", result["query_params"])
+        # JSON contents preserved.
+        decoded = json.loads(result["query_params"])
+        self.assertEqual(decoded, {"target_id": "1", "next_max_id": "abc"})
+
+    def test_set_locale_updates_country_and_country_code_consistently(self):
+        client = Client()
+        client.set_locale("ja_JP")
+        # set_locale parses locale into country/country_code and timezone
+        self.assertEqual(client.locale, "ja_JP")
+        self.assertEqual(client.country, "JP")
+
+    def test_set_timezone_offset_stores_int(self):
+        client = Client()
+        client.set_timezone_offset(10800)
+        self.assertEqual(client.timezone_offset, 10800)
+
 
 class ClientTestCase(unittest.IsolatedAsyncioTestCase):
     def test_default_settings_are_not_shared_between_clients(self):
