@@ -27,6 +27,8 @@ query) and as **named convenience wrappers** (`user_info_v2_gql`,
 | Related profiles via legacy GraphQL `edge_chaining` | `Client.user_related_profiles_gql(user_id)` |
 | HEAD a public URL (resolve short-link redirects without body) | `Client.public_head(url, follow_redirects=False)` |
 | Audio/track clips-pivot stream | `Client.track_stream_info_by_id(track_id, max_id="")` |
+| Media info via discover/media_metadata fallback | `Client.media_info_v2(media_id)` |
+| Lightweight offensive-comment check (raw payload) | `Client.media_check_offensive_comment_v2(media_id, comment)` |
 | Followers list (mobile-app surface) | `Client.private_graphql_followers_list(user_id, rank_token)` |
 | Following list (mobile-app surface) | `Client.private_graphql_following_list(user_id, rank_token)` |
 | Profile reels stream | `Client.private_graphql_clips_profile(target_user_id)` |

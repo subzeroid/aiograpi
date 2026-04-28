@@ -4691,6 +4691,90 @@ class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         data = client.private_request.call_args.args[1]
         self.assertEqual(data["music_page"]["max_id"], "cursor-2")
 
+    # --- media v2 ---
+
+    async def test_media_info_v2_strips_userid_suffix_from_media_id(self):
+        client = self.build_client()
+        client.private_request = AsyncMock(
+            return_value={
+                "media_or_ad": {
+                    "id": "2154602296692269830_25025320",
+                    "pk": "2154602296692269830",
+                    "code": "B-fKL9qpeab",
+                    "media_type": 1,
+                    "taken_at": 1710000000,
+                    "user": {
+                        "pk": "25025320",
+                        "username": "instagram",
+                        "profile_pic_url": "https://example.com/p.jpg",
+                    },
+                    "image_versions2": {
+                        "candidates": [
+                            {
+                                "url": "https://example.com/i.jpg",
+                                "width": 1,
+                                "height": 1,
+                            }
+                        ]
+                    },
+                    "like_count": 0,
+                }
+            }
+        )
+
+        media = await client.media_info_v2("2154602296692269830_25025320")
+
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "discover/media_metadata/")
+        # _userid suffix is stripped before the call.
+        self.assertEqual(kwargs["params"], {"media_id": "2154602296692269830"})
+        self.assertEqual(media.pk, "2154602296692269830")
+
+    async def test_media_info_v2_raises_media_not_found_when_payload_missing(self):
+        from aiograpi.exceptions import MediaNotFound
+
+        client = self.build_client()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+        client.last_json = {}
+
+        with self.assertRaises(MediaNotFound):
+            await client.media_info_v2("2154602296692269830")
+
+    async def test_media_check_offensive_comment_v2_uses_lighter_payload(self):
+        client = self.build_client()
+        client.uuid = "stub-uuid"
+        # Fake user_id so PreLoginRequired guard passes.
+        client.authorization_data = {"ds_user_id": "1"}
+        client.private_request = AsyncMock(
+            return_value={"is_offensive": False, "category": None}
+        )
+
+        result = await client.media_check_offensive_comment_v2(
+            "2154602296692269830", "hello there"
+        )
+
+        # Returns the full payload (not just the bool), unlike v1.
+        self.assertEqual(result, {"is_offensive": False, "category": None})
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "media/comment/check_offensive_comment/")
+        self.assertEqual(
+            kwargs["data"],
+            {
+                "comment_text": "hello there",
+                "media_id": "2154602296692269830",
+                "_uuid": "stub-uuid",
+            },
+        )
+
+    async def test_media_check_offensive_comment_v2_requires_login(self):
+        from aiograpi.exceptions import PreLoginRequired
+
+        client = self.build_client()
+        client.authorization_data = None
+
+        with self.assertRaises(PreLoginRequired):
+            await client.media_check_offensive_comment_v2("123", "x")
+
     # --- comment ---
 
     async def test_media_comment_infos_joins_list_into_csv(self):
