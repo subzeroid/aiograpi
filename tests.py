@@ -3056,6 +3056,115 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(UserNotFound):
             await client.user_web_profile_info_v1("ghost")
 
+    async def test_discover_recommended_accounts_extracts_category_id(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(
+            side_effect=[
+                # 1st call: user_stream_by_id_v1 — stream_rows with
+                # category_id buried in one of the rows.
+                {
+                    "stream_rows": [
+                        {"user": {"pk": "25025320", "username": "instagram"}},
+                        {"user": {"category_id": 1839}},
+                    ]
+                },
+                # 2nd call: discover/recommended_accounts_for_category/
+                {"users": []},
+            ]
+        )
+
+        await client.discover_recommended_accounts_for_category_v1("25025320")
+
+        self.assertEqual(client.private_request.call_count, 2)
+        second_call = client.private_request.call_args_list[1]
+        self.assertEqual(
+            second_call.args[0], "discover/recommended_accounts_for_category/"
+        )
+        self.assertEqual(
+            second_call.kwargs["params"],
+            {"target_id": "25025320", "category_id": 1839},
+        )
+
+    async def test_discover_recommended_accounts_handles_missing_category_id(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(
+            side_effect=[
+                {"stream_rows": [{"user": {"pk": "25025320"}}]},
+                {"users": []},
+            ]
+        )
+
+        await client.discover_recommended_accounts_for_category_v1("25025320")
+
+        params = client.private_request.call_args_list[1].kwargs["params"]
+        self.assertIsNone(params["category_id"])
+
+    async def test_user_related_profiles_gql_extracts_edge_chaining(self):
+        client = self.build_private_client()
+        client.public_graphql_request = AsyncMock(
+            return_value={
+                "user": {
+                    "edge_chaining": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "id": "1",
+                                    "username": "a",
+                                    "full_name": "A",
+                                    "is_private": False,
+                                    "profile_pic_url": "https://example.com/a.jpg",
+                                }
+                            },
+                            {
+                                "node": {
+                                    "id": "2",
+                                    "username": "b",
+                                    "full_name": "B",
+                                    "is_private": True,
+                                    "profile_pic_url": "https://example.com/b.jpg",
+                                }
+                            },
+                        ]
+                    }
+                }
+            }
+        )
+
+        users = await client.user_related_profiles_gql("25025320")
+
+        self.assertEqual([u.username for u in users], ["a", "b"])
+
+    async def test_user_related_profiles_gql_no_user_raises_user_not_found(self):
+        client = self.build_private_client()
+        client.public_graphql_request = AsyncMock(return_value={"user": None})
+
+        with self.assertRaises(UserNotFound):
+            await client.user_related_profiles_gql("25025320")
+
+    async def test_user_related_profiles_gql_empty_returns_empty_list_by_default(
+        self,
+    ):
+        # num_retry not set → return empty list, no exception.
+        client = self.build_private_client()
+        client.public_graphql_request = AsyncMock(
+            return_value={"user": {"edge_chaining": {"edges": []}}}
+        )
+
+        result = await client.user_related_profiles_gql("25025320")
+        self.assertEqual(result, [])
+
+    async def test_user_related_profiles_gql_empty_raises_when_num_retry_set(self):
+        from aiograpi.exceptions import RelatedProfileRequired
+
+        client = self.build_private_client()
+        client.num_retry = 0
+        client.public_graphql_request = AsyncMock(
+            return_value={"user": {"edge_chaining": {"edges": []}}}
+        )
+
+        with self.assertRaises(RelatedProfileRequired):
+            await client.user_related_profiles_gql("25025320")
+
 
 class TimelineRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     @staticmethod

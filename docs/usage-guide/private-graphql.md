@@ -21,6 +21,10 @@ query) and as **named convenience wrappers** (`user_info_v2_gql`,
 | Flat (merged) profile dict by `user_id` | `Client.user_stream_by_id_flat(user_id)` |
 | Flat (merged) profile dict by `username` | `Client.user_stream_by_username_flat(username)` |
 | Web-scraper-style profile via private host | `Client.user_web_profile_info_v1(username)` |
+| "Suggested" profiles by user_id (chaining) | `Client.chaining(user_id)` |
+| Suggested-profile expanded details | `Client.fetch_suggestion_details(user_id, chained_ids)` |
+| Similar businesses by user's category | `Client.discover_recommended_accounts_for_category_v1(user_id)` |
+| Related profiles via legacy GraphQL `edge_chaining` | `Client.user_related_profiles_gql(user_id)` |
 | Followers list (mobile-app surface) | `Client.private_graphql_followers_list(user_id, rank_token)` |
 | Following list (mobile-app surface) | `Client.private_graphql_following_list(user_id, rank_token)` |
 | Profile reels stream | `Client.private_graphql_clips_profile(target_user_id)` |
