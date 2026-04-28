@@ -158,6 +158,10 @@ async def main():
                 "track_stream_info_by_id",
                 lambda: cl.track_stream_info_by_id("18462251209012169"),
             ),
+            (
+                "media_info_v2",
+                lambda: cl.media_info_v2("2278584739065882267"),
+            ),
             ("feed_user_stream_item", lambda: cl.feed_user_stream_item(instagram_pk)),
             (
                 "private_graphql_followers_list",
