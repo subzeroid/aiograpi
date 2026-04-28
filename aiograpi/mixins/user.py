@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 from orjson import JSONDecodeError
 
@@ -1933,22 +1933,30 @@ class UserMixin:
                 raise InvalidTargetUser("Not eligible for chaining.") from e
             raise
 
-    async def fetch_suggestion_details(self, user_id: str, chained_ids: str) -> dict:
+    async def fetch_suggestion_details(
+        self,
+        user_id: str,
+        chained_ids: Union[str, List[Union[str, int]]],
+    ) -> dict:
         """Fetch expanded details for chained suggestion ids.
 
-        Companion to :meth:`chaining`. Pass a comma-separated list of
-        user pks (typically the ``pk`` field of every entry in
-        ``chaining()['users']``) and Instagram returns the same users
-        with social-context fields filled in (mutual followers,
-        verification, friendship state, etc.).
+        Companion to :meth:`chaining`. Pass either a comma-separated
+        string or a list of user pks (typically the ``pk`` field of
+        every entry in ``chaining()['users']``) and Instagram returns
+        the same users with social-context fields filled in (mutual
+        followers, verification, friendship state, etc.).
 
         Parameters
         ----------
         user_id: str
             Target user pk that produced the chained ids.
-        chained_ids: str
-            Comma-separated list of suggested user pks.
+        chained_ids: Union[str, List[Union[str, int]]]
+            Either a comma-separated string of user pks (IG-native
+            shape) or a Python list of pks. Lists are joined with
+            ``,`` internally; ints are coerced to str.
         """
+        if isinstance(chained_ids, (list, tuple)):
+            chained_ids = ",".join(str(x) for x in chained_ids)
         params = {
             "target_id": str(user_id),
             "chained_ids": chained_ids,

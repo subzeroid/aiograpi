@@ -6,6 +6,85 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.0] — 2026-04-28
+
+### Added
+
+- **`Client.chaining(user_id)`** — calls `discover/chaining/`, the
+  same private endpoint the IG app uses to render the
+  "Suggested for you" carousel under a profile. Returns the raw
+  payload. Maps `"Not eligible for chaining."` → `InvalidTargetUser`.
+- **`Client.fetch_suggestion_details(user_id, chained_ids)`** — calls
+  `discover/fetch_suggestion_details/` with `include_social_context=1`,
+  expanding the suggestion list with mutual-follower / friendship
+  state. `chained_ids` accepts `Union[str, List[Union[str, int]]]`
+  (lists are joined internally with `,`).
+- **`Client.media_check_offensive_comment(media_id, text)`** — calls
+  `media/comment/check_offensive_comment/`, returns IG's
+  `is_offensive` flag so callers can surface the auto-mod verdict
+  before actually posting a comment. Last meaningful upstream gap
+  vs instagrapi 2.4.4.
+
+### Fixed
+
+- **`media_seen()` (and via it `story_seen()`) actually work now.**
+  Two bugs lived together: `gen(media_ids)` was passed into the
+  request data dict without `await`, raising
+  `TypeError: Object of type coroutine is not JSON serializable`;
+  and `gen` itself used `async for` over a `List[str]`, which
+  would raise `TypeError: object list can't be used in 'async for'`
+  once the first bug was fixed. Closes #116 (sat in queue 18 months).
+- **`extract_reply_message` now extracts `xma_share` from `xma_clip`
+  / `xma_media_share`.** `extract_direct_message` already did this
+  but the parallel `extract_reply_message` only handled the inline
+  `clip` block, so replies quoting reel/clip shares dropped
+  `xma_share=None` even though `ReplyMessage.xma_share` exists.
+- **`Location.external_id` no longer crashes on missing/None payloads.**
+  The model declares `Optional[int]`, but `extract_location` was
+  passing the raw IG value through without coercion. When IG returned
+  the field missing, `None`, `""`, or the literal string `"None"`,
+  pydantic raised `int_parsing` and bubbled out of `media_info_gql`.
+  Now: take `external_id` or fall back to `facebook_places_id`,
+  treat empty / "None" as missing, otherwise `int()`. Closes #72.
+- **`DirectThread` parses degraded payloads.**
+  `business_thread_folder`, `read_state`, `assigned_admin_id`,
+  `shh_mode_enabled` were declared as required scalars; IG omits
+  them on older inbox shapes / Threads-app threads, breaking parsing.
+  All four are now `Optional[...] = None`. Closes #7.
+
+### CI / Tooling
+
+- **`actions/checkout` v5 → v6** (Node 24 runtime).
+- **`actions/upload-artifact` v5 → v7**, **`actions/download-artifact`
+  v5 → v8.**
+- **`Pillow` 11.3.0 → 12.0.0**, **`pydantic` 2.12.3 → 2.12.4**,
+  **`mkdocs-material` 9.6.22 → 9.7.0**, **`bandit` 1.8.6 → 1.9.1**,
+  **`pytest` ~=8.4.2 → ~=9.0.1**.
+- **`mkdocstrings-python==2.0.3` pinned.** mkdocstrings 0.19+ split
+  the python handler into a separate package; CI was building docs
+  without it.
+- **`update-dev-docs` job actually publishes now.** Fixed three
+  things in one go: created the missing `gh-pages` branch (orphan,
+  empty), granted the job `permissions: contents: write`, and
+  flipped Pages source from `main:/docs` to `gh-pages:/`. Dev docs
+  live at <https://subzeroid.github.io/aiograpi/dev/>.
+- **`live-test` job is reliable.** Pure-helper pytest classes
+  (`ClientMediaTestCase`, `ClientUserTestCase`, `ClientHighlightTestCase`)
+  required `ACCOUNT_USERNAME`/`PASSWORD` env vars that don't exist
+  in this repo's secrets — they crashed in setUp before any
+  assertion ran. Removed; their pure helpers are covered by
+  unit-test, and `user_followers` / `highlight_info` are now
+  REQUIRED checks in `tests/live/smoke.py` against the HikerAPI
+  pool. Plus `bandit` is green (the new `try/except/pass` in
+  `_inject_sessionid_for_v2_gql` got an explicit `# nosec B110`).
+
+### Test coverage
+
+- New `UserMixinRegressionTestCase` cases for `chaining` /
+  `fetch_suggestion_details` cover param shape, the
+  `"Not eligible for chaining."` → `InvalidTargetUser` mapping,
+  and `Union[str, List]` normalization.
+
 ## [0.7.2] — 2026-04-27
 
 ### Security

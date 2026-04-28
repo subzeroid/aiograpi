@@ -36,6 +36,7 @@ from aiograpi.exceptions import (
     ClientThrottledError,
     DirectThreadNotFound,
     IGTVConfigureError,
+    InvalidTargetUser,
     PleaseWaitFewMinutes,
     PhotoConfigureError,
     PhotoConfigureStoryError,
@@ -2894,6 +2895,64 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         params = client.private_request.call_args.kwargs["params"]
         self.assertNotIn("max_id", params)
+
+    async def test_chaining_sends_required_params(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(return_value={"users": []})
+
+        await client.chaining("25025320")
+
+        endpoint = client.private_request.call_args.args[0]
+        params = client.private_request.call_args.kwargs["params"]
+        self.assertEqual(endpoint, "discover/chaining/")
+        self.assertEqual(params["module"], "profile")
+        self.assertEqual(params["target_id"], "25025320")
+        self.assertEqual(params["profile_chaining_check"], "false")
+        self.assertEqual(params["eligible_for_threads_cta"], "false")
+
+    async def test_chaining_maps_not_eligible_to_invalid_target_user(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(
+            side_effect=UnknownError(
+                "Not eligible for chaining.", response=Mock(status_code=400)
+            )
+        )
+
+        with self.assertRaises(InvalidTargetUser):
+            await client.chaining("25025320")
+
+    async def test_chaining_propagates_other_unknown_errors(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(
+            side_effect=UnknownError(
+                "Some other server error", response=Mock(status_code=500)
+            )
+        )
+
+        with self.assertRaises(UnknownError):
+            await client.chaining("25025320")
+
+    async def test_fetch_suggestion_details_accepts_string(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(return_value={"users": []})
+
+        await client.fetch_suggestion_details("25025320", "1,2,3")
+
+        endpoint = client.private_request.call_args.args[0]
+        params = client.private_request.call_args.kwargs["params"]
+        self.assertEqual(endpoint, "discover/fetch_suggestion_details/")
+        self.assertEqual(params["target_id"], "25025320")
+        self.assertEqual(params["chained_ids"], "1,2,3")
+        self.assertEqual(params["include_social_context"], "1")
+
+    async def test_fetch_suggestion_details_joins_list(self):
+        client = self.build_private_client()
+        client.private_request = AsyncMock(return_value={"users": []})
+
+        await client.fetch_suggestion_details("25025320", ["1", "2", 3])
+
+        params = client.private_request.call_args.kwargs["params"]
+        self.assertEqual(params["chained_ids"], "1,2,3")
 
 
 class TimelineRegressionTestCase(unittest.IsolatedAsyncioTestCase):
