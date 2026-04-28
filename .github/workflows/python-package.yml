@@ -149,18 +149,21 @@ jobs:
           test-requirements: "true"
       - name: Run end-to-end smoke
         # Required: anonymous public_gql + login(TOTP) + private_v1 +
-        # private_v2_gql + hashtag_info_v1 + user_medias_v1.
+        # private_v2_gql + hashtag_info_v1 + user_medias_v1 +
+        # user_followers + highlight_info.
         # Optional (reports but never fails): all chapi-ported endpoints.
         # PYTHONPATH=. so `from aiograpi import Client` resolves without
         # `pip install -e .` (install-dependencies action installs deps
         # only, not the package itself).
+        #
+        # Note: pytest classes ClientMediaTestCase / ClientUserTestCase /
+        # ClientHighlightTestCase are intentionally not run here — they
+        # require ACCOUNT_USERNAME/PASSWORD env vars (not provided by the
+        # HikerAPI pool). Pure helpers (media_pk, media_pk_from_code,
+        # media_code_from_pk, media_id, highlight_pk_from_url) are covered
+        # by the unit-test job; user_followers and highlight_info are
+        # covered by the smoke above.
         run: PYTHONPATH=. python tests/live/smoke.py
-      - name: Run media test
-        run: pytest -sv tests.py::ClientMediaTestCase
-      - name: Run user test
-        run: pytest -sv tests.py::ClientUserTestCase
-      - name: Run highlight test
-        run: pytest -sv tests.py::ClientHighlightTestCase
 
   build-docs:
     runs-on: ubuntu-latest
