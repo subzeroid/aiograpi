@@ -142,6 +142,14 @@ async def main():
                 "user_web_profile_info_v1",
                 lambda: cl.user_web_profile_info_v1("instagram"),
             ),
+            (
+                "discover_recommended_accounts_for_category_v1",
+                lambda: cl.discover_recommended_accounts_for_category_v1(instagram_pk),
+            ),
+            (
+                "user_related_profiles_gql",
+                lambda: cl.user_related_profiles_gql(instagram_pk),
+            ),
             ("feed_user_stream_item", lambda: cl.feed_user_stream_item(instagram_pk)),
             (
                 "private_graphql_followers_list",

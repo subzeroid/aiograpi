@@ -15,6 +15,7 @@ from aiograpi.exceptions import (
     IsRegulatedC18Error,
     PreLoginRequired,
     PrivateError,
+    RelatedProfileRequired,
     UnknownError,
     UserNotFound,
 )
@@ -2107,3 +2108,91 @@ class UserMixin:
             "discover/fetch_suggestion_details/",
             params=params,
         )
+
+    async def discover_recommended_accounts_for_category_v1(self, user_id: str) -> dict:
+        """
+        Get business-category-similar accounts for a target user.
+
+        Two-step call:
+
+        1. Fetch the target's profile via :meth:`user_stream_by_id_v1`
+           to extract ``category_id`` from the streamed payload.
+        2. Hit ``GET /discover/recommended_accounts_for_category/``
+           with that ``category_id`` to get IG's "similar businesses"
+           recommendations for that category.
+
+        Parameters
+        ----------
+        user_id: str
+            Target user pk.
+
+        Returns
+        -------
+        dict
+            Raw recommended-accounts payload. ``category_id`` will be
+            ``None`` if the target has no business category — IG
+            still returns a payload (typically with empty ``users``)
+            in that case.
+        """
+        user_info = await self.user_stream_by_id_v1(user_id)
+        category_id = next(
+            (
+                cid
+                for row in user_info.get("stream_rows", [])
+                if (cid := row.get("user", {}).get("category_id")) is not None
+            ),
+            None,
+        )
+        return await self.private_request(
+            "discover/recommended_accounts_for_category/",
+            params={"target_id": user_id, "category_id": category_id},
+        )
+
+    async def user_related_profiles_gql(self, user_id: str) -> List[UserShort]:
+        """
+        Get related profiles for a target user via the public GraphQL
+        ``edge_chaining`` field.
+
+        Hits the legacy ``query_hash="ad99dd9d3646cc3c0dda65debcd266a7"``
+        — IG has been gating this query_hash more aggressively over
+        time; it may raise ``ClientGraphqlError`` on logged-out or
+        rate-limited callers. For a more reliable mobile-app-style
+        suggestion list, use :meth:`chaining` (private API).
+
+        Parameters
+        ----------
+        user_id: str
+            Target user pk.
+
+        Returns
+        -------
+        List[UserShort]
+            Related profiles. Empty list if IG returned no edges.
+
+        Raises
+        ------
+        UserNotFound
+            GraphQL response had no ``user`` block.
+        RelatedProfileRequired
+            Empty result and the caller had ``self.num_retry`` set
+            below 4 (upstream hiker-next retry signal — opt-in via
+            setting ``client.num_retry`` yourself).
+        """
+        variables = {
+            "user_id": str(user_id),
+            "include_chaining": True,
+        }
+        data = await self.public_graphql_request(
+            variables, query_hash="ad99dd9d3646cc3c0dda65debcd266a7"
+        )
+        if not data.get("user"):
+            raise UserNotFound("User not found")
+        edges = json_value(data, "user", "edge_chaining", "edges", default=[])
+        res = [extract_user_short(e["node"]) for e in edges if "node" in e]
+        if (
+            not res
+            and getattr(self, "num_retry", None) is not None
+            and self.num_retry < 4
+        ):
+            raise RelatedProfileRequired
+        return res
