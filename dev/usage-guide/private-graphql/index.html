@@ -1360,8 +1360,24 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <td><code>Client.fbsearch_typeahead_stream(query)</code></td>
 </tr>
 <tr>
+<td>Typeahead users (flattened)</td>
+<td><code>Client.fbsearch_typehead(query)</code></td>
+</tr>
+<tr>
 <td>Generic SERP fetch (top / user / clips / popular)</td>
 <td><code>Client.fbsearch_item(item_id, search_surface, query)</code></td>
+</tr>
+<tr>
+<td>Accounts SERP (v2)</td>
+<td><code>Client.fbsearch_accounts_v2(query, page_token=None)</code></td>
+</tr>
+<tr>
+<td>Reels SERP (v2)</td>
+<td><code>Client.fbsearch_reels_v2(query, reels_max_id=None, rank_token=None)</code></td>
+</tr>
+<tr>
+<td>Top blended SERP (v2)</td>
+<td><code>Client.fbsearch_topsearch_v2(query, next_max_id=None, reels_max_id=None, rank_token=None)</code></td>
 </tr>
 <tr>
 <td>Per-user feed stream</td>
@@ -1411,6 +1427,18 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <span class="n">hits</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_keyword_typeahead</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">hit</span> <span class="ow">in</span> <span class="n">hits</span><span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">]:</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">hit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">hit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">))</span>
+
+<span class="c1"># v2 SERP endpoints — same surfaces the IG app uses for the Top /</span>
+<span class="c1"># Accounts / Reels tabs. Return raw payloads (users / items /</span>
+<span class="c1"># pagination tokens) — caller decides what to extract.</span>
+<span class="n">top</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_topsearch_v2</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
+<span class="n">accounts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_accounts_v2</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
+<span class="n">reels</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_reels_v2</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
+
+<span class="c1"># Pagination: pass the cursor from the previous response back in.</span>
+<span class="n">more_accounts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_accounts_v2</span><span class="p">(</span>
+    <span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">page_token</span><span class="o">=</span><span class="n">accounts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;next_page_token&quot;</span><span class="p">)</span>
+<span class="p">)</span>
 </code></pre></div>
 <h2 id="calling-unwrapped-doc_ids-directly">Calling unwrapped doc_ids directly</h2>
 <p>When you have a <code>doc_id</code> from a Charles capture or from
