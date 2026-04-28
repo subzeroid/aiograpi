@@ -298,9 +298,7 @@ class UserMixin:
         public_doc_id_graphql_request carries it."""
         try:
             self.inject_sessionid_to_public()
-        except Exception:
-            # Caller may be anonymous / pre-login — let the request go and
-            # IG will reject with 403 if it actually needs auth.
+        except Exception:  # nosec B110 - anonymous caller; IG will 403 if auth needed
             pass
 
     async def user_info_v2_gql(self, user_id: str) -> User:
