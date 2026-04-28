@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.7] — 2026-04-29
+
+### Docs — high-traffic-mixin docstrings
+
+Coverage batch 2/3 from the docs+tests audit (#240). Adds proper
+docstrings to 7 public methods on the high-traffic mixins where the
+audit found either no docstring at all or a misleading one-liner:
+
+- **`user.user_web_profile_info_gql`** — documents the doc_id
+  PolarisProfilePageContentQuery fallback path used by
+  `user_short_gql`, with all three raise-types spelled out.
+- **`media.media_template_v1`** — clip "Use as template" remix flow.
+- **`comment.media_comments`** — the try/fallback orchestration
+  between GraphQL, sessionid-retry, and v1.
+- **`highlight.highlight_edit`** — all four optional fields (title /
+  cover / added_media_ids / removed_media_ids) spelled out.
+- **`story.story_viewers_chunk`** — owner-only endpoint; documents
+  the `(viewers, next_max_id)` tuple return shape.
+- **`account.remove_bio_links`** — companion to `set_external_url`,
+  notes the manual pre-signed body shape.
+- **`account.set_external_url`** — was a misleading one-liner
+  (`"Set new biography"`). Now documents that it replaces (not
+  appends) the bio-link list with a single `external`-type link.
+
+No behavior changes.
+
 ## [0.8.6] — 2026-04-29
 
 ### Tests — auth + private coverage
