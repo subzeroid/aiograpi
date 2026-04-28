@@ -25,6 +25,8 @@ query) and as **named convenience wrappers** (`user_info_v2_gql`,
 | Suggested-profile expanded details | `Client.fetch_suggestion_details(user_id, chained_ids)` |
 | Similar businesses by user's category | `Client.discover_recommended_accounts_for_category_v1(user_id)` |
 | Related profiles via legacy GraphQL `edge_chaining` | `Client.user_related_profiles_gql(user_id)` |
+| HEAD a public URL (resolve short-link redirects without body) | `Client.public_head(url, follow_redirects=False)` |
+| Audio/track clips-pivot stream | `Client.track_stream_info_by_id(track_id, max_id="")` |
 | Followers list (mobile-app surface) | `Client.private_graphql_followers_list(user_id, rank_token)` |
 | Following list (mobile-app surface) | `Client.private_graphql_following_list(user_id, rank_token)` |
 | Profile reels stream | `Client.private_graphql_clips_profile(target_user_id)` |
