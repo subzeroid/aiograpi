@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.3] — 2026-04-29
+
+### Added — discover/related batch
+
+Batch 3/5 of the hiker-next gap audit (#236). Two
+recommendation/discovery endpoints used by `hapi/routers/v2_user.py`
++ `gql_user.py`:
+
+- **`Client.discover_recommended_accounts_for_category_v1(user_id)`**
+  — two-step flow: fetches the target's profile via
+  `user_stream_by_id_v1` to extract `category_id`, then calls
+  `GET /discover/recommended_accounts_for_category/`. Returns the
+  raw payload. `category_id` falls through as `None` if the target
+  has no business category (IG still returns a payload, typically
+  empty).
+- **`Client.user_related_profiles_gql(user_id)`** — public GraphQL
+  with the legacy `query_hash="ad99dd9d3646cc3c0dda65debcd266a7"` +
+  `edge_chaining` field. Returns `List[UserShort]`. IG has been
+  gating this query_hash more aggressively; for a more reliable
+  mobile-app-style suggestion list, prefer `chaining()` (private API).
+
+### New exception
+
+- **`RelatedProfileRequired`** in `aiograpi.exceptions` — opt-in
+  retry signal raised by `user_related_profiles_gql` when
+  `edge_chaining` is empty AND `client.num_retry < 4`. By default
+  the method just returns `[]`; callers that want upstream
+  hiker-next's retry semantics can set `num_retry` themselves.
+
+Test coverage: 6 new `UserMixinRegressionTestCase` cases (two-step
+orchestration, missing-category fall-through, edge_chaining
+extraction, missing-user → `UserNotFound`, empty edges with/without
+`num_retry`). 2 new OPTIONAL checks in `tests/live/smoke.py`.
+
+Docs: `docs/usage-guide/private-graphql.md` "When to use what" gets
+four new rows covering `chaining`, `fetch_suggestion_details`,
+`discover_recommended_accounts_for_category_v1`, and
+`user_related_profiles_gql`.
+
 ## [0.8.2] — 2026-04-29
 
 ### Added — user stream batch
