@@ -17,11 +17,11 @@ from aiograpi.exceptions import (
     ClientForbiddenError,
     ClientGraphqlError,
     ClientJSONDecodeError,
-    IsRegulatedC18Error,
     ClientLoginRequired,
     ClientNotFoundError,
     ClientThrottledError,
     ClientUnauthorizedError,
+    IsRegulatedC18Error,
     TermsAccept,
     TermsUnblock,
 )

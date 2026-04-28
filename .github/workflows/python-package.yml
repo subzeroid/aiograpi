@@ -151,7 +151,10 @@ jobs:
         # Required: anonymous public_gql + login(TOTP) + private_v1 +
         # private_v2_gql + hashtag_info_v1 + user_medias_v1.
         # Optional (reports but never fails): all chapi-ported endpoints.
-        run: python tests/live/smoke.py
+        # PYTHONPATH=. so `from aiograpi import Client` resolves without
+        # `pip install -e .` (install-dependencies action installs deps
+        # only, not the package itself).
+        run: PYTHONPATH=. python tests/live/smoke.py
       - name: Run media test
         run: pytest -sv tests.py::ClientMediaTestCase
       - name: Run user test
