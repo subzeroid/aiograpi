@@ -1,0 +1,1809 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/troubleshooting/">
+      
+      
+        <link rel="prev" href="../best-practices/">
+      
+      
+        <link rel="next" href="../../development-guide/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Troubleshooting - aiograpi Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../css/mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#troubleshooting" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="aiograpi Documentation" class="md-header__button md-logo" aria-label="aiograpi Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            aiograpi Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Troubleshooting
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/subzeroid/aiograpi/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    subzeroid/aiograpi
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="aiograpi Documentation" class="md-nav__button md-logo" aria-label="aiograpi Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    aiograpi Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/subzeroid/aiograpi/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    subzeroid/aiograpi
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Usage Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Usage Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fundamentals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fundamentals
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Interactions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../handle_exception/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Handle Exceptions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../challenge_resolver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Challenge Resolver
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../captcha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Captcha
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../collection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Collection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Comment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../direct/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Direct
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../explore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Explore
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fundraiser/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fundraiser
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hashtag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hashtag
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../highlight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Highlight
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../insight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Insight
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../location/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Location
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../media/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Media
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Story
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../totp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TOTP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../track/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Track
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Account
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../private-graphql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Private GraphQL & doc_id
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#preloginrequired-authentication-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      PreLoginRequired: Authentication required
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#badcredentials-both-username-and-password-must-be-provided" class="md-nav__link">
+    <span class="md-ellipsis">
+      BadCredentials: Both username and password must be provided
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#badpassword" class="md-nav__link">
+    <span class="md-ellipsis">
+      BadPassword
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#twofactorrequired" class="md-nav__link">
+    <span class="md-ellipsis">
+      TwoFactorRequired
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#challengerequired" class="md-nav__link">
+    <span class="md-ellipsis">
+      ChallengeRequired
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loginrequired-after-a-successful-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      LoginRequired (after a successful login)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network-tls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Network &amp; TLS
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Network &amp; TLS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#httpxconnecterror-httpxreaderror" class="md-nav__link">
+    <span class="md-ellipsis">
+      httpx.ConnectError / httpx.ReadError
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sslsslcertverificationerror-tls-handshake-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      ssl.SSLCertVerificationError / TLS handshake failures
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authrequiredproxyerror-302-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      AuthRequiredProxyError: 302 Found
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ig-side-rate-limits-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      IG-side rate limits &amp; blocks
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IG-side rate limits &amp; blocks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pleasewaitfewminutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      PleaseWaitFewMinutes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clientthrottlederror-http-429" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClientThrottledError (HTTP 429)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ratelimiterror" class="md-nav__link">
+    <span class="md-ellipsis">
+      RateLimitError
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proxyaddressisblocked" class="md-nav__link">
+    <span class="md-ellipsis">
+      ProxyAddressIsBlocked
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feedbackrequired" class="md-nav__link">
+    <span class="md-ellipsis">
+      FeedbackRequired
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data / parsing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data / parsing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pydanticvalidationerror-n-validation-errors-for-usermedia" class="md-nav__link">
+    <span class="md-ellipsis">
+      pydantic.ValidationError: N validation errors for User/Media/...
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clientgraphqlerror-missing-data-in-graphql-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClientGraphqlError: Missing 'data' in GraphQL response
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clientnotfounderror-on-mediacomments" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClientNotFoundError on /media/.../comments/
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uploads" class="md-nav__link">
+    <span class="md-ellipsis">
+      Uploads
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Uploads">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#photoconfigureerror-videoconfigureerror-albumconfigureerror" class="md-nav__link">
+    <span class="md-ellipsis">
+      PhotoConfigureError / VideoConfigureError / AlbumConfigureError
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#videotoolongexception" class="md-nav__link">
+    <span class="md-ellipsis">
+      VideoTooLongException
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource-leak-warnings-on-upload-retries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resource leak warnings on upload retries
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setup
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pip-install-aiograpi-succeeds-but-import-aiograpi-fails-on-httpx" class="md-nav__link">
+    <span class="md-ellipsis">
+      pip install aiograpi succeeds but import aiograpi fails on httpx
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtimeerror-this-event-loop-is-already-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      RuntimeError: This event loop is already running
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mypy-complains-about-cross-mixin-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      mypy complains about cross-mixin attributes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-in-doubt" class="md-nav__link">
+    <span class="md-ellipsis">
+      When in doubt
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../exceptions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Exceptions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#preloginrequired-authentication-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      PreLoginRequired: Authentication required
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#badcredentials-both-username-and-password-must-be-provided" class="md-nav__link">
+    <span class="md-ellipsis">
+      BadCredentials: Both username and password must be provided
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#badpassword" class="md-nav__link">
+    <span class="md-ellipsis">
+      BadPassword
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#twofactorrequired" class="md-nav__link">
+    <span class="md-ellipsis">
+      TwoFactorRequired
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#challengerequired" class="md-nav__link">
+    <span class="md-ellipsis">
+      ChallengeRequired
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loginrequired-after-a-successful-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      LoginRequired (after a successful login)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network-tls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Network &amp; TLS
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Network &amp; TLS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#httpxconnecterror-httpxreaderror" class="md-nav__link">
+    <span class="md-ellipsis">
+      httpx.ConnectError / httpx.ReadError
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sslsslcertverificationerror-tls-handshake-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      ssl.SSLCertVerificationError / TLS handshake failures
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authrequiredproxyerror-302-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      AuthRequiredProxyError: 302 Found
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ig-side-rate-limits-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      IG-side rate limits &amp; blocks
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IG-side rate limits &amp; blocks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pleasewaitfewminutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      PleaseWaitFewMinutes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clientthrottlederror-http-429" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClientThrottledError (HTTP 429)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ratelimiterror" class="md-nav__link">
+    <span class="md-ellipsis">
+      RateLimitError
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proxyaddressisblocked" class="md-nav__link">
+    <span class="md-ellipsis">
+      ProxyAddressIsBlocked
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feedbackrequired" class="md-nav__link">
+    <span class="md-ellipsis">
+      FeedbackRequired
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data / parsing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data / parsing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pydanticvalidationerror-n-validation-errors-for-usermedia" class="md-nav__link">
+    <span class="md-ellipsis">
+      pydantic.ValidationError: N validation errors for User/Media/...
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clientgraphqlerror-missing-data-in-graphql-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClientGraphqlError: Missing 'data' in GraphQL response
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clientnotfounderror-on-mediacomments" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClientNotFoundError on /media/.../comments/
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uploads" class="md-nav__link">
+    <span class="md-ellipsis">
+      Uploads
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Uploads">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#photoconfigureerror-videoconfigureerror-albumconfigureerror" class="md-nav__link">
+    <span class="md-ellipsis">
+      PhotoConfigureError / VideoConfigureError / AlbumConfigureError
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#videotoolongexception" class="md-nav__link">
+    <span class="md-ellipsis">
+      VideoTooLongException
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource-leak-warnings-on-upload-retries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resource leak warnings on upload retries
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setup
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pip-install-aiograpi-succeeds-but-import-aiograpi-fails-on-httpx" class="md-nav__link">
+    <span class="md-ellipsis">
+      pip install aiograpi succeeds but import aiograpi fails on httpx
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtimeerror-this-event-loop-is-already-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      RuntimeError: This event loop is already running
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mypy-complains-about-cross-mixin-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      mypy complains about cross-mixin attributes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-in-doubt" class="md-nav__link">
+    <span class="md-ellipsis">
+      When in doubt
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="troubleshooting">Troubleshooting</h1>
+<p>Common errors and what to do about them. If your case isn't listed,
+check <a href="../handle_exception/">Handle Exceptions</a> for the full exception
+hierarchy or open a <a href="https://github.com/subzeroid/aiograpi/issues/new/choose">bug report</a>.</p>
+<h2 id="authentication">Authentication</h2>
+<h3 id="preloginrequired-authentication-required"><code>PreLoginRequired: Authentication required</code></h3>
+<p>You called a private method (most <code>_v1</code>, <code>private_graphql_*</code>, anything
+that mutates account state) without logging in first.</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>   <span class="c1"># do this first</span>
+<span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_info_v1</span><span class="p">(</span><span class="s2">&quot;25025320&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Or restore from a saved session:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="n">client</span><span class="o">.</span><span class="n">set_settings</span><span class="p">(</span><span class="n">saved_dict</span><span class="p">)</span>   <span class="c1"># contains a valid sessionid</span>
+<span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_info_v1</span><span class="p">(</span><span class="s2">&quot;25025320&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="badcredentials-both-username-and-password-must-be-provided"><code>BadCredentials: Both username and password must be provided</code></h3>
+<p>Empty / missing username or password. Check env vars are loaded.</p>
+<h3 id="badpassword"><code>BadPassword</code></h3>
+<p>Wrong password, OR Instagram flagged your account and silently invalidated
+the password. If the same credentials work in the IG app, you've been
+flagged — wait 24-48 hours, change IP, log in via app first.</p>
+<h3 id="twofactorrequired"><code>TwoFactorRequired</code></h3>
+<p>Pass <code>verification_code=</code> to <code>login()</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USER</span><span class="p">,</span> <span class="n">PASS</span><span class="p">,</span> <span class="n">verification_code</span><span class="o">=</span><span class="s2">&quot;123456&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>For TOTP-based 2FA, generate the code from the seed:</p>
+<div class="highlight"><pre><span></span><code><span class="n">code</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">totp_generate_code</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USER</span><span class="p">,</span> <span class="n">PASS</span><span class="p">,</span> <span class="n">verification_code</span><span class="o">=</span><span class="n">code</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="challengerequired"><code>ChallengeRequired</code></h3>
+<p>Instagram wants you to solve a challenge (email/SMS code, photo verification,
+phone confirmation). See <a href="../challenge_resolver/">Challenge Resolver</a> for the
+flow. Often triggered by:</p>
+<ul>
+<li>New IP / device combination they haven't seen.</li>
+<li>Datacenter proxy (they fingerprint).</li>
+<li>Too many requests in a short window.</li>
+</ul>
+<h3 id="loginrequired-after-a-successful-login"><code>LoginRequired</code> (after a successful login)</h3>
+<p>Your <code>sessionid</code> expired or was invalidated server-side. Re-login:</p>
+<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USER</span><span class="p">,</span> <span class="n">PASS</span><span class="p">,</span> <span class="n">relogin</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<p>Some <code>private_graphql_*</code> endpoints surface this via the 0.6.5+ body-error
+promotion — you'll get <code>LoginRequired</code>, not generic <code>ClientForbiddenError</code>,
+so your retry logic can branch on it correctly.</p>
+<h2 id="network-tls">Network &amp; TLS</h2>
+<h3 id="httpxconnecterror-httpxreaderror"><code>httpx.ConnectError</code> / <code>httpx.ReadError</code></h3>
+<p>Connection-level failure. Most common causes:</p>
+<ul>
+<li>Proxy is dead or wrong port.</li>
+<li>Proxy provider rate-limited you (try other accounts in your pool).</li>
+<li>Instagram blocked the proxy IP — switch to residential.</li>
+</ul>
+<h3 id="sslsslcertverificationerror-tls-handshake-failures"><code>ssl.SSLCertVerificationError</code> / TLS handshake failures</h3>
+<p>Since 0.6.6 aiograpi verifies TLS by default. If your proxy is a known
+SSL-MITM (corporate inspection gateway), opt out <strong>after</strong> construction:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="n">client</span><span class="o">.</span><span class="n">private</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">client</span><span class="o">.</span><span class="n">public</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">client</span><span class="o">.</span><span class="n">graphql</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div>
+<p>Don't blindly disable on residential proxies — that's how MITM attackers
+intercept your sessionid.</p>
+<h3 id="authrequiredproxyerror-302-found"><code>AuthRequiredProxyError: 302 Found</code></h3>
+<p>Your proxy provider redirected you to their captive portal. Usually means:</p>
+<ul>
+<li>Out of bandwidth quota.</li>
+<li>Subscription expired.</li>
+<li>Proxy creds invalid.</li>
+</ul>
+<p>Open the proxy's management URL (often the redirect target) to confirm.</p>
+<h2 id="ig-side-rate-limits-blocks">IG-side rate limits &amp; blocks</h2>
+<h3 id="pleasewaitfewminutes"><code>PleaseWaitFewMinutes</code></h3>
+<p>Self-explanatory. Wait, don't retry-loop. aiograpi already retries with
+backoff on 429, so this means you've exhausted that and Instagram wants
+you to actually pause.</p>
+<h3 id="clientthrottlederror-http-429"><code>ClientThrottledError</code> (HTTP 429)</h3>
+<p>You're hitting the endpoint too fast. Slow down:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">delay_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>   <span class="c1"># random delay 3-6s between requests</span>
+</code></pre></div>
+<h3 id="ratelimiterror"><code>RateLimitError</code></h3>
+<p>Account-level rate limit (vs endpoint-level <code>ClientThrottledError</code>).
+Different account, different proxy, or wait it out.</p>
+<h3 id="proxyaddressisblocked"><code>ProxyAddressIsBlocked</code></h3>
+<p>Instagram has blocklisted your proxy IP. Switch to a different (preferably
+residential) IP.</p>
+<h3 id="feedbackrequired"><code>FeedbackRequired</code></h3>
+<p>Instagram thinks your account is doing automated activity (likes, follows,
+DMs). Stop those operations on this account for 24-72 hours. The account
+isn't banned, just on a behavioural watch.</p>
+<h2 id="data-parsing">Data / parsing</h2>
+<h3 id="pydanticvalidationerror-n-validation-errors-for-usermedia"><code>pydantic.ValidationError: N validation errors for User/Media/...</code></h3>
+<p>Should be rare since 0.7.0 — <code>PreLoginRequired</code> now fires upfront for
+unauthenticated calls instead of letting them reach the extractor.</p>
+<p>If you see this on an authenticated call:</p>
+<ul>
+<li>Instagram changed the response shape. File a bug with the full traceback
+  and the response body (<code>client.last_json</code>, redacted).</li>
+<li>Your <code>last_json</code> may have a clue: <code>print(client.last_json)</code> after the failure.</li>
+</ul>
+<h3 id="clientgraphqlerror-missing-data-in-graphql-response"><code>ClientGraphqlError: Missing 'data' in GraphQL response</code></h3>
+<p>GraphQL endpoint returned an error envelope. The doc_id may have rotated
+(IG re-registers queries periodically). Capture a fresh <code>client_doc_id</code>
+from a current Instagram-app build and pass it explicitly:</p>
+<div class="highlight"><pre><span></span><code><span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">private_graphql_followers_list</span><span class="p">(</span>
+    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;25025320&quot;</span><span class="p">,</span>
+    <span class="n">rank_token</span><span class="o">=</span><span class="n">rank_token</span><span class="p">,</span>
+    <span class="n">client_doc_id</span><span class="o">=</span><span class="s2">&quot;&lt;fresh capture&gt;&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>See <a href="../private-graphql/">Private GraphQL &amp; doc_id</a> for the rotation
+playbook.</p>
+<h3 id="clientnotfounderror-on-mediacomments"><code>ClientNotFoundError</code> on <code>/media/.../comments/</code></h3>
+<p>Could be a real "media doesn't exist", or could be a masked challenge.
+Since 0.4.1 aiograpi promotes <code>404 b"Not Found"</code> to <code>ChallengeRequired</code>
+on the private path; since 0.6.5 it does the same on the
+<code>private_graphql_*</code> path. If you're on an older version, upgrade — you
+may be silently dropping work that's actually a challenge.</p>
+<h2 id="uploads">Uploads</h2>
+<h3 id="photoconfigureerror-videoconfigureerror-albumconfigureerror"><code>PhotoConfigureError</code> / <code>VideoConfigureError</code> / <code>AlbumConfigureError</code></h3>
+<p>Instagram accepted the upload but the configure call failed. Common
+causes:</p>
+<ul>
+<li>Image / video doesn't meet IG specs (aspect ratio, codec, size).</li>
+<li>Account flagged — uploads work less reliably than reads on flagged accounts.</li>
+<li>Cross-region upload (uploaded from one IP, configured from another).</li>
+</ul>
+<h3 id="videotoolongexception"><code>VideoTooLongException</code></h3>
+<p>Self-explanatory. Trim or split.</p>
+<h3 id="resource-leak-warnings-on-upload-retries">Resource leak warnings on upload retries</h3>
+<p>Since 0.4.1 aiograpi closes file handles in <code>finally:</code> blocks across
+photo/video/album/clip/story/igtv. If you see <code>ResourceWarning: unclosed file</code>
+on <code>0.0.x</code>, upgrade.</p>
+<h2 id="setup">Setup</h2>
+<h3 id="pip-install-aiograpi-succeeds-but-import-aiograpi-fails-on-httpx"><code>pip install aiograpi</code> succeeds but <code>import aiograpi</code> fails on <code>httpx</code></h3>
+<p><code>requirements.txt</code> pins <code>httpx==0.28.1</code>. If <code>pip</code> resolved a different
+version due to a constraint elsewhere in your project, force-pin:</p>
+<div class="highlight"><pre><span></span><code>aiograpi==0.7.1
+httpx==0.28.1
+</code></pre></div>
+<h3 id="runtimeerror-this-event-loop-is-already-running"><code>RuntimeError: This event loop is already running</code></h3>
+<p>You're calling <code>await ...</code> outside an async function. Wrap in
+<code>asyncio.run(main())</code> or use <code>nest_asyncio</code> for Jupyter.</p>
+<h3 id="mypy-complains-about-cross-mixin-attributes"><code>mypy</code> complains about cross-mixin attributes</h3>
+<p>Known issue (<code>.mypy-baseline = 1095</code>). aiograpi mixins reference each
+other's attributes (<code>self.user_id</code>, <code>self.private_request</code>) which mypy
+sees as <code>[attr-defined]</code> because each mixin is checked in isolation.
+We ratchet the baseline down per release. For now, suppress with
+<code># type: ignore[attr-defined]</code> if you subclass.</p>
+<h2 id="when-in-doubt">When in doubt</h2>
+<ol>
+<li>Check <code>client.last_json</code> — Instagram's actual response body is often
+   more informative than the exception class.</li>
+<li>Check <code>client.last_response.status_code</code> and <code>client.last_response.url</code>.</li>
+<li>Run <a href="https://github.com/subzeroid/aiograpi/blob/main/tests/live/smoke.py"><code>tests/live/smoke.py</code></a>
+   on your environment to confirm the basic flow works at all.</li>
+<li>File a <a href="https://github.com/subzeroid/aiograpi/issues/new/choose">bug report</a> —
+   include the traceback (redact creds), <code>aiograpi.__version__</code>, Python
+   version, OS, and proxy type. The issue template has all of this.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
