@@ -1,7 +1,7 @@
 # Migration Guide
 
-If you're on `aiograpi==0.0.x` (or one of the third-party forks like
-`aiograpi-fixed`), here's how to move to the current `0.7.x` line.
+If you're on `aiograpi==0.0.x`, here's how to move to the current
+`0.7.x` line.
 
 ## Why migrate
 
@@ -14,33 +14,6 @@ If you're on `aiograpi==0.0.x` (or one of the third-party forks like
   clearer signal that `await` only marks IO.
 - **Active maintenance.** PyPI releases on every tag via trusted
   publishing CI.
-
-## Switching from `aiograpi-fixed`
-
-`aiograpi-fixed==0.5.0` is a third-party namespace fork frozen at our
-August 2025 source tree (commit `192866b`) — no semantic patches on
-top, just a renamed package. We're months ahead of it on every front.
-To switch:
-
-```bash
-pip uninstall aiograpi-fixed
-pip install aiograpi
-```
-
-Then change imports:
-
-```python
-# Before
-from aiograpi_fixed import Client
-from aiograpi_fixed.exceptions import ChallengeRequired
-
-# After
-from aiograpi import Client
-from aiograpi.exceptions import ChallengeRequired
-```
-
-After the import rename, follow the version-by-version section below
-to cover the breaking changes.
 
 ## Version-by-version breaking changes
 

@@ -63,7 +63,7 @@ work anonymously. Methods with `_v1` need login.
 * [Private GraphQL & doc_id](usage-guide/private-graphql.md) — newer mobile-app API surface (followers, clips, search, inbox)
 * [Handle Exceptions](usage-guide/handle_exception.md) — every exception you'll see and what to do
 * [Challenge Resolver](usage-guide/challenge_resolver.md) — what to do when IG challenges you
-* [Migration Guide](migration.md) — upgrading from `0.0.x` or the `aiograpi-fixed` namespace fork
+* [Migration Guide](migration.md) — upgrading from `0.0.x`
 * [Exceptions](exceptions.md) — full exception class reference
 
 [docs-main]: index.md

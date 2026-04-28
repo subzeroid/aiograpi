@@ -508,7 +508,7 @@ it back to upstream.
 - **PEP 561 type marker (`py.typed`).** mypy / pyright will now pick
   up aiograpi's type annotations from the installed package.
 - **Migration guide** at `docs/migration.md` — for users coming from
-  `0.0.x` or the third-party `aiograpi-fixed` namespace fork.
+  `0.0.x`.
 - **CaptchaHandlerMixin tests** — `CaptchaHandlerMixinRegressionTestCase`
   with 7 unit tests. The mixin was at 0% coverage (opt-in, not auto-wired
   into `Client`); now at 95.8%.

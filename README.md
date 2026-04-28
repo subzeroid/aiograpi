@@ -104,7 +104,7 @@ What you can rely on instead:
   publishes, and creates a release.
 
 Full per-release notes: [CHANGELOG.md](https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md).
-Migrating from `0.0.x` or `aiograpi-fixed`?
+Migrating from `0.0.x`?
 See the [Migration Guide](https://subzeroid.github.io/aiograpi/migration.html).
 
 ### Installation
@@ -229,7 +229,7 @@ await cl.video_upload_to_story(
 
 * [Index](https://subzeroid.github.io/aiograpi/)
 * [Getting Started](https://subzeroid.github.io/aiograpi/getting-started.html)
-* [Migration Guide](https://subzeroid.github.io/aiograpi/migration.html) — for users coming from `0.0.x` or `aiograpi-fixed`
+* [Migration Guide](https://subzeroid.github.io/aiograpi/migration.html) — for users coming from `0.0.x`
 * [Usage Guide](https://subzeroid.github.io/aiograpi/usage-guide/fundamentals.html)
 * [Interactions](https://subzeroid.github.io/aiograpi/usage-guide/interactions.html)
   * [`Media`](https://subzeroid.github.io/aiograpi/usage-guide/media.html) - Publication (also called post): Photo, Video, Album, IGTV and Reels
