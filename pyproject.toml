@@ -85,7 +85,7 @@ test = [
     "mkdocstrings==0.30.1",
     "mkdocstrings-python==2.0.3",
     "pytest-xdist==3.8.0",
-    "pytest~=8.4.2",
+    "pytest~=9.0.1",
 ]
 
 [tool.setuptools]
