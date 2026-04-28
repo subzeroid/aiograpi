@@ -100,6 +100,26 @@ class AccountMixin:
             return False
 
     async def remove_bio_links(self, link_ids: list) -> dict:
+        """
+        Remove one or more bio links by id.
+
+        ``POST /accounts/remove_bio_links/`` — companion to
+        :meth:`set_external_url` / the bio-link editor in the IG app.
+        Passes a manually-pre-signed body (``with_signature=False``)
+        because IG validates the signature on this endpoint
+        differently than the action-data flow.
+
+        Parameters
+        ----------
+        link_ids: list
+            List of ``link_id`` strings (the ``link_id`` field on each
+            ``BioLink`` object returned by ``user_info``).
+
+        Returns
+        -------
+        dict
+            Raw response.
+        """
         signed_body = {
             "signed_body": "SIGNATURE."
             + json.dumps(
@@ -112,7 +132,24 @@ class AccountMixin:
 
     async def set_external_url(self, external_url) -> dict:
         """
-        Set new biography
+        Replace the profile's external link with a single URL.
+
+        ``POST /accounts/update_bio_links/`` — replaces (not appends)
+        the bio-link list with one ``external``-type link. Sends a
+        signed body via :func:`aiograpi.utils.generate_signature` and
+        ``with_signature=False`` because the endpoint expects the
+        signature pre-baked into the body, not as a header.
+
+        Parameters
+        ----------
+        external_url: str
+            URL to set as the profile's external link. Pass an empty
+            string to clear (untested — IG may reject empty URL).
+
+        Returns
+        -------
+        dict
+            Raw response.
         """
         data = dumps(
             {

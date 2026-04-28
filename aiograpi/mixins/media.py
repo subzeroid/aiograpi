@@ -1428,6 +1428,25 @@ class MediaMixin:
         return await self.media_pin(media_pk, True)
 
     async def media_template_v1(self, media_id: str):
+        """
+        Fetch a clip template (remix-from-template) for a clip media.
+
+        ``POST /clips/template/`` — the surface IG's app uses when
+        the user taps "Use as template" on a reel/clip. Returns the
+        raw template payload (audio, text overlays, transitions, clip
+        timings) ready to be applied to a new upload.
+
+        Parameters
+        ----------
+        media_id: str
+            Source clip media id (the clip the template is being
+            extracted from).
+
+        Returns
+        -------
+        dict
+            Raw template response.
+        """
         data = {
             "should_show_friends_media_at_top": "false",
             "template_clips_media_id": media_id,

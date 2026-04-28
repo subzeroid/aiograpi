@@ -183,6 +183,32 @@ class HighlightMixin:
         added_media_ids: List[str] = [],
         removed_media_ids: List[str] = [],
     ):
+        """
+        Edit an existing highlight reel — title, cover, or membership.
+
+        ``POST /highlights/highlight:{pk}/edit_reel/``. All four
+        editable fields are optional; pass only what you want to
+        change.
+
+        Parameters
+        ----------
+        highlight_pk: str
+            Target highlight pk.
+        title: str, default ""
+            New title (empty string leaves it unchanged).
+        cover: Dict, default {}
+            New cover dict (e.g. ``{"media_id": "..."}``); empty dict
+            leaves it unchanged.
+        added_media_ids: List[str], default []
+            Story pks to add to the highlight.
+        removed_media_ids: List[str], default []
+            Story pks to remove from the highlight.
+
+        Returns
+        -------
+        Highlight
+            Refreshed highlight after the edit.
+        """
         data = {
             "supported_capabilities_new": json.dumps(config.SUPPORTED_CAPABILITIES),
             "source": "self_profile",
