@@ -449,6 +449,35 @@ class CommentMixin:
         )
         return extract_comment(result["comment"])
 
+    async def media_check_offensive_comment(self, media_id: str, text: str) -> bool:
+        """
+        Checks if a comment text is offensive
+
+        Parameters
+        ----------
+        media_id: str
+            Unique identifier of a Media
+        text: str
+            String to be posted on the media
+
+        Returns
+        -------
+        bool
+            If comment is offensive
+        """
+        if not self.user_id:
+            raise PreLoginRequired
+        media_id = self.media_id(media_id)
+        data = {
+            "media_id": media_id,
+            "comment_text": text,
+        }
+        result = await self.private_request(
+            "media/comment/check_offensive_comment/",
+            self.with_action_data(data),
+        )
+        return result["is_offensive"]
+
     async def comment_like(self, comment_pk: int, revert: bool = False) -> bool:
         """
         Like a comment on a media
