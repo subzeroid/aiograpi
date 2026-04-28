@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.2] — 2026-04-29
+
+### Added — user stream batch
+
+Batch 2/5 of the hiker-next gap audit (#235). Ports four
+profile-fetch endpoints used in production by `hapi/routers/v2_user.py`
++ `v1_user.py` + `gql_user.py`:
+
+- **`Client.user_stream_by_id_v1(user_id)`** — `POST users/{user_id}/info_stream/`,
+  the pk-keyed mirror of the existing `user_stream_by_username_v1`.
+- **`Client.user_stream_by_id_flat(user_id)`** — calls
+  `user_stream_by_id_v1` then collapses `stream_rows[*].user`
+  partial payloads into a single dict via the new
+  `_user_stream_collector` helper. Promotes `pk_id` → `pk` if `pk`
+  is missing.
+- **`Client.user_stream_by_username_flat(username)`** — same helper,
+  username variant.
+- **`Client.user_web_profile_info_v1(username)`** —
+  `GET users/web_profile_info/?username={username}` via the private
+  host. Carries the logged-in session, bypasses public-side rate
+  limiting, returns the inner `data` block already unwrapped.
+
+Internal helper `_user_stream_collector` matches upstream
+hiker-next's defensive empty-rows fallback (one extra fetch +
+`last_json`) one-for-one.
+
+Test coverage: 7 new `UserMixinRegressionTestCase` cases (endpoint
+URL, data payload, `ClientNotFoundError` → `UserNotFound` mapping,
+merge ordering, `pk_id` → `pk` promotion, `web_profile_info_v1`
+data unwrap + empty-data → `UserNotFound`). 4 new OPTIONAL checks
+in `tests/live/smoke.py`.
+
+Docs: `docs/usage-guide/private-graphql.md` "When to use what"
+table gets five new rows.
+
 ## [0.8.1] — 2026-04-29
 
 ### Added — fbsearch v2 batch

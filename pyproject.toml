@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiograpi"
-version = "0.8.1"
+version = "0.8.2"
 authors = [
     { name = "Mark Subzeroid", email = "143403577+subzeroid@users.noreply.github.com" },
 ]
