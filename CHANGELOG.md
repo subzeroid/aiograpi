@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.6] — 2026-04-29
+
+### Tests — auth + private coverage
+
+Coverage batch 1/3 from the docs+tests audit (#239). 15 new
+`AuthAndStoryRegressionTestCase` cases covering request-payload
+plumbing that other code paths depend on but had no direct unit
+tests:
+
+- **Request-payload helpers** (`with_default_data`,
+  `with_action_data`, `with_extra_data`, `gen_user_breadcrumb`).
+- **Stable ID generators** (`generate_uuid`,
+  `generate_android_device_id`, `generate_mutation_token`).
+- **Session round-trip** (`get_settings` ↔ `set_settings`;
+  `dump_settings` ↔ `load_settings` via a real tempfile).
+- **Proxy plumbing** (`set_proxy(dsn)` propagates to all three
+  sessions; empty string clears all three).
+- **`private.py` helpers** (`with_query_params` compact-JSON,
+  `set_locale` parsing into country, `set_timezone_offset`).
+
+No behavior changes. 174 unit tests pass (was 159).
+
 ## [0.8.5] — 2026-04-29
 
 ### Added — media v2 batch (final hiker-next port)
