@@ -67,7 +67,10 @@ class NotificationMixin:
             self.notification_report_updated,
             self.notification_login,
         )
-        return all(await func("off") for func in notifications)
+        # all() doesn't accept async generators — materialize via list
+        # comprehension instead.
+        results = [await func("off") for func in notifications]
+        return all(results)
 
     async def notification_mute_all(self, setting_value: MUTE_ALL = "8_hour") -> bool:
         """
