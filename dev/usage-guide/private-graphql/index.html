@@ -1320,6 +1320,26 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <td><code>Client.user_info_by_username_v2_gql(username)</code></td>
 </tr>
 <tr>
+<td>Streamed profile envelope by <code>user_id</code></td>
+<td><code>Client.user_stream_by_id_v1(user_id)</code></td>
+</tr>
+<tr>
+<td>Streamed profile envelope by <code>username</code></td>
+<td><code>Client.user_stream_by_username_v1(username)</code></td>
+</tr>
+<tr>
+<td>Flat (merged) profile dict by <code>user_id</code></td>
+<td><code>Client.user_stream_by_id_flat(user_id)</code></td>
+</tr>
+<tr>
+<td>Flat (merged) profile dict by <code>username</code></td>
+<td><code>Client.user_stream_by_username_flat(username)</code></td>
+</tr>
+<tr>
+<td>Web-scraper-style profile via private host</td>
+<td><code>Client.user_web_profile_info_v1(username)</code></td>
+</tr>
+<tr>
 <td>Followers list (mobile-app surface)</td>
 <td><code>Client.private_graphql_followers_list(user_id, rank_token)</code></td>
 </tr>
