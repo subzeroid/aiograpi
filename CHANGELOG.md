@@ -6,6 +6,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.8] — 2026-04-29
+
+### Tests — notification + signup smoke coverage
+
+Coverage batch 3/3 from the docs+tests audit (#241). Adds smoke
+tests for the two niche mixins that previously had **zero test
+coverage**:
+
+- **`SignUpTestCase` +8 cases** for the signup endpoints
+  (`check_username`, `get_signup_config`, `check_email`,
+  `send_verify_email`, `check_confirmation_code`,
+  `check_age_eligibility`, `check_phone_number`,
+  `send_signup_sms_code`). Each verifies the endpoint URL plus key
+  payload fields. The phone-number tests confirm the `" "` → `"+"`
+  normalization.
+- **New `NotificationMixinRegressionTestCase` +7 cases** including a
+  parameterized walk over all 24 `notification_*` wrappers
+  verifying each dispatches to `notification_settings` with the
+  correct IG-side `content_type` label. Surfaced three naming
+  surprises that downstream callers may want to know about:
+  `notification_connection` → `"connection_notification"`,
+  `notification_login` → `"login_notification"`,
+  `notification_reminders` → `"notification_reminders"`.
+
+### Fixed — `notification_disable`
+
+The new smoke surfaced that `Client.notification_disable` was
+**unconditionally broken**: the line
+
+```python
+return all(await func("off") for func in notifications)
+```
+
+is an async generator expression and `all()` doesn't accept async
+generators, so every call raised
+`TypeError: 'async_generator' object is not iterable`. Replaced
+with list-comprehension materialization. The path had been silently
+broken since the mixin landed.
+
+### CI
+
+`NotificationMixinRegressionTestCase` added to the unit-test matrix.
+
+### Audit complete
+
+This release closes the docs+tests coverage audit started in 0.8.6.
+Three batches over 0.8.6 → 0.8.8:
+
+- **0.8.6** (#239): 15 tests on `auth.py` / `private.py` request
+  payload helpers, ID generators, session round-trip, proxy
+  plumbing.
+- **0.8.7** (#240): 7 docstrings on high-traffic mixins (`user`,
+  `media`, `comment`, `highlight`, `story`, `account`).
+- **0.8.8** (#241): 15 tests on `signup.py` / `notification.py`
+  + drive-by fix for `notification_disable`.
+
+Net unit-test count: 159 → 189 (+30 tests, +1 real bug fix).
+
 ## [0.8.7] — 2026-04-29
 
 ### Docs — high-traffic-mixin docstrings
