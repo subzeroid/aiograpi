@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.5] — 2026-04-29
+
+### Added — media v2 batch (final hiker-next port)
+
+Final batch (5/5) of the hiker-next gap audit (#238). Two media-side
+endpoints close the audit:
+
+- **`Client.media_info_v2(media_id)`** — alternative source for
+  media info via `GET discover/media_metadata/?media_id={pk}`.
+  Returns the same `Media` model as `media_info_v1`, but the
+  underlying `media_or_ad` payload sometimes succeeds where the
+  canonical `media/{pk}/info/` path fails (ad-tagged, sponsored,
+  regulated). Strips a `_userid` suffix from `media_id` automatically.
+- **`Client.media_check_offensive_comment_v2(media_id, comment)`**
+  — same endpoint as the v1 we shipped in 0.8.0
+  (`POST media/comment/check_offensive_comment/`), but with the
+  lighter payload IG's app actually sends in production:
+  `{comment_text, media_id, _uuid}` directly, no `with_action_data`
+  wrapping. Returns the **raw response** (not just `bool`) so callers
+  can inspect any new flags IG adds beyond `is_offensive` (e.g.
+  `category` / `confidence`). v1 stays for backward compat.
+
+Test coverage: 4 new `ChapiPortedRegressionTestCase` cases
+(`_userid`-suffix stripping for `media_info_v2`, `MediaNotFound`
+on missing payload; lighter-payload shape, raw response, and
+`PreLoginRequired` guard for the v2 offensive-check). 1 new
+OPTIONAL `media_info_v2` check in `tests/live/smoke.py`.
+
+### Hiker-next audit complete
+
+This release closes a five-batch port (#234–#238) of every
+production-confirmed method that `hapi` consumes but public
+aiograpi was missing. Net additions across 0.8.1 → 0.8.5:
+
+- **14 new methods**: `fbsearch_accounts_v2`, `fbsearch_reels_v2`,
+  `fbsearch_topsearch_v2`, `fbsearch_typehead`, `user_stream_by_id_v1`,
+  `user_stream_by_id_flat`, `user_stream_by_username_flat`,
+  `user_web_profile_info_v1`,
+  `discover_recommended_accounts_for_category_v1`,
+  `user_related_profiles_gql`, `public_head`,
+  `track_stream_info_by_id`, `media_info_v2`,
+  `media_check_offensive_comment_v2`.
+- **1 new exception**: `RelatedProfileRequired`.
+- **30 new unit tests + 13 OPTIONAL live-smoke checks**.
+
 ## [0.8.4] — 2026-04-29
 
 ### Added — public_head + track_stream batch
