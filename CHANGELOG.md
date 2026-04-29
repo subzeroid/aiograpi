@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.9] — 2026-04-29
+
+### Security
+
+Closes three findings from a `/cso` security audit (#242):
+
+- **HIGH — SSRF + reachable Pillow OOB-write in `image_util.prepare_image` /
+  `prepare_video`.** The `is_remote(img)` branch was calling
+  `httpx.get(url, follow_redirects=True)` on caller-supplied URLs with no
+  allowlist, then feeding bytes straight to `Image.open(BytesIO)`
+  (CVE-2026-25990 PSD OOB write, CVE-2026-40192 FITS bomb) or
+  `VideoFileClip`. Three layers of defense added:
+
+  1. **DNS-resolved private-network denylist** — rejects 10/8, 172.16/12,
+     192.168/16, 127/8, ::1, 169.254/16 (cloud metadata!), fe80::/10,
+     fc00::/7. Resolves the host so `attacker.com → 127.0.0.1` fails the
+     same as the literal IP. Non-http(s) schemes also rejected.
+  2. **`follow_redirects=False`** — a permitted public host can't redirect
+     us into a blocked target.
+  3. **`Image.open(..., formats=("JPEG","PNG","WEBP","GIF"))`** — restricts
+     Pillow's parser to formats IG accepts; drops PSD/FITS/TIFF parsers
+     that historically carry memory-corruption CVEs.
+
+  New helper `image_util._safe_remote_get()` shared by both prepare_*
+  paths.
+
+- **MEDIUM — Unpinned `pypa/gh-action-pypi-publish`.** Was `@release/v1`
+  (moving ref); now pinned to commit SHA `cef221092ed1bacb1cc03d23a2d87d1d172e277b`
+  (v1.14.0). The job has `id-token: write` for trusted PyPI publishing;
+  upstream compromise of the moving ref would have given attackers PyPI
+  publish authority for `aiograpi`.
+
+- **MEDIUM — `Pillow>=8.1.1` runtime constraint allowed resolution of
+  known-vulnerable versions.** Bumped to `Pillow>=12.2.0`. Compatible with
+  aiograpi's Python 3.10+ requirement (Pillow 12 dropped 3.9). Test pin
+  also bumped to 12.2.0; `pip-audit` reports zero known CVEs.
+
+### Tests
+
+- New `ImageUtilSafeRemoteFetchTestCase` with 9 cases covering loopback
+  v4/v6, AWS metadata endpoint, RFC1918, non-http schemes, DNS rebinding
+  via `localhost`, refusing redirects on safe-fetch path. 198 unit tests
+  pass (was 189).
+
 ## [0.8.8] — 2026-04-29
 
 ### Tests — notification + signup smoke coverage
