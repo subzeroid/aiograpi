@@ -108,6 +108,7 @@ jobs:
         run: |
           pytest -sv \
             tests.py::ExtractorsRegressionTestCase \
+            tests.py::ImageUtilSafeRemoteFetchTestCase \
             tests.py::DirectExtractorRegressionTestCase \
             tests.py::PublicRegressionTestCase \
             tests.py::PolarisProfileNormalizationTestCase \

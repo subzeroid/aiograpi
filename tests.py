@@ -298,6 +298,85 @@ class ExtractorsRegressionTestCase(unittest.TestCase):
         self.assertEqual(resource.pk, "1")
 
 
+class ImageUtilSafeRemoteFetchTestCase(unittest.TestCase):
+    """SSRF hardening for image_util._is_safe_remote_url and
+    _safe_remote_get — block private/loopback/link-local destinations
+    and refuse redirects on caller-supplied URLs."""
+
+    def test_blocks_loopback_ipv4(self):
+        from aiograpi.image_util import _is_safe_remote_url
+
+        self.assertFalse(_is_safe_remote_url("http://127.0.0.1/"))
+        self.assertFalse(_is_safe_remote_url("http://127.0.0.1:6379/"))
+
+    def test_blocks_loopback_ipv6(self):
+        from aiograpi.image_util import _is_safe_remote_url
+
+        self.assertFalse(_is_safe_remote_url("http://[::1]/"))
+
+    def test_blocks_aws_metadata_endpoint(self):
+        from aiograpi.image_util import _is_safe_remote_url
+
+        self.assertFalse(
+            _is_safe_remote_url("http://169.254.169.254/latest/meta-data/")
+        )
+
+    def test_blocks_rfc1918_ipv4_ranges(self):
+        from aiograpi.image_util import _is_safe_remote_url
+
+        self.assertFalse(_is_safe_remote_url("http://10.0.0.1/"))
+        self.assertFalse(_is_safe_remote_url("http://172.16.0.1/"))
+        self.assertFalse(_is_safe_remote_url("http://192.168.1.1/"))
+
+    def test_rejects_non_http_schemes(self):
+        from aiograpi.image_util import _is_safe_remote_url
+
+        self.assertFalse(_is_safe_remote_url("file:///etc/passwd"))
+        self.assertFalse(_is_safe_remote_url("ftp://example.com/foo"))
+        self.assertFalse(_is_safe_remote_url("gopher://example.com/"))
+        self.assertFalse(_is_safe_remote_url("ssh://example.com/"))
+
+    def test_rejects_unresolvable_host(self):
+        from aiograpi.image_util import _is_safe_remote_url
+
+        # .invalid is RFC 6761 — guaranteed never to resolve.
+        self.assertFalse(_is_safe_remote_url("http://nonexistent.invalid/"))
+
+    def test_blocks_dns_rebinding_attempt_via_resolution(self):
+        from aiograpi.image_util import _is_safe_remote_url
+
+        # localhost resolves to 127.0.0.1 — reject even if textual
+        # check would have passed on hostname alone.
+        self.assertFalse(_is_safe_remote_url("http://localhost/"))
+
+    def test_safe_remote_get_blocks_private_url_before_fetching(self):
+        from aiograpi.image_util import _safe_remote_get
+
+        with self.assertRaises(ValueError) as cm:
+            _safe_remote_get("http://127.0.0.1/foo")
+
+        self.assertIn("non-public", str(cm.exception).lower())
+
+    def test_safe_remote_get_refuses_redirect(self):
+        from aiograpi.image_util import _safe_remote_get
+
+        # Build a fake redirect response. _is_safe_remote_url is bypassed
+        # by patching it to True so the test isolates redirect handling.
+        fake_response = Mock(
+            status_code=302,
+            is_redirect=True,
+            headers={"location": "http://169.254.169.254/secret"},
+        )
+        with (
+            mock.patch("aiograpi.image_util._is_safe_remote_url", return_value=True),
+            mock.patch("aiograpi.image_util.httpx.get", return_value=fake_response),
+        ):
+            with self.assertRaises(ValueError) as cm:
+                _safe_remote_get("http://example.com/redirect")
+
+        self.assertIn("redirect", str(cm.exception).lower())
+
+
 class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_public_request_uses_post_for_post_bodies(self):
         client = Client()
