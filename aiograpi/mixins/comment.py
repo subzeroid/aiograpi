@@ -512,10 +512,9 @@ class CommentMixin:
         but skips the ``with_action_data`` wrapping (no
         ``_csrftoken`` / ``_uid`` / breadcrumb) and just sends
         ``{comment_text, media_id, _uuid}`` directly. Closer to what
-        the IG app posts in practice and what hiker-next uses in
-        production. Returns the raw response so callers can inspect
-        any flags IG ships beyond ``is_offensive`` (e.g. category /
-        confidence in newer payloads).
+        the IG app posts in practice. Returns the raw response so
+        callers can inspect any flags IG ships beyond ``is_offensive``
+        (e.g. category / confidence in newer payloads).
 
         Parameters
         ----------

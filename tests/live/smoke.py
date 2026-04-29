@@ -4,9 +4,9 @@ Exits 0 if all REQUIRED checks pass; non-zero otherwise. Optional
 checks (chapi-style new endpoints) are reported but never fail the
 build — IG rotates doc_ids and we don't want a flaky CI gate.
 
-Required env: TEST_ACCOUNTS_URL pointing at a HikerAPI-style accounts
-endpoint that returns at least one usable account (with TOTP seed if
-2FA is enabled). Skips cleanly if unset.
+Required env: TEST_ACCOUNTS_URL pointing at an accounts endpoint
+that returns at least one usable account (with TOTP seed if 2FA is
+enabled). Skips cleanly if unset.
 """
 
 import asyncio

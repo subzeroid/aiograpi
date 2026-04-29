@@ -1730,7 +1730,7 @@ class UserMixin:
         Each row in ``stream_rows`` carries a partial ``user`` payload;
         this merges them in order so later rows override earlier ones.
         Falls back to one extra fetch if the first response was
-        empty (matches upstream hiker-next behaviour).
+        empty (defensive behaviour matching observed IG quirks).
         """
         data = {}
         for urow in resp.get("stream_rows", []):
@@ -2208,8 +2208,8 @@ class UserMixin:
             GraphQL response had no ``user`` block.
         RelatedProfileRequired
             Empty result and the caller had ``self.num_retry`` set
-            below 4 (upstream hiker-next retry signal — opt-in via
-            setting ``client.num_retry`` yourself).
+            below 4 (opt-in retry signal — set ``client.num_retry``
+            yourself to enable).
         """
         variables = {
             "user_id": str(user_id),
