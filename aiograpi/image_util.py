@@ -4,10 +4,13 @@
 # https://opensource.org/licenses/MIT
 
 import io
+import ipaddress
 import os
 import re
 import shutil
+import socket
 import tempfile
+from urllib.parse import urlparse
 
 try:
     from PIL import Image
@@ -15,6 +18,78 @@ except ImportError:
     raise Exception("You don't have PIL installed. Please install PIL or Pillow>=8.1.1")
 
 import httpx
+
+# Whitelist of image formats Pillow is allowed to decode for remote
+# fetches. Restricts the parser surface to the formats Instagram
+# actually accepts as media uploads — drops PSD/FITS/TIFF/etc.
+# parsers that have historically had memory-corruption CVEs
+# (e.g. CVE-2026-25990 PSD OOB write, CVE-2026-40192 FITS bomb).
+_SAFE_REMOTE_IMAGE_FORMATS = ("JPEG", "PNG", "WEBP", "GIF")
+
+# Private / loopback / link-local networks we never want to fetch
+# from when the URL comes from caller-supplied input. Blocks
+# internal-service SSRF and cloud metadata endpoints
+# (169.254.169.254 — AWS / Azure / GCP).
+_BLOCKED_NETWORKS = [
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("169.254.0.0/16"),
+    ipaddress.ip_network("0.0.0.0/8"),
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("fe80::/10"),
+]
+
+
+def _is_safe_remote_url(url: str) -> bool:
+    """Return True iff ``url`` resolves to a public IP and uses http(s).
+
+    Resolves DNS so a domain pointing at 127.0.0.1 doesn't slip
+    through a textual check. Caller must still pass
+    ``follow_redirects=False`` to httpx — a 3xx to a blocked target
+    isn't checked here.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        return False
+    try:
+        addrinfo = socket.getaddrinfo(parsed.hostname, None)
+    except (socket.gaierror, UnicodeError):
+        return False
+    for family, _type, _proto, _canon, sockaddr in addrinfo:
+        try:
+            ip = ipaddress.ip_address(sockaddr[0])
+        except ValueError:
+            return False
+        for net in _BLOCKED_NETWORKS:
+            if ip in net:
+                return False
+    return True
+
+
+def _safe_remote_get(url: str) -> httpx.Response:
+    """SSRF-hardened ``httpx.get`` for caller-supplied URLs.
+
+    1. Pre-flight check via :func:`_is_safe_remote_url` — DNS-resolves
+       the host and rejects private / loopback / link-local addresses.
+    2. ``follow_redirects=False`` — a permitted public host can't
+       redirect us into an internal service.
+    3. ``raise_for_status`` so 4xx/5xx surfaces clearly to the caller.
+    """
+    if not _is_safe_remote_url(url):
+        raise ValueError(
+            f"Refusing remote fetch from non-public or non-HTTP URL: {url!r}"
+        )
+    res = httpx.get(url, timeout=5, follow_redirects=False)
+    if res.is_redirect:
+        raise ValueError(
+            f"Refusing redirect to {res.headers.get('location')!r} "
+            f"(remote fetch must be a single hop)"
+        )
+    res.raise_for_status()
+    return res
 
 
 def calc_resize(max_size, curr_size, min_size=(0, 0)):
@@ -112,7 +187,7 @@ def prepare_image(
     max_size=(1080, 1350),
     aspect_ratios=(4.0 / 5.0, 90.0 / 47.0),
     save_path=None,
-    **kwargs
+    **kwargs,
 ):
     """
     Prepares an image file for posting.
@@ -128,8 +203,8 @@ def prepare_image(
     """
     min_size = kwargs.pop("min_size", (320, 167))
     if is_remote(img):
-        res = httpx.get(img, timeout=5, follow_redirects=True)
-        im = Image.open(io.BytesIO(res.content))
+        res = _safe_remote_get(img)
+        im = Image.open(io.BytesIO(res.content), formats=_SAFE_REMOTE_IMAGE_FORMATS)
     else:
         im = Image.open(img)
 
@@ -164,7 +239,7 @@ def prepare_video(
     max_duration=60.0,
     save_path=None,
     skip_reencoding=False,
-    **kwargs
+    **kwargs,
 ):
     """
     Prepares a video file for posting.
@@ -209,8 +284,9 @@ def prepare_video(
     )
 
     if is_remote(vid):
-        # Download remote file
-        res = httpx.get(vid, timeout=5, follow_redirects=True)
+        # Download remote file (SSRF-hardened: blocks private nets,
+        # disables redirects).
+        res = _safe_remote_get(vid)
         temp_video_file.write(res.content)
         video_src_filename = temp_video_file.name
     else:
