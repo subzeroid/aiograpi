@@ -205,9 +205,9 @@ except ClientGraphqlError as e:
   [#2652](https://github.com/instaloader/instaloader/pull/2652) — the
   "Fix obtaining Profiles when logged in" fix that aiograpi 0.5.0
   ported).
-- **`private_graphql_query_request`** mirrors the wrapper used by the
-  HikerAPI team's `chapi` client. The 13 chapi-ported methods landed in
-  aiograpi 0.6.0; live-verified in 0.6.2 / 0.6.4.
+- **`private_graphql_query_request`** mirrors the wrapper pattern from
+  the `chapi` client. The 13 chapi-ported methods landed in aiograpi
+  0.6.0; live-verified in 0.6.2 / 0.6.4.
 - The default `client_doc_id` values for FollowersList, FollowingList,
   ClipsProfileQuery, and InboxTrayRequestForUser are captures from
   chapi's reference invocations.

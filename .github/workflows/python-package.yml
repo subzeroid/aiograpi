@@ -161,7 +161,7 @@ jobs:
         # Note: pytest classes ClientMediaTestCase / ClientUserTestCase /
         # ClientHighlightTestCase are intentionally not run here — they
         # require ACCOUNT_USERNAME/PASSWORD env vars (not provided by the
-        # HikerAPI pool). Pure helpers (media_pk, media_pk_from_code,
+        # accounts endpoint). Pure helpers (media_pk, media_pk_from_code,
         # media_code_from_pk, media_id, highlight_pk_from_url) are covered
         # by the unit-test job; user_followers and highlight_info are
         # covered by the smoke above.

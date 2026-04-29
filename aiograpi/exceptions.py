@@ -381,10 +381,10 @@ class AboutUsError(ClientError):
 
 class RelatedProfileRequired(ClientError):
     """Raised by user_related_profiles_gql when IG returns no related
-    profiles. Upstream hiker-next uses this as a retry signal; in
+    profiles. Some upstream forks use this as a retry signal; in
     aiograpi the method returns an empty list instead, so this is
-    exposed for callers that want to opt into the same retry
-    semantics by setting ``client.num_retry`` themselves."""
+    exposed for callers that want to opt into retry semantics by
+    setting ``client.num_retry`` themselves."""
 
     pass
 

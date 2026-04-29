@@ -52,7 +52,7 @@ body:
     id: references
     attributes:
       label: References, captures, doc_id, or similar implementations
-      description: Charles HAR / mitmproxy capture / instaloader / chapi / hiker-next references.
+      description: Charles HAR / mitmproxy capture / instaloader / chapi / similar references.
       placeholder: |
         doc_id 26347858941511777 — FB search non_profiled_serp
         captured from IG iPhone app build 364.x on 2026-04-15

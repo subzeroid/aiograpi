@@ -158,9 +158,9 @@ No behavior changes. 174 unit tests pass (was 159).
 
 ## [0.8.5] — 2026-04-29
 
-### Added — media v2 batch (final hiker-next port)
+### Added — media v2 batch (final upstream-port batch)
 
-Final batch (5/5) of the hiker-next gap audit (#238). Two media-side
+Final batch (5/5) of the gap audit (#238). Two media-side
 endpoints close the audit:
 
 - **`Client.media_info_v2(media_id)`** — alternative source for
@@ -205,7 +205,7 @@ aiograpi was missing. Net additions across 0.8.1 → 0.8.5:
 
 ### Added — public_head + track_stream batch
 
-Batch 4/5 of the hiker-next gap audit (#237). Two utility endpoints:
+Batch 4/5 of the gap audit (#237). Two utility endpoints:
 
 - **`Client.public_head(url, follow_redirects=False)`** — `HEAD`
   request through the public session. Useful for resolving
@@ -240,7 +240,7 @@ two new rows.
 
 ### Added — discover/related batch
 
-Batch 3/5 of the hiker-next gap audit (#236). Two
+Batch 3/5 of the gap audit (#236). Two
 recommendation/discovery endpoints used by `hapi/routers/v2_user.py`
 + `gql_user.py`:
 
@@ -263,7 +263,7 @@ recommendation/discovery endpoints used by `hapi/routers/v2_user.py`
   retry signal raised by `user_related_profiles_gql` when
   `edge_chaining` is empty AND `client.num_retry < 4`. By default
   the method just returns `[]`; callers that want upstream
-  hiker-next's retry semantics can set `num_retry` themselves.
+  an upstream fork's retry semantics can set `num_retry` themselves.
 
 Test coverage: 6 new `UserMixinRegressionTestCase` cases (two-step
 orchestration, missing-category fall-through, edge_chaining
@@ -279,7 +279,7 @@ four new rows covering `chaining`, `fetch_suggestion_details`,
 
 ### Added — user stream batch
 
-Batch 2/5 of the hiker-next gap audit (#235). Ports four
+Batch 2/5 of the gap audit (#235). Ports four
 profile-fetch endpoints used in production by `hapi/routers/v2_user.py`
 + `v1_user.py` + `gql_user.py`:
 
@@ -298,7 +298,7 @@ profile-fetch endpoints used in production by `hapi/routers/v2_user.py`
   limiting, returns the inner `data` block already unwrapped.
 
 Internal helper `_user_stream_collector` matches upstream
-hiker-next's defensive empty-rows fallback (one extra fetch +
+an upstream fork's defensive empty-rows fallback (one extra fetch +
 `last_json`) one-for-one.
 
 Test coverage: 7 new `UserMixinRegressionTestCase` cases (endpoint
@@ -314,7 +314,7 @@ table gets five new rows.
 
 ### Added — fbsearch v2 batch
 
-Ports four `fbsearch_*` v2 SERP endpoints from `hiker-next` —
+Ports four `fbsearch_*` v2 SERP endpoints from `an upstream fork` —
 the first batch of a five-batch audit of methods used in production
 by hapi but missing from public aiograpi (#234):
 
@@ -335,7 +335,7 @@ by hapi but missing from public aiograpi (#234):
 Test coverage: 8 new `ChapiPortedRegressionTestCase` cases (param
 shapes, optional-cursor omission, `rank_token` resolution,
 `stream_rows` flattening edge cases). 4 new OPTIONAL checks in
-`tests/live/smoke.py` against the HikerAPI account pool.
+`tests/live/smoke.py` against the test accounts pool.
 
 Docs: `docs/usage-guide/private-graphql.md` updated with a row per
 new method and an example block showing top/accounts/reels +
@@ -409,8 +409,8 @@ pagination via `page_token`.
   in this repo's secrets — they crashed in setUp before any
   assertion ran. Removed; their pure helpers are covered by
   unit-test, and `user_followers` / `highlight_info` are now
-  REQUIRED checks in `tests/live/smoke.py` against the HikerAPI
-  pool. Plus `bandit` is green (the new `try/except/pass` in
+  REQUIRED checks in `tests/live/smoke.py` against the test
+  accounts pool. Plus `bandit` is green (the new `try/except/pass` in
   `_inject_sessionid_for_v2_gql` got an explicit `# nosec B110`).
 
 ### Test coverage
@@ -455,14 +455,14 @@ pagination via `page_token`.
   Tasks (list/download user posts, location search, followers via new
   private GraphQL). Added badges: Python versions, License, Docs,
   ZeroVer. Pointed to the new private-graphql.md page from the README.
-- **GH repo `homepageUrl` → docs site** (was pointing at a HikerAPI
+- **GH repo `homepageUrl` → docs site** (was pointing at a marketing
   promo page; users clicking "About" landed on a sales page instead
   of `https://subzeroid.github.io/aiograpi/`).
 - **Issue + PR templates upgraded to instagrapi-style v2** —
   observed/expected split, traceback `render: pytb`, login_method +
   proxy + current_master dropdowns, `raw_data` field for
   `cl.last_json`, title prefix `[BUG]` / `[Feature]`. Plus contact
-  links to Discussions / Security Advisories / HikerAPI / Telegram.
+  links to Discussions / Security Advisories / Telegram.
 - **`docs/usage-guide/troubleshooting.md`** added (240 lines): every
   common error category with what / why / how to fix.
 
@@ -583,7 +583,7 @@ infrastructure + code + supply chain).
   re-enable for a known-MITM proxy: `client.private.verify = False`
   (and `.public` / `.graphql`) AFTER construction.
   Live-verified: 13/13 chapi methods + login + TOTP still PASS
-  through HikerAPI's residential pool with `verify=True`. The pool
+  through the residential proxy pool with `verify=True`. The pool
   proxies are CONNECT-tunnels, not SSL-MITM, so the IG cert reaches
   the client honestly.
 - **[MEDIUM] `orjson` 3.11.4 → 3.11.8.** CVE-2025-67221 — `orjson.dumps`
@@ -794,7 +794,7 @@ Tested on a TOTP-authenticated pool account through a working proxy:
 ### Added — chapi sweep
 
 13 new IG endpoints ported from `/Users/colinfrl/work/ng/chapi`
-(standalone async client by the same team behind `hiker-next`). All
+(standalone async client by the team behind related forks). All
 on real Instagram — no proprietary infrastructure imported. Methods
 funnel through our existing `private_request` /
 `public_doc_id_graphql_request` stack.
@@ -895,7 +895,7 @@ No breaking changes; existing methods unchanged.
 ### Fixed
 
 Phase 2 of the modernization — porting hardening fixes that the
-`hiker-next` fork had on top of `instagrapi==2.4.4` but never made
+`an upstream fork` fork had on top of `instagrapi==2.4.4` but never made
 it back to upstream.
 
 - **`extract_story_v1`**: fall back to `InstagramIdCodec.encode(pk)`
