@@ -144,3 +144,6 @@ docs/superpowers/
 # Port-time scratch tooling (smoke helpers, etc.)
 util/
 .gstack/
+
+# Claude session context (local only — don't commit)
+CLAUDE.md
