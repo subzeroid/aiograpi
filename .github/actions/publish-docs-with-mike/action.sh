@@ -18,12 +18,13 @@ if [[ "${NEW_VERSION}" == "false" ]]; then
   fi
   echo "mike deploy \"${VERSION_NAME}\""
   mike deploy "${VERSION_NAME}"
-elif [[ "${GITHUB_EVENT_NAME:-}" != "release" ]]; then
-  echo "::error::new_version can only be used for release events."
+elif [[ "${RELEASE_TAG}" == "" ]]; then
+  echo "::error::new_version requires RELEASE_TAG (release event or tag push)."
   exit 1
 else
-  # drop leading "v" from tag name to have just the version number
-  "${GITHUB_ACTION_PATH}/update_docs_for_version.sh" "${RELEASE_TAG:1}"
+  # Strip a leading "v" if present (e.g. "v0.8.9" -> "0.8.9");
+  # aiograpi's tags are unprefixed ("0.8.9") so this is a no-op there.
+  "${GITHUB_ACTION_PATH}/update_docs_for_version.sh" "${RELEASE_TAG#v}"
 fi
 echo "git push origin gh-pages"
 git push origin gh-pages

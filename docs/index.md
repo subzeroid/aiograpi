@@ -21,14 +21,14 @@ For any other languages (e.g. C++, C#, F#, D, [Golang](https://github.com/subzer
 
 ## Features
 
-1. Performs [Public API](https://subzeroid.github.io/aiograpi/usage-guide/fundamentals.html) (web, anonymous) or [Private API](https://subzeroid.github.io/aiograpi/usage-guide/fundamentals.html) (mobile app, authorized) requests depending on the situation (to avoid Instagram limits)
-2. [Login](https://subzeroid.github.io/aiograpi/usage-guide/interactions.html) by username and password, including 2FA and by sessionid
-3. [Challenge Resolver](https://subzeroid.github.io/aiograpi/usage-guide/challenge_resolver.html) have Email and SMS handlers
-4. Support [upload](https://subzeroid.github.io/aiograpi/usage-guide/media.html) a Photo, Video, IGTV, Reels, Albums and Stories
-5. Support work with [User](https://subzeroid.github.io/aiograpi/usage-guide/user.html), [Media](https://subzeroid.github.io/aiograpi/usage-guide/media.html), [Comment](https://subzeroid.github.io/aiograpi/usage-guide/comment.html), [Insights](https://subzeroid.github.io/aiograpi/usage-guide/insight.html), [Collections](https://subzeroid.github.io/aiograpi/usage-guide/collection.html), [Location](https://subzeroid.github.io/aiograpi/usage-guide/location.html) (Place), [Hashtag](https://subzeroid.github.io/aiograpi/usage-guide/hashtag.html) and [Direct Message](https://subzeroid.github.io/aiograpi/usage-guide/direct.html) objects
-6. [Like](https://subzeroid.github.io/aiograpi/usage-guide/media.html), [Follow](https://subzeroid.github.io/aiograpi/usage-guide/user.html), [Edit account](https://subzeroid.github.io/aiograpi/usage-guide/account.html) (Bio) and much more else
-7. [Insights](https://subzeroid.github.io/aiograpi/usage-guide/insight.html) by account, posts and stories
-8. [Build stories](https://subzeroid.github.io/aiograpi/usage-guide/story.html) with custom background, font animation, swipe up link and mention users
+1. Performs [Public API](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/) (web, anonymous) or [Private API](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/) (mobile app, authorized) requests depending on the situation (to avoid Instagram limits)
+2. [Login](https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/) by username and password, including 2FA and by sessionid
+3. [Challenge Resolver](https://subzeroid.github.io/aiograpi/latest/usage-guide/challenge_resolver/) have Email and SMS handlers
+4. Support [upload](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/) a Photo, Video, IGTV, Reels, Albums and Stories
+5. Support work with [User](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/), [Media](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/), [Comment](https://subzeroid.github.io/aiograpi/latest/usage-guide/comment/), [Insights](https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/), [Collections](https://subzeroid.github.io/aiograpi/latest/usage-guide/collection/), [Location](https://subzeroid.github.io/aiograpi/latest/usage-guide/location/) (Place), [Hashtag](https://subzeroid.github.io/aiograpi/latest/usage-guide/hashtag/) and [Direct Message](https://subzeroid.github.io/aiograpi/latest/usage-guide/direct/) objects
+6. [Like](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/), [Follow](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/), [Edit account](https://subzeroid.github.io/aiograpi/latest/usage-guide/account/) (Bio) and much more else
+7. [Insights](https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/) by account, posts and stories
+8. [Build stories](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) with custom background, font animation, swipe up link and mention users
 9. In the next release, account registration and captcha passing will appear
 
 ## Example

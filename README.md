@@ -53,14 +53,14 @@ Support chat in Telegram: https://t.me/aiograpi_support
 
 ## Features
 
-1. Performs [Web API](https://subzeroid.github.io/aiograpi/usage-guide/fundamentals.html) or [Mobile API](https://subzeroid.github.io/aiograpi/usage-guide/fundamentals.html) requests depending on the situation (to avoid Instagram limits)
-2. [Login](https://subzeroid.github.io/aiograpi/usage-guide/interactions.html) by username and password, including 2FA and by sessionid (and uses Authorization header instead Cookies)
-3. [Challenge Resolver](https://subzeroid.github.io/aiograpi/usage-guide/challenge_resolver.html) have Email and SMS handlers
-4. Support [upload](https://subzeroid.github.io/aiograpi/usage-guide/media.html) a Photo, Video, IGTV, Reels, Albums and Stories
-5. Support work with [User](https://subzeroid.github.io/aiograpi/usage-guide/user.html), [Media](https://subzeroid.github.io/aiograpi/usage-guide/media.html), [Comment](https://subzeroid.github.io/aiograpi/usage-guide/comment.html), [Insights](https://subzeroid.github.io/aiograpi/usage-guide/insight.html), [Collections](https://subzeroid.github.io/aiograpi/usage-guide/collection.html), [Location](https://subzeroid.github.io/aiograpi/usage-guide/location.html) (Place), [Hashtag](https://subzeroid.github.io/aiograpi/usage-guide/hashtag.html) and [Direct Message](https://subzeroid.github.io/aiograpi/usage-guide/direct.html) objects
-6. [Like](https://subzeroid.github.io/aiograpi/usage-guide/media.html), [Follow](https://subzeroid.github.io/aiograpi/usage-guide/user.html), [Edit account](https://subzeroid.github.io/aiograpi/usage-guide/account.html) (Bio) and much more else
-7. [Insights](https://subzeroid.github.io/aiograpi/usage-guide/insight.html) by account, posts and stories
-8. [Build stories](https://subzeroid.github.io/aiograpi/usage-guide/story.html) with custom background, font animation, link sticker and mention users
+1. Performs [Web API](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/) or [Mobile API](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/) requests depending on the situation (to avoid Instagram limits)
+2. [Login](https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/) by username and password, including 2FA and by sessionid (and uses Authorization header instead Cookies)
+3. [Challenge Resolver](https://subzeroid.github.io/aiograpi/latest/usage-guide/challenge_resolver/) have Email and SMS handlers
+4. Support [upload](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/) a Photo, Video, IGTV, Reels, Albums and Stories
+5. Support work with [User](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/), [Media](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/), [Comment](https://subzeroid.github.io/aiograpi/latest/usage-guide/comment/), [Insights](https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/), [Collections](https://subzeroid.github.io/aiograpi/latest/usage-guide/collection/), [Location](https://subzeroid.github.io/aiograpi/latest/usage-guide/location/) (Place), [Hashtag](https://subzeroid.github.io/aiograpi/latest/usage-guide/hashtag/) and [Direct Message](https://subzeroid.github.io/aiograpi/latest/usage-guide/direct/) objects
+6. [Like](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/), [Follow](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/), [Edit account](https://subzeroid.github.io/aiograpi/latest/usage-guide/account/) (Bio) and much more else
+7. [Insights](https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/) by account, posts and stories
+8. [Build stories](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) with custom background, font animation, link sticker and mention users
 9. Account [registration](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/mixins/signup.py) and captcha passing will appear
 
 ### Versioning policy — we stay in 0.x
@@ -82,14 +82,14 @@ What you can rely on instead:
 - **Live CI smoke** runs on every push: `tests/live/smoke.py` against a
   real account through a real proxy. If we ship something that breaks
   the basic happy path, CI catches it.
-- **Migration Guide** at [docs/migration.md](https://subzeroid.github.io/aiograpi/migration.html) — every breaking change documented with before/after.
+- **Migration Guide** at [docs/migration.md](https://subzeroid.github.io/aiograpi/latest/migration/) — every breaking change documented with before/after.
 
 ### What's new in 0.6.x and 0.7.x
 
 - **Sync with instagrapi 2.4.4** — every mixin and infrastructure module ported, plus three new mixins:
-  [`ExploreMixin`](https://subzeroid.github.io/aiograpi/usage-guide/explore.html),
-  [`FundraiserMixin`](https://subzeroid.github.io/aiograpi/usage-guide/fundraiser.html), and opt-in
-  [`CaptchaHandlerMixin`](https://subzeroid.github.io/aiograpi/usage-guide/captcha.html).
+  [`ExploreMixin`](https://subzeroid.github.io/aiograpi/latest/usage-guide/explore/),
+  [`FundraiserMixin`](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundraiser/), and opt-in
+  [`CaptchaHandlerMixin`](https://subzeroid.github.io/aiograpi/latest/usage-guide/captcha/).
 - **doc_id GraphQL primitive** — `Client.public_doc_id_graphql_request(doc_id, variables)` and
   `Client.private_graphql_query_request(...)` for the new `i.instagram.com/graphql/query` surface
   IG migrated to. New high-level methods: `user_info_v2_gql`, `user_info_by_username_v2_gql`,
@@ -100,14 +100,14 @@ What you can rely on instead:
 - **Pure helpers go sync** (breaking from 0.0.x): `media_pk_from_code`, `media_code_from_pk`,
   `media_pk`, `share_info`, `share_code_from_url`, `share_info_by_url`, `highlight_pk_from_url`,
   `handle_challenge_result`, `challenge_resolve_new_password_form` no longer require `await`.
-  See [Migration Guide](https://subzeroid.github.io/aiograpi/migration.html) for the full list.
+  See [Migration Guide](https://subzeroid.github.io/aiograpi/latest/migration/) for the full list.
 - **PEP 561 typed** (`py.typed`) — mypy / pyright pick up annotations from the installed package.
 - **CI publish-on-tag** with PyPI trusted publishing — push a version tag, GitHub Actions builds,
   publishes, and creates a release.
 
 Full per-release notes: [CHANGELOG.md](https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md).
 Migrating from `0.0.x`?
-See the [Migration Guide](https://subzeroid.github.io/aiograpi/migration.html).
+See the [Migration Guide](https://subzeroid.github.io/aiograpi/latest/migration/).
 
 ### Installation
 
@@ -198,7 +198,7 @@ data = await cl.private_graphql_followers_list(
 # Raw GraphQL envelope: {"data": {...}, "status": "ok", ...}
 ```
 
-See [Private GraphQL & doc_id](https://subzeroid.github.io/aiograpi/usage-guide/private-graphql.html)
+See [Private GraphQL & doc_id](https://subzeroid.github.io/aiograpi/latest/usage-guide/private-graphql/)
 for the full new-mobile-API surface (followers, clips, search, inbox).
 
 <details>
@@ -230,43 +230,43 @@ await cl.video_upload_to_story(
 ## Documentation
 
 * [Index](https://subzeroid.github.io/aiograpi/)
-* [Getting Started](https://subzeroid.github.io/aiograpi/getting-started.html)
-* [Migration Guide](https://subzeroid.github.io/aiograpi/migration.html) — for users coming from `0.0.x`
-* [Usage Guide](https://subzeroid.github.io/aiograpi/usage-guide/fundamentals.html)
-* [Interactions](https://subzeroid.github.io/aiograpi/usage-guide/interactions.html)
-  * [`Media`](https://subzeroid.github.io/aiograpi/usage-guide/media.html) - Publication (also called post): Photo, Video, Album, IGTV and Reels
-  * [`Resource`](https://subzeroid.github.io/aiograpi/usage-guide/media.html) - Part of Media (for albums)
-  * [`MediaOembed`](https://subzeroid.github.io/aiograpi/usage-guide/media.html) - Short version of Media
-  * [`Account`](https://subzeroid.github.io/aiograpi/usage-guide/account.html) - Full private info for your account (e.g. email, phone_number)
-  * [`TOTP`](https://subzeroid.github.io/aiograpi/usage-guide/totp.html) - 2FA TOTP helpers (generate seed, enable/disable TOTP, generate code as Google Authenticator)
-  * [`User`](https://subzeroid.github.io/aiograpi/usage-guide/user.html) - Full public user data
-  * [`UserShort`](https://subzeroid.github.io/aiograpi/usage-guide/user.html) - Short public user data (used in Usertag, Comment, Media, Direct Message)
-  * [`Usertag`](https://subzeroid.github.io/aiograpi/usage-guide/user.html) - Tag user in Media (coordinates + UserShort)
-  * [`Location`](https://subzeroid.github.io/aiograpi/usage-guide/location.html) - GEO location (GEO coordinates, name, address)
-  * [`Hashtag`](https://subzeroid.github.io/aiograpi/usage-guide/hashtag.html) - Hashtag object (id, name, picture)
-  * [`Collection`](https://subzeroid.github.io/aiograpi/usage-guide/collection.html) - Collection of medias (name, picture and list of medias)
-  * [`Comment`](https://subzeroid.github.io/aiograpi/usage-guide/comment.html) - Comments to Media
-  * [`Highlight`](https://subzeroid.github.io/aiograpi/usage-guide/highlight.html) - Highlights
-  * [`Notes`](https://subzeroid.github.io/aiograpi/usage-guide/notes.html) - Notes
-  * [`Story`](https://subzeroid.github.io/aiograpi/usage-guide/story.html) - Story
-  * [`StoryLink`](https://subzeroid.github.io/aiograpi/usage-guide/story.html) - Link Sticker
-  * [`StoryLocation`](https://subzeroid.github.io/aiograpi/usage-guide/story.html) - Tag Location in Story (as sticker)
-  * [`StoryMention`](https://subzeroid.github.io/aiograpi/usage-guide/story.html) - Mention users in Story (user, coordinates and dimensions)
-  * [`StoryHashtag`](https://subzeroid.github.io/aiograpi/usage-guide/story.html) - Hashtag for story (as sticker)
-  * [`StorySticker`](https://subzeroid.github.io/aiograpi/usage-guide/story.html) - Tag sticker to story (for example from giphy)
-  * [`StoryBuild`](https://subzeroid.github.io/aiograpi/usage-guide/story.html) - [StoryBuilder](/aiograpi/story.py) return path to photo/video and mention co-ordinates
-  * [`DirectThread`](https://subzeroid.github.io/aiograpi/usage-guide/direct.html) - Thread (topic) with messages in Direct Message
-  * [`DirectMessage`](https://subzeroid.github.io/aiograpi/usage-guide/direct.html) - Message in Direct Message
-  * [`Insight`](https://subzeroid.github.io/aiograpi/usage-guide/insight.html) - Insights for a post
-  * [`Track`](https://subzeroid.github.io/aiograpi/usage-guide/track.html) - Music track (for Reels/Clips)
-* [Captcha](https://subzeroid.github.io/aiograpi/usage-guide/captcha.html) - Opt-in handler interface for solver integrations
-* [Explore](https://subzeroid.github.io/aiograpi/usage-guide/explore.html) - Explore page methods
-* [Fundraiser](https://subzeroid.github.io/aiograpi/usage-guide/fundraiser.html) - Fundraiser info
-* [Best Practices](https://subzeroid.github.io/aiograpi/usage-guide/best-practices.html)
-* [Development Guide](https://subzeroid.github.io/aiograpi/development-guide.html)
-* [Handle Exceptions](https://subzeroid.github.io/aiograpi/usage-guide/handle_exception.html)
-* [Challenge Resolver](https://subzeroid.github.io/aiograpi/usage-guide/challenge_resolver.html)
-* [Exceptions](https://subzeroid.github.io/aiograpi/exceptions.html)
+* [Getting Started](https://subzeroid.github.io/aiograpi/latest/getting-started/)
+* [Migration Guide](https://subzeroid.github.io/aiograpi/latest/migration/) — for users coming from `0.0.x`
+* [Usage Guide](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/)
+* [Interactions](https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/)
+  * [`Media`](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/) - Publication (also called post): Photo, Video, Album, IGTV and Reels
+  * [`Resource`](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/) - Part of Media (for albums)
+  * [`MediaOembed`](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/) - Short version of Media
+  * [`Account`](https://subzeroid.github.io/aiograpi/latest/usage-guide/account/) - Full private info for your account (e.g. email, phone_number)
+  * [`TOTP`](https://subzeroid.github.io/aiograpi/latest/usage-guide/totp/) - 2FA TOTP helpers (generate seed, enable/disable TOTP, generate code as Google Authenticator)
+  * [`User`](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/) - Full public user data
+  * [`UserShort`](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/) - Short public user data (used in Usertag, Comment, Media, Direct Message)
+  * [`Usertag`](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/) - Tag user in Media (coordinates + UserShort)
+  * [`Location`](https://subzeroid.github.io/aiograpi/latest/usage-guide/location/) - GEO location (GEO coordinates, name, address)
+  * [`Hashtag`](https://subzeroid.github.io/aiograpi/latest/usage-guide/hashtag/) - Hashtag object (id, name, picture)
+  * [`Collection`](https://subzeroid.github.io/aiograpi/latest/usage-guide/collection/) - Collection of medias (name, picture and list of medias)
+  * [`Comment`](https://subzeroid.github.io/aiograpi/latest/usage-guide/comment/) - Comments to Media
+  * [`Highlight`](https://subzeroid.github.io/aiograpi/latest/usage-guide/highlight/) - Highlights
+  * [`Notes`](https://subzeroid.github.io/aiograpi/latest/usage-guide/notes/) - Notes
+  * [`Story`](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) - Story
+  * [`StoryLink`](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) - Link Sticker
+  * [`StoryLocation`](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) - Tag Location in Story (as sticker)
+  * [`StoryMention`](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) - Mention users in Story (user, coordinates and dimensions)
+  * [`StoryHashtag`](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) - Hashtag for story (as sticker)
+  * [`StorySticker`](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) - Tag sticker to story (for example from giphy)
+  * [`StoryBuild`](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) - [StoryBuilder](/aiograpi/story.py) return path to photo/video and mention co-ordinates
+  * [`DirectThread`](https://subzeroid.github.io/aiograpi/latest/usage-guide/direct/) - Thread (topic) with messages in Direct Message
+  * [`DirectMessage`](https://subzeroid.github.io/aiograpi/latest/usage-guide/direct/) - Message in Direct Message
+  * [`Insight`](https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/) - Insights for a post
+  * [`Track`](https://subzeroid.github.io/aiograpi/latest/usage-guide/track/) - Music track (for Reels/Clips)
+* [Captcha](https://subzeroid.github.io/aiograpi/latest/usage-guide/captcha/) - Opt-in handler interface for solver integrations
+* [Explore](https://subzeroid.github.io/aiograpi/latest/usage-guide/explore/) - Explore page methods
+* [Fundraiser](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundraiser/) - Fundraiser info
+* [Best Practices](https://subzeroid.github.io/aiograpi/latest/usage-guide/best-practices/)
+* [Development Guide](https://subzeroid.github.io/aiograpi/latest/development-guide/)
+* [Handle Exceptions](https://subzeroid.github.io/aiograpi/latest/usage-guide/handle_exception/)
+* [Challenge Resolver](https://subzeroid.github.io/aiograpi/latest/usage-guide/challenge_resolver/)
+* [Exceptions](https://subzeroid.github.io/aiograpi/latest/exceptions/)
 
 ## Contributing
 
