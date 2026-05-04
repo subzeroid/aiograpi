@@ -94,3 +94,26 @@ jobs:
             "dist/aiograpi-$TAG.tar.gz" \
             --title "$TAG" \
             --generate-notes
+
+  publish-docs:
+    name: Publish docs (mike)
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # required to push to gh-pages
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+        with:
+          requirements: "true"
+          test-requirements: "true"
+      - name: Publish versioned docs with `latest` alias
+        uses: ./.github/actions/publish-docs-with-mike
+        with:
+          new_version: "true"

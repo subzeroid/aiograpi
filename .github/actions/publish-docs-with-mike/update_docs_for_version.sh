@@ -13,3 +13,8 @@ else
 fi
 echo "mike deploy --update-aliases --title \"${NEW_VERSION} (latest)\" \"${NEW_VERSION}\" \"latest\""
 mike deploy --update-aliases --title "${NEW_VERSION} (latest)" "${NEW_VERSION}" "latest"
+
+# Idempotent: writes a root-level redirect index.html pointing at /latest/
+# so https://subzeroid.github.io/aiograpi/ resolves instead of returning 404.
+echo "mike set-default latest"
+mike set-default latest

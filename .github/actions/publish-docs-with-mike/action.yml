@@ -34,4 +34,7 @@ runs:
         USER_EMAIL: ${{ inputs.email }}
         VERSION_NAME: ${{ inputs.version_name }}
         NEW_VERSION: ${{ inputs.new_version }}
-        RELEASE_TAG: ${{ github.event.release.tag_name }}
+        # Support both `release` events (release.tag_name) and tag pushes
+        # (ref_name) — aiograpi's publish.yml triggers on tag push, not on
+        # GitHub release events.
+        RELEASE_TAG: ${{ github.event.release.tag_name || github.ref_name }}
