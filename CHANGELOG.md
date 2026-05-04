@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.10] — 2026-05-05
+
+### Fixed — broken README doc links
+
+All `https://subzeroid.github.io/aiograpi/X.html` links in `README.md`,
+`CONTRIBUTING.md`, and `docs/index.md` returned **404**. The published
+docs site uses `mike` (versioned) on top of `mkdocs` with
+`use_directory_urls: true`, so the actual paths are
+`/aiograpi/latest/X/` (no `.html`, trailing slash). Rewritten across
+all three files to the working pattern. Bare root link
+(`https://subzeroid.github.io/aiograpi/`) preserved — it now redirects
+to `/latest/` (see CI section).
+
+### CI — release-time docs publishing
+
+`publish.yml` gains a `publish-docs` job that runs after the PyPI
+upload and invokes the existing `publish-docs-with-mike` action with
+`new_version: true`. Each release tag now publishes a versioned doc
+set at `/aiograpi/X.Y.Z/` and updates the `latest` alias to point at
+the newest. The mike action was tightened to:
+
+- Accept tag-push events (not only `release: published`) — aiograpi's
+  `publish.yml` triggers on tag push.
+- Strip an optional leading `v` rather than unconditionally slicing
+  the first character — aiograpi tags are unprefixed (`0.8.10`, not
+  `v0.8.10`), so the old `${RELEASE_TAG:1}` would have corrupted the
+  version.
+- Run `mike set-default latest` so the gh-pages root has a meta-refresh
+  redirect to `/latest/` instead of returning 404.
+
+The `latest` alias and root redirect for 0.8.9 were seeded manually in
+the same PR so the rewritten README links resolved on merge without
+waiting for the next release.
+
+PR: #247.
+
 ## [0.8.9] — 2026-04-29
 
 ### Security
