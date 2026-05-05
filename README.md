@@ -20,7 +20,7 @@ The aiograpi more suits for testing or research than a working business!
 [![Python](https://img.shields.io/pypi/pyversions/aiograpi)](https://pypi.org/project/aiograpi/)
 [![License](https://img.shields.io/pypi/l/aiograpi)](LICENSE)
 [![Package](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml/badge.svg)](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml)
-[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://subzeroid.github.io/aiograpi/)
+[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://subzeroid.github.io/aiograpi/latest/)
 [![ZeroVer](https://img.shields.io/badge/zer0ver-0.x.y-blue)](https://0ver.org/)
 
 
@@ -229,7 +229,7 @@ await cl.video_upload_to_story(
 
 ## Documentation
 
-* [Index](https://subzeroid.github.io/aiograpi/)
+* [Index](https://subzeroid.github.io/aiograpi/latest/)
 * [Getting Started](https://subzeroid.github.io/aiograpi/latest/getting-started/)
 * [Migration Guide](https://subzeroid.github.io/aiograpi/latest/migration/) — for users coming from `0.0.x`
 * [Usage Guide](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/)
