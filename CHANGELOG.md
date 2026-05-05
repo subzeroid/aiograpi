@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.8.11] — 2026-05-05
+
+### Fixed — Telegram support link in `docs/index.md`
+
+The mass-rewrite in #246 missed one occurrence of `t.me/aiograpi` in
+`docs/index.md`. The bare `@aiograpi` Telegram group has been
+restricted by Meta and is no longer maintained — the published
+`/latest/` docs were still pointing readers there. Now points at
+`@aiograpi_support` like every other support link in the project.
+
+No code changes. PR: #248.
+
 ## [0.8.10] — 2026-05-05
 
 ### Fixed — broken README doc links
