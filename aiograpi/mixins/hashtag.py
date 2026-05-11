@@ -17,7 +17,7 @@ from aiograpi.extractors import (
     extract_media_v1,
 )
 from aiograpi.types import Hashtag, Media
-from aiograpi.utils import dumps
+from aiograpi.utils.serialization import dumps
 
 logger = logging.getLogger(__name__)
 

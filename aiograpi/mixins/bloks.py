@@ -1,4 +1,4 @@
-from aiograpi.utils import dumps
+from aiograpi.utils.serialization import dumps
 
 
 class BloksMixin:

@@ -25,7 +25,8 @@ from aiograpi.exceptions import (
     TwoFactorRequired,
     UnknownError,
 )
-from aiograpi.utils import dumps, gen_token, generate_jazoest
+from aiograpi.utils.auth import gen_token, generate_jazoest
+from aiograpi.utils.serialization import dumps
 
 # from aiograpi.zones import CET
 TIMELINE_FEED_REASONS = (

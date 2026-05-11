@@ -7,7 +7,8 @@ from aiograpi import httpx_ext
 from aiograpi.exceptions import ClientLoginRequired, ResetPasswordError
 from aiograpi.extractors import extract_account, extract_user_short
 from aiograpi.types import Account, UserShort
-from aiograpi.utils import dumps, gen_token, generate_signature
+from aiograpi.utils.auth import gen_token, generate_signature
+from aiograpi.utils.serialization import dumps
 
 
 class AccountMixin:

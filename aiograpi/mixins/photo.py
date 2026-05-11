@@ -27,7 +27,8 @@ from aiograpi.types import (
     StorySticker,
     Usertag,
 )
-from aiograpi.utils import date_time_original, dumps
+from aiograpi.utils.serialization import dumps
+from aiograpi.utils.timing import date_time_original
 
 try:
     from PIL import Image

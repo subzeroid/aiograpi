@@ -9,7 +9,8 @@ from aiograpi import config
 from aiograpi.exceptions import HighlightNotFound
 from aiograpi.extractors import extract_highlight_v1
 from aiograpi.types import Highlight
-from aiograpi.utils import dumps, vassert
+from aiograpi.utils.serialization import dumps
+from aiograpi.utils.validation import vassert
 
 
 class HighlightMixin:

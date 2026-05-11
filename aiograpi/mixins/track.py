@@ -6,7 +6,7 @@ from aiograpi import httpx_ext
 from aiograpi.exceptions import ClientError, TrackNotFound
 from aiograpi.extractors import extract_track
 from aiograpi.types import Track
-from aiograpi.utils import json_value
+from aiograpi.utils.serialization import json_value
 
 
 class TrackMixin:

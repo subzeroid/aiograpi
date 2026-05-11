@@ -22,7 +22,7 @@ from aiograpi.types import (
     Media,
     UserShort,
 )
-from aiograpi.utils import dumps
+from aiograpi.utils.serialization import dumps
 
 SELECTED_FILTERS = ("flagged", "unread")
 SEARCH_MODES = ("raven", "universal")

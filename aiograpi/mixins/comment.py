@@ -13,7 +13,8 @@ from aiograpi.exceptions import (  # CommentsDisabled,
 from aiograpi.extractors import extract_comment
 from aiograpi.mixins.graphql import GQL_STUFF
 from aiograpi.types import Comment
-from aiograpi.utils import dumps, generate_jazoest
+from aiograpi.utils.auth import generate_jazoest
+from aiograpi.utils.serialization import dumps
 
 
 class CommentMixin:

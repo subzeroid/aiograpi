@@ -10,7 +10,8 @@ from aiograpi.exceptions import (
     AlbumUnknownFormat,
 )
 from aiograpi.types import Location, Media, Usertag
-from aiograpi.utils import date_time_original, dumps
+from aiograpi.utils.serialization import dumps
+from aiograpi.utils.timing import date_time_original
 
 
 class DownloadAlbumMixin:

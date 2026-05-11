@@ -8,7 +8,7 @@ from aiograpi.exceptions import (
     UnsupportedError,
     UserError,
 )
-from aiograpi.utils import json_value
+from aiograpi.utils.serialization import json_value
 
 POST_TYPES = ("ALL", "CAROUSEL_V2", "IMAGE", "SHOPPING", "VIDEO")
 TIME_FRAMES = (

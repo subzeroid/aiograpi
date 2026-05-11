@@ -45,7 +45,9 @@ from aiograpi.exceptions import (
     UserNotFound,
     VideoTooLongException,
 )
-from aiograpi.utils import dumps, generate_signature, random_delay
+from aiograpi.utils.auth import generate_signature
+from aiograpi.utils.serialization import dumps
+from aiograpi.utils.timing import random_delay
 
 
 async def manual_input_code(self, username: str, choice=None):

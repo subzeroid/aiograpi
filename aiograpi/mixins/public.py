@@ -25,7 +25,7 @@ from aiograpi.exceptions import (
     TermsAccept,
     TermsUnblock,
 )
-from aiograpi.utils import random_delay
+from aiograpi.utils.timing import random_delay
 
 
 class PublicRequestMixin:

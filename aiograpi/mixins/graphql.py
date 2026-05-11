@@ -30,7 +30,7 @@ from aiograpi.exceptions import (
     TermsUnblock,
     UserNotFound,
 )
-from aiograpi.utils import random_delay
+from aiograpi.utils.timing import random_delay
 
 GRAPHQL_API_URL = "https://www.instagram.com/api/graphql"
 PRIVATE_GRAPHQL_QUERY_URL = "https://i.instagram.com/graphql/query"

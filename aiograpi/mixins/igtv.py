@@ -10,7 +10,7 @@ from uuid import uuid4
 from aiograpi import config
 from aiograpi.exceptions import ClientError, IGTVConfigureError, IGTVNotUpload
 from aiograpi.types import Location, Media, Usertag
-from aiograpi.utils import date_time_original
+from aiograpi.utils.timing import date_time_original
 
 try:
     from PIL import Image

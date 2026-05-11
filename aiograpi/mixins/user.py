@@ -34,7 +34,8 @@ from aiograpi.types import (
     User,
     UserShort,
 )
-from aiograpi.utils import dumps, generate_jazoest, json_value
+from aiograpi.utils.auth import generate_jazoest
+from aiograpi.utils.serialization import dumps, json_value
 
 MAX_USER_COUNT = 200
 INFO_FROM_MODULES = ("self_profile", "feed_timeline", "reel_feed_timeline")
