@@ -76,6 +76,7 @@ test = [
     "mypy==1.20.2",
     "Pillow==12.2.0",
     "bandit==1.9.4",
+    "pip-audit==2.10.0",
     "mike==2.2.0",
     # mike implicitly imports pkg_resources from setuptools.
     "setuptools==82.0.1",

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Added a `pip-audit --strict .` CI gate so known-vulnerable runtime dependencies block future releases.
+- Documented the published `GHSA-7mw3-79jq-xc7f` advisory in `SECURITY.md`, including the yanked affected versions and
+  the fixed upgrade path.
+
 ### Fixed
 
 - Truncated long public/GraphQL JSON decode error response bodies in logs so HTML error pages no longer flood consoles.

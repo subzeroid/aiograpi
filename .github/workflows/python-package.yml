@@ -12,6 +12,22 @@ env:
   PYTHON_VERSION: "3.13.5"
 
 jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+        with:
+          test: "true"
+
+      - name: Run pip-audit
+        run: pip-audit --strict --progress-spinner off .
+
   bandit:
     runs-on: ubuntu-latest
     steps:

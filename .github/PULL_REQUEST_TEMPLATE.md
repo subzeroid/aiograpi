@@ -17,6 +17,7 @@
 - [ ] Tests added or updated (prefer `tests/regression/`; legacy classes live in `tests/legacy.py`)
 - [ ] Unit tests pass (or trust CI)
 - [ ] Mypy gate clean: `./scripts/check-mypy-baseline.sh`
+- [ ] Dependency audit clean: `pip-audit --strict .`
 - [ ] Docs updated if user-facing (`docs/`, `README.md`, `CHANGELOG.md`)
 - [ ] Migration note in `CHANGELOG.md` if breaking
 - [ ] No secrets, tokens, sessionids, or proxy URLs in commits or logs

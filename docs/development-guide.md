@@ -52,6 +52,7 @@ pytest -sv tests/regression
 ruff check .
 ruff format --check .
 bandit -c pyproject.toml -r aiograpi
+pip-audit --strict .
 mkdocs build --strict
 ```
 
@@ -91,9 +92,9 @@ maintainers cut a version tag only after the checks are green.
 
 ## Continuous Integration Pipeline
 
-The `Package` workflow runs Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs builds. On
-canonical repository pushes it also runs `tests/live/smoke.py` against the pooled live-account endpoint configured in
-`TEST_ACCOUNTS_URL`.
+The `Package` workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs
+builds. On canonical repository pushes it also runs `tests/live/smoke.py` against the pooled live-account endpoint
+configured in `TEST_ACCOUNTS_URL`.
 
 The `Publish to PyPI` workflow runs only for version tags such as `0.9.0`. It verifies the tag matches
 `pyproject.toml`, builds the wheel and sdist, publishes through PyPI trusted publishing, creates the GitHub release, and
