@@ -275,6 +275,7 @@ await cl.video_upload_to_story(
 * [Explore](https://subzeroid.github.io/aiograpi/latest/usage-guide/explore/) - Explore page methods
 * [Fundraiser](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundraiser/) - Fundraiser info
 * [Best Practices](https://subzeroid.github.io/aiograpi/latest/usage-guide/best-practices/)
+* [Pydroid and ffmpeg](https://subzeroid.github.io/aiograpi/latest/usage-guide/pydroid/) - Android/Pydroid video upload notes
 * [Development Guide](https://subzeroid.github.io/aiograpi/latest/development-guide/)
 * [Handle Exceptions](https://subzeroid.github.io/aiograpi/latest/usage-guide/handle_exception/)
 * [Challenge Resolver](https://subzeroid.github.io/aiograpi/latest/usage-guide/challenge_resolver/)
@@ -282,7 +283,7 @@ await cl.video_upload_to_story(
 
 ## Contributing
 
-[![List of contributors](https://opencollective.com/aiograpi/contributors.svg?width=890&button=0)](https://github.com/subzeroid/aiograpi/graphs/contributors)
+[![List of contributors](https://contrib.rocks/image?repo=subzeroid/aiograpi)](https://github.com/subzeroid/aiograpi/graphs/contributors)
 
 ### Releasing
 

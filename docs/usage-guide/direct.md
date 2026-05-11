@@ -80,7 +80,7 @@ DirectMessage(id=300712312341231237412312312360, user_id=12312312, thread_id=Non
 >>> await cl.direct_answer(thread.id, 'Hello!')
 DirectMessage(id=30076213210116812312341061613568, user_id=None, thread_id=34028236684171031231231231233331238762, timestamp=datetime.datetime(2021, 8, 31, 18, 33, 5, 127298, tzinfo=datetime.timezone.utc), item_type=None, is_shh_mode=None, reactions=None, text=None, animated_media=None, media=None, media_share=None, reel_share=None, story_share=None, felix_share=None, clip=None, placeholder=None)
 
->>> await cl.direct_send('How are you?', user_ids=[cl.user_id])  # send youself
+>>> await cl.direct_send('How are you?', user_ids=[cl.user_id])  # send yourself
 DirectMessage(id=30076213210116812312341061613568, user_id=None, thread_id=34028236684171031231231231233331238762, timestamp=datetime.datetime(2021, 8, 31, 18, 33, 5, 127298, tzinfo=datetime.timezone.utc), item_type=None, is_shh_mode=None, reactions=None, text=None, animated_media=None, media=None, media_share=None, reel_share=None, story_share=None, felix_share=None, clip=None, placeholder=None)
 
 >>> await cl.direct_send('How are you?', thread_ids=[thread.id])

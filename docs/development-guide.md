@@ -86,12 +86,21 @@ Setuptools is used to package the library through `pyproject.toml`.
 * `[project].dependencies` lists runtime dependencies imported by the library.
 * `[project.optional-dependencies].test` lists tools needed for tests, linting, docs, and local development.
 
-This will trigger the CI system to build a wheel and a source distributions of the package and push them to
-[PyPI][pypi].
+Publishing is handled by the tag-based `publish.yml` workflow. Pushes and pull requests run the package workflow first;
+maintainers cut a version tag only after the checks are green.
 
 ## Continuous Integration Pipeline
 
-TODO: Add CI documentation.
+The `Package` workflow runs Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs builds. On
+canonical repository pushes it also runs `tests/live/smoke.py` against the pooled live-account endpoint configured in
+`TEST_ACCOUNTS_URL`.
+
+The `Publish to PyPI` workflow runs only for version tags such as `0.9.0`. It verifies the tag matches
+`pyproject.toml`, builds the wheel and sdist, publishes through PyPI trusted publishing, creates the GitHub release, and
+publishes versioned docs with `mike`.
+
+The `Upstream Sync Tracker` workflow can be triggered manually or by repository dispatch when `instagrapi` publishes a
+new release. It creates a tracking issue with the current async-port baseline and the target upstream tag.
 
 [pdb-docs]: https://docs.python.org/3/library/pdb.html
 [pytest-docs]: https://docs.pytest.org/en/latest/

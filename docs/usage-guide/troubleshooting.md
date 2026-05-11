@@ -206,7 +206,7 @@ on `0.0.x`, upgrade.
 due to a constraint elsewhere in your project, force-pin:
 
 ```
-aiograpi==0.7.1
+aiograpi>=0.9.0,<1
 httpx==0.28.1
 ```
 
