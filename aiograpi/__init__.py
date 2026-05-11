@@ -8,7 +8,7 @@ from aiograpi.mixins.album import DownloadAlbumMixin, UploadAlbumMixin
 from aiograpi.mixins.auth import LoginMixin
 from aiograpi.mixins.bloks import BloksMixin
 from aiograpi.mixins.challenge import ChallengeResolveMixin
-from aiograpi.mixins.clip import DownloadClipMixin, UploadClipMixin
+from aiograpi.mixins.clip import ClipMixin, DownloadClipMixin, UploadClipMixin
 from aiograpi.mixins.collection import CollectionMixin
 from aiograpi.mixins.comment import CommentMixin
 from aiograpi.mixins.direct import DirectMixin
@@ -83,6 +83,7 @@ class Client(
     StoryMixin,
     PasswordMixin,
     SignUpMixin,
+    ClipMixin,
     DownloadClipMixin,
     UploadClipMixin,
     ReelsMixin,

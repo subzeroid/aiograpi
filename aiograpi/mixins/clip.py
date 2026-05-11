@@ -1,11 +1,10 @@
 import asyncio
 import contextlib
 import json
-import random
 import tempfile
 import time
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 from uuid import uuid4
 
 from aiograpi import config
@@ -18,6 +17,49 @@ try:
     from PIL import Image
 except ImportError:
     raise Exception("You don't have PIL installed. Please install PIL or Pillow>=8.1.1")
+
+
+class ClipMixin:
+    """
+    Helpers for CLIP/Reel actions
+    """
+
+    async def clip_pin(self, media_pk: str, revert: bool = False) -> bool:
+        """
+        Pin Reel to the Reels tab/profile Reels grid
+
+        Parameters
+        ----------
+        media_pk: str
+        revert: bool, optional
+            Unpin when True
+
+        Returns
+        -------
+        bool
+        A boolean value
+        """
+        name = "unpin" if revert else "pin"
+        result = await self.private_request(
+            f"users/{name}_timeline_media/",
+            data={"post_id": str(media_pk), "profile_grid": "clips"},
+        )
+        return result["status"] == "ok"
+
+    async def clip_unpin(self, media_pk: str) -> bool:
+        """
+        Unpin Reel from the Reels tab/profile Reels grid
+
+        Parameters
+        ----------
+        media_pk: str
+
+        Returns
+        -------
+        bool
+        A boolean value
+        """
+        return await self.clip_pin(media_pk, True)
 
 
 class DownloadClipMixin:
@@ -69,6 +111,38 @@ class UploadClipMixin:
     Helpers to upload CLIP videos
     """
 
+    async def clip_share_to_fb_config(self, device_status: Optional[Dict[str, object]] = None) -> Dict:
+        """
+        Get Reel Facebook sharing configuration for the current user.
+
+        Parameters
+        ----------
+        device_status: Dict[str, object], optional
+            Device video capability status sent by the Instagram Android app.
+
+        Returns
+        -------
+        Dict
+            A dictionary of response from the call
+        """
+        device_status = device_status or {
+            "hw_av1_dec": False,
+            "hw_vp9_dec": False,
+            "hw_avc_dec": False,
+            "10bit_hw_av1_dec": False,
+            "10bit_hw_vp9_dec": False,
+            "is_hlg_supported": False,
+            "chip_vendor": "others",
+            "chip_name": "unknown",
+            "core_count": 0,
+            "max_ghz_sum": 0,
+            "min_ghz_sum": 0,
+        }
+        return await self.private_request(
+            "clips/user/share_to_fb_config/",
+            params={"device_status": json.dumps(device_status)},
+        )
+
     async def clip_upload(
         self,
         path: Path,
@@ -78,7 +152,9 @@ class UploadClipMixin:
         location: Location = None,
         configure_timeout: int = 10,
         feed_show: str = "1",
-        extra_data: Dict[str, str] = {},
+        extra_data: Dict[str, object] = {},
+        trial: bool = False,
+        trial_graduation_strategy: str = "manual",
     ) -> Media:
         """
         Upload CLIP to Instagram
@@ -98,9 +174,16 @@ class UploadClipMixin:
             Location tag for this upload, default is none
         configure_timeout: int
             Timeout between attempt to configure media (set caption, etc), default is 10
+        feed_show: str
+            Show Reel preview in feed/profile grid, default is "1".
+            Forced to "0" for Trial Reels.
         extra_data: Dict[str, str], optional
             Dict of extra data, if you need to add your params,
             like {"share_to_facebook": 1}.
+        trial: bool, optional
+            Upload as a Trial Reel for eligible accounts, default is False.
+        trial_graduation_strategy: str, optional
+            Trial Reel graduation strategy, default is "manual".
 
         Returns
         -------
@@ -112,24 +195,122 @@ class UploadClipMixin:
             thumbnail = Path(thumbnail)
         upload_id = str(int(time.time() * 1000))
         thumbnail, width, height, duration = analyze_video(path, thumbnail)
-        waterfall_id = str(uuid4())
-        # upload_name example: '1576102477530_0_7823256191'
-        upload_name = "{upload_id}_0_{rand}".format(upload_id=upload_id, rand=random.randint(1000000000, 9999999999))
+        with open(path, "rb") as fp:
+            clip_data = fp.read()
+            clip_len = str(len(clip_data))
+        configure_extra_data = dict(extra_data or {})
+        if trial:
+            feed_show = "0"
+            configure_extra_data.setdefault(
+                "trial_params",
+                {"graduation_strategy": trial_graduation_strategy},
+            )
+        duration_ms = str(int(duration * 1000))
+        composer_session_id = str(uuid4())
+        asset_id = uuid4().hex[:12].upper()
+        target_id = self.user_id or getattr(self, "_user_id", None)
+        upload_context = {
+            "source_attribution": None,
+            "enable_video_dimension_upscale": False,
+            "source_type": "clips",
+            "quality": "",
+        }
+        if target_id:
+            upload_context["target_id"] = int(target_id)
+        upload_timestamp_ms = upload_id
+        upload_name = "{upload_uuid}-0-{length}-{timestamp}-{timestamp}".format(
+            upload_uuid=uuid4().hex,
+            length=clip_len,
+            timestamp=upload_timestamp_ms,
+        )
+        upload_settings = {
+            "composer_session_id": composer_session_id,
+            "upload_setting_properties": {
+                "upload_settings_version": "v0.1",
+                "codec": {},
+                "context": upload_context,
+                "video": {
+                    "video_height": height,
+                    "video_gop_size_sec": 0,
+                    "video_rotation_angle": 0,
+                    "video_width": width,
+                    "source_video_codec": None,
+                    "video_partial_frame_size_bytes": 0,
+                    "asset_id": asset_id,
+                    "video_key_frame_size_bytes": 0,
+                    "target_duration": int(duration),
+                    "video_original_file_size": int(clip_len),
+                    "video_duration_milliseconds": int(duration_ms),
+                    "audio_bit_rate_bps": -1,
+                    "video_bit_rate_bps": 0,
+                    "audio_codec_type": None,
+                    "video_fps": 30,
+                },
+                "creative_tools": {
+                    "transmuxing_eligible": False,
+                    "transcoding_required": True,
+                },
+                "network": {
+                    "download_latency_connection_quality": "ig_dummy",
+                    "network_connection_name": "ig_dummy",
+                    "download_bandwidth_connection_quality": "ig_dummy",
+                },
+            },
+            "preview_spec": {
+                "spec_version": 1,
+                "video_dur_ms": int(duration_ms),
+                "audio_dur_ms": int(duration_ms),
+            },
+        }
+        upload_settings_data = json.dumps(upload_settings)
+        upload_settings_len = str(len(upload_settings_data.encode("utf-8")))
+        headers = {
+            "Accept-Encoding": "gzip",
+            "Content-Type": "application/json",
+            "Content-Length": upload_settings_len,
+            "Offset": "0",
+            "X-Entity-Length": upload_settings_len,
+            "X-Entity-Name": "upload_settings",
+            "X-Entity-Type": "application/json",
+            "X_FB_VIDEO_WATERFALL_ID": f"{composer_session_id}_settings",
+        }
+        response = await self.private.post(
+            "https://{domain}/upload_settings/{session_id}".format(
+                domain=config.API_DOMAIN,
+                session_id=composer_session_id,
+            ),
+            data=upload_settings_data,
+            headers=headers,
+        )
+        self.request_log(response)
+        if response.status_code != 200:
+            raise ClipNotUpload(response=self.last_response, **self.last_json)
         rupload_params = {
-            "is_clips_video": "1",
-            "retry_context": '{"num_reupload":0,"num_step_auto_retry":0,"num_step_manual_retry":0}',
-            "media_type": "2",
-            "xsharing_user_ids": json.dumps([self.user_id]),
-            "upload_id": upload_id,
-            "upload_media_duration_ms": str(int(duration * 1000)),
-            "upload_media_width": str(width),
+            "provenance_metadata": json.dumps({"origin": ["EXTERNAL"]}),
             "upload_media_height": str(height),
+            "share_type": "reels",
+            "debug_segment_id": "0",
+            "extract_cover_frame": "1",
+            "upload_engine_config_enum": "0",
+            "xsharing_user_ids": "[]",
+            "upload_media_width": str(width),
+            "stella_data": "{}",
+            "is_clips_video": "1",
+            "is_optimistic_upload": "true",
+            "upload_media_duration_ms": duration_ms,
+            "content_tags": "use_default_cover",
+            "upload_id": upload_id,
+            "retry_context": '{"num_reupload":0,"num_step_auto_retry":0,"num_step_manual_retry":0}',
+            "session_id": upload_id,
+            "media_type": "2",
         }
         headers = {
             "Accept-Encoding": "gzip",
             "X-Instagram-Rupload-Params": json.dumps(rupload_params),
-            "X_FB_VIDEO_WATERFALL_ID": waterfall_id,
+            "X_FB_VIDEO_WATERFALL_ID": f"{composer_session_id}_{asset_id}_Mixed_0",
             "X-Entity-Type": "video/mp4",
+            "Segment-Start-Offset": "0",
+            "Segment-Type": "3",
         }
         response = await self.private.get(
             "https://{domain}/rupload_igvideo/{name}".format(domain=config.API_DOMAIN, name=upload_name),
@@ -138,9 +319,6 @@ class UploadClipMixin:
         self.request_log(response)
         if response.status_code != 200:
             raise ClipNotUpload(response=self.last_response, **self.last_json)
-        with open(path, "rb") as fp:
-            clip_data = fp.read()
-            clip_len = str(len(clip_data))
         headers = {
             "Offset": "0",
             "X-Entity-Name": upload_name,
@@ -173,7 +351,7 @@ class UploadClipMixin:
                     usertags,
                     location,
                     feed_show,
-                    extra_data=extra_data,
+                    extra_data=configure_extra_data,
                 )
             except ClientError as e:
                 if "Transcode not finished yet" in str(e):
