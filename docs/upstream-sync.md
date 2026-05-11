@@ -4,7 +4,7 @@
 independent, but every sync release records the `instagrapi` tag it has been
 ported through.
 
-The current sync target for the next release is:
+The current sync baseline is:
 
 ```text
 instagrapi 2.5.18

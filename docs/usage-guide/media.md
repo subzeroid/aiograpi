@@ -42,8 +42,11 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | media_likers(media_id: str)                                     | List\[UserShort]   | Return list of users who liked this post (due to Instagram limitations, this may not return a complete list)
 | media_archive(media_id: str)                                    | bool               | Archive a media
 | media_unarchive(media_id: str)                                  | bool               | Unarchive a media
+| archive_medias(amount: int = 0)                                 | List\[Media]       | Get your archived feed posts
 | media_pin(media_id: str)                                        | bool               | Pin a media to user profile
 | media_unpin(media_id: str)                                      | bool               | Unpin a media to user profile
+| clip_pin(media_pk: str)                                         | bool               | Pin a Reel to the Reels tab/profile Reels grid
+| clip_unpin(media_pk: str)                                       | bool               | Unpin a Reel from the Reels tab/profile Reels grid
 
 Low level methods:
 
@@ -62,6 +65,7 @@ Low level methods:
 | user_videos_chunk_v1(user_id: int, end_cursor: str = "") | Tuple\[List\[Media], str] | Get a page of user's video by Private Mobile API
 | usertag_medias_gql(user_id: str, amount: int = 20)              | List\[Media] | Get medias where a user is tagged by Public Graphql API
 | usertag_medias_v1(user_id: str, amount: int = 20)               | List\[Media] | Get medias where a user is tagged by Private Mobile API
+| usertag_medias_paginated(user_id: str, amount: int = 20, end_cursor: str = "") | Tuple\[List\[Media], str] | Get tagged medias with pagination cursor
 
 ### Example:
 
@@ -258,13 +262,40 @@ Upload medias to your feed. Common arguments:
 | Method                                                                                                                                 | Return  | Description
 | -------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------
 | photo_upload(path: Path, caption: str, upload_id: str, usertags: List[Usertag], location: Location, extra_data: Dict = {})             | Media   | Upload photo (Support JPG files)
+| photo_upload_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {}) | Media | Upload feed photo with music metadata
 | video_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {})            | Media   | Upload video (Support MP4 files)
 | album_upload(paths: List[Path], caption: str, usertags: List[Usertag], location: Location, extra_data: Dict = {})                      | Media   | Upload Album (Support JPG/MP4 files)
+| album_upload_with_music(paths: List[Path], caption: str, track: Track, extra_data: Dict = {}) | Media | Upload feed album/carousel with music metadata
 | igtv_upload(path: Path, title: str, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}) | Media   | Upload IGTV (Support MP4 files)
-| clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {})             | Media   | Upload Reels Clip (Support MP4 files)
+| clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, trial: bool = False) | Media | Upload Reels Clip (Support MP4 files), optionally as a Trial Reel
 | clip_upload_as_reel_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {}) | Media | Upload Reels Clip as reel with music metadata
+| clip_share_to_fb_config()                                      | Dict    | Get Reel Facebook sharing configuration for the current user
 
 For video uploads in Android/Pydroid environments, pass `thumbnail=...` to avoid automatic thumbnail generation or configure executable ffmpeg. See [Pydroid and ffmpeg](pydroid.md).
+
+Trial Reels use the same upload method:
+
+``` python
+media = await cl.clip_upload(
+    Path("reel.mp4"),
+    "Trying a new format",
+    thumbnail=Path("reel-thumb.jpg"),
+    trial=True,
+)
+```
+
+Feed music helpers attach Instagram music metadata to photo and carousel posts:
+
+``` python
+browser = await cl.music_in_feed_audio_browser()
+track = browser["items"][0]["track"]
+media = await cl.photo_upload_with_music(
+    Path("photo.jpg"),
+    "caption",
+    track,
+    alacorn_session_id=browser["alacorn_session_id"],
+)
+```
 
 In `extra_data`, you can pass additional media settings, for example:
 

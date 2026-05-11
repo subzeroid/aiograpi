@@ -12,6 +12,8 @@
 | story_viewers(story_pk: int, amount: int = 20)                         | List[UserShort] | List of story viewers (via Private API)
 | story_like(story_id: str, revert: bool = False)                        | bool            | Like a story
 | story_unlike(story_id: str)                                            | bool            | Unlike a story
+| archive_story_days(amount: int = 0, include_memories: bool = True)      | List[StoryArchiveDay] | Get story archive day shells
+| archive_stories(amount: int = 0)                                       | List[Story]     | Get archived stories
 
 Example:
 
@@ -26,6 +28,9 @@ PosixPath('/app/189361307_229642088942817_9180243596650100310_n.mp4')
 
 >>> await cl.story_download_by_url(s.thumbnail_url)  # URL to jpg file
 PosixPath('/app/191260083_2908005872746895_8988438451809588865_n.jpg')
+
+>>> days = await cl.archive_story_days(amount=5)
+>>> stories = await cl.archive_stories(amount=10)
 ```
 
 ## Upload Stories

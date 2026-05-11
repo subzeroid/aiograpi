@@ -11,11 +11,16 @@
 | direct_search(query: str)                                                 | List[DirectShortThread] | Search threads (for example by username)
 | direct_thread_by_participants(user_ids: List[int])                        | DirectThread            | Get thread by user_id
 | direct_thread_hide(thread_id: int)                                        | bool                    | Delete (called "hide")
+| direct_thread_update_title(thread_id: int, title: str)                    | bool                    | Update a thread title
 | direct_media_share(media_id: str, user_ids: List[int])                    | DirectMessage           | Share a media to list of users
 | direct_story_share(story_id: str, user_ids: List[int], thread_ids: List[int]) | DirectMessage       | Share a story to list of users
 | direct_profile_share(user_id: str, user_ids: List[int], thread_ids: List[int]) | DirectMessage      | Share a user profile to list of users
 | direct_thread_mark_unread(thread_id: int)                                 | bool                    | Mark a thread as unread
 | direct_message_delete(thread_id: int, message_id: int)                    | bool                    | Delete a message from thread
+| direct_send_reaction(thread_id: int, message_id: int, emoji: str = "❤")  | bool                    | Add an emoji reaction to a message
+| direct_delete_reaction(thread_id: int, message_id: int, emoji: str = "❤") | bool                   | Delete your emoji reaction from a message
+| direct_message_like(thread_id: int, message_id: int)                      | bool                    | Add a heart reaction to a message
+| direct_message_unlike(thread_id: int, message_id: int)                    | bool                    | Remove your heart reaction from a message
 | direct_thread_mute(thread_id: int, revert: bool = False)                  | bool                    | Mute the thread
 | direct_thread_unmute(thread_id: int)                                      | bool                    | Unmute the thread
 | direct_thread_mute_video_call(thread_id: int, revert: bool = False)       | bool                    | Mute video call for the thread
@@ -94,6 +99,12 @@ DirectMessage(id=30076291231321231369939116032, user_id=None, thread_id=34028231
 DirectMessage(id=30076291231231230352896, user_id=None, thread_id=3402812312312310641298762, timestamp=datetime.datetime(2021, 8, 31, 19, 48, 38, 482706, tzinfo=datetime.timezone.utc), item_type=None, is_shh_mode=None, reactions=None, text=None, animated_media=None, media=None, media_share=None, reel_share=None, story_share=None, felix_share=None, clip=None, placeholder=None)
 
 >>> await cl.direct_message_delete(thread.id, message.pk)
+True
+
+>>> await cl.direct_send_reaction(thread.id, message.id, emoji="😂")
+True
+
+>>> await cl.direct_thread_update_title(thread.id, "Support")
 True
 
 >>> photo_path = await cl.photo_download(await cl.media_pk_from_url('https://www.instagram.com/p/BgqFyjqloOr/'))

@@ -4,8 +4,10 @@
 | --------------------------- | ----------------- | ------------------------------- |
 | get_notes()                 | List[Note]        | Retrieve direct Notes           |
 | create_note(text: str, audience: int = 0) | Note | Post a new Note                 |
+| notes_music_browser()       | Dict              | Retrieve music candidates for Notes |
+| create_music_note(track, text: str = "", audience: int = 0) | Note | Post a new music Note |
 | delete_note(note_id: int)   | bool              | Delete a posted Note            |
-| update_last_seen_note()     | bool              | Update the last seen time |
+| last_seen_update_note()     | bool              | Update the last seen time |
 
 Example:
 
@@ -36,6 +38,18 @@ Example:
 >>> await cl.last_seen_update_note()
 
 >>> await cl.delete_note(note.id)
+```
+
+Music Notes use the music browser response:
+
+``` python
+browser = await cl.notes_music_browser()
+track = browser["items"][0]["track"]
+note = await cl.create_music_note(
+    track,
+    text="Now playing",
+    alacorn_session_id=browser["alacorn_session_id"],
+)
 ```
 
 ## Get Notes  |  Post Notes  |  Delete Notes

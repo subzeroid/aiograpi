@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (with the pre-1.0 caveat that minor bumps may include breaking changes).
 
+## [0.9.0] - 2026-05-11
+
+### Added
+
+- Synced the async public API with `instagrapi` through upstream `2.5.18`.
+- Added Trial Reels support to `clip_upload(trial=True, trial_graduation_strategy="manual")`.
+- Added Reel helpers: `clip_pin`, `clip_unpin`, and `clip_share_to_fb_config`.
+- Updated Reel upload to the current mobile upload flow with `upload_settings` and modern rupload headers.
+- Added feed music helpers: `music_in_feed_audio_browser`, `photo_upload_with_music`, and `album_upload_with_music`.
+- Added music Notes support via `notes_music_browser` and `create_music_note`.
+- Added archived media/story readers: `archive_medias`, `archive_story_days`, and `archive_stories`.
+- Added tagged-media pagination helpers and safer location pagination cursors.
+- Added Direct reactions and thread-title updates.
+- Added a Pydroid usage guide for Android environments without ffmpeg.
+
+### Fixed
+
+- Video uploads with a user-provided thumbnail no longer require MoviePy/ffmpeg just to read basic MP4 metadata.
+- Missing ffmpeg now reports an actionable error: pass `thumbnail=...` or install/configure ffmpeg with `IMAGEIO_FFMPEG_EXE`.
+- Story location stickers now prefer the external Facebook Places id when Instagram requires it.
+
+### Changed
+
+- Split the legacy `aiograpi.utils` module into a package while preserving old import compatibility.
+- Modernized local tooling around `uv`, Ruff, current test pins, and the upstream sync workflow.
+
 ## [0.8.11] — 2026-05-05
 
 ### Fixed — Telegram support link in `docs/index.md`

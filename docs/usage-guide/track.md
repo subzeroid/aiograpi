@@ -7,6 +7,7 @@ Viewing and downloading tracks
 | track_info_by_canonical_id(music_canonical_id: str)                    | Track       | Get Track by music_canonical_id
 | track_download_by_url(url: str, filename: str = "", folder: Path = "") | Path        | Download track by URL
 | search_music(query: str)                                               | List[Track] | Return list of tracks
+| music_in_feed_audio_browser(browse_session_id: str = None)             | Dict        | Retrieve music candidates for feed photo/carousel posts
 
 ### Example:
 

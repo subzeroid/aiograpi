@@ -37,8 +37,8 @@ Features:
 * Getting public data of all comments on a post and a list of users who liked it
 * Management of proxy servers, mobile devices and challenge resolver
 * Login by username and password, sessionid and support 2FA
-* Managing messages and threads for Direct and attach files
-* Download and upload a Photo, Video, IGTV, Reels, Albums and Stories
+* Managing messages, reactions and threads for Direct and attach files
+* Download and upload a Photo, Video, IGTV, Reels, Albums, Stories and Trial Reels
 * Work with Users, Posts, Comments, Insights, Collections, Location and Hashtag
 * Insights by account, posts and stories
 * Like, following, commenting, editing account (Bio) and much more else
@@ -88,8 +88,16 @@ What you can rely on instead:
   the basic happy path, CI catches it.
 - **Migration Guide** at [docs/migration.md](https://subzeroid.github.io/aiograpi/latest/migration/) — every breaking change documented with before/after.
 
-### What's new in 0.6.x and 0.7.x
+### What's new in 0.6.x through 0.9.x
 
+- **Sync with instagrapi 2.5.18** — Trial Reels, current Reel rupload flow, Reel pin/unpin,
+  feed photo/carousel music, music Notes, archive readers, tagged media pagination,
+  Direct reactions and thread title updates.
+- **Android/Pydroid-friendly video uploads** — when you pass `thumbnail=...`, aiograpi can read
+  MP4 dimensions/duration without importing MoviePy/ffmpeg. If thumbnail generation is needed,
+  the error now explains how to install ffmpeg or set `IMAGEIO_FFMPEG_EXE`.
+- **Modern dev tooling** — `uv.lock`, Ruff formatting/checks, updated test pins, and an
+  upstream sync tracking workflow.
 - **Sync with instagrapi 2.4.4** — every mixin and infrastructure module ported, plus three new mixins:
   [`ExploreMixin`](https://subzeroid.github.io/aiograpi/latest/usage-guide/explore/),
   [`FundraiserMixin`](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundraiser/), and opt-in
@@ -281,11 +289,11 @@ await cl.video_upload_to_story(
 Releases are automated via the `publish.yml` GitHub Actions workflow with PyPI
 [trusted publishing](https://docs.pypi.org/trusted-publishers/). To cut a new release:
 
-1. Bump `version=` in `setup.py`.
+1. Bump `version =` in `pyproject.toml`.
 2. Add a section to `CHANGELOG.md`.
 3. Commit and push to `main`.
 4. Tag: `git tag -a 0.x.y -m "Release 0.x.y" && git push origin 0.x.y`.
 
-The workflow then builds sdist + wheel, verifies the tag matches `setup.py`,
+The workflow then builds sdist + wheel, verifies the tag matches `pyproject.toml`,
 publishes to PyPI, and creates the GitHub release with both artefacts attached
 — no API tokens needed.
