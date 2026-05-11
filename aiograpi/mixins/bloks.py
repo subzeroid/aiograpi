@@ -18,14 +18,10 @@ class BloksMixin:
         -------
         bool
         """
-        result = await self.private_request(
-            f"bloks/apps/{action}/", self.with_default_data(data)
-        )
+        result = await self.private_request(f"bloks/apps/{action}/", self.with_default_data(data))
         return result["status"] == "ok"
 
-    async def bloks_change_password(
-        self, password: str, challenge_context: dict
-    ) -> bool:
+    async def bloks_change_password(self, password: str, challenge_context: dict) -> bool:
         """
         Change password for challenge
 
@@ -38,19 +34,13 @@ class BloksMixin:
         -------
         bool
         """
-        assert (
-            self.bloks_versioning_id
-        ), "Client.bloks_versioning_id is empty (hash is expected)"
+        assert self.bloks_versioning_id, "Client.bloks_versioning_id is empty (hash is expected)"
         enc_password = await self.password_encrypt(password)
         data = {
-            "bk_client_context": dumps(
-                {"bloks_version": self.bloks_versioning_id, "styles_id": "instagram"}
-            ),
+            "bk_client_context": dumps({"bloks_version": self.bloks_versioning_id, "styles_id": "instagram"}),
             "challenge_context": challenge_context,
             "bloks_versioning_id": self.bloks_versioning_id,
             "enc_new_password1": enc_password,
             "enc_new_password2": enc_password,
         }
-        return await self.bloks_action(
-            "com.instagram.challenge.navigation.take_challenge", data
-        )
+        return await self.bloks_action("com.instagram.challenge.navigation.take_challenge", data)

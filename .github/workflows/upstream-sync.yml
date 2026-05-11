@@ -1,0 +1,73 @@
+name: Upstream Sync Tracker
+
+on:
+  workflow_dispatch:
+    inputs:
+      instagrapi_tag:
+        description: "instagrapi tag to sync through, for example 2.5.18"
+        required: true
+        type: string
+  repository_dispatch:
+    types:
+      - instagrapi_release
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-sync-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Create upstream sync issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WORKFLOW_TAG: ${{ github.event.inputs.instagrapi_tag }}
+          DISPATCH_TAG: ${{ github.event.client_payload.tag }}
+        run: |
+          set -euo pipefail
+
+          TARGET_TAG="${WORKFLOW_TAG:-${DISPATCH_TAG:-}}"
+          if [[ -z "${TARGET_TAG}" ]]; then
+            echo "::error::No instagrapi tag was provided"
+            exit 1
+          fi
+
+          CURRENT_TAG="$(python - <<'PY'
+          import re
+          from pathlib import Path
+
+          text = Path("aiograpi/__init__.py").read_text()
+          match = re.search(r'__upstream_instagrapi_version__\s*=\s*"([^"]+)"', text)
+          print(match.group(1) if match else "")
+          PY
+          )"
+
+          if [[ "${CURRENT_TAG}" == "${TARGET_TAG}" ]]; then
+            echo "Already synced through instagrapi ${TARGET_TAG}"
+            exit 0
+          fi
+
+          BODY="$(mktemp)"
+          cat > "${BODY}" <<EOF
+          A new instagrapi release needs aiograpi triage.
+
+          Current aiograpi baseline: ${CURRENT_TAG:-unknown}
+          Target instagrapi tag: ${TARGET_TAG}
+          Compare: https://github.com/subzeroid/instagrapi/compare/${CURRENT_TAG:-${TARGET_TAG}}...${TARGET_TAG}
+
+          Checklist:
+          - [ ] Review instagrapi release notes and changed files.
+          - [ ] Decide which changes are async-portable.
+          - [ ] Port features/fixes with regression tests.
+          - [ ] Update docs and aiograpi upstream baseline.
+          - [ ] Run local checks and CI.
+          - [ ] Publish an aiograpi release or record why no release is needed.
+          EOF
+
+          gh issue create \
+            --title "Sync aiograpi with instagrapi ${TARGET_TAG}" \
+            --body-file "${BODY}"

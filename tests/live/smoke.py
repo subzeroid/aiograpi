@@ -50,9 +50,7 @@ async def _login_first_usable(accs):
             print(f"LOGIN_OK acc{i} {acc['username']} (user_id={c.user_id})")
             return c
         except Exception as e:
-            print(
-                f"acc{i} {acc.get('username','?')}: {type(e).__name__}: {str(e)[:120]}"
-            )
+            print(f"acc{i} {acc.get('username', '?')}: {type(e).__name__}: {str(e)[:120]}")
     return None
 
 
@@ -97,11 +95,7 @@ async def main():
                     else (
                         out.name
                         if hasattr(out, "name")
-                        else (
-                            f"len={len(out)}"
-                            if isinstance(out, list)
-                            else str(out)[:50]
-                        )
+                        else (f"len={len(out)}" if isinstance(out, list) else str(out)[:50])
                     )
                 )
                 print(f"REQ {name}: {summary}")
@@ -165,15 +159,11 @@ async def main():
             ("feed_user_stream_item", lambda: cl.feed_user_stream_item(instagram_pk)),
             (
                 "private_graphql_followers_list",
-                lambda: cl.private_graphql_followers_list(
-                    instagram_pk, rank_token=rank_token
-                ),
+                lambda: cl.private_graphql_followers_list(instagram_pk, rank_token=rank_token),
             ),
             (
                 "private_graphql_following_list",
-                lambda: cl.private_graphql_following_list(
-                    instagram_pk, rank_token=rank_token
-                ),
+                lambda: cl.private_graphql_following_list(instagram_pk, rank_token=rank_token),
             ),
             (
                 "private_graphql_clips_profile",

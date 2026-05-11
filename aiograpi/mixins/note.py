@@ -39,11 +39,7 @@ class NoteMixin:
         """
         username = str(username).lower()
         for note in notes:
-            if (
-                note.user
-                and note.user.username
-                and note.user.username.lower() == username
-            ):
+            if note.user and note.user.username and note.user.username.lower() == username:
                 return note
         return None
 
@@ -75,9 +71,7 @@ class NoteMixin:
         bool
             A boolean value
         """
-        result = await self.private_request(
-            "notes/update_notes_last_seen_timestamp/", data={"_uuid": self.uuid}
-        )
+        result = await self.private_request("notes/update_notes_last_seen_timestamp/", data={"_uuid": self.uuid})
         return result.get("status", "") == "ok"
 
     async def delete_note(self, note_id: int) -> bool:
@@ -94,9 +88,7 @@ class NoteMixin:
         bool
             A boolean value
         """
-        result = await self.private_request(
-            "notes/delete_note/", data={"id": note_id, "_uuid": self.uuid}
-        )
+        result = await self.private_request("notes/delete_note/", data={"id": note_id, "_uuid": self.uuid})
         return result.get("status", "") == "ok"
 
     async def create_note(self, text: str, audience: int = 0) -> Note:

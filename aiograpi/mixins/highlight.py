@@ -36,9 +36,7 @@ class HighlightMixin:
         parts = [p for p in path.split("/") if p and p.isdigit()]
         return str(parts[0])
 
-    async def user_highlights_v1(
-        self, user_id: int, amount: int = 0
-    ) -> List[Highlight]:
+    async def user_highlights_v1(self, user_id: int, amount: int = 0) -> List[Highlight]:
         """
         Get a user's highlight
 
@@ -64,9 +62,7 @@ class HighlightMixin:
             "is_dark_mode": random.randint(0, 1),
             "will_sound_on": random.randint(0, 1),
         }
-        result = await self.private_request(
-            f"highlights/{user_id}/highlights_tray/", params=params
-        )
+        result = await self.private_request(f"highlights/{user_id}/highlights_tray/", params=params)
         return [extract_highlight_v1(highlight) for highlight in result.get("tray", [])]
 
     async def user_highlights(self, user_id: int, amount: int = 0) -> List[Highlight]:
@@ -221,9 +217,7 @@ class HighlightMixin:
             data["title"] = title
         if cover:
             data["cover"] = dumps(cover)
-        result = await self.private_request(
-            f"highlights/highlight:{highlight_pk}/edit_reel/", data=data
-        )
+        result = await self.private_request(f"highlights/highlight:{highlight_pk}/edit_reel/", data=data)
         return extract_highlight_v1(result["reel"])
 
     async def highlight_change_title(self, highlight_pk: str, title: str) -> Highlight:
@@ -243,9 +237,7 @@ class HighlightMixin:
         """
         return await self.highlight_edit(highlight_pk, title=title)
 
-    async def highlight_change_cover(
-        self, highlight_pk: str, cover_path: Path
-    ) -> Highlight:
+    async def highlight_change_cover(self, highlight_pk: str, cover_path: Path) -> Highlight:
         """
         Change cover for highlight
 
@@ -264,9 +256,7 @@ class HighlightMixin:
         cover = {"upload_id": str(upload_id), "crop_rect": "[0.0,0.0,1.0,1.0]"}
         return await self.highlight_edit(highlight_pk, cover=cover)
 
-    async def highlight_add_stories(
-        self, highlight_pk: str, added_media_ids: List[str]
-    ) -> Highlight:
+    async def highlight_add_stories(self, highlight_pk: str, added_media_ids: List[str]) -> Highlight:
         """
         Add stories to highlight
 
@@ -283,9 +273,7 @@ class HighlightMixin:
         """
         return await self.highlight_edit(highlight_pk, added_media_ids=added_media_ids)
 
-    async def highlight_remove_stories(
-        self, highlight_pk: str, removed_media_ids: List[str]
-    ) -> Highlight:
+    async def highlight_remove_stories(self, highlight_pk: str, removed_media_ids: List[str]) -> Highlight:
         """
         Remove stories from highlight
 
@@ -300,9 +288,7 @@ class HighlightMixin:
         -------
         Highlight
         """
-        return await self.highlight_edit(
-            highlight_pk, removed_media_ids=removed_media_ids
-        )
+        return await self.highlight_edit(highlight_pk, removed_media_ids=removed_media_ids)
 
     async def highlight_delete(self, highlight_pk: str) -> bool:
         """
@@ -318,7 +304,5 @@ class HighlightMixin:
         bool
         """
         data = {"_uid": str(self.user_id), "_uuid": self.uuid}
-        result = await self.private_request(
-            f"highlights/highlight:{highlight_pk}/delete_reel/", data=data
-        )
+        result = await self.private_request(f"highlights/highlight:{highlight_pk}/delete_reel/", data=data)
         return result.get("status") == "ok"

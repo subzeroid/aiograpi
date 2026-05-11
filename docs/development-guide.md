@@ -5,34 +5,33 @@ and how to work with the code base.
 
 Before you dive into this, it is best to read:
 
-* The [Contributing guide](development-guide.md)
+* The [Contributing guide](https://github.com/subzeroid/aiograpi/blob/main/CONTRIBUTING.md)
 
-## Docker
+## Local Environment
 
-The `aiograpi` project uses Docker to ease setting up a consistent development environment. The Docker documentation has
-details on how to [install docker][install-docker] on your computer.
-
-Once that is configured, the test suite can be run locally:
+Use a virtual environment and install the project from `pyproject.toml` with test extras:
 
 ```bash
-docker-compose run --rm test
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[test]"
+pre-commit install
 ```
 
-If you want to be able to execute code in the container:
+If you use [uv][uv-docs], keep the same `pyproject.toml` source of truth:
 
 ```bash
-docker-compose run --rm devbox
-(your code here)
+uv venv
+source .venv/bin/activate
+uv pip install -e ".[test]"
+pre-commit install
 ```
-
-In the devbox environment you'll be able to enter a python shell and import `aiograpi` or any dependencies.
 
 ## Debugging
 
-The docker container has [pdb++][pdbpp-home] install that can be used as a debugger. (However, you are welcome to set up
-a different debugger if you would like.)
-
-This allows you to easily create a breakpoint anywhere in the code.
+Python's built-in [pdb][pdb-docs] debugger is enough for most local debugging. You can create a breakpoint anywhere in
+the code:
 
 ```python
 def my_function():
@@ -40,20 +39,28 @@ def my_function():
     ...
 ```
 
-When your the code, you will drop into an interactive `pdb++` debugger.
+When the code reaches the breakpoint, it will drop into an interactive debugger.
 
-See the documentation on [pdb][pdb-docs] and [pdb++][pdbpp-docs] for more information.
+See the documentation on [pdb][pdb-docs] for more information.
 
 ## Testing
 
-You'll be unable to merge code unless the linting and tests pass. You can run these in your container via:
+You'll be unable to merge code unless linting and tests pass. The main local checks are:
 
 ```bash
-docker-compose run --rm test
+pytest -sv tests.py tests/regression
+ruff check .
+ruff format --check .
+bandit -c pyproject.toml -r aiograpi
+mkdocs build --strict
 ```
 
-This will run the same tests, linting, and code coverage that are run by the CI pipeline. The only difference is that,
-when run locally, `black` and `isort` are configured to automatically correct issues they detect.
+To apply automatic lint and formatting fixes locally:
+
+```bash
+ruff check . --fix
+ruff format .
+```
 
 Generally we should endeavor to write tests for every feature. Every new feature branch should increase the test
 coverage rather than decreasing it.
@@ -65,24 +72,19 @@ We use [pytest][pytest-docs] as our testing framework.
 To customize / override a specific testing stage, please read the documentation specific to that tool:
 
 1. [PyTest][pytest-docs]
-2. [MyPy][mypy-docs]
-3. [Isort][isort-docs]
-4. [Flake8][flake8-docs]
-5. [Bandit][bandit-docs]
+2. [Ruff][ruff-docs]
+3. [Bandit][bandit-docs]
 
-### `setup.py`
+### `pyproject.toml`
 
-Setuptools is used to packaging the library.
+Setuptools is used to package the library through `pyproject.toml`.
 
-**`setup.py` must not import anything from the package** When installing from source, the user may not have the
-packages dependencies installed, and importing the package is likely to raise an `ImportError`. For this reason, the
-**package version should be obtained without importing**. This is explains why `setup.py` uses a regular expression to
-grabs the version from `__init__.py` without actually importing.
+`pyproject.toml` is the source of truth for package metadata, runtime dependencies, and test/development extras.
 
 ### Requirements
 
-* **requirements.txt** - Lists all direct dependencies (packages imported by the library).
-* **requirements-test.txt** - Lists all direct requirements needed to run the test suite & lints.
+* `[project].dependencies` lists runtime dependencies imported by the library.
+* `[project.optional-dependencies].test` lists tools needed for tests, linting, docs, and local development.
 
 This will trigger the CI system to build a wheel and a source distributions of the package and push them to
 [PyPI][pypi].
@@ -91,14 +93,10 @@ This will trigger the CI system to build a wheel and a source distributions of t
 
 TODO: Add CI documentation.
 
-[install-docker]: https://docs.docker.com/install/
-[pdbpp-home]: https://github.com/pdbpp/pdbpp
 [pdb-docs]: https://docs.python.org/3/library/pdb.html
-[pdbpp-docs]: https://github.com/pdbpp/pdbpp#usage
 [pytest-docs]: https://docs.pytest.org/en/latest/
-[mypy-docs]: https://mypy.readthedocs.io/en/stable/
-[isort-docs]: https://pycqa.github.io/isort/
-[flake8-docs]: http://flake8.pycqa.org/en/stable/
+[ruff-docs]: https://docs.astral.sh/ruff/
+[uv-docs]: https://docs.astral.sh/uv/
 [bandit-docs]: https://bandit.readthedocs.io/en/stable/
 [sem-ver]: https://semver.org/
-[pypi]: https://pypi.org/project/gbq/
+[pypi]: https://pypi.org/project/aiograpi/

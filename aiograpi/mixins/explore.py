@@ -40,8 +40,6 @@ class ExploreMixin:
         and you click into a media item. It returns information about that media item
         like comments, likes, etc.
         """
-        return (
-            await self.private_request(
-                "/v1/discover/media_metadata/", params={"media_id": media_pk}
-            )
-        )["media_or_ad"]
+        return (await self.private_request("/v1/discover/media_metadata/", params={"media_id": media_pk}))[
+            "media_or_ad"
+        ]

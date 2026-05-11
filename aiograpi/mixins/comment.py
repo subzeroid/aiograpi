@@ -88,15 +88,11 @@ class CommentMixin:
             for edge in edges:
                 comments.append(edge["node"])
             page_info = item.get("page_info", {})
-            end_cursor = (
-                page_info.get("end_cursor") if page_info.get("has_next_page") else None
-            )
+            end_cursor = page_info.get("end_cursor") if page_info.get("has_next_page") else None
             return comments, end_cursor
         return [], ""
 
-    async def media_comments_threaded_gql(
-        self, media_pk: str, comment_pk: str, amount: int = 0
-    ) -> List[dict]:
+    async def media_comments_threaded_gql(self, media_pk: str, comment_pk: str, amount: int = 0) -> List[dict]:
         """
         Get threaded comments on a media
 
@@ -127,9 +123,7 @@ class CommentMixin:
             comments = comments[:amount]
         return comments
 
-    async def media_comments_gql_chunk(
-        self, media_pk: str, end_cursor: str = ""
-    ) -> Tuple[List[dict], str]:
+    async def media_comments_gql_chunk(self, media_pk: str, end_cursor: str = "") -> Tuple[List[dict], str]:
         """
         Get comments on a media
 
@@ -203,15 +197,11 @@ class CommentMixin:
             for edge in item.get("edges", []):
                 comments.append(edge["node"])
             page_info = item.get("page_info", {})
-            end_cursor = (
-                page_info.get("end_cursor") if page_info.get("has_next_page") else None
-            )
+            end_cursor = page_info.get("end_cursor") if page_info.get("has_next_page") else None
             return comments, end_cursor
         return [], ""
 
-    async def media_comments_gql(
-        self, media_pk: str, amount: int = 50, max_requests: int = 0
-    ) -> List[dict]:
+    async def media_comments_gql(self, media_pk: str, amount: int = 50, max_requests: int = 0) -> List[dict]:
         """
         Get comments on a media
 
@@ -235,9 +225,7 @@ class CommentMixin:
             i += 1
             if max_requests and i > max_requests:
                 break
-            items, end_cursor = await self.media_comments_gql_chunk(
-                media_pk, end_cursor=end_cursor
-            )
+            items, end_cursor = await self.media_comments_gql_chunk(media_pk, end_cursor=end_cursor)
             comments.extend(items)
             if not end_cursor or len(items) == 0:
                 break
@@ -343,9 +331,7 @@ class CommentMixin:
             params["min_id"] = min_id
         if max_id:
             params["max_id"] = max_id
-        result = await self.private_request(
-            f"media/{media_id}/comments/", params=params
-        )
+        result = await self.private_request(f"media/{media_id}/comments/", params=params)
         # if result.get("has_more_comments"):
         #     params = {"max_id": max_id}
         # else:  # has_more_headload_comments
@@ -377,9 +363,7 @@ class CommentMixin:
         min_id, max_id = None, None
         try:
             while True:
-                items, min_id, max_id = await self.media_comments_v1_chunk(
-                    media_id, min_id, max_id
-                )
+                items, min_id, max_id = await self.media_comments_v1_chunk(media_id, min_id, max_id)
                 comments.extend(items)
                 if len(items) == 0:
                     break
@@ -436,9 +420,7 @@ class CommentMixin:
             comments = await self.media_comments_v1(media_id, amount)
         return comments
 
-    async def media_comment(
-        self, media_id: str, text: str, replied_to_comment_id: Optional[int] = None
-    ) -> Comment:
+    async def media_comment(self, media_id: str, text: str, replied_to_comment_id: Optional[int] = None) -> Comment:
         """
         Post a comment on a media
 
@@ -501,9 +483,7 @@ class CommentMixin:
         )
         return result["is_offensive"]
 
-    async def media_check_offensive_comment_v2(
-        self, media_id: str, comment: str
-    ) -> dict:
+    async def media_check_offensive_comment_v2(self, media_id: str, comment: str) -> dict:
         """
         Lighter-weight variant of :meth:`media_check_offensive_comment`
         — returns the full IG payload instead of just the boolean.
@@ -535,9 +515,7 @@ class CommentMixin:
             "media_id": media_id,
             "_uuid": self.uuid,
         }
-        return await self.private_request(
-            "media/comment/check_offensive_comment/", data=data
-        )
+        return await self.private_request("media/comment/check_offensive_comment/", data=data)
 
     async def comment_like(self, comment_pk: int, revert: bool = False) -> bool:
         """
@@ -564,9 +542,7 @@ class CommentMixin:
             "feed_position": str(random.randint(0, 6)),
         }
         name = "unlike" if revert else "like"
-        result = await self.private_request(
-            f"media/{comment_pk}/comment_{name}/", self.with_action_data(data)
-        )
+        result = await self.private_request(f"media/{comment_pk}/comment_{name}/", self.with_action_data(data))
         return result["status"] == "ok"
 
     async def comment_unlike(self, comment_pk: int) -> bool:
@@ -605,9 +581,7 @@ class CommentMixin:
         data = self.with_action_data({"_uid": self.user_id, "_uuid": self.uuid})
         name = "unpin" if revert else "pin"
 
-        result = await self.private_request(
-            f"media/{media_id}/{name}_comment/{comment_pk}", data
-        )
+        result = await self.private_request(f"media/{media_id}/{name}_comment/{comment_pk}", data)
         return result["status"] == "ok"
 
     async def comment_unpin(self, media_id: str, comment_pk: int):
@@ -649,14 +623,10 @@ class CommentMixin:
             "comment_ids_to_delete": ",".join([str(pk) for pk in comment_pks]),
             "container_module": "self_comments_v2_newsfeed_you",
         }
-        result = await self.private_request(
-            f"media/{media_id}/comment/bulk_delete/", self.with_action_data(data)
-        )
+        result = await self.private_request(f"media/{media_id}/comment/bulk_delete/", self.with_action_data(data))
         return result["status"] == "ok"
 
-    async def comment_likers_gql_chunk(
-        self, comment_pk: str, end_cursor: str = ""
-    ) -> Tuple[List[dict], str]:
+    async def comment_likers_gql_chunk(self, comment_pk: str, end_cursor: str = "") -> Tuple[List[dict], str]:
         """
         Get likers of comment
 
@@ -713,9 +683,7 @@ class CommentMixin:
         end_cursor = ""
         likers = []
         while True:
-            items, end_cursor = await self.comment_likers_gql_chunk(
-                comment_pk, end_cursor=end_cursor
-            )
+            items, end_cursor = await self.comment_likers_gql_chunk(comment_pk, end_cursor=end_cursor)
             likers.extend(items)
             if not end_cursor or len(items) == 0:
                 break

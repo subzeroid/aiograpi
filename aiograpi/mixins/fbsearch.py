@@ -10,9 +10,7 @@ from aiograpi.types import Hashtag, Location, Track, UserShort
 
 
 class FbSearchMixin:
-    async def fbsearch_places(
-        self, query: str, lat: float = 40.74, lng: float = -73.94
-    ) -> List[Location]:
+    async def fbsearch_places(self, query: str, lat: float = 40.74, lng: float = -73.94) -> List[Location]:
         params = {
             "search_surface": "places_search_page",
             "timezone_offset": self.timezone_offset,
@@ -254,9 +252,7 @@ class FbSearchMixin:
         data = []
         for item in result.get("recent", []):
             if "user" in item.keys():
-                data.append(
-                    (item.get("client_time", None), extract_user_short(item["user"]))
-                )
+                data.append((item.get("client_time", None), extract_user_short(item["user"])))
             if "hashtag" in item.keys():
                 hashtag = item.get("hashtag")
                 hashtag["media_count"] = hashtag.pop("formatted_media_count")
@@ -265,9 +261,7 @@ class FbSearchMixin:
                 data.append((item.get("client_time", None), item["keyword"]))
         return data
 
-    async def fbsearch_accounts_v2(
-        self, query: str, page_token: Optional[str] = None
-    ) -> dict:
+    async def fbsearch_accounts_v2(self, query: str, page_token: Optional[str] = None) -> dict:
         """
         Search accounts via the v2 SERP endpoint.
 

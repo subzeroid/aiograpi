@@ -54,9 +54,7 @@ class HashtagMixin:
             raise HashtagNotFound(name=name, **data)
         return extract_hashtag_gql(data["hashtag"])
 
-    async def hashtag_info_gql(
-        self, name: str, amount: int = 12, end_cursor: str = None
-    ) -> Hashtag:
+    async def hashtag_info_gql(self, name: str, amount: int = 12, end_cursor: str = None) -> Hashtag:
         """
         Get information about a hashtag by Public Graphql API
 
@@ -79,9 +77,7 @@ class HashtagMixin:
         variables = {"tag_name": name, "show_ranked": False, "first": int(amount)}
         if end_cursor:
             variables["after"] = end_cursor
-        data = await self.public_graphql_request(
-            variables, query_hash="f92f56d47dc7a55b606908374b43a314"
-        )
+        data = await self.public_graphql_request(variables, query_hash="f92f56d47dc7a55b606908374b43a314")
         if not data.get("hashtag"):
             raise HashtagNotFound(name=name, **data)
         return extract_hashtag_gql(data["hashtag"])
@@ -144,10 +140,7 @@ class HashtagMixin:
         data = await self.public_a1_request(f"/explore/tags/{name}/")
         if not data.get("hashtag"):
             raise HashtagNotFound(name=name, **data)
-        return [
-            extract_hashtag_gql(item["node"])
-            for item in data["hashtag"]["edge_hashtag_to_related_tags"]["edges"]
-        ]
+        return [extract_hashtag_gql(item["node"]) for item in data["hashtag"]["edge_hashtag_to_related_tags"]["edges"]]
 
     async def hashtag_medias_a1_chunk(
         self, name: str, max_amount: int = 27, tab_key: str = "", end_cursor: str = None
@@ -213,9 +206,7 @@ class HashtagMixin:
             end_cursor = result["next_max_id"]
         return medias, end_cursor
 
-    async def hashtag_medias_a1(
-        self, name: str, amount: int = 27, tab_key: str = ""
-    ) -> List[Media]:
+    async def hashtag_medias_a1(self, name: str, amount: int = 27, tab_key: str = "") -> List[Media]:
         """
         Get medias for a hashtag by Public Web API
 
@@ -319,9 +310,7 @@ class HashtagMixin:
             next_max_id = None  # stop
         return medias, next_max_id
 
-    async def hashtag_medias_v1(
-        self, name: str, amount: int = 27, tab_key: str = ""
-    ) -> List[Media]:
+    async def hashtag_medias_v1(self, name: str, amount: int = 27, tab_key: str = "") -> List[Media]:
         """
         Get medias for a hashtag by Private Mobile API
 
@@ -342,9 +331,7 @@ class HashtagMixin:
         medias = []
         max_id = None
         while True:
-            items, max_id = await self.hashtag_medias_v1_chunk(
-                name, amount, tab_key, max_id
-            )
+            items, max_id = await self.hashtag_medias_v1_chunk(name, amount, tab_key, max_id)
             medias.extend(items)
             if amount and len(medias) >= amount:
                 break
@@ -412,9 +399,7 @@ class HashtagMixin:
             medias = await self.hashtag_medias_top_v1(name, amount)
         return medias
 
-    async def hashtag_medias_recent_a1(
-        self, name: str, amount: int = 71
-    ) -> List[Media]:
+    async def hashtag_medias_recent_a1(self, name: str, amount: int = 71) -> List[Media]:
         """
         Get recent medias for a hashtag by Public Web API
 
@@ -432,9 +417,7 @@ class HashtagMixin:
         """
         return await self.hashtag_medias_a1(name, amount, tab_key="recent")
 
-    async def hashtag_medias_recent_v1(
-        self, name: str, amount: int = 27
-    ) -> List[Media]:
+    async def hashtag_medias_recent_v1(self, name: str, amount: int = 27) -> List[Media]:
         """
         Get recent medias for a hashtag by Private Mobile API
 
@@ -510,9 +493,7 @@ class HashtagMixin:
             raise PreLoginRequired
         name = "unfollow" if unfollow else "follow"
         data = self.with_action_data({"user_id": self.user_id})
-        result = await self.private_request(
-            f"web/tags/{name}/{hashtag}/", domain="www.instagram.com", data=data
-        )
+        result = await self.private_request(f"web/tags/{name}/{hashtag}/", domain="www.instagram.com", data=data)
         return result["status"] == "ok"
 
     async def hashtag_unfollow(self, hashtag: str) -> bool:

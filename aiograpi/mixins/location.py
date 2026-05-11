@@ -124,9 +124,7 @@ class LocationMixin:
                 pass
         if not location.pk and location.external_id:
             info = await self.location_info(location.external_id)
-            if info.name == location.name or (
-                info.lat == location.lat and info.lng == location.lng
-            ):
+            if info.name == location.name or (info.lat == location.lat and info.lng == location.lng):
                 location.pk = location.external_id
         return location
 
@@ -177,9 +175,7 @@ class LocationMixin:
             An object of Location
         """
         try:
-            data = (
-                await self.public_a1_request(f"/explore/locations/{location_pk}/") or {}
-            )
+            data = await self.public_a1_request(f"/explore/locations/{location_pk}/") or {}
             if not data.get("location"):
                 raise LocationNotFound(location_pk=location_pk, **data)
             return extract_location(data["location"])
@@ -260,9 +256,7 @@ class LocationMixin:
             List of objects of Media and end_cursor
         """
         if tab_key not in tab_keys_a1:
-            raise Exception(
-                f'You must specify one of the options for "tab_key" {tab_keys_a1}'
-            )
+            raise Exception(f'You must specify one of the options for "tab_key" {tab_keys_a1}')
         unique_set = set()
         medias = []
         end_cursor = None
@@ -308,12 +302,8 @@ class LocationMixin:
             List of objects of Media
         """
         if tab_key not in tab_keys_a1:
-            raise Exception(
-                f'You must specify one of the options for "tab_key" {tab_keys_a1}'
-            )
-        medias, _ = await self.location_medias_a1_chunk(
-            location_pk, amount, sleep, tab_key
-        )
+            raise Exception(f'You must specify one of the options for "tab_key" {tab_keys_a1}')
+        medias, _ = await self.location_medias_a1_chunk(location_pk, amount, sleep, tab_key)
         if amount:
             medias = medias[:amount]
         return medias
@@ -345,9 +335,7 @@ class LocationMixin:
             List of objects of Media and max_id
         """
         if tab_key not in tab_keys_v1:
-            raise Exception(
-                f'You must specify one of the options for "tab_key" {tab_keys_v1}'
-            )
+            raise Exception(f'You must specify one of the options for "tab_key" {tab_keys_v1}')
         data = {
             "_uuid": self.uuid,
             "session_id": self.client_session_id,
@@ -371,9 +359,7 @@ class LocationMixin:
             np = result.get("next_page")
             ids = result.get("next_media_ids")
             next_m_id = result.get("next_max_id")
-            next_max_id = base64.b64encode(
-                json.dumps([next_m_id, np, ids]).encode()
-            ).decode()
+            next_max_id = base64.b64encode(json.dumps([next_m_id, np, ids]).encode()).decode()
         for section in result.get("sections") or []:
             layout_content = section.get("layout_content") or {}
             nodes = layout_content.get("medias") or []
@@ -382,9 +368,7 @@ class LocationMixin:
                 medias.append(media)
         return medias, next_max_id
 
-    async def location_medias_v1(
-        self, location_pk: int, amount: int = 63, tab_key: str = ""
-    ) -> List[Media]:
+    async def location_medias_v1(self, location_pk: int, amount: int = 63, tab_key: str = "") -> List[Media]:
         """
         Get medias for a location by Private Mobile API
 
@@ -403,17 +387,13 @@ class LocationMixin:
             List of objects of Media
         """
         if tab_key not in tab_keys_v1:
-            raise Exception(
-                f'You must specify one of the options for "tab_key" {tab_keys_a1}'
-            )
+            raise Exception(f'You must specify one of the options for "tab_key" {tab_keys_a1}')
         medias, _ = await self.location_medias_v1_chunk(location_pk, amount, tab_key)
         if amount:
             medias = medias[:amount]
         return medias
 
-    async def location_medias_top_a1(
-        self, location_pk: int, amount: int = 9, sleep: float = 0.5
-    ) -> List[Media]:
+    async def location_medias_top_a1(self, location_pk: int, amount: int = 9, sleep: float = 0.5) -> List[Media]:
         """
         Get top medias for a location
 
@@ -431,13 +411,9 @@ class LocationMixin:
         List[Media]
             List of objects of Media
         """
-        return await self.location_medias_a1(
-            location_pk, amount, sleep=sleep, tab_key="edge_location_to_top_posts"
-        )
+        return await self.location_medias_a1(location_pk, amount, sleep=sleep, tab_key="edge_location_to_top_posts")
 
-    async def location_medias_top_v1(
-        self, location_pk: int, amount: int = 21
-    ) -> List[Media]:
+    async def location_medias_top_v1(self, location_pk: int, amount: int = 21) -> List[Media]:
         """
         Get top medias for a location
 
@@ -455,9 +431,7 @@ class LocationMixin:
         """
         return await self.location_medias_v1(location_pk, amount, tab_key="ranked")
 
-    async def location_medias_top(
-        self, location_pk: int, amount: int = 27, sleep: float = 0.5
-    ) -> List[Media]:
+    async def location_medias_top(self, location_pk: int, amount: int = 27, sleep: float = 0.5) -> List[Media]:
         """
         Get top medias for a location
 
@@ -484,9 +458,7 @@ class LocationMixin:
             #     self.logger.exception(e)
             return await self.location_medias_top_v1(location_pk, amount)
 
-    async def location_medias_recent_a1(
-        self, location_pk: int, amount: int = 24, sleep: float = 0.5
-    ) -> List[Media]:
+    async def location_medias_recent_a1(self, location_pk: int, amount: int = 24, sleep: float = 0.5) -> List[Media]:
         """
         Get recent medias for a location
 
@@ -504,13 +476,9 @@ class LocationMixin:
         List[Media]
             List of objects of Media
         """
-        return await self.location_medias_a1(
-            location_pk, amount, sleep=sleep, tab_key="edge_location_to_media"
-        )
+        return await self.location_medias_a1(location_pk, amount, sleep=sleep, tab_key="edge_location_to_media")
 
-    async def location_medias_recent_v1(
-        self, location_pk: int, amount: int = 63
-    ) -> List[Media]:
+    async def location_medias_recent_v1(self, location_pk: int, amount: int = 63) -> List[Media]:
         """
         Get recent medias for a location
 
@@ -528,9 +496,7 @@ class LocationMixin:
         """
         return await self.location_medias_v1(location_pk, amount, tab_key="recent")
 
-    async def location_medias_recent(
-        self, location_pk: int, amount: int = 63, sleep: float = 0.5
-    ) -> List[Media]:
+    async def location_medias_recent(self, location_pk: int, amount: int = 63, sleep: float = 0.5) -> List[Media]:
         """
         Get recent medias for a location
 

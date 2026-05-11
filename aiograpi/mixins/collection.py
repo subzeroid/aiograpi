@@ -78,9 +78,7 @@ class CollectionMixin:
 
         return await self.collection_medias(await self.collection_pk_by_name(name))
 
-    async def liked_medias(
-        self, amount: int = 21, last_media_pk: int = 0
-    ) -> List[Media]:
+    async def liked_medias(self, amount: int = 21, last_media_pk: int = 0) -> List[Media]:
         """
         Get media you have liked
 
@@ -97,9 +95,7 @@ class CollectionMixin:
         """
         return await self.collection_medias("liked", amount, last_media_pk)
 
-    async def collection_medias_v1_chunk(
-        self, collection_pk: str, max_id: str = ""
-    ) -> Tuple[List[Media], str]:
+    async def collection_medias_v1_chunk(self, collection_pk: str, max_id: str = "") -> Tuple[List[Media], str]:
         """
         Get media in a collection by collection_pk
 
@@ -129,9 +125,7 @@ class CollectionMixin:
         items = [extract_media_v1(m.get("media", m)) for m in result["items"]]
         return items, result.get("next_max_id", "") or result.get("max_id", "")
 
-    async def collection_medias_v1(
-        self, collection_pk: str, amount: int = 21, last_media_pk: int = 0
-    ) -> List[Media]:
+    async def collection_medias_v1(self, collection_pk: str, amount: int = 21, last_media_pk: int = 0) -> List[Media]:
         """
         Get media in a collection by collection_pk
 
@@ -156,9 +150,7 @@ class CollectionMixin:
         found_last_media_pk = False
         while True:
             try:
-                items, next_max_id = await self.collection_medias_v1_chunk(
-                    collection_pk, max_id=next_max_id
-                )
+                items, next_max_id = await self.collection_medias_v1_chunk(collection_pk, max_id=next_max_id)
             except PrivateError as e:
                 raise e
             except Exception as e:
@@ -175,9 +167,7 @@ class CollectionMixin:
                 break
         return total_items[:amount] if amount else total_items
 
-    async def collection_medias(
-        self, collection_pk: str, amount: int = 21, last_media_pk: int = 0
-    ) -> List[Media]:
+    async def collection_medias(self, collection_pk: str, amount: int = 21, last_media_pk: int = 0) -> List[Media]:
         """
         Get media in a collection by collection_pk
 
@@ -195,13 +185,9 @@ class CollectionMixin:
         List[Media]
             A list of objects of Media
         """
-        return await self.collection_medias_v1(
-            collection_pk, amount=amount, last_media_pk=last_media_pk
-        )
+        return await self.collection_medias_v1(collection_pk, amount=amount, last_media_pk=last_media_pk)
 
-    async def media_save(
-        self, media_id: str, collection_pk: int = None, revert: bool = False
-    ) -> bool:
+    async def media_save(self, media_id: str, collection_pk: int = None, revert: bool = False) -> bool:
         """
         Save a media to collection
 
@@ -229,9 +215,7 @@ class CollectionMixin:
         if collection_pk:
             data["added_collection_ids"] = f"[{int(collection_pk)}]"
         name = "unsave" if revert else "save"
-        result = await self.private_request(
-            f"media/{media_id}/{name}/", self.with_action_data(data)
-        )
+        result = await self.private_request(f"media/{media_id}/{name}/", self.with_action_data(data))
         return result["status"] == "ok"
 
     async def media_unsave(self, media_id: str, collection_pk: int = None) -> bool:

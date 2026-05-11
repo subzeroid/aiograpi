@@ -121,14 +121,9 @@ class AccountMixin:
             Raw response.
         """
         signed_body = {
-            "signed_body": "SIGNATURE."
-            + json.dumps(
-                {"_uid": self.user_id, "_uuid": self.uuid, "link_ids": link_ids}
-            )
+            "signed_body": "SIGNATURE." + json.dumps({"_uid": self.user_id, "_uuid": self.uuid, "link_ids": link_ids})
         }
-        return await self.private_request(
-            "accounts/remove_bio_links/", data=signed_body, with_signature=False
-        )
+        return await self.private_request("accounts/remove_bio_links/", data=signed_body, with_signature=False)
 
     async def set_external_url(self, external_url) -> dict:
         """
@@ -153,9 +148,7 @@ class AccountMixin:
         """
         data = dumps(
             {
-                "updated_links": dumps(
-                    [{"url": external_url, "title": "", "link_type": "external"}]
-                ),
+                "updated_links": dumps([{"url": external_url, "title": "", "link_type": "external"}]),
                 "_uid": self.user_id,
                 "_uuid": self.uuid,
             }
@@ -219,9 +212,7 @@ class AccountMixin:
             "can_add_additional_totp_seed": false
             }
         """
-        return await self.private_request(
-            "accounts/account_security_info/", self.with_default_data({})
-        )
+        return await self.private_request("accounts/account_security_info/", self.with_default_data({}))
 
     async def account_edit(self, **data: Dict) -> Account:
         """
@@ -262,9 +253,7 @@ class AccountMixin:
             # Instagram original field-name for full user name is "first_name"
             data["first_name"] = full_name
         # Biography with entities (markup)
-        result = await self.private_request(
-            "accounts/edit_profile/", self.with_default_data(data)
-        )
+        result = await self.private_request("accounts/edit_profile/", self.with_default_data(data))
         biography = data.get("biography")
         if biography:
             await self.account_set_biography(biography)
@@ -285,9 +274,7 @@ class AccountMixin:
             A boolean value
         """
         data = {"logged_in_uids": dumps([str(self.user_id)]), "raw_text": biography}
-        result = await self.private_request(
-            "accounts/set_biography/", self.with_default_data(data)
-        )
+        result = await self.private_request("accounts/set_biography/", self.with_default_data(data))
         return result["status"] == "ok"
 
     async def account_change_picture(self, path: Path) -> UserShort:
@@ -324,9 +311,7 @@ class AccountMixin:
         -------
         dict
         """
-        return await self.private_request(
-            "news/inbox/", params={"mark_as_seen": mark_as_seen}
-        )
+        return await self.private_request("news/inbox/", params={"mark_as_seen": mark_as_seen})
 
     async def send_confirm_email(self, email: str) -> dict:
         """
@@ -343,9 +328,7 @@ class AccountMixin:
         """
         return await self.private_request(
             "accounts/send_confirm_email/",
-            self.with_extra_data(
-                {"send_source": "personal_information", "email": email}
-            ),
+            self.with_extra_data({"send_source": "personal_information", "email": email}),
         )
 
     async def send_confirm_phone_number(self, phone_number: str) -> dict:

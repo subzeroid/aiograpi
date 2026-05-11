@@ -111,8 +111,7 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:
-          requirements: "true"
-          test-requirements: "true"
+          test: "true"
       - name: Publish versioned docs with `latest` alias
         uses: ./.github/actions/publish-docs-with-mike
         with:

@@ -10,6 +10,7 @@ nav:
   - Overview: index.md
   - Getting Started: getting-started.md
   - Migration Guide: migration.md
+  - Upstream Sync: upstream-sync.md
   - Usage Guide:
     - Fundamentals: usage-guide/fundamentals.md
     - Interactions: usage-guide/interactions.md
@@ -48,17 +49,18 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.superfences
 plugins:
+  - search
+  - autorefs
   - mkdocstrings:
       handlers:
         python:
           selection:
-            docstring_style: "restructured-text"
+            docstring_style: "sphinx"
           rendering:
             heading_level: 3
             show_root_heading: True
             show_source: False
             show_root_full_path: False
-  - mkdocstrings_patch_type_aliases
 
 extra:
   version:

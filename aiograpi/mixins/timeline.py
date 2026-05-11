@@ -26,9 +26,7 @@ class ReelsMixin:
         """
         return await self.reels_timeline_media("reels", amount, last_media_pk)
 
-    async def explore_reels(
-        self, amount: int = 10, last_media_pk: int = 0
-    ) -> List[Media]:
+    async def explore_reels(self, amount: int = 10, last_media_pk: int = 0) -> List[Media]:
         """
         Get discover reels media
 
@@ -45,9 +43,7 @@ class ReelsMixin:
         """
         return await self.reels_timeline_media("explore_reels", amount, last_media_pk)
 
-    async def reels_timeline_media(
-        self, collection_pk: str, amount: int = 10, last_media_pk: int = 0
-    ) -> List[Media]:
+    async def reels_timeline_media(self, collection_pk: str, amount: int = 10, last_media_pk: int = 0) -> List[Media]:
         """
         Get reels timeline media in a collection
 
@@ -71,9 +67,7 @@ class ReelsMixin:
             "explore_reels": "clips/discover/",
         }.get(collection_pk)
         if not private_request_endpoint:
-            self.logger.warning(
-                "Unsupported reels timeline collection: %r", collection_pk
-            )
+            self.logger.warning("Unsupported reels timeline collection: %r", collection_pk)
             return []
 
         last_media_pk = last_media_pk and int(last_media_pk)

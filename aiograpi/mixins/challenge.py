@@ -67,10 +67,7 @@ class ChallengeResolveMixin:
         for attempt in range(attempts):
             code = await self.challenge_code_handler(self.username, choice, **kwargs)
             if code:
-                print(
-                    f'Code entered "{code}" for {self.username} '
-                    f"({attempt} attempts by {wait_seconds} seconds)"
-                )
+                print(f'Code entered "{code}" for {self.username} ({attempt} attempts by {wait_seconds} seconds)')
                 return code
             if attempt == 0:
                 raise ChallengeRequired(
@@ -219,9 +216,7 @@ class ChallengeResolveMixin:
                     if choice == ChallengeChoice.SMS:  # last iteration
                         raise e
                     choice = ChallengeChoice.SMS
-                    result = await session.post(
-                        challenge_url, data={"choice": choice.value}
-                    )
+                    result = await session.post(challenge_url, data={"choice": choice.value})
                     result = result.json()
                     continue  # next choice attempt
                 except SubmitPhoneNumberForm as e:
@@ -241,10 +236,7 @@ class ChallengeResolveMixin:
                 "VerifySMSCodeForm",
                 "VerifySMSCodeFormForSMSCaptcha",
             ):
-                raise ChallengeError(
-                    "Unexpected contact-form challenge step after verification selection: "
-                    f"{result}"
-                )
+                raise ChallengeError(f"Unexpected contact-form challenge step after verification selection: {result}")
             for retry_code in range(5):
                 code = None
                 for attempt in range(1, 11):
@@ -261,32 +253,20 @@ class ChallengeResolveMixin:
                     raise ChallengeRequired(
                         "Challenge code required to continue contact-form verification. "
                         "Provide it via challenge_code_handler or retry after manual verification.",
-                        **{
-                            key: value
-                            for key, value in self.last_json.items()
-                            if key != "message"
-                        },
+                        **{key: value for key, value in self.last_json.items() if key != "message"},
                     )
                 # SEND CODE
                 await asyncio.sleep(WAIT_SECONDS)
-                result = (
-                    await session.post(challenge_url, data={"security_code": code})
-                ).json()
+                result = (await session.post(challenge_url, data={"security_code": code})).json()
                 result = result.get("challenge", result)
-                if (
-                    "Please check the code we sent you and try again"
-                    not in (result.get("errors") or [""])[0]
-                ):
+                if "Please check the code we sent you and try again" not in (result.get("errors") or [""])[0]:
                     break
             # FORM TO APPROVE CONTACT DATA
             challenge_type = result.get("challengeType")
             if challenge_type == "LegacyForceSetNewPasswordForm":
                 self.challenge_resolve_new_password_form(result)
             if result.get("challengeType") != "ReviewContactPointChangeForm":
-                raise ChallengeError(
-                    "Unexpected contact-form challenge step after security code "
-                    f"submission: {result}"
-                )
+                raise ChallengeError(f"Unexpected contact-form challenge step after security code submission: {result}")
             details = []
             extra_data = result.get("extraData") or {}
             content = extra_data.get("content") or []
@@ -301,15 +281,11 @@ class ChallengeResolveMixin:
             # CHECK ACCOUNT DATA
             for detail in [self.username, self.email, self.phone_number]:
                 if detail and detail not in details:
-                    raise ChallengeError(
-                        f'ChallengeResolve: Data invalid: "{detail}" not in {details}'
-                    )
+                    raise ChallengeError(f'ChallengeResolve: Data invalid: "{detail}" not in {details}')
             navigation = result.get("navigation") or {}
             forward = navigation.get("forward")
             if not forward:
-                raise ChallengeError(
-                    "Contact-form challenge response did not provide a forward navigation target."
-                )
+                raise ChallengeError("Contact-form challenge response did not provide a forward navigation target.")
             await asyncio.sleep(WAIT_SECONDS)
             result = (
                 await session.post(
@@ -323,14 +299,8 @@ class ChallengeResolveMixin:
                     },
                 )
             ).json()
-            if (
-                result.get("type") != "CHALLENGE_REDIRECTION"
-                or result.get("status") != "ok"
-            ):
-                raise ChallengeError(
-                    "Unexpected final response after contact-form approval: "
-                    f"{result}"
-                )
+            if result.get("type") != "CHALLENGE_REDIRECTION" or result.get("status") != "ok":
+                raise ChallengeError(f"Unexpected final response after contact-form approval: {result}")
             return True
         finally:
             await session._close()
@@ -370,9 +340,7 @@ class ChallengeResolveMixin:
             """
             challenge = challenge["challenge"]
             if not isinstance(challenge, dict):
-                raise ChallengeError(
-                    "Malformed nested challenge payload received from Instagram."
-                )
+                raise ChallengeError("Malformed nested challenge payload received from Instagram.")
         challenge_type = challenge.get("challengeType")
         if challenge_type == "SelectContactPointRecoveryForm":
             """
@@ -408,9 +376,7 @@ class ChallengeResolveMixin:
             if "errors" in challenge:
                 for error in challenge["errors"]:
                     messages.append(error)
-            raise SelectContactPointRecoveryForm(
-                " ".join(messages), challenge=challenge
-            )
+            raise SelectContactPointRecoveryForm(" ".join(messages), challenge=challenge)
         elif challenge_type == "RecaptchaChallengeForm":
             """
             Example:
@@ -512,14 +478,10 @@ class ChallengeResolveMixin:
                 challenge_url = challenge_url[1:]
                 if "email" in steps:
                     choice = ChallengeChoice.EMAIL
-                    await self._send_private_request(
-                        challenge_url, {"choice": str(choice.value)}
-                    )
+                    await self._send_private_request(challenge_url, {"choice": str(choice.value)})
                 elif "phone_number" in steps:
                     choice = ChallengeChoice.SMS
-                    await self._send_private_request(
-                        challenge_url, {"choice": str(choice.value)}
-                    )
+                    await self._send_private_request(challenge_url, {"choice": str(choice.value)})
                 else:
                     raise ChallengeError(
                         f'ChallengeResolve: Choice "email" or "phone_number" '
@@ -563,27 +525,15 @@ class ChallengeResolveMixin:
                 raise ChallengeRequired(
                     "Password change required. Provide a new password via "
                     "change_password_handler or complete the flow manually.",
-                    **{
-                        key: value
-                        for key, value in self.last_json.items()
-                        if key != "message"
-                    },
+                    **{key: value for key, value in self.last_json.items() if key != "message"},
                 )
-            print(
-                f'Password entered "{pwd}" for {self.username} ({attempt} attempts by {wait_seconds} seconds)'
-            )
-            return await self.bloks_change_password(
-                pwd, self.last_json["challenge_context"]
-            )
+            print(f'Password entered "{pwd}" for {self.username} ({attempt} attempts by {wait_seconds} seconds)')
+            return await self.bloks_change_password(pwd, self.last_json["challenge_context"])
         elif step_name == "ufac_www_bloks":
             raise ChallengeRequired(
                 "Manual verification required via Instagram UFAC web bloks checkpoint. "
                 "Please resolve it in the Instagram app or web flow and then retry.",
-                **{
-                    key: value
-                    for key, value in self.last_json.items()
-                    if key != "message"
-                },
+                **{key: value for key, value in self.last_json.items() if key != "message"},
             )
         elif step_name == "selfie_captcha":
             raise ChallengeSelfieCaptcha(self.last_json)
@@ -614,14 +564,10 @@ class ChallengeResolveMixin:
             choice = ChallengeChoice.EMAIL
             if "email" in steps:
                 choice = ChallengeChoice.EMAIL
-                await self._send_private_request(
-                    challenge_url, {"choice": str(choice.value)}
-                )
+                await self._send_private_request(challenge_url, {"choice": str(choice.value)})
             elif "phone_number" in steps:
                 choice = ChallengeChoice.SMS
-                await self._send_private_request(
-                    challenge_url, {"choice": str(choice.value)}
-                )
+                await self._send_private_request(challenge_url, {"choice": str(choice.value)})
             else:
                 raise ChallengeError(
                     f'ChallengeResolve: Choice "email" or "phone_number" (sms) '
@@ -643,8 +589,7 @@ class ChallengeResolveMixin:
             # last form to verify account details
             if self.last_json.get("step_name") != "review_contact_point_change":
                 raise ChallengeError(
-                    "Unexpected final challenge step after contact point recovery: "
-                    f"{self.last_json.get('step_name')}"
+                    f"Unexpected final challenge step after contact point recovery: {self.last_json.get('step_name')}"
                 )
 
             # details = self.last_json["step_data"]

@@ -79,15 +79,10 @@ def _safe_remote_get(url: str) -> httpx.Response:
     3. ``raise_for_status`` so 4xx/5xx surfaces clearly to the caller.
     """
     if not _is_safe_remote_url(url):
-        raise ValueError(
-            f"Refusing remote fetch from non-public or non-HTTP URL: {url!r}"
-        )
+        raise ValueError(f"Refusing remote fetch from non-public or non-HTTP URL: {url!r}")
     res = httpx.get(url, timeout=5, follow_redirects=False)
     if res.is_redirect:
-        raise ValueError(
-            f"Refusing redirect to {res.headers.get('location')!r} "
-            f"(remote fetch must be a single hop)"
-        )
+        raise ValueError(f"Refusing redirect to {res.headers.get('location')!r} (remote fetch must be a single hop)")
     res.raise_for_status()
     return res
 
@@ -105,32 +100,18 @@ def calc_resize(max_size, curr_size, min_size=(0, 0)):
     max_width, max_height = max_size or (0, 0)
     min_width, min_height = min_size or (0, 0)
 
-    if (max_width and min_width > max_width) or (
-        max_height and min_height > max_height
-    ):
+    if (max_width and min_width > max_width) or (max_height and min_height > max_height):
         raise ValueError("Invalid min / max sizes.")
 
     orig_width, orig_height = curr_size
-    if (
-        max_width
-        and max_height
-        and (orig_width > max_width or orig_height > max_height)
-    ):
-        resize_factor = min(
-            1.0 * max_width / orig_width, 1.0 * max_height / orig_height
-        )
+    if max_width and max_height and (orig_width > max_width or orig_height > max_height):
+        resize_factor = min(1.0 * max_width / orig_width, 1.0 * max_height / orig_height)
         new_width = int(resize_factor * orig_width)
         new_height = int(resize_factor * orig_height)
         return new_width, new_height
 
-    elif (
-        min_width
-        and min_height
-        and (orig_width < min_width or orig_height < min_height)
-    ):
-        resize_factor = max(
-            1.0 * min_width / orig_width, 1.0 * min_height / orig_height
-        )
+    elif min_width and min_height and (orig_width < min_width or orig_height < min_height):
+        resize_factor = max(1.0 * min_width / orig_width, 1.0 * min_height / orig_height)
         new_width = int(resize_factor * orig_width)
         new_height = int(resize_factor * orig_height)
         return new_width, new_height
@@ -279,9 +260,7 @@ def prepare_video(
 
     vid_is_modified = False  # flag to track if re-encoding can be skipped
 
-    temp_video_file = tempfile.NamedTemporaryFile(
-        prefix="ipae_", suffix=".mp4", delete=False
-    )
+    temp_video_file = tempfile.NamedTemporaryFile(prefix="ipae_", suffix=".mp4", delete=False)
 
     if is_remote(vid):
         # Download remote file (SSRF-hardened: blocks private nets,
@@ -308,9 +287,7 @@ def prepare_video(
     if aspect_ratios:
         crop_box = calc_crop(aspect_ratios, vidclip.size)
         if crop_box:
-            vidclip = crop(
-                vidclip, x1=crop_box[0], y1=crop_box[1], x2=crop_box[2], y2=crop_box[3]
-            )
+            vidclip = crop(vidclip, x1=crop_box[0], y1=crop_box[1], x2=crop_box[2], y2=crop_box[3])
             vid_is_modified = True
 
     if max_size or min_size:
@@ -319,9 +296,7 @@ def prepare_video(
             vidclip = resize(vidclip, newsize=new_size)
             vid_is_modified = True
 
-    temp_vid_output_file = tempfile.NamedTemporaryFile(
-        prefix="ipae_", suffix=".mp4", delete=False
-    )
+    temp_vid_output_file = tempfile.NamedTemporaryFile(prefix="ipae_", suffix=".mp4", delete=False)
     if vid_is_modified or not skip_reencoding:
         # write out
         vidclip.write_videofile(
@@ -342,9 +317,7 @@ def prepare_video(
         shutil.copyfile(temp_vid_output_file.name, save_path)
 
     # Temp thumbnail img filename
-    temp_thumbnail_file = tempfile.NamedTemporaryFile(
-        prefix="ipae_", suffix=".jpg", delete=False
-    )
+    temp_thumbnail_file = tempfile.NamedTemporaryFile(prefix="ipae_", suffix=".jpg", delete=False)
     vidclip.save_frame(temp_thumbnail_file.name, t=thumbnail_frame_ts)
 
     video_duration = vidclip.duration
@@ -378,15 +351,12 @@ if __name__ == "__main__":  # pragma: no cover
     args = parser.parse_args()
 
     if args.image:
-        photo_data, size = prepare_image(
-            args.image, max_size=(1000, 800), aspect_ratios=0.9
-        )
+        photo_data, size = prepare_image(args.image, max_size=(1000, 800), aspect_ratios=0.9)
         print("Image dimensions: {0:d}x{1:d}".format(size[0], size[1]))
 
     def print_vid_info(video_data, size, duration, thumbnail_data):
         print(
-            "vid file size: {0:d}, thumbnail file size: {1:d}, , "
-            "vid dimensions: {2:d}x{3:d}, duration: {4:f}".format(
+            "vid file size: {0:d}, thumbnail file size: {1:d}, , vid dimensions: {2:d}x{3:d}, duration: {4:f}".format(
                 len(video_data), len(thumbnail_data), size[0], size[1], duration
             )
         )
@@ -405,9 +375,7 @@ if __name__ == "__main__":  # pragma: no cover
         print_vid_info(video_data, size, duration, thumbnail_data)
 
         print("Example 3: Leave video intact and speed up retrieval")
-        video_data, size, duration, thumbnail_data = prepare_video(
-            args.video, max_size=None, skip_reencoding=True
-        )
+        video_data, size, duration, thumbnail_data = prepare_video(args.video, max_size=None, skip_reencoding=True)
         print_vid_info(video_data, size, duration, thumbnail_data)
 
     if args.videostory:

@@ -105,9 +105,7 @@ class PrivateRequestMixin:
         # MITM proxy, set self.private.verify = False AFTER construction.
         self.email = kwargs.pop("email", None)
         self.phone_number = kwargs.pop("phone_number", None)
-        self.request_timeout = kwargs.pop(
-            "request_timeout", getattr(self, "request_timeout", self.request_timeout)
-        )
+        self.request_timeout = kwargs.pop("request_timeout", getattr(self, "request_timeout", self.request_timeout))
         # Session retry config kept for API parity with instagrapi.
         # httpx_ext.Session does not expose urllib3-style HTTPAdapter
         # retries, so these values are stored but not actively wired into
@@ -168,12 +166,8 @@ class PrivateRequestMixin:
             "X-Pigeon-Session-Id": self.generate_uuid("UFS-", "-1"),
             "X-Pigeon-Rawclienttime": str(round(time.time(), 3)),
             # "X-IG-Connection-Speed": "-1kbps",
-            "X-IG-Bandwidth-Speed-KBPS": str(
-                random.randint(2500000, 3000000) / 1000
-            ),  # "-1.000"
-            "X-IG-Bandwidth-TotalBytes-B": str(
-                random.randint(5000000, 90000000)
-            ),  # "0"
+            "X-IG-Bandwidth-Speed-KBPS": str(random.randint(2500000, 3000000) / 1000),  # "-1.000"
+            "X-IG-Bandwidth-TotalBytes-B": str(random.randint(5000000, 90000000)),  # "0"
             "X-IG-Bandwidth-TotalTime-MS": str(random.randint(2000, 9000)),  # "0"
             # "X-IG-EU-DC-ENABLED": "true", # <- type of DC? Eu is euro, but we use US
             # "X-IG-Prefetch-Request": "foreground",  # OLD from instabot
@@ -204,10 +198,7 @@ class PrivateRequestMixin:
             "X-FB-Client-IP": "True",
             "X-FB-Server-Cluster": "True",
             "IG-INTENDED-USER-ID": str(self.user_id or 0),
-            "X-IG-Nav-Chain": (
-                "9MV:self_profile:2,ProfileMediaTabFragment:"
-                "self_profile:3,9Xf:self_following:4"
-            ),
+            "X-IG-Nav-Chain": ("9MV:self_profile:2,ProfileMediaTabFragment:self_profile:3,9Xf:self_following:4"),
             "X-IG-SALT-IDS": str(random.randint(1061162222, 1061262222)),
         }
         if self.user_id:
@@ -290,9 +281,7 @@ class PrivateRequestMixin:
         bool
             A boolean value
         """
-        user_agent = (self.settings.get("user_agent") or "").replace(
-            self.locale, locale
-        )
+        user_agent = (self.settings.get("user_agent") or "").replace(self.locale, locale)
         self.settings["locale"] = self.locale = str(locale)
         self.set_user_agent(user_agent)  # update locale in user_agent
         if "_" in locale:
@@ -361,9 +350,7 @@ class PrivateRequestMixin:
             if data:  # POST
                 # Client.direct_answer raw dict
                 # data = json.dumps(data)
-                self.private.headers["Content-Type"] = (
-                    "application/x-www-form-urlencoded; charset=UTF-8"
-                )
+                self.private.headers["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8"
                 if with_signature:
                     # Client.direct_answer doesn't need a signature
                     data = generate_signature(dumps(data))
@@ -398,16 +385,10 @@ class PrivateRequestMixin:
             self.request_log(response)
             self.last_response = response
             # hack for re-request without paging cursor if cursor is broken
-            if (
-                response.status_code == 500
-                and params
-                and (params.get("min_id") or params.get("max_id"))
-            ):
+            if response.status_code == 500 and params and (params.get("min_id") or params.get("max_id")):
                 params.pop("min_id", None)
                 params.pop("max_id", None)
-                self.logger.warning(
-                    "Resend request without cursor %r (%r)", endpoint, params
-                )
+                self.logger.warning("Resend request without cursor %r (%r)", endpoint, params)
                 return await self._send_private_request(
                     endpoint,
                     data=data,
@@ -422,8 +403,7 @@ class PrivateRequestMixin:
                 self.last_json = last_json = response.json()
             except orjson.JSONDecodeError:
                 rows = [
-                    orjson.loads(item if item.endswith('"}') else f'{item}"}}')
-                    for item in response_text.split('"}\n')
+                    orjson.loads(item if item.endswith('"}') else f'{item}"}}') for item in response_text.split('"}\n')
                 ]
                 self.last_json = last_json = {"stream_rows": rows}
             self.logger.debug("last_json %s", last_json)
@@ -435,17 +415,12 @@ class PrivateRequestMixin:
                     null_state.get("title"),
                     warning_message.get("body_text") or null_state.get("text"),
                 ]
-                raise HashtagPageWarning(
-                    ": ".join(d for d in details if d), response=response, **last_json
-                )
+                raise HashtagPageWarning(": ".join(d for d in details if d), response=response, **last_json)
             elif last_json.get("comments_disabled"):
                 raise CommentsDisabled(**last_json)
         except orjson.JSONDecodeError as e:
             self.logger.error(
-                (
-                    "Status %r: JSONDecodeError in private_request "
-                    "(user_id=%s, endpoint=%s) >>> %r"
-                ),
+                ("Status %r: JSONDecodeError in private_request (user_id=%s, endpoint=%s) >>> %r"),
                 response.headers,
                 self.user_id,
                 endpoint,
@@ -502,8 +477,7 @@ class PrivateRequestMixin:
                         last_json["message"] = "Two-factor authentication required"
                         if last_json.get("error_type") != "two_factor_required":
                             self.logger.info(
-                                "Changing error_type from %s to two_factor_required "
-                                "due to presence of two_factor_info",
+                                "Changing error_type from %s to two_factor_required due to presence of two_factor_info",
                                 last_json.get("error_type"),
                             )
                         last_json["error_type"] = "two_factor_required"
@@ -514,8 +488,7 @@ class PrivateRequestMixin:
                     raise FeedbackRequired(
                         **dict(
                             last_json,
-                            message="%s: %s"
-                            % (message, last_json.get("feedback_message")),
+                            message="%s: %s" % (message, last_json.get("feedback_message")),
                         )
                     )
                 elif message == "consent_required":
@@ -556,26 +529,19 @@ class PrivateRequestMixin:
                     raise InvalidMediaId(e, response=response, **last_json)
                 elif "comment is unavailable" in message.lower():
                     raise CommentUnavailable(e, response=response, **last_json)
-                elif (
-                    "Media is unavailable" in message
-                    or "Media not found or unavailable" in message
-                ):
+                elif "Media is unavailable" in message or "Media not found or unavailable" in message:
                     raise MediaUnavailable(e, response=response, **last_json)
                 elif "has been deleted" in message:
                     # Sorry, this photo has been deleted.
                     raise MediaUnavailable(e, response=response, **last_json)
-                elif (
-                    "unable to fetch followers" in message
-                    or "Error generating user info response" in message
-                ):
+                elif "unable to fetch followers" in message or "Error generating user info response" in message:
                     # returned when user not found
                     raise UserNotFound(e, response=response, **last_json)
                 elif "The username you entered" in message:
                     # The username you entered doesn't appear to belong to an account.
                     # Please check your username and try again.
                     last_json["message"] = (
-                        "Instagram has blocked your IP address, "
-                        "use a quality proxy provider (not free, not shared)"
+                        "Instagram has blocked your IP address, use a quality proxy provider (not free, not shared)"
                     )
                     raise ProxyAddressIsBlocked(**last_json)
                 elif error_type or message:
@@ -604,8 +570,7 @@ class PrivateRequestMixin:
                 # rather than confusingly retrying a "missing endpoint".
                 if response.content == b"Not Found":
                     self.logger.warning(
-                        "Status 404 with body 'Not Found' — likely a masked "
-                        "challenge on %s",
+                        "Status 404 with body 'Not Found' — likely a masked challenge on %s",
                         endpoint,
                     )
                     raise ChallengeRequired(**last_json)
@@ -693,9 +658,7 @@ class PrivateRequestMixin:
             self.private_requests_count += 1
             await self._send_private_request(endpoint, **kwargs)
         except ClientRequestTimeout:
-            self.logger.info(
-                "Wait 60 seconds and try one more time (ClientRequestTimeout)"
-            )
+            self.logger.info("Wait 60 seconds and try one more time (ClientRequestTimeout)")
             await asyncio.sleep(60)
             return await self._send_private_request(endpoint, **kwargs)
         # except BadPassword as e:

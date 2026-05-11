@@ -45,6 +45,8 @@ from aiograpi.mixins.video import DownloadVideoMixin, UploadVideoMixin
 # Used as fallback logger if another is not provided.
 DEFAULT_LOGGER = logging.getLogger("aiograpi")
 
+__upstream_instagrapi_version__ = "2.5.18"
+
 
 class Client(
     MultipleAccountsMixin,
@@ -110,9 +112,7 @@ class Client(
         if not dsn:
             self.public.proxy = self.private.proxy = self.graphql.proxy = None
             return False
-        assert isinstance(
-            dsn, str
-        ), f'Proxy must been string (URL), but now "{dsn}" ({type(dsn)})'
+        assert isinstance(dsn, str), f'Proxy must been string (URL), but now "{dsn}" ({type(dsn)})'
         self.proxy = dsn
         proxy_href = "{scheme}{href}".format(
             scheme="http://" if not urlparse(self.proxy).scheme else "",

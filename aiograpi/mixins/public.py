@@ -128,25 +128,15 @@ class PublicRequestMixin:
             headers=headers,
             return_json=return_json,
         )
-        retries_count = (
-            self.public_request_retries_count
-            if retries_count is None
-            else retries_count
-        )
-        retries_timeout = (
-            self.public_request_retries_timeout
-            if retries_timeout is None
-            else retries_timeout
-        )
+        retries_count = self.public_request_retries_count if retries_count is None else retries_count
+        retries_timeout = self.public_request_retries_timeout if retries_timeout is None else retries_timeout
         assert retries_count <= 10, "Retries count is too high"
         assert retries_timeout <= 600, "Retries timeout is too high"
         for iteration in range(retries_count):
             try:
                 if self.delay_range:
                     await random_delay(delay_range=self.delay_range)
-                return await self._send_public_request(
-                    url, update_headers=update_headers, **kwargs
-                )
+                return await self._send_public_request(url, update_headers=update_headers, **kwargs)
             except (
                 ClientLoginRequired,
                 ClientNotFoundError,
@@ -197,16 +187,10 @@ class PublicRequestMixin:
             await asyncio.sleep(1.0)
         try:
             if data is not None:
-                response = await self.public.post(
-                    url, data=data, params=params, headers=per_request_headers
-                )
+                response = await self.public.post(url, data=data, params=params, headers=per_request_headers)
             else:
-                response = await self.public.get(
-                    url, params=params, headers=per_request_headers
-                )
-            self.public_request_logger.debug(
-                "public_request %s: %s", response.status_code, response.url
-            )
+                response = await self.public.get(url, params=params, headers=per_request_headers)
+            self.public_request_logger.debug("public_request %s: %s", response.status_code, response.url)
             self.public_request_logger.info(
                 "[%s] [%s] %s %s",
                 self.public.proxy,
@@ -269,30 +253,20 @@ class PublicRequestMixin:
         finally:
             self.last_response_ts = time.time()
 
-    async def public_a1_request(
-        self, endpoint, data=None, params=None, headers=None, full=False
-    ):
+    async def public_a1_request(self, endpoint, data=None, params=None, headers=None, full=False):
         url = self.PUBLIC_API_URL + endpoint.lstrip("/")
         params = params or {}
         params |= {"__a": 1, "__d": "dis"}
-        response = await self.public_request(
-            url, data=data, params=params, headers=headers, return_json=True
-        )
+        response = await self.public_request(url, data=data, params=params, headers=headers, return_json=True)
         if full:
             return response
         return response.get("graphql") or response
 
-    async def public_a1_request_user_info_by_username(
-        self, username, data=None, params=None
-    ):
+    async def public_a1_request_user_info_by_username(self, username, data=None, params=None):
         params = params or {}
-        url = (
-            self.PUBLIC_API_URL + f"api/v1/users/web_profile_info/?username={username}"
-        )
+        url = self.PUBLIC_API_URL + f"api/v1/users/web_profile_info/?username={username}"
         headers = {"x-ig-app-id": "936619743392459"}
-        response = await self.public_request(
-            url, data=data, params=params, headers=headers, return_json=True
-        )
+        response = await self.public_request(url, data=data, params=params, headers=headers, return_json=True)
         return response.get("user") or response
 
     async def public_graphql_request(
@@ -337,9 +311,7 @@ class PublicRequestMixin:
                 summary = errors[0].get("summary") if errors else None
                 description = errors[0].get("description") if errors else None
                 raise ClientGraphqlError(
-                    "Missing 'data' in GraphQL response. Summary: '{}'. Description: '{}'".format(
-                        summary, description
-                    )
+                    "Missing 'data' in GraphQL response. Summary: '{}'. Description: '{}'".format(summary, description)
                 )
 
             return body_json["data"]
@@ -351,9 +323,7 @@ class PublicRequestMixin:
                 message = body_json.get("message", None)
             except orjson.JSONDecodeError:
                 pass
-            raise ClientGraphqlError(
-                "Error: '{}'. Message: '{}'".format(e, message), response=e.response
-            )
+            raise ClientGraphqlError("Error: '{}'. Message: '{}'".format(e, message), response=e.response)
 
     async def public_doc_id_graphql_request(
         self,
@@ -395,8 +365,7 @@ class PublicRequestMixin:
             "Accept-Language": "en-US,en;q=0.8",
             "Referer": referer or "https://www.instagram.com/",
             "User-Agent": (
-                "Instagram 273.0.0.16.70 (iPhone15,2; iOS 17_5_1; en_US; en-US; "
-                "scale=3.00; 1290x2796; 470085518)"
+                "Instagram 273.0.0.16.70 (iPhone15,2; iOS 17_5_1; en_US; en-US; scale=3.00; 1290x2796; 470085518)"
             ),
         }
         if headers:
@@ -413,8 +382,9 @@ class PublicRequestMixin:
             summary = errors[0].get("summary") if errors else None
             description = errors[0].get("description") if errors else None
             raise ClientGraphqlError(
-                "Missing 'data' in doc_id GraphQL response (doc_id={}). "
-                "Summary: '{}'. Description: '{}'".format(doc_id, summary, description),
+                "Missing 'data' in doc_id GraphQL response (doc_id={}). Summary: '{}'. Description: '{}'".format(
+                    doc_id, summary, description
+                ),
                 response=body_json,
             )
         return body_json["data"]
@@ -443,9 +413,7 @@ class ProfilePublicMixin:
         }
         if end_cursor:
             variables["after"] = end_cursor
-        data = await self.public_graphql_request(
-            variables, query_hash="1b84447a4d8b6d6d0426fefb34514485"
-        )
+        data = await self.public_graphql_request(variables, query_hash="1b84447a4d8b6d6d0426fefb34514485")
         return data["location"]
 
     async def profile_related_info(self, profile_id):
@@ -458,7 +426,5 @@ class ProfilePublicMixin:
             "include_highlight_reels": True,
             "include_related_profiles": True,
         }
-        data = await self.public_graphql_request(
-            variables, query_hash="e74d51c10ecc0fe6250a295b9bb9db74"
-        )
+        data = await self.public_graphql_request(variables, query_hash="e74d51c10ecc0fe6250a295b9bb9db74")
         return data["user"]

@@ -9,7 +9,7 @@ on:
   pull_request: {}
 
 env:
-  PYTHON_VERSION: "3.10.13"
+  PYTHON_VERSION: "3.13.5"
 
 jobs:
   bandit:
@@ -23,12 +23,12 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:
-          test-requirements: "true"
+          test: "true"
 
       - name: Run bandit
-        run: bandit --ini .bandit -r aiograpi
+        run: bandit -c pyproject.toml -r aiograpi
 
-  flake8:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -39,30 +39,12 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:
-          test-requirements: "true"
+          test: "true"
 
-      - name: Run flake8
+      - name: Run Ruff
         run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --statistics
-  isort:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - name: Install dependencies
-        uses: ./.github/actions/install-dependencies
-        with:
-          requirements: "true"
-          test-requirements: "true"
-
-      - name: Run isort
-        run: isort --check-only aiograpi
+          ruff check --output-format=github .
+          ruff format --check .
 
   mypy:
     # Mypy regression gate. Counts errors against .mypy-baseline and fails
@@ -78,8 +60,7 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:
-          requirements: "true"
-          test-requirements: "true"
+          test: "true"
       - name: Run mypy regression gate
         run: ./scripts/check-mypy-baseline.sh
 
@@ -99,8 +80,7 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:
-          requirements: "true"
-          test-requirements: "true"
+          test: "true"
       - name: Run regression tests
         # ~107 tests across all RegressionTestCase classes + a few
         # related ones. ~10 are individually @unittest.skip-ped with
@@ -126,7 +106,8 @@ jobs:
             tests.py::UploadRegressionTestCase \
             tests.py::SignUpTestCase \
             tests.py::NotificationMixinRegressionTestCase \
-            tests.py::ChapiPortedRegressionTestCase
+            tests.py::ChapiPortedRegressionTestCase \
+            tests/regression
 
   live-test:
     # Live IG tests via pooled accounts. Only on canonical-repo pushes
@@ -147,8 +128,7 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:
-          requirements: "true"
-          test-requirements: "true"
+          test: "true"
       - name: Run end-to-end smoke
         # Required: anonymous public_gql + login(TOTP) + private_v1 +
         # private_v2_gql + hashtag_info_v1 + user_medias_v1 +
@@ -181,8 +161,7 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:
-          requirements: "true"
-          test-requirements: "true"
+          test: "true"
 
       - name: Build Docs
         run: mkdocs build --strict
@@ -213,8 +192,7 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:
-          requirements: "true"
-          test-requirements: "true"
+          test: "true"
 
       - name: Push documentaiton changes
         uses: ./.github/actions/publish-docs-with-mike

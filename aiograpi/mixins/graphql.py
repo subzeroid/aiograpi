@@ -166,9 +166,7 @@ class GraphQLRequestMixin:
                     raise e
                 continue
 
-    async def _send_graphql_request(
-        self, data=None, params=None, headers=None, return_json=False
-    ):
+    async def _send_graphql_request(self, data=None, params=None, headers=None, return_json=False):
         self.last_graphql_response = None
         self.graphql_requests_count += 1
         if headers:
@@ -177,14 +175,10 @@ class GraphQLRequestMixin:
             await asyncio.sleep(1.0)
         try:
             if data is not None:
-                response = await self.graphql.post(
-                    GRAPHQL_API_URL, data=data, params=params
-                )
+                response = await self.graphql.post(GRAPHQL_API_URL, data=data, params=params)
             else:
                 response = await self.graphql.get(GRAPHQL_API_URL, params=params)
-            self.request_logger.debug(
-                "graphql_request %s: %s", response.status_code, response.url
-            )
+            self.request_logger.debug("graphql_request %s: %s", response.status_code, response.url)
             self.request_logger.info(
                 "GraphQL: [%s] [%s] %s %s",
                 self.graphql.proxy,
@@ -374,19 +368,13 @@ class GraphQLRequestMixin:
                 raise SentryBlock(e, response=response, **last_json)
             if "not authorized to view user" in message:
                 raise PrivateAccount(e, response=response, **last_json)
-            if (
-                "unable to fetch followers" in message
-                or "error generating user info response" in message
-            ):
+            if "unable to fetch followers" in message or "error generating user info response" in message:
                 raise UserNotFound(e, response=response, **last_json)
 
             # 404 with body b"Not Found" is a masked challenge on the
             # private mobile surface (mirrors private.py:598). Promote
             # before the generic 404 → ClientNotFoundError fallback.
-            if (
-                getattr(response, "status_code", None) == 404
-                and getattr(response, "content", None) == b"Not Found"
-            ):
+            if getattr(response, "status_code", None) == 404 and getattr(response, "content", None) == b"Not Found":
                 raise ChallengeRequired(**last_json)
 
             # HTTP-status fallback.
@@ -410,11 +398,7 @@ class GraphQLRequestMixin:
             # Streamed line-delimited JSON envelope (similar to
             # _send_private_request fallback for stream endpoints).
             text = response.text.strip()
-            rows = [
-                orjson.loads(item if item.endswith('"}') else f'{item}"}}')
-                for item in text.split('"}\n')
-                if item
-            ]
+            rows = [orjson.loads(item if item.endswith('"}') else f'{item}"}}') for item in text.split('"}\n') if item]
             body = {"stream_rows": rows}
         self.last_json = body
         return body

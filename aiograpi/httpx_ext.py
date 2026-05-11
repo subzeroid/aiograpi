@@ -59,14 +59,10 @@ SUPPORTED_DECODERS["zstd"] = ZstdDecoder
 DEFAULT_TIMEOUT = 45
 
 
-async def request(
-    method, url, proxy=None, verify=True, follow_redirects=True, **kwargs
-):
+async def request(method, url, proxy=None, verify=True, follow_redirects=True, **kwargs):
     if "timeout" not in kwargs:
         kwargs["timeout"] = DEFAULT_TIMEOUT
-    async with httpx.AsyncClient(
-        proxy=proxy, verify=verify, follow_redirects=follow_redirects
-    ) as client:
+    async with httpx.AsyncClient(proxy=proxy, verify=verify, follow_redirects=follow_redirects) as client:
         return await client.request(method, url, **kwargs)
 
 
@@ -102,9 +98,7 @@ class Session:
         self._set_client()
 
     def _set_client(self):
-        self._client = httpx.AsyncClient(
-            proxy=self._proxy, verify=self.verify, follow_redirects=True
-        )
+        self._client = httpx.AsyncClient(proxy=self._proxy, verify=self.verify, follow_redirects=True)
 
     async def __aenter__(self):
         return self

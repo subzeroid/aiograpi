@@ -43,9 +43,7 @@ class DownloadClipMixin:
         """
         return await self.video_download(media_pk, folder)
 
-    async def clip_download_by_url(
-        self, url: str, filename: str = "", folder: Path = ""
-    ) -> str:
+    async def clip_download_by_url(self, url: str, filename: str = "", folder: Path = "") -> str:
         """
         Download CLIP video using URL
 
@@ -115,9 +113,7 @@ class UploadClipMixin:
         thumbnail, width, height, duration = analyze_video(path, thumbnail)
         waterfall_id = str(uuid4())
         # upload_name example: '1576102477530_0_7823256191'
-        upload_name = "{upload_id}_0_{rand}".format(
-            upload_id=upload_id, rand=random.randint(1000000000, 9999999999)
-        )
+        upload_name = "{upload_id}_0_{rand}".format(upload_id=upload_id, rand=random.randint(1000000000, 9999999999))
         rupload_params = {
             "is_clips_video": "1",
             "retry_context": '{"num_reupload":0,"num_step_auto_retry":0,"num_step_manual_retry":0}',
@@ -135,9 +131,7 @@ class UploadClipMixin:
             "X-Entity-Type": "video/mp4",
         }
         response = await self.private.get(
-            "https://{domain}/rupload_igvideo/{name}".format(
-                domain=config.API_DOMAIN, name=upload_name
-            ),
+            "https://{domain}/rupload_igvideo/{name}".format(domain=config.API_DOMAIN, name=upload_name),
             headers=headers,
         )
         self.request_log(response)
@@ -155,9 +149,7 @@ class UploadClipMixin:
             **headers,
         }
         response = await self.private.post(
-            "https://{domain}/rupload_igvideo/{name}".format(
-                domain=config.API_DOMAIN, name=upload_name
-            ),
+            "https://{domain}/rupload_igvideo/{name}".format(domain=config.API_DOMAIN, name=upload_name),
             data=clip_data,
             headers=headers,
         )
@@ -289,9 +281,7 @@ class UploadClipMixin:
                 "alacorn_session_id": "null",
             }
             if getattr(track, "music_canonical_id", None):
-                data["clips_audio_metadata"]["song"][
-                    "music_canonical_id"
-                ] = track.music_canonical_id
+                data["clips_audio_metadata"]["song"]["music_canonical_id"] = track.music_canonical_id
                 data["music_params"]["music_canonical_id"] = track.music_canonical_id
             return await self.clip_upload(tmpvideo, caption, extra_data=data)
         finally:
@@ -347,9 +337,7 @@ class UploadClipMixin:
             A dictionary of response from the call
         """
         await self.photo_rupload(Path(thumbnail), upload_id, for_story=True)
-        usertags = [
-            {"user_id": tag.user.pk, "position": [tag.x, tag.y]} for tag in usertags
-        ]
+        usertags = [{"user_id": tag.user.pk, "position": [tag.x, tag.y]} for tag in usertags]
         data = {
             # "igtv_ads_toggled_on": "0",
             "filter_type": "0",

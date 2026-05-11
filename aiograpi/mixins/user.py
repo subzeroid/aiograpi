@@ -132,9 +132,7 @@ class UserMixin:
             "include_reel": True,
         }
         try:
-            data = await self.public_graphql_request(
-                variables, query_hash="ad99dd9d3646cc3c0dda65debcd266a7"
-            )
+            data = await self.public_graphql_request(variables, query_hash="ad99dd9d3646cc3c0dda65debcd266a7")
             if not data["user"]:
                 raise UserNotFound(user_id=user_id, **data)
             user = extract_user_short(data["user"]["reel"]["user"])
@@ -396,16 +394,12 @@ class UserMixin:
         """
         username = str(username).lower()
         self._inject_sessionid_for_v2_gql()
-        data = await self.public_doc_id_graphql_request(
-            "26347858941511777", {"hasQuery": True, "query": username}
-        )
+        data = await self.public_doc_id_graphql_request("26347858941511777", {"hasQuery": True, "query": username})
         # Defend against `{"xdt_api__v1__fbsearch__non_profiled_serp": null}` —
         # `.get(key, {})` returns the default ONLY when key is absent;
         # if the key is present with value `None`, the chained `.get` would
         # crash with AttributeError. Promote None → {} explicitly.
-        users = (
-            (data or {}).get("xdt_api__v1__fbsearch__non_profiled_serp") or {}
-        ).get("users") or []
+        users = ((data or {}).get("xdt_api__v1__fbsearch__non_profiled_serp") or {}).get("users") or []
         for user in users:
             if (user.get("username") or "").lower() == username:
                 return await self.user_info_v2_gql(user.get("pk") or user.get("id"))
@@ -506,9 +500,7 @@ class UserMixin:
         user_id = str(user_id)
         try:
             # GraphQL haven't method to receive user by id
-            return await self.user_info_by_username_gql(
-                await self.username_from_user_id_gql(user_id)
-            )
+            return await self.user_info_by_username_gql(await self.username_from_user_id_gql(user_id))
         except JSONDecodeError as e:
             raise ClientJSONDecodeError(e, user_id=user_id)
 
@@ -544,9 +536,7 @@ class UserMixin:
                 "from_module": from_module,
                 "is_app_start": is_app_start,
             }
-            assert (
-                from_module in INFO_FROM_MODULES
-            ), f'Unsupported send_attribute="{from_module}" {INFO_FROM_MODULES}'
+            assert from_module in INFO_FROM_MODULES, f'Unsupported send_attribute="{from_module}" {INFO_FROM_MODULES}'
             if from_module != "self_profile":
                 params["entry_point"] = "profile"
 
@@ -576,9 +566,7 @@ class UserMixin:
             An object of About type
         """
         user_id = str(user_id)
-        bk = dumps(
-            {"bloks_version": self.bloks_versioning_id, "styles_id": "instagram"}
-        )
+        bk = dumps({"bloks_version": self.bloks_versioning_id, "styles_id": "instagram"})
         data = {
             "referer_type": "ProfileMore",
             "target_user_id": user_id,
@@ -586,9 +574,7 @@ class UserMixin:
             "bloks_versioning_id": self.bloks_versioning_id,
         }
         try:
-            await self.bloks_action(
-                "com.instagram.interactions.about_this_account", data
-            )
+            await self.bloks_action("com.instagram.interactions.about_this_account", data)
         except ClientNotFoundError as e:
             raise UserNotFound(e, user_id=user_id, **self.last_json)
         except ClientError as e:
@@ -686,9 +672,7 @@ class UserMixin:
             params = {
                 "is_external_deeplink_profile_view": "false",
             }
-            result = await self.private_request(
-                f"friendships/show/{user_id}/", params=params
-            )
+            result = await self.private_request(f"friendships/show/{user_id}/", params=params)
             assert result.get("status", "") == "ok"
 
             return Relationship(user_id=user_id, **result)
@@ -710,9 +694,7 @@ class UserMixin:
         List[UserShort]
             List of users
         """
-        results = await self.private_request(
-            "users/search/", params={"query": query, "count": count}
-        )
+        results = await self.private_request("users/search/", params={"query": query, "count": count})
         users = results.get("users", [])
         return [extract_user_short(user) for user in users]
 
@@ -855,9 +837,7 @@ class UserMixin:
         while True:
             if end_cursor:
                 variables["after"] = end_cursor
-            data = await self.public_graphql_request(
-                variables, query_hash="58712303d941c6855d4e888c5f0cd22f"
-            )
+            data = await self.public_graphql_request(variables, query_hash="58712303d941c6855d4e888c5f0cd22f")
             if not data["user"] and not users:
                 raise UserNotFound(user_id=user_id, **data)
             page_info = json_value(data, "user", "edge_follow", "page_info", default={})
@@ -871,9 +851,7 @@ class UserMixin:
                 break
         return users, end_cursor
 
-    async def user_following_gql(
-        self, user_id: str, amount: int = 0
-    ) -> List[UserShort]:
+    async def user_following_gql(self, user_id: str, amount: int = 0) -> List[UserShort]:
         """
         Get user's following users information by Public Graphql API
 
@@ -962,9 +940,7 @@ class UserMixin:
             users = users[:amount]
         return users
 
-    async def user_following(
-        self, user_id: str, amount: int = 0
-    ) -> Dict[str, UserShort]:
+    async def user_following(self, user_id: str, amount: int = 0) -> Dict[str, UserShort]:
         """
         Get user's followers information
 
@@ -1019,14 +995,10 @@ class UserMixin:
         while True:
             if end_cursor:
                 variables["after"] = end_cursor
-            data = await self.public_graphql_request(
-                variables, query_hash="37479f2b8209594dde7facb0d904896a"
-            )
+            data = await self.public_graphql_request(variables, query_hash="37479f2b8209594dde7facb0d904896a")
             if not data["user"] and not users:
                 raise UserNotFound(user_id=user_id, **data)
-            page_info = json_value(
-                data, "user", "edge_followed_by", "page_info", default={}
-            )
+            page_info = json_value(data, "user", "edge_followed_by", "page_info", default={})
             edges = json_value(data, "user", "edge_followed_by", "edges", default=[])
             for edge in edges:
                 users.append(extract_user_short(edge["node"]))
@@ -1037,9 +1009,7 @@ class UserMixin:
                 break
         return users, end_cursor
 
-    async def user_followers_gql(
-        self, user_id: str, amount: int = 0
-    ) -> List[UserShort]:
+    async def user_followers_gql(self, user_id: str, amount: int = 0) -> List[UserShort]:
         """
         Get user's followers information by Public Graphql API
 
@@ -1128,9 +1098,7 @@ class UserMixin:
             users = users[:amount]
         return users
 
-    async def user_followers(
-        self, user_id: str, amount: int = 0
-    ) -> Dict[str, UserShort]:
+    async def user_followers(self, user_id: str, amount: int = 0) -> Dict[str, UserShort]:
         """
         Get user's followers
 
@@ -1285,9 +1253,7 @@ class UserMixin:
             raise PreLoginRequired
         user_id = str(user_id)
         data = self.with_action_data({"user_id": str(user_id)})
-        result = await self.private_request(
-            f"friendships/remove_follower/{user_id}/", data
-        )
+        result = await self.private_request(f"friendships/remove_follower/{user_id}/", data)
         if self.user_id in self._users_followers:
             self._users_followers[self.user_id].pop(user_id, None)
         return result["friendship_status"]["followed_by"] is False
@@ -1336,9 +1302,7 @@ class UserMixin:
         """
         return await self.mute_posts_from_follow(user_id, True)
 
-    async def mute_stories_from_follow(
-        self, user_id: str, revert: bool = False
-    ) -> bool:
+    async def mute_stories_from_follow(self, user_id: str, revert: bool = False) -> bool:
         """
         Mute stories from following user
 
@@ -1382,9 +1346,7 @@ class UserMixin:
         """
         return await self.mute_stories_from_follow(user_id, True)
 
-    async def enable_posts_notifications(
-        self, user_id: str, disable: bool = False
-    ) -> bool:
+    async def enable_posts_notifications(self, user_id: str, disable: bool = False) -> bool:
         """
         Enable post notifications of a user
 
@@ -1423,9 +1385,7 @@ class UserMixin:
         """
         return await self.enable_posts_notifications(user_id, True)
 
-    async def enable_videos_notifications(
-        self, user_id: str, revert: bool = False
-    ) -> bool:
+    async def enable_videos_notifications(self, user_id: str, revert: bool = False) -> bool:
         """
         Enable videos notifications of a user
 
@@ -1446,9 +1406,7 @@ class UserMixin:
         user_id = str(user_id)
         data = self.with_action_data({"user_id": user_id, "_uid": self.user_id})
         name = "unfavorite" if revert else "favorite"
-        result = await self.private_request(
-            f"friendships/{name}_for_igtv/{user_id}/", data
-        )
+        result = await self.private_request(f"friendships/{name}_for_igtv/{user_id}/", data)
         return result["status"] == "ok"
 
     async def disable_videos_notifications(self, user_id: str) -> bool:
@@ -1466,9 +1424,7 @@ class UserMixin:
         """
         return await self.enable_videos_notifications(user_id, True)
 
-    async def enable_reels_notifications(
-        self, user_id: str, revert: bool = False
-    ) -> bool:
+    async def enable_reels_notifications(self, user_id: str, revert: bool = False) -> bool:
         """
         Enable reels notifications of a user
 
@@ -1489,9 +1445,7 @@ class UserMixin:
         user_id = str(user_id)
         data = self.with_action_data({"user_id": user_id, "_uid": self.user_id})
         name = "unfavorite" if revert else "favorite"
-        result = await self.private_request(
-            f"friendships/{name}_for_clips/{user_id}/", data
-        )
+        result = await self.private_request(f"friendships/{name}_for_clips/{user_id}/", data)
         return result["status"] == "ok"
 
     async def disable_reels_notifications(self, user_id: str) -> bool:
@@ -1509,9 +1463,7 @@ class UserMixin:
         """
         return await self.enable_reels_notifications(user_id, True)
 
-    async def enable_stories_notifications(
-        self, user_id: str, revert: bool = False
-    ) -> bool:
+    async def enable_stories_notifications(self, user_id: str, revert: bool = False) -> bool:
         """
         Enable stories notifications of a user
 
@@ -1532,9 +1484,7 @@ class UserMixin:
         user_id = str(user_id)
         data = self.with_action_data({"user_id": user_id, "_uid": self.user_id})
         name = "unfavorite" if revert else "favorite"
-        result = await self.private_request(
-            f"friendships/{name}_for_stories/{user_id}/", data
-        )
+        result = await self.private_request(f"friendships/{name}_for_stories/{user_id}/", data)
         return result["status"] == "ok"
 
     async def disable_stories_notifications(self, user_id: str) -> bool:
@@ -1606,9 +1556,7 @@ class UserMixin:
         result = await self.private_request("friendships/set_besties/", data)
         return json_value(result, "friendship_statuses", user_id, "is_bestie") is False
 
-    async def creator_info(
-        self, user_id: str, entry_point: str = "direct_thread"
-    ) -> Tuple[UserShort, Dict]:
+    async def creator_info(self, user_id: str, entry_point: str = "direct_thread") -> Tuple[UserShort, Dict]:
         """
         Retrieves Creator's information
 
@@ -1677,9 +1625,7 @@ class UserMixin:
             "from_module": "feed_timeline",
         }
         try:
-            result = await self.private_request(
-                f"users/{username}/usernameinfo_stream/", data=data
-            )
+            result = await self.private_request(f"users/{username}/usernameinfo_stream/", data=data)
         except ClientNotFoundError as e:
             raise UserNotFound(e, username=username, **self.last_json)
         except ClientError as e:
@@ -1712,9 +1658,7 @@ class UserMixin:
             "from_module": "feed_timeline",
         }
         try:
-            result = await self.private_request(
-                f"users/{user_id}/info_stream/", data=data
-            )
+            result = await self.private_request(f"users/{user_id}/info_stream/", data=data)
         except (ClientNotFoundError, ClientError) as e:
             logger.exception(
                 "Client error user_stream_by_id_v1, exception: %r, user_id %r",
@@ -2215,17 +2159,11 @@ class UserMixin:
             "user_id": str(user_id),
             "include_chaining": True,
         }
-        data = await self.public_graphql_request(
-            variables, query_hash="ad99dd9d3646cc3c0dda65debcd266a7"
-        )
+        data = await self.public_graphql_request(variables, query_hash="ad99dd9d3646cc3c0dda65debcd266a7")
         if not data.get("user"):
             raise UserNotFound("User not found")
         edges = json_value(data, "user", "edge_chaining", "edges", default=[])
         res = [extract_user_short(e["node"]) for e in edges if "node" in e]
-        if (
-            not res
-            and getattr(self, "num_retry", None) is not None
-            and self.num_retry < 4
-        ):
+        if not res and getattr(self, "num_retry", None) is not None and self.num_retry < 4:
             raise RelatedProfileRequired
         return res

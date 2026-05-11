@@ -17,6 +17,4 @@ class FundraiserMixin:
         dict
         """
         user_id = str(user_id)
-        return await self.private_request(
-            f"fundraiser/{user_id}/standalone_fundraiser_info/"
-        )
+        return await self.private_request(f"fundraiser/{user_id}/standalone_fundraiser_info/")

@@ -120,9 +120,7 @@ class StoryMixin:
         self._stories_cache.pop(self.media_pk(media_id), None)
         return await self.media_delete(media_id)
 
-    async def users_stories_gql(
-        self, user_ids: List[str], amount: int = 0
-    ) -> List[UserShort]:
+    async def users_stories_gql(self, user_ids: List[str], amount: int = 0) -> List[UserShort]:
         """
         Get a user's stories (Public API)
 
@@ -202,9 +200,7 @@ class StoryMixin:
         List[Story]
             A list of objects of Story
         """
-        params = {
-            "supported_capabilities_new": json.dumps(config.SUPPORTED_CAPABILITIES)
-        }
+        params = {"supported_capabilities_new": json.dumps(config.SUPPORTED_CAPABILITIES)}
         user_id = str(user_id)
         resp = await self.private_request(f"feed/user/{user_id}/story/", params=params)
         reel = resp.get("reel") or {}
@@ -243,8 +239,7 @@ class StoryMixin:
                 if isinstance(e, ClientGraphqlError):
                     raise
                 raise ClientGraphqlError(
-                    "Anonymous story fetch failed via public API "
-                    "and private fallback requires login"
+                    "Anonymous story fetch failed via public API and private fallback requires login"
                 ) from e
             return await self.user_stories_v1(user_id, amount)
 
@@ -267,9 +262,7 @@ class StoryMixin:
             [(await self.media_id(mid)) for mid in skipped_story_pks],
         )
 
-    async def story_download(
-        self, story_pk: str, filename: str = "", folder: Path = ""
-    ) -> Path:
+    async def story_download(self, story_pk: str, filename: str = "", folder: Path = "") -> Path:
         """
         Download story media by media_type
 
@@ -287,9 +280,7 @@ class StoryMixin:
         url = str(story.thumbnail_url if story.media_type == 1 else story.video_url)
         return await self.story_download_by_url(url, filename, folder)
 
-    async def story_download_by_url(
-        self, url: str, filename: str = "", folder: Path = ""
-    ) -> Path:
+    async def story_download_by_url(self, url: str, filename: str = "", folder: Path = "") -> Path:
         """
         Download story media using URL
 
@@ -351,16 +342,12 @@ class StoryMixin:
         unique_set: set = set()
         viewers: List[Viewer] = []
         story_pk = self.media_pk(story_pk)
-        params = {
-            "supported_capabilities_new": json.dumps(config.SUPPORTED_CAPABILITIES)
-        }
+        params = {"supported_capabilities_new": json.dumps(config.SUPPORTED_CAPABILITIES)}
 
         while True:
             if max_id:
                 params["max_id"] = max_id
-            result = await self.private_request(
-                f"media/{story_pk}/list_reel_media_viewer/", params=params
-            )
+            result = await self.private_request(f"media/{story_pk}/list_reel_media_viewer/", params=params)
             for item in result["viewers"]:
                 viewer = extract_viewer(item)
                 if viewer.pk in unique_set:
@@ -421,9 +408,7 @@ class StoryMixin:
             "container_module": "reel_feed_timeline",
         }
         name = "unsend" if revert else "send"
-        result = await self.private_request(
-            f"story_interactions/{name}_story_like", self.with_action_data(data)
-        )
+        result = await self.private_request(f"story_interactions/{name}_story_like", self.with_action_data(data))
         return result["status"] == "ok"
 
     async def story_unlike(self, story_id: str) -> bool:

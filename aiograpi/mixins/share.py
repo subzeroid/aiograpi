@@ -24,12 +24,7 @@ class ShareMixin:
             code = code.encode()
         # ignore example from instagram: b'highli\xb1\xdb\x1dght:17988089629383770'
         try:
-            data = (
-                base64.b64decode(code)
-                .decode(errors="ignore")
-                .replace("\x1d", "")
-                .split(":")
-            )
+            data = base64.b64decode(code).decode(errors="ignore").replace("\x1d", "").split(":")
         except Exception as e:
             raise ShareDecodeError(e)
         return Share(type=data[0], pk=data[1])

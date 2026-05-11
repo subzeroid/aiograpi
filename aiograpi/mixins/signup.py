@@ -51,40 +51,27 @@ class SignUpMixin:
         if email:
             check = await self.check_email(email)
             if not check.get("valid"):
-                raise EmailInvalidError(
-                    f"Email not valid: {check.get('error_title', check)}"
-                )
+                raise EmailInvalidError(f"Email not valid: {check.get('error_title', check)}")
             if not check.get("available"):
-                raise EmailNotAvailableError(
-                    f"Email not available: {check.get('feedback_message', check)}"
-                )
+                raise EmailNotAvailableError(f"Email not available: {check.get('feedback_message', check)}")
             sent = await self.send_verify_email(email)
             if not sent.get("email_sent"):
-                raise EmailVerificationSendError(
-                    f"Failed to send verification email: {sent}"
-                )
+                raise EmailVerificationSendError(f"Failed to send verification email: {sent}")
 
             # Date of Birth (DOB) Age Eligibility Check
             if year and month and day:
                 age_check_result = await self.check_age_eligibility(year, month, day)
                 if not age_check_result.get("eligible"):
-                    raise AgeEligibilityError(
-                        f"Account not eligible based on age criteria: {age_check_result}"
-                    )
+                    raise AgeEligibilityError(f"Account not eligible based on age criteria: {age_check_result}")
 
             # send code confirmation
             code = ""
             for attempt in range(1, 11):
-                code = await self.challenge_code_handler(
-                    username, ChallengeChoice.EMAIL
-                )
+                code = await self.challenge_code_handler(username, ChallengeChoice.EMAIL)
                 if code:
                     break
                 await asyncio.sleep(self.wait_seconds * attempt)
-            print(
-                f'Enter code "{code}" for {username} '
-                f"({attempt} attempts, by {self.wait_seconds} seconds)"
-            )
+            print(f'Enter code "{code}" for {username} ({attempt} attempts, by {self.wait_seconds} seconds)')
             confirmation_result = await self.check_confirmation_code(email, code)
             kwargs["email"] = email
             kwargs["email_code"] = confirmation_result.get("signup_code")
@@ -102,16 +89,11 @@ class SignUpMixin:
                 code = sms["verification_code"]
             else:
                 for attempt in range(1, 11):
-                    code = await self.challenge_code_handler(
-                        username, ChallengeChoice.SMS
-                    )
+                    code = await self.challenge_code_handler(username, ChallengeChoice.SMS)
                     if code:
                         break
                     await asyncio.sleep(self.wait_seconds * attempt)
-            print(
-                f'Enter code "{code}" for {username} '
-                f"({attempt} attempts, by {self.wait_seconds} seconds)"
-            )
+            print(f'Enter code "{code}" for {username} ({attempt} attempts, by {self.wait_seconds} seconds)')
             kwargs["phone_code"] = code
 
         retries = 0
@@ -124,18 +106,14 @@ class SignUpMixin:
             if await self.challenge_flow(data["challenge"]):
                 kwargs.update({"suggestedUsername": "", "sn_result": "MLA"})
             retries += 1
-        self.authorization_data = self.parse_authorization(
-            self.last_response.headers.get("ig-set-authorization")
-        )
+        self.authorization_data = self.parse_authorization(self.last_response.headers.get("ig-set-authorization"))
         try:
             return extract_user_short(data["created_user"])
         except Exception as e:
             print(f"ERROR: {e}", data)
 
     async def check_username(self, username):
-        return await self.private_request(
-            "users/check_username/", data={"username": username, "_uuid": self.uuid}
-        )
+        return await self.private_request("users/check_username/", data={"username": username, "_uuid": self.uuid})
 
     async def get_signup_config(self) -> dict:
         return await self.private_request(
@@ -254,9 +232,7 @@ class SignUpMixin:
                 data,
                 **{
                     "phone_number": phone_number,
-                    "is_secondary_account_creation": (
-                        "true" if data.get("logged_in_user_id") else "false"
-                    ),
+                    "is_secondary_account_creation": ("true" if data.get("logged_in_user_id") else "false"),
                     "verification_code": phone_code,
                     "force_sign_up_code": "",
                     "has_sms_consent": "true",
@@ -297,9 +273,7 @@ class SignUpMixin:
             self.logger.error(
                 f"Malformed captcha challenge data from Instagram: site_key={site_key}, api_path={api_path}"
             )
-            raise ClientError(
-                "Malformed captcha challenge data from Instagram (missing site_key or api_path)."
-            )
+            raise ClientError("Malformed captcha challenge data from Instagram (missing site_key or api_path).")
 
         challenge_post_url = f"https://i.instagram.com{api_path}"
         captcha_details_for_solver = {
@@ -310,9 +284,7 @@ class SignUpMixin:
         }
 
         try:
-            g_recaptcha_response = await self.captcha_resolve(
-                **captcha_details_for_solver
-            )
+            g_recaptcha_response = await self.captcha_resolve(**captcha_details_for_solver)
         except CaptchaChallengeRequired:
             self.logger.warning(
                 "Captcha solution was required by Instagram but not provided/resolved by any configured handler."

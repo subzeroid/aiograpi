@@ -6,22 +6,16 @@ import random
 import tempfile
 import types
 import unittest
-from unittest import mock
-from unittest.mock import AsyncMock, Mock
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 from pathlib import Path
+from unittest import mock
+from unittest.mock import AsyncMock, Mock
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import ValidationError
 
 from aiograpi import Client
-from aiograpi.extractors import (
-    extract_direct_message,
-    extract_direct_thread,
-    extract_resource_v1,
-    extract_story_v1,
-)
 from aiograpi.exceptions import (
     AlbumConfigureError,
     BadCredentials,
@@ -29,17 +23,17 @@ from aiograpi.exceptions import (
     ChallengeRedirection,
     ChallengeRequired,
     ChallengeUnknownStep,
-    ClipConfigureError,
     ClientConnectionError,
     ClientGraphqlError,
-    ClientUnauthorizedError,
     ClientThrottledError,
+    ClientUnauthorizedError,
+    ClipConfigureError,
     DirectThreadNotFound,
     IGTVConfigureError,
     InvalidTargetUser,
-    PleaseWaitFewMinutes,
     PhotoConfigureError,
     PhotoConfigureStoryError,
+    PleaseWaitFewMinutes,
     PrivateError,
     RecaptchaChallengeForm,
     ReloginAttemptExceeded,
@@ -50,6 +44,12 @@ from aiograpi.exceptions import (
     UserNotFound,
     VideoConfigureError,
     VideoConfigureStoryError,
+)
+from aiograpi.extractors import (
+    extract_direct_message,
+    extract_direct_thread,
+    extract_resource_v1,
+    extract_story_v1,
 )
 from aiograpi.mixins.user import UserMixin
 from aiograpi.story import StoryBuilder
@@ -178,8 +178,8 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
         return str(info.pk)
 
     async def fresh_account(self):
-        import urllib.request
         import ssl
+        import urllib.request
 
         ctx = ssl._create_unverified_context()
         req = urllib.request.Request(
@@ -208,10 +208,7 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
                 await cl.login(**login_kwargs)
             except Exception as exc:
                 last_exc = exc
-                print(
-                    f"Fresh account attempt {attempt} failed for {acc['username']}: "
-                    f"{exc.__class__.__name__} {exc}"
-                )
+                print(f"Fresh account attempt {attempt} failed for {acc['username']}: {exc.__class__.__name__} {exc}")
                 continue
             cl._user_id = acc.get("user_id")
             return cl
@@ -227,16 +224,12 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
         settings = {}
         try:
             st = os.stat(filename)
-            if datetime.fromtimestamp(st.st_mtime) > (
-                datetime.now() - timedelta(seconds=3600)
-            ):
+            if datetime.fromtimestamp(st.st_mtime) > (datetime.now() - timedelta(seconds=3600)):
                 settings = self.cl.load_settings(filename)
         except FileNotFoundError:
             pass
         except JSONDecodeError as e:
-            logger.info(
-                "JSONDecodeError when read stored client settings. Use empty settings"
-            )
+            logger.info("JSONDecodeError when read stored client settings. Use empty settings")
             logger.exception(e)
         self.cl.set_settings(settings)
         self.cl.request_timeout = 1
@@ -261,9 +254,7 @@ class ClientPublicTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(obj[key], value)
 
     async def test_media_info_gql(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/BVDOOolFFxg/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/BVDOOolFFxg/")
         m = await self.cl.media_info_gql(media_pk)
         self.assertIsInstance(m, Media)
         media = {
@@ -291,9 +282,7 @@ class ClientPublicTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
 
 class ExtractorsRegressionTestCase(unittest.TestCase):
     def test_extract_resource_v1_handles_empty_candidates(self):
-        resource = extract_resource_v1(
-            {"pk": "1", "media_type": 1, "image_versions2": {"candidates": []}}
-        )
+        resource = extract_resource_v1({"pk": "1", "media_type": 1, "image_versions2": {"candidates": []}})
         self.assertIsNone(resource.thumbnail_url)
         self.assertEqual(resource.pk, "1")
 
@@ -317,9 +306,7 @@ class ImageUtilSafeRemoteFetchTestCase(unittest.TestCase):
     def test_blocks_aws_metadata_endpoint(self):
         from aiograpi.image_util import _is_safe_remote_url
 
-        self.assertFalse(
-            _is_safe_remote_url("http://169.254.169.254/latest/meta-data/")
-        )
+        self.assertFalse(_is_safe_remote_url("http://169.254.169.254/latest/meta-data/"))
 
     def test_blocks_rfc1918_ipv4_ranges(self):
         from aiograpi.image_util import _is_safe_remote_url
@@ -389,9 +376,7 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         response.raise_for_status.return_value = None
         response.text = ""
 
-        with mock.patch.object(
-            client.public, "post", new=AsyncMock(return_value=response)
-        ) as post:
+        with mock.patch.object(client.public, "post", new=AsyncMock(return_value=response)) as post:
             body = await client.public_request(
                 "https://www.instagram.com/api/graphql",
                 data={"doc_id": "1"},
@@ -429,9 +414,7 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_user_stories_anonymous_does_not_fallback_to_private(self):
         client = Client()
 
-        client.user_stories_gql = AsyncMock(
-            side_effect=ClientGraphqlError("Incorrect Query")
-        )
+        client.user_stories_gql = AsyncMock(side_effect=ClientGraphqlError("Incorrect Query"))
         client.user_stories_v1 = AsyncMock()
         with self.assertRaises(ClientGraphqlError) as cm:
             await client.user_stories("4776134209", amount=5)
@@ -527,9 +510,7 @@ class PolarisProfileNormalizationTestCase(unittest.TestCase):
 
     def test_friendship_status_flattened(self):
         client = Client()
-        out = client._normalize_polaris_profile(
-            {"friendship_status": {"following": True, "followed_by": False}}
-        )
+        out = client._normalize_polaris_profile({"friendship_status": {"following": True, "followed_by": False}})
         self.assertTrue(out["followed_by_viewer"])
         self.assertFalse(out["follows_viewer"])
 
@@ -607,9 +588,7 @@ class CaptchaHandlerMixinRegressionTestCase(unittest.TestCase):
 
     def test_handler_can_propagate_captcha_required(self):
         def explicit_raise(details):
-            raise self.CaptchaChallengeRequired(
-                message="manual reject", challenge_details=details
-            )
+            raise self.CaptchaChallengeRequired(message="manual reject", challenge_details=details)
 
         self.client.set_captcha_handler(explicit_raise)
         with self.assertRaises(self.CaptchaChallengeRequired) as cm:
@@ -679,9 +658,7 @@ class LocationMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_location_search_pk_returns_exact_match(self):
         client = Client()
-        client.location_info = AsyncMock(
-            side_effect=lambda pk: Location(pk=str(pk), name="Choroni")
-        )
+        client.location_info = AsyncMock(side_effect=lambda pk: Location(pk=str(pk), name="Choroni"))
         client.top_search = AsyncMock(
             return_value={
                 "places": [
@@ -739,9 +716,7 @@ class ChallengeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         client.challenge_code_handler = code_handler
 
-        with mock.patch(
-            "aiograpi.mixins.challenge.asyncio.sleep", new=AsyncMock()
-        ) as sleep:
+        with mock.patch("aiograpi.mixins.challenge.asyncio.sleep", new=AsyncMock()) as sleep:
             with self.assertRaises(ChallengeRequired) as cm:
                 await client.challenge_resolve_simple("challenge/test/")
 
@@ -790,14 +765,10 @@ class ChallengeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             "challenge/12345/nonce-code/",
         )
         self.assertEqual(
-            client._send_private_request.call_args.kwargs["params"][
-                "challenge_context"
-            ],
+            client._send_private_request.call_args.kwargs["params"]["challenge_context"],
             '{"step_name": "", "nonce_code": "nonce-code", "user_id": 12345, "is_stateless": false}',
         )
-        client.challenge_resolve_simple.assert_called_once_with(
-            "/challenge/12345/nonce-code/"
-        )
+        client.challenge_resolve_simple.assert_called_once_with("/challenge/12345/nonce-code/")
 
     async def test_challenge_resolve_falls_back_to_contact_form(self):
         client = Client()
@@ -813,9 +784,7 @@ class ChallengeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         result = await client.challenge_resolve(last_json)
 
         self.assertTrue(result)
-        client.challenge_resolve_contact_form.assert_called_once_with(
-            "/challenge/test/"
-        )
+        client.challenge_resolve_contact_form.assert_called_once_with("/challenge/test/")
 
     @unittest.skip(_CONTACT_FORM_SKIP_REASON)
     def test_challenge_resolve_contact_form_posts_numeric_email_choice(self):
@@ -842,9 +811,7 @@ class ChallengeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         challenge = {
             "challengeType": "SelectContactPointRecoveryForm",
             "errors": ["Need recovery"],
-            "extraData": {
-                "content": [{"title": "Help us confirm you own this account"}]
-            },
+            "extraData": {"content": [{"title": "Help us confirm you own this account"}]},
         }
 
         with self.assertRaises(SelectContactPointRecoveryForm) as cm:
@@ -889,9 +856,7 @@ class ChallengeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ChallengeError) as cm:
             client.handle_challenge_result(challenge)
 
-        self.assertIn(
-            "Unsupported challenge type: SomeNewChallengeForm", str(cm.exception)
-        )
+        self.assertIn("Unsupported challenge type: SomeNewChallengeForm", str(cm.exception))
         self.assertIn("Need manual action", str(cm.exception))
 
     async def test_challenge_resolve_simple_select_verify_method_uses_sms_choice_for_code(
@@ -910,16 +875,10 @@ class ChallengeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         result = await client.challenge_resolve_simple("/challenge/test/")
 
         self.assertTrue(result)
-        self.assertEqual(
-            client._send_private_request.call_args_list[0].args[1]["choice"], "0"
-        )
+        self.assertEqual(client._send_private_request.call_args_list[0].args[1]["choice"], "0")
         self.assertEqual(client.challenge_code_or_raised.call_args.args[0].name, "SMS")
-        self.assertEqual(
-            client.challenge_code_or_raised.call_args.kwargs["wait_seconds"], 5
-        )
-        self.assertEqual(
-            client.challenge_code_or_raised.call_args.kwargs["attempts"], 24
-        )
+        self.assertEqual(client.challenge_code_or_raised.call_args.kwargs["wait_seconds"], 5)
+        self.assertEqual(client.challenge_code_or_raised.call_args.kwargs["attempts"], 24)
 
     async def test_challenge_resolve_simple_select_contact_point_recovery_uses_sms_choice_for_code(
         self,
@@ -937,9 +896,7 @@ class ChallengeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         result = await client.challenge_resolve_simple("/challenge/test/")
 
         self.assertTrue(result)
-        self.assertEqual(
-            client._send_private_request.call_args_list[0].args[1]["choice"], "0"
-        )
+        self.assertEqual(client._send_private_request.call_args_list[0].args[1]["choice"], "0")
         self.assertEqual(client.challenge_code_or_raised.call_args.args[0].name, "SMS")
 
     async def test_challenge_resolve_simple_unknown_step_raises_clear_error(self):
@@ -1109,9 +1066,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.username = "example"
         client.password = "password"
         client.pre_login_flow = AsyncMock(return_value=True)
-        client.private_request = AsyncMock(
-            side_effect=TwoFactorRequired("Two-factor authentication required")
-        )
+        client.private_request = AsyncMock(side_effect=TwoFactorRequired("Two-factor authentication required"))
         client.password_encrypt = AsyncMock(return_value="enc-password")
 
         with self.assertRaises(TwoFactorRequired) as cm:
@@ -1128,9 +1083,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.phone_id = "phone-1"
         client.android_device_id = "android-1"
         client._token = "csrftoken"
-        client.last_json = {
-            "two_factor_info": {"two_factor_identifier": "two-factor-id"}
-        }
+        client.last_json = {"two_factor_info": {"two_factor_identifier": "two-factor-id"}}
         client.last_response = Mock(headers={"ig-set-authorization": "Bearer second"})
         client.parse_authorization = Mock(return_value={"sessionid": "abc"})
         client.pre_login_flow = AsyncMock(return_value=True)
@@ -1165,9 +1118,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.phone_id = "phone-1"
         client.android_device_id = "android-1"
         client._token = "csrftoken"
-        client.last_json = {
-            "two_factor_info": {"two_factor_identifier": "two-factor-id"}
-        }
+        client.last_json = {"two_factor_info": {"two_factor_identifier": "two-factor-id"}}
         client.pre_login_flow = AsyncMock(return_value=True)
         client.password_encrypt = AsyncMock(return_value="enc-password")
         client.private_request = AsyncMock(
@@ -1187,9 +1138,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client = Client()
         sessionid = "1234567890123456789012345678901%3Atoken"
         client.user_info_v1 = AsyncMock(side_effect=PrivateError("boom"))
-        client.user_short_gql = AsyncMock(
-            return_value=UserShort(pk="1234567890123456789", username="example")
-        )
+        client.user_short_gql = AsyncMock(return_value=UserShort(pk="1234567890123456789", username="example"))
 
         result = await client.login_by_sessionid(sessionid)
 
@@ -1231,12 +1180,8 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     ):
         client = Client()
         sessionid = "1234567890123456789012345678901%3Atoken"
-        client.user_info_v1 = AsyncMock(
-            side_effect=ValidationError.from_exception_data("User", [])
-        )
-        client.user_short_gql = AsyncMock(
-            return_value=UserShort(pk="1234567890123456789", username="example")
-        )
+        client.user_info_v1 = AsyncMock(side_effect=ValidationError.from_exception_data("User", []))
+        client.user_short_gql = AsyncMock(return_value=UserShort(pk="1234567890123456789", username="example"))
 
         result = await client.login_by_sessionid(sessionid)
 
@@ -1280,9 +1225,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.authorization_data = {"ds_user_id": "123"}
         expected = [Mock(spec=Story)]
 
-        client.user_stories_gql = AsyncMock(
-            side_effect=ClientGraphqlError("Incorrect Query")
-        )
+        client.user_stories_gql = AsyncMock(side_effect=ClientGraphqlError("Incorrect Query"))
         client.user_stories_v1 = AsyncMock(return_value=expected)
 
         result = await client.user_stories("4776134209", amount=5)
@@ -1301,9 +1244,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
     def test_init_clears_stale_private_cookies_when_settings_have_no_cookies(self):
         client = Client()
-        client.private.set_cookies(
-            {"sessionid": "stale-session", "ds_user_id": "12345"}
-        )
+        client.private.set_cookies({"sessionid": "stale-session", "ds_user_id": "12345"})
         client.set_settings({})
 
         self.assertEqual(client.private.cookies_dict(), {})
@@ -1380,9 +1321,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
     def test_parse_authorization_decodes_valid_bearer_header(self):
         client = Client()
-        authorization = (
-            "Bearer IGT:2:eyJzZXNzaW9uaWQiOiAiYWJjIiwgImRzX3VzZXJfaWQiOiAiMTIzIn0="
-        )
+        authorization = "Bearer IGT:2:eyJzZXNzaW9uaWQiOiAiYWJjIiwgImRzX3VzZXJfaWQiOiAiMTIzIn0="
 
         result = client.parse_authorization(authorization)
 
@@ -1521,9 +1460,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     ):
         from aiograpi.mixins.private import PrivateRequestMixin
 
-        result = PrivateRequestMixin.with_query_params(
-            {"foo": "bar"}, {"target_id": "1", "next_max_id": "abc"}
-        )
+        result = PrivateRequestMixin.with_query_params({"foo": "bar"}, {"target_id": "1", "next_max_id": "abc"})
         self.assertEqual(result["foo"], "bar")
         # Compact JSON: no spaces between separators.
         self.assertIn("query_params", result)
@@ -1667,23 +1604,17 @@ class ClientTestCase(unittest.IsolatedAsyncioTestCase):
         cl.set_settings(settings)  # load source settings
         check("UK", "en_US", 3600)
         self.assertEqual(cl.get_settings()["user_agent"], settings["user_agent"])
-        self.assertEqual(
-            cl.get_settings()["device_settings"], settings["device_settings"]
-        )
+        self.assertEqual(cl.get_settings()["device_settings"], settings["device_settings"])
 
     async def test_media_pk_from_share_url(self):
         cl = Client()
-        response = Mock(
-            headers={"Location": "https://www.instagram.com/p/DC2konOtSse/"}
-        )
+        response = Mock(headers={"Location": "https://www.instagram.com/p/DC2konOtSse/"})
         with mock.patch(
             "aiograpi.mixins.media.httpx_ext.request",
             new=AsyncMock(return_value=response),
         ) as ext_request:
             self.assertEqual(
-                await cl.media_pk_from_url(
-                    "https://www.instagram.com/share/p/BALv9Ep4YH"
-                ),
+                await cl.media_pk_from_url("https://www.instagram.com/share/p/BALv9Ep4YH"),
                 cl.media_pk_from_code("DC2konOtSse"),
             )
         ext_request.assert_called_once()
@@ -1921,9 +1852,7 @@ class ClientUserExtendTestCase(ClientPrivateTestCase):
 
 class ClientMediaTestCase(ClientPrivateTestCase):
     async def test_media_id(self):
-        self.assertEqual(
-            await self.cl.media_id(3258619191829745894), "3258619191829745894_25025320"
-        )
+        self.assertEqual(await self.cl.media_id(3258619191829745894), "3258619191829745894_25025320")
 
     async def test_media_pk(self):
         self.assertEqual(
@@ -1932,9 +1861,7 @@ class ClientMediaTestCase(ClientPrivateTestCase):
         )
 
     async def test_media_pk_from_code(self):
-        self.assertEqual(
-            self.cl.media_pk_from_code("B-fKL9qpeab"), "2278584739065882267"
-        )
+        self.assertEqual(self.cl.media_pk_from_code("B-fKL9qpeab"), "2278584739065882267")
         self.assertEqual(
             self.cl.media_pk_from_code("B8jnuB2HAbyc0q001y3F9CHRSoqEljK_dgkJjo0"),
             "2243811726252050162",
@@ -1950,9 +1877,7 @@ class ClientMediaTestCase(ClientPrivateTestCase):
             "2110901750722920960",
         )
         self.assertEqual(
-            await self.cl.media_pk_from_url(
-                "https://www.instagram.com/p/B-fKL9qpeab/?igshid=1xm76zkq7o1im"
-            ),
+            await self.cl.media_pk_from_url("https://www.instagram.com/p/B-fKL9qpeab/?igshid=1xm76zkq7o1im"),
             "2278584739065882267",
         )
 
@@ -1971,9 +1896,7 @@ class ClientMediaExtendTestCase(ClientPrivateTestCase):
         self.assertTrue(user.profile_pic_url.startswith("https://"))
 
     async def test_media_oembed(self):
-        media_oembed = await self.cl.media_oembed(
-            "https://www.instagram.com/p/B3mr1-OlWMG/"
-        )
+        media_oembed = await self.cl.media_oembed("https://www.instagram.com/p/B3mr1-OlWMG/")
         self.assertIsInstance(media_oembed, MediaOembed)
         for key, val in {
             "title": "В гостях у ДК @delai_krasivo_kaifui",
@@ -1998,16 +1921,12 @@ class ClientMediaExtendTestCase(ClientPrivateTestCase):
         self.assertIsInstance(likers[0], UserShort)
 
     async def test_media_like_by_pk(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/ByU3LAslgWY/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/ByU3LAslgWY/")
         self.assertTrue(await self.cl.media_like(media_pk))
 
     async def test_media_edit(self):
         # Upload photo
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/BVDOOolFFxg/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/BVDOOolFFxg/")
         path = await self.cl.photo_download(media_pk)
         self.assertIsInstance(path, Path)
         try:
@@ -2026,15 +1945,11 @@ class ClientMediaExtendTestCase(ClientPrivateTestCase):
             cleanup(path)
 
     async def test_media_edit_igtv(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/tv/B91gKCcpnTk/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/tv/B91gKCcpnTk/")
         path = await self.cl.igtv_download(media_pk)
         self.assertIsInstance(path, Path)
         try:
-            media = await self.cl.igtv_upload(
-                path, "Test title", "Test caption for IGTV"
-            )
+            media = await self.cl.igtv_upload(path, "Test title", "Test caption for IGTV")
             self.assertIsInstance(media, Media)
             # Enter title
             title = "Title %s" % random.randint(1, 100)
@@ -2064,9 +1979,7 @@ class ClientMediaExtendTestCase(ClientPrivateTestCase):
             cleanup(path)
 
     async def test_media_like_and_unlike(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/B3mr1-OlWMG/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/B3mr1-OlWMG/")
         self.assertTrue(await self.cl.media_unlike(media_pk))
         media = await self.cl.media_info_v1(media_pk)
         like_count = int(media.like_count)
@@ -2127,9 +2040,7 @@ class ClientCommentExtendTestCase(ClientPrivateTestCase):
             self.assertIn(field, user_fields)
 
     async def test_comment_like_and_unlike(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/B3mr1-OlWMG/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/B3mr1-OlWMG/")
         comment = (await self.cl.media_comments_v1(media_pk))[0]
         if comment.has_liked:
             self.assertTrue(await self.cl.comment_unlike(comment.pk))
@@ -2172,17 +2083,13 @@ class ClientCompareExtractTestCase(ClientPrivateTestCase):
         return media_v1.dict(), media_gql.dict()
 
     async def test_two_extract_media_photo(self):
-        media_v1, media_gql = await self.media_info(
-            self.cl.media_pk_from_code("B3mr1-OlWMG")
-        )
+        media_v1, media_gql = await self.media_info(self.cl.media_pk_from_code("B3mr1-OlWMG"))
         self.assertTrue(media_v1.pop("thumbnail_url").startswith("https://"))
         self.assertTrue(media_gql.pop("thumbnail_url").startswith("https://"))
         self.assertMedia(media_v1, media_gql)
 
     async def test_two_extract_media_video(self):
-        media_v1, media_gql = await self.media_info(
-            self.cl.media_pk_from_code("B3rFQPblq40")
-        )
+        media_v1, media_gql = await self.media_info(self.cl.media_pk_from_code("B3rFQPblq40"))
         self.assertTrue(media_v1.pop("video_url").startswith("https://"))
         self.assertTrue(media_gql.pop("video_url").startswith("https://"))
         self.assertTrue(media_v1.pop("thumbnail_url").startswith("https://"))
@@ -2190,9 +2097,7 @@ class ClientCompareExtractTestCase(ClientPrivateTestCase):
         self.assertMedia(media_v1, media_gql)
 
     async def test_two_extract_media_album(self):
-        media_v1, media_gql = await self.media_info(
-            self.cl.media_pk_from_code("BjNLpA1AhXM")
-        )
+        media_v1, media_gql = await self.media_info(self.cl.media_pk_from_code("BjNLpA1AhXM"))
         for res in media_v1["resources"]:
             self.assertTrue(res.pop("thumbnail_url").startswith("https://"))
             if res["media_type"] == 2:
@@ -2204,9 +2109,7 @@ class ClientCompareExtractTestCase(ClientPrivateTestCase):
         self.assertMedia(media_v1, media_gql)
 
     async def test_two_extract_media_igtv(self):
-        media_v1, media_gql = await self.media_info(
-            self.cl.media_pk_from_code("ByYn5ZNlHWf")
-        )
+        media_v1, media_gql = await self.media_info(self.cl.media_pk_from_code("ByYn5ZNlHWf"))
         self.assertTrue(media_v1.pop("video_url").startswith("https://"))
         self.assertTrue(media_gql.pop("video_url").startswith("https://"))
         self.assertTrue(media_v1.pop("thumbnail_url").startswith("https://"))
@@ -2226,9 +2129,7 @@ class ClientCompareExtractTestCase(ClientPrivateTestCase):
 
 class ClientExtractTestCase(ClientPrivateTestCase):
     async def test_extract_media_photo(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/B3mr1-OlWMG/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/B3mr1-OlWMG/")
         media = await self.cl.media_info(media_pk)
         self.assertIsInstance(media, Media)
         self.assertTrue(len(media.resources) == 0)
@@ -2250,9 +2151,7 @@ class ClientExtractTestCase(ClientPrivateTestCase):
             self.assertEqual(getattr(media.user, key), val)
 
     async def test_extract_media_video(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/BgRIGUQFltp/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/BgRIGUQFltp/")
         media = await self.cl.media_info(media_pk)
         self.assertIsInstance(media, Media)
         self.assertTrue(len(media.resources) == 0)
@@ -2276,9 +2175,7 @@ class ClientExtractTestCase(ClientPrivateTestCase):
             self.assertEqual(getattr(media.user, key), val)
 
     async def test_extract_media_album(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/BjNLpA1AhXM/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/BjNLpA1AhXM/")
         media = await self.cl.media_info(media_pk)
         self.assertIsInstance(media, Media)
         self.assertTrue(len(media.resources) == 3)
@@ -2321,9 +2218,7 @@ class ClientExtractTestCase(ClientPrivateTestCase):
                 self.assertEqual(getattr(photo_resource, key), val)
 
     async def test_extract_media_igtv(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/tv/ByYn5ZNlHWf/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/tv/ByYn5ZNlHWf/")
         media = await self.cl.media_info(media_pk)
         self.assertIsInstance(media, Media)
         self.assertTrue(len(media.resources) == 0)
@@ -2385,9 +2280,7 @@ class ClienUploadTestCase(ClientPrivateTestCase):
             self.assertEqual(itm, val)
 
     async def test_photo_upload_without_location(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/BVDOOolFFxg/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/BVDOOolFFxg/")
         path = await self.cl.photo_download(media_pk)
         self.assertIsInstance(path, Path)
         try:
@@ -2400,15 +2293,11 @@ class ClienUploadTestCase(ClientPrivateTestCase):
             self.assertTrue(await self.cl.media_delete(media.id))
 
     async def test_photo_upload(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/BVDOOolFFxg/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/BVDOOolFFxg/")
         path = await self.cl.photo_download(media_pk)
         self.assertIsInstance(path, Path)
         try:
-            media = await self.cl.photo_upload(
-                path, "Test caption for photo", location=await self.get_location()
-            )
+            media = await self.cl.photo_upload(path, "Test caption for photo", location=await self.get_location())
             self.assertIsInstance(media, Media)
             self.assertEqual(media.caption_text, "Test caption for photo")
             self.assertLocation(media.location)
@@ -2417,15 +2306,11 @@ class ClienUploadTestCase(ClientPrivateTestCase):
             self.assertTrue(await self.cl.media_delete(media.id))
 
     async def test_video_upload(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/Bk2tOgogq9V/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/Bk2tOgogq9V/")
         path = await self.cl.video_download(media_pk)
         self.assertIsInstance(path, Path)
         try:
-            media = await self.cl.video_upload(
-                path, "Test caption for video", location=await self.get_location()
-            )
+            media = await self.cl.video_upload(path, "Test caption for video", location=await self.get_location())
             self.assertIsInstance(media, Media)
             self.assertEqual(media.caption_text, "Test caption for video")
             self.assertLocation(media.location)
@@ -2434,18 +2319,14 @@ class ClienUploadTestCase(ClientPrivateTestCase):
             self.assertTrue(await self.cl.media_delete(media.id))
 
     async def test_album_upload(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/BjNLpA1AhXM/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/BjNLpA1AhXM/")
         paths = await self.cl.album_download(media_pk)
         [self.assertIsInstance(path, Path) for path in paths]
         try:
             instagram = await self.user_info_by_username("instagram")
             usertag = Usertag(user=instagram, x=0.5, y=0.5)
             location = await self.get_location()
-            media = await self.cl.album_upload(
-                paths, "Test caption for album", usertags=[usertag], location=location
-            )
+            media = await self.cl.album_upload(paths, "Test caption for album", usertags=[usertag], location=location)
             self.assertIsInstance(media, Media)
             self.assertEqual(media.caption_text, "Test caption for album")
             self.assertEqual(len(media.resources), 3)
@@ -2458,17 +2339,13 @@ class ClienUploadTestCase(ClientPrivateTestCase):
             self.assertTrue(await self.cl.media_delete(media.id))
 
     async def test_igtv_upload(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/tv/B91gKCcpnTk/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/tv/B91gKCcpnTk/")
         path = await self.cl.igtv_download(media_pk)
         self.assertIsInstance(path, Path)
         try:
             title = "6/6: The Transceiver Failure"
             caption_text = "Test caption for IGTV"
-            media = await self.cl.igtv_upload(
-                path, title, caption_text, location=await self.get_location()
-            )
+            media = await self.cl.igtv_upload(path, title, caption_text, location=await self.get_location())
             self.assertIsInstance(media, Media)
             self.assertEqual(media.title, title)
             self.assertEqual(media.caption_text, caption_text)
@@ -2480,9 +2357,7 @@ class ClienUploadTestCase(ClientPrivateTestCase):
     async def test_clip_upload(self):
         # media_type: 2 (video, not IGTV)
         # product_type: clips
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/CEjXskWJ1on/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/CEjXskWJ1on/")
         path = await self.cl.clip_download(media_pk)
         self.assertIsInstance(path, Path)
         try:
@@ -2504,9 +2379,7 @@ class ClienUploadTestCase(ClientPrivateTestCase):
         # media_type: 2 (video, not IGTV)
         # product_type: reels
 
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/CEjXskWJ1on/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/CEjXskWJ1on/")
         path = await self.cl.clip_download(media_pk)
         self.assertIsInstance(path, Path)
         try:
@@ -2539,9 +2412,7 @@ class ClientCollectionTestCase(ClientPrivateTestCase):
             self.assertTrue(hasattr(media, field))
 
     async def test_media_save_to_collection(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/B3mr1-OlWMG/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/B3mr1-OlWMG/")
         collection_pk = await self.cl.collection_pk_by_name("Repost")
         # clear and check
         await self.cl.media_unsave(media_pk)
@@ -2577,9 +2448,7 @@ class ClientDirectTestCase(ClientPrivateTestCase):
         self.assertIsInstance(pong, DirectMessage)
         self.assertEqual(ping.thread_id, pong.thread_id)
         # send direct photo
-        photo = await self.cl.direct_send_photo(
-            path="examples/kanada.jpg", user_ids=[instagram]
-        )
+        photo = await self.cl.direct_send_photo(path="examples/kanada.jpg", user_ids=[instagram])
         self.assertIsInstance(photo, DirectMessage)
         self.assertEqual(photo.thread_id, pong.thread_id)
         # send seen
@@ -2594,16 +2463,12 @@ class ClientDirectTestCase(ClientPrivateTestCase):
 
     async def test_direct_send_photo(self):
         instagram = await self.user_id_from_username("instagram")
-        dm = await self.cl.direct_send_photo(
-            path="examples/kanada.jpg", user_ids=[instagram]
-        )
+        dm = await self.cl.direct_send_photo(path="examples/kanada.jpg", user_ids=[instagram])
         self.assertIsInstance(dm, DirectMessage)
 
     async def test_direct_send_video(self):
         instagram = await self.user_id_from_username("instagram")
-        path = await self.cl.video_download(
-            await self.cl.media_pk_from_url("https://www.instagram.com/p/B3rFQPblq40/")
-        )
+        path = await self.cl.video_download(await self.cl.media_pk_from_url("https://www.instagram.com/p/B3rFQPblq40/"))
         dm = await self.cl.direct_send_video(path=path, user_ids=[instagram])
         self.assertIsInstance(dm, DirectMessage)
 
@@ -2636,10 +2501,7 @@ class ClientDirectMessageTypesTestCase(ClientPrivateTestCase):
                     self.assertIsInstance(message.reactions, MessageReactions)
 
                     # Test that reactions have proper structure
-                    if (
-                        hasattr(message.reactions, "emojis")
-                        and message.reactions.emojis
-                    ):
+                    if hasattr(message.reactions, "emojis") and message.reactions.emojis:
                         for emoji_reaction in message.reactions.emojis:
                             self.assertIsInstance(emoji_reaction, MessageReaction)
                             self.assertIsInstance(emoji_reaction.emoji, str)
@@ -2672,15 +2534,10 @@ class ClientDirectMessageTypesTestCase(ClientPrivateTestCase):
                     if hasattr(message.link, "text"):
                         self.assertIsInstance(message.link.text, str)
 
-                    if (
-                        hasattr(message.link, "link_context")
-                        and message.link.link_context
-                    ):
+                    if hasattr(message.link, "link_context") and message.link.link_context:
                         self.assertIsInstance(message.link.link_context, LinkContext)
                         if hasattr(message.link.link_context, "link_url"):
-                            self.assertIsInstance(
-                                message.link.link_context.link_url, str
-                            )
+                            self.assertIsInstance(message.link.link_context.link_url, str)
 
                     return  # Found one message with link, test passed
 
@@ -2701,13 +2558,8 @@ class ClientDirectMessageTypesTestCase(ClientPrivateTestCase):
                     self.assertIsInstance(message.visual_media, VisualMedia)
 
                     # Test that visual_media has proper structure
-                    if (
-                        hasattr(message.visual_media, "media")
-                        and message.visual_media.media
-                    ):
-                        self.assertIsInstance(
-                            message.visual_media.media, VisualMediaContent
-                        )
+                    if hasattr(message.visual_media, "media") and message.visual_media.media:
+                        self.assertIsInstance(message.visual_media.media, VisualMediaContent)
 
                     return  # Found one message with visual media, test passed
 
@@ -2891,12 +2743,8 @@ class DirectExtractorRegressionTestCase(unittest.TestCase):
 
         self.assertIsNotNone(message.generic_xma)
         self.assertEqual(len(message.generic_xma), 2)
-        self.assertEqual(
-            str(message.generic_xma[0].video_url), "https://example.com/first"
-        )
-        self.assertEqual(
-            str(message.generic_xma[1].video_url), "https://example.com/second"
-        )
+        self.assertEqual(str(message.generic_xma[0].video_url), "https://example.com/first")
+        self.assertEqual(str(message.generic_xma[1].video_url), "https://example.com/second")
 
     def test_reply_visual_media_timestamp_uses_microseconds(self):
         message = extract_direct_message(
@@ -2990,9 +2838,7 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         result = await client.direct_send_video("clip.mp4", thread_ids=[123])
 
         self.assertIs(result, expected)
-        client.video_upload_to_direct.assert_called_once_with(
-            Path("clip.mp4"), thread_ids=[123]
-        )
+        client.video_upload_to_direct.assert_called_once_with(Path("clip.mp4"), thread_ids=[123])
 
     async def test_direct_send_video_resolves_existing_thread_for_user_ids(self):
         client = self.build_client()
@@ -3068,9 +2914,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             "profile_pic_url": "https://example.com/pic.jpg",
         }
 
-        client.public_graphql_request = AsyncMock(
-            side_effect=ClientGraphqlError("Incorrect Query")
-        )
+        client.public_graphql_request = AsyncMock(side_effect=ClientGraphqlError("Incorrect Query"))
         client.user_web_profile_info_gql = AsyncMock(return_value=web_user)
         # user_short_gql in aiograpi has no use_cache kwarg; signature differs
         user = await client.user_short_gql("25025320")
@@ -3088,9 +2932,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 self.public_request_calls = []
 
             async def public_request(self, url, headers=None, **kwargs):
-                self.public_request_calls.append(
-                    {"url": url, "headers": headers, "kwargs": kwargs}
-                )
+                self.public_request_calls.append({"url": url, "headers": headers, "kwargs": kwargs})
                 return json.dumps(self.response_body)
 
         client = DummyClient()
@@ -3149,9 +2991,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_user_followers_v1_chunk_omits_empty_max_id_on_first_page(self):
         client = self.build_private_client()
 
-        client.private_request = AsyncMock(
-            return_value={"users": [], "next_max_id": None}
-        )
+        client.private_request = AsyncMock(return_value={"users": [], "next_max_id": None})
         await client.user_followers_v1_chunk("123")
 
         params = client.private_request.call_args.kwargs["params"]
@@ -3160,9 +3000,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_user_followers_v1_chunk_sends_non_empty_max_id_on_next_page(self):
         client = self.build_private_client()
 
-        client.private_request = AsyncMock(
-            return_value={"users": [], "next_max_id": None}
-        )
+        client.private_request = AsyncMock(return_value={"users": [], "next_max_id": None})
         await client.user_followers_v1_chunk("123", max_id="cursor")
 
         params = client.private_request.call_args.kwargs["params"]
@@ -3171,9 +3009,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_user_following_v1_chunk_omits_empty_max_id_on_first_page(self):
         client = self.build_private_client()
 
-        client.private_request = AsyncMock(
-            return_value={"users": [], "next_max_id": None}
-        )
+        client.private_request = AsyncMock(return_value={"users": [], "next_max_id": None})
         await client.user_following_v1_chunk("123")
 
         params = client.private_request.call_args.kwargs["params"]
@@ -3196,9 +3032,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_chaining_maps_not_eligible_to_invalid_target_user(self):
         client = self.build_private_client()
         client.private_request = AsyncMock(
-            side_effect=UnknownError(
-                "Not eligible for chaining.", response=Mock(status_code=400)
-            )
+            side_effect=UnknownError("Not eligible for chaining.", response=Mock(status_code=400))
         )
 
         with self.assertRaises(InvalidTargetUser):
@@ -3207,9 +3041,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_chaining_propagates_other_unknown_errors(self):
         client = self.build_private_client()
         client.private_request = AsyncMock(
-            side_effect=UnknownError(
-                "Some other server error", response=Mock(status_code=500)
-            )
+            side_effect=UnknownError("Some other server error", response=Mock(status_code=500))
         )
 
         with self.assertRaises(UnknownError):
@@ -3259,9 +3091,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         client = self.build_private_client()
         client.private_request = AsyncMock(
-            side_effect=ClientNotFoundError(
-                "User not found", response=Mock(status_code=404)
-            )
+            side_effect=ClientNotFoundError("User not found", response=Mock(status_code=404))
         )
 
         with self.assertRaises(UserNotFound):
@@ -3302,9 +3132,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_user_stream_by_username_flat_uses_username_endpoint(self):
         client = self.build_private_client()
         client.private_request = AsyncMock(
-            return_value={
-                "stream_rows": [{"user": {"pk": "25025320", "username": "instagram"}}]
-            }
+            return_value={"stream_rows": [{"user": {"pk": "25025320", "username": "instagram"}}]}
         )
 
         flat = await client.user_stream_by_username_flat("instagram")
@@ -3359,9 +3187,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(client.private_request.call_count, 2)
         second_call = client.private_request.call_args_list[1]
-        self.assertEqual(
-            second_call.args[0], "discover/recommended_accounts_for_category/"
-        )
+        self.assertEqual(second_call.args[0], "discover/recommended_accounts_for_category/")
         self.assertEqual(
             second_call.kwargs["params"],
             {"target_id": "25025320", "category_id": 1839},
@@ -3428,9 +3254,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     ):
         # num_retry not set → return empty list, no exception.
         client = self.build_private_client()
-        client.public_graphql_request = AsyncMock(
-            return_value={"user": {"edge_chaining": {"edges": []}}}
-        )
+        client.public_graphql_request = AsyncMock(return_value={"user": {"edge_chaining": {"edges": []}}})
 
         result = await client.user_related_profiles_gql("25025320")
         self.assertEqual(result, [])
@@ -3440,9 +3264,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         client = self.build_private_client()
         client.num_retry = 0
-        client.public_graphql_request = AsyncMock(
-            return_value={"user": {"edge_chaining": {"edges": []}}}
-        )
+        client.public_graphql_request = AsyncMock(return_value={"user": {"edge_chaining": {"edges": []}}})
 
         with self.assertRaises(RelatedProfileRequired):
             await client.user_related_profiles_gql("25025320")
@@ -3643,9 +3465,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_video_upload_raises_clear_error_when_configure_has_no_media(self):
         client = self.build_client()
-        client.video_rupload = AsyncMock(
-            return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg"))
-        )
+        client.video_rupload = AsyncMock(return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg")))
         client.video_configure = AsyncMock(return_value={"status": "ok"})
 
         with mock.patch("aiograpi.mixins.video.asyncio.sleep", new_callable=AsyncMock):
@@ -3688,9 +3508,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         media_payload["carousel_media"] = [self.build_media_payload(media_type=1)]
 
         client.photo_rupload = AsyncMock(return_value=("1", 720, 720))
-        client.album_configure = AsyncMock(
-            return_value={"status": "ok", "media": media_payload}
-        )
+        client.album_configure = AsyncMock(return_value={"status": "ok", "media": media_payload})
 
         with mock.patch("aiograpi.mixins.album.asyncio.sleep", new_callable=AsyncMock):
             media = await client.album_upload([Path("slide.png")], "caption")
@@ -3725,9 +3543,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             return_value=(Path("/tmp/thumb.jpg"), 720, 1280, 5),
         ):
             with mock.patch("builtins.open", mock.mock_open(read_data=b"video-bytes")):
-                with mock.patch(
-                    "aiograpi.mixins.clip.asyncio.sleep", new_callable=AsyncMock
-                ):
+                with mock.patch("aiograpi.mixins.clip.asyncio.sleep", new_callable=AsyncMock):
                     media = await client.clip_upload(Path("example.mp4"), "caption")
 
         self.assertIsInstance(media, Media)
@@ -3737,9 +3553,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self,
     ):
         client = self.build_client()
-        client.video_rupload = AsyncMock(
-            return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg"))
-        )
+        client.video_rupload = AsyncMock(return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg")))
         client.video_configure_to_story = AsyncMock(return_value={"status": "ok"})
 
         with mock.patch("aiograpi.mixins.video.asyncio.sleep", new_callable=AsyncMock):
@@ -3752,9 +3566,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self,
     ):
         client = self.build_client()
-        client.video_rupload = AsyncMock(
-            return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg"))
-        )
+        client.video_rupload = AsyncMock(return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg")))
         client.video_configure_to_story = AsyncMock(return_value={"status": "ok"})
 
         with mock.patch("aiograpi.mixins.video.asyncio.sleep", new_callable=AsyncMock):
@@ -3772,9 +3584,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client = self.build_client()
         client.private_request = AsyncMock(return_value={"status": "ok"})
         with self.assertRaises(PrivateError) as ctx:
-            await client.media_configure_to_cutout_sticker(
-                "1", manual_box=[0.0, 0.0, 1.0, 1.0]
-            )
+            await client.media_configure_to_cutout_sticker("1", manual_box=[0.0, 0.0, 1.0, 1.0])
 
         self.assertIn("without media payload", str(ctx.exception))
 
@@ -3782,12 +3592,8 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client = self.build_client()
         media_payload = self.build_media_payload(media_type=1)
 
-        client.private_request = AsyncMock(
-            return_value={"status": "ok", "media": media_payload}
-        )
-        media = await client.media_configure_to_cutout_sticker(
-            "1", manual_box=[0.0, 0.0, 1.0, 1.0]
-        )
+        client.private_request = AsyncMock(return_value={"status": "ok", "media": media_payload})
+        media = await client.media_configure_to_cutout_sticker("1", manual_box=[0.0, 0.0, 1.0, 1.0])
 
         self.assertIsInstance(media, Media)
         self.assertEqual(media.media_type, 1)
@@ -3846,9 +3652,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                     "moviepy.editor": fake_mp,
                 },
             ):
-                with mock.patch(
-                    "tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]
-                ):
+                with mock.patch("tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]):
                     result = await client.clip_upload_as_reel_with_music(
                         Path("input.mp4"),
                         "caption",
@@ -3917,9 +3721,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                     "moviepy.editor": fake_mp,
                 },
             ):
-                with mock.patch(
-                    "tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]
-                ):
+                with mock.patch("tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]):
                     await client.clip_upload_as_reel_with_music(
                         Path("input.mp4"),
                         "caption",
@@ -3989,9 +3791,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                     "moviepy.editor": fake_mp,
                 },
             ):
-                with mock.patch(
-                    "tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]
-                ):
+                with mock.patch("tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]):
                     with self.assertRaises(ClipConfigureError):
                         await client.clip_upload_as_reel_with_music(
                             Path("input.mp4"),
@@ -4025,9 +3825,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 "moviepy.editor": fake_mp,
             },
         ):
-            result = clip_mixin.analyze_video(
-                Path("input.mp4"), thumbnail=Path("thumb.jpg")
-            )
+            result = clip_mixin.analyze_video(Path("input.mp4"), thumbnail=Path("thumb.jpg"))
 
         self.assertEqual(result, (Path("thumb.jpg"), 720, 1280, 5))
         self.assertTrue(closed["value"])
@@ -4203,14 +4001,10 @@ class ClientAccountTestCase(ClientPrivateTestCase):
         self.assertIsInstance(one, User)
         instagram = await self.user_info_by_username("instagram")
         # change
-        two = await self.cl.account_change_picture(
-            await self.cl.photo_download_by_url(instagram.profile_pic_url)
-        )
+        two = await self.cl.account_change_picture(await self.cl.photo_download_by_url(instagram.profile_pic_url))
         self.assertIsInstance(two, UserShort)
         # return back
-        three = await self.cl.account_change_picture(
-            await self.cl.photo_download_by_url(one.profile_pic_url)
-        )
+        three = await self.cl.account_change_picture(await self.cl.photo_download_by_url(one.profile_pic_url))
         self.assertIsInstance(three, UserShort)
 
 
@@ -4244,9 +4038,7 @@ class ClientLocationTestCase(ClientPrivateTestCase):
         self.assertEqual(result.lng, 13.8108333333)
 
     async def test_location_complete_external_id(self):
-        source = Location(
-            name="Blaues Wunder (Dresden)", lat=51.0536111111, lng=13.8108333333
-        )
+        source = Location(name="Blaues Wunder (Dresden)", lat=51.0536111111, lng=13.8108333333)
         result = await self.cl.location_complete(source)
         self.assertIsInstance(result, Location)
         self.assertEqual(result.external_id, 150300262230285)
@@ -4503,9 +4295,7 @@ class NotificationMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         wrappers_to_content_type = {
             "notification_likes": "likes",
-            "notification_like_and_comment_on_photo_user_tagged": (
-                "like_and_comment_on_photo_user_tagged"
-            ),
+            "notification_like_and_comment_on_photo_user_tagged": ("like_and_comment_on_photo_user_tagged"),
             "notification_user_tagged": "user_tagged",
             "notification_comments": "comments",
             "notification_comment_likes": "comment_likes",
@@ -4640,15 +4430,11 @@ class ClientHashtagTestCase(ClientPrivateTestCase):
 
 class ClientStoryTestCase(ClientPrivateTestCase):
     async def test_story_pk_from_url(self):
-        story_pk = self.cl.story_pk_from_url(
-            "https://www.instagram.com/stories/instagram/2581281926631793076/"
-        )
+        story_pk = self.cl.story_pk_from_url("https://www.instagram.com/stories/instagram/2581281926631793076/")
         self.assertEqual(story_pk, 2581281926631793076)
 
     async def test_upload_photo_story(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/B3mr1-OlWMG/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/B3mr1-OlWMG/")
         path = await self.cl.photo_download(media_pk)
         self.assertIsInstance(path, Path)
         caption = "Test photo caption"
@@ -4702,9 +4488,7 @@ class ClientStoryTestCase(ClientPrivateTestCase):
             self.assertTrue(await self.cl.story_delete(story.id))
 
     async def test_upload_video_story(self):
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/Bk2tOgogq9V/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/Bk2tOgogq9V/")
         story = None
         path = await self.cl.video_download(media_pk)
         self.assertIsInstance(path, Path)
@@ -4724,9 +4508,7 @@ class ClientStoryTestCase(ClientPrivateTestCase):
         #     )
         # ]
         try:
-            buildout = StoryBuilder(
-                path, caption, mentions, Path("./examples/background.png")
-            ).video(1)
+            buildout = StoryBuilder(path, caption, mentions, Path("./examples/background.png")).video(1)
             story = await self.cl.video_upload_to_story(
                 buildout.path,
                 caption,
@@ -4758,9 +4540,7 @@ class ClientStoryTestCase(ClientPrivateTestCase):
         self.assertIsInstance(story, Story)
         for field in REQUIRED_STORY_FIELDS:
             self.assertTrue(hasattr(story, field))
-        stories = await self.cl.user_stories(
-            await self.user_id_from_username("instagram")
-        )
+        stories = await self.cl.user_stories(await self.user_id_from_username("instagram"))
         self.assertIsInstance(stories, list)
 
     async def test_extract_user_stories(self):
@@ -4804,9 +4584,7 @@ class ClientStoryTestCase(ClientPrivateTestCase):
                     # [{'webUri': HttpUrl('https://l.instagram.com/?u=https%3A%2F%2Fyoutu.be%2Fx3GYpar-e64&e=ATM59nvUNmptw8vUsyoX835T....}]
                     self.assertEqual(len(v1_val), len(gql_val))
                     if gql_val:
-                        self.assertIn(
-                            gql_val[0]["webUri"].host, v1_val[0]["webUri"].query
-                        )
+                        self.assertIn(gql_val[0]["webUri"].host, v1_val[0]["webUri"].query)
                     continue
                 if gql_val != v1_val:
                     import pudb
@@ -4851,9 +4629,7 @@ class TOTPTestCase(ClientPrivateTestCase):
 
 class ClientHighlightTestCase(ClientPrivateTestCase):
     async def test_highlight_pk_from_url(self):
-        highlight_pk = self.cl.highlight_pk_from_url(
-            "https://www.instagram.com/stories/highlights/17983407089364361/"
-        )
+        highlight_pk = self.cl.highlight_pk_from_url("https://www.instagram.com/stories/highlights/17983407089364361/")
         self.assertEqual(highlight_pk, "17983407089364361")
 
     async def test_highlight_info(self):
@@ -4896,9 +4672,7 @@ class ClientCutoutStickerTestCase(ClientPrivateTestCase):
     async def test_photo_upload_to_cutout_sticker_bypass_ai(self):
         """Test uploading a photo as cutout sticker with AI bypass (full image selection)"""
         # Download a test photo
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/BVDOOolFFxg/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/BVDOOolFFxg/")
         path = await self.cl.photo_download(media_pk)
         self.assertIsInstance(path, Path)
         media = None
@@ -4916,9 +4690,7 @@ class ClientCutoutStickerTestCase(ClientPrivateTestCase):
     async def test_photo_upload_to_cutout_sticker_with_ai(self):
         """Test uploading a photo as cutout sticker with AI detection"""
         # Download a test photo
-        media_pk = await self.cl.media_pk_from_url(
-            "https://www.instagram.com/p/BVDOOolFFxg/"
-        )
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/BVDOOolFFxg/")
         path = await self.cl.photo_download(media_pk)
         self.assertIsInstance(path, Path)
         media = None
@@ -5203,13 +4975,9 @@ class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.uuid = "stub-uuid"
         # Fake user_id so PreLoginRequired guard passes.
         client.authorization_data = {"ds_user_id": "1"}
-        client.private_request = AsyncMock(
-            return_value={"is_offensive": False, "category": None}
-        )
+        client.private_request = AsyncMock(return_value={"is_offensive": False, "category": None})
 
-        result = await client.media_check_offensive_comment_v2(
-            "2154602296692269830", "hello there"
-        )
+        result = await client.media_check_offensive_comment_v2("2154602296692269830", "hello there")
 
         # Returns the full payload (not just the bool), unlike v1.
         self.assertEqual(result, {"is_offensive": False, "category": None})
@@ -5380,9 +5148,7 @@ class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(captured["friendly_name"], "InboxTrayRequestForUserQuery")
         self.assertEqual(captured["root_field_name"], "xdt_get_inbox_tray_items")
         self.assertEqual(captured["variables"]["user_id"], "17")
-        self.assertFalse(
-            captured["variables"]["should_fetch_content_note_stack_video_info"]
-        )
+        self.assertFalse(captured["variables"]["should_fetch_content_note_stack_video_info"])
 
     async def test_private_graphql_memories_pog_passes_region_hint(self):
         client = self.build_client()

@@ -202,8 +202,8 @@ on `0.0.x`, upgrade.
 
 ### `pip install aiograpi` succeeds but `import aiograpi` fails on `httpx`
 
-`requirements.txt` pins `httpx==0.28.1`. If `pip` resolved a different
-version due to a constraint elsewhere in your project, force-pin:
+`pyproject.toml` pins `httpx==0.28.1`. If `pip` resolved a different version
+due to a constraint elsewhere in your project, force-pin:
 
 ```
 aiograpi==0.7.1

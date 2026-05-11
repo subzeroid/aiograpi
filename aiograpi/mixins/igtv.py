@@ -41,9 +41,7 @@ class DownloadIGTVMixin:
         """
         return await self.video_download(media_pk, folder)
 
-    async def igtv_download_by_url(
-        self, url: str, filename: str = "", folder: Path = ""
-    ) -> str:
+    async def igtv_download_by_url(self, url: str, filename: str = "", folder: Path = "") -> str:
         """
         Download IGTV video using URL
 
@@ -112,9 +110,7 @@ class UploadIGTVMixin:
         thumbnail, width, height, duration = analyze_video(path, thumbnail)
         waterfall_id = str(uuid4())
         # upload_name example: '1576102477530_0_7823256191'
-        upload_name = "{upload_id}_0_{rand}".format(
-            upload_id=upload_id, rand=random.randint(1000000000, 9999999999)
-        )
+        upload_name = "{upload_id}_0_{rand}".format(upload_id=upload_id, rand=random.randint(1000000000, 9999999999))
         # by segments bb2c1d0c127384453a2122e79e4c9a85-0-6498763
         # upload_name = "{hash}-0-{rand}".format(
         #     hash="bb2c1d0c127384453a2122e79e4c9a85", rand=random.randint(1111111, 9999999)
@@ -136,9 +132,7 @@ class UploadIGTVMixin:
             "X-Entity-Type": "video/mp4",
         }
         response = await self.private.get(
-            "https://{domain}/rupload_igvideo/{name}".format(
-                domain=config.API_DOMAIN, name=upload_name
-            ),
+            "https://{domain}/rupload_igvideo/{name}".format(domain=config.API_DOMAIN, name=upload_name),
             headers=headers,
         )
         self.request_log(response)
@@ -156,9 +150,7 @@ class UploadIGTVMixin:
             **headers,
         }
         response = await self.private.post(
-            "https://{domain}/rupload_igvideo/{name}".format(
-                domain=config.API_DOMAIN, name=upload_name
-            ),
+            "https://{domain}/rupload_igvideo/{name}".format(domain=config.API_DOMAIN, name=upload_name),
             data=igtv_data,
             headers=headers,
         )
@@ -247,9 +239,7 @@ class UploadIGTVMixin:
             A dictionary of response from the call
         """
         await self.photo_rupload(Path(thumbnail), upload_id)
-        usertags = [
-            {"user_id": tag.user.pk, "position": [tag.x, tag.y]} for tag in usertags
-        ]
+        usertags = [{"user_id": tag.user.pk, "position": [tag.x, tag.y]} for tag in usertags]
         data = {
             "igtv_ads_toggled_on": "0",
             "filter_type": "0",
