@@ -8,15 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-05-12
+
 ### Security
 
 - Added a `pip-audit --strict .` CI gate so known-vulnerable runtime dependencies block future releases.
 - Documented the published `GHSA-7mw3-79jq-xc7f` advisory in `SECURITY.md`, including the yanked affected versions and
   the fixed upgrade path.
 
+### Changed
+
+- Synced the async client with `instagrapi` `2.6.0`.
+- Updated the default Android app profile to Instagram `428.0.0.47.67` with a physical Pixel 8 Pro device tuple.
+- Switched private request headers to the current Android transport value.
+- Added `Client(settings=..., override_app_version=True)` so saved session app metadata can be explicitly upgraded during construction.
+
 ### Fixed
 
 - Truncated long public/GraphQL JSON decode error response bodies in logs so HTML error pages no longer flood consoles.
+- Preserved saved legacy app profiles by default while still allowing explicit opt-in app profile upgrades.
 
 ## [0.9.0] - 2026-05-11
 

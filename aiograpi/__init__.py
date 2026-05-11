@@ -45,7 +45,7 @@ from aiograpi.mixins.video import DownloadVideoMixin, UploadVideoMixin
 # Used as fallback logger if another is not provided.
 DEFAULT_LOGGER = logging.getLogger("aiograpi")
 
-__upstream_instagrapi_version__ = "2.5.18"
+__upstream_instagrapi_version__ = "2.6.0"
 
 
 class Client(
@@ -100,10 +100,12 @@ class Client(
         proxy: Optional[str] = None,
         delay_range: Optional[list] = None,
         logger=DEFAULT_LOGGER,
+        override_app_version: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.settings = deepcopy(settings or {})
+        self.override_app_version = override_app_version
         self.logger = logger
         self.delay_range = delay_range
         self.set_proxy(proxy)
