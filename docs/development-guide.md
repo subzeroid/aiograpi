@@ -48,7 +48,7 @@ See the documentation on [pdb][pdb-docs] for more information.
 You'll be unable to merge code unless linting and tests pass. The main local checks are:
 
 ```bash
-pytest -sv tests.py tests/regression
+pytest -sv tests/regression
 ruff check .
 ruff format --check .
 bandit -c pyproject.toml -r aiograpi

@@ -14,7 +14,7 @@
 
 ## Checklist
 
-- [ ] Tests added or updated (see existing classes in `tests.py`)
+- [ ] Tests added or updated (prefer `tests/regression/`; legacy classes live in `tests/legacy.py`)
 - [ ] Unit tests pass (or trust CI)
 - [ ] Mypy gate clean: `./scripts/check-mypy-baseline.sh`
 - [ ] Docs updated if user-facing (`docs/`, `README.md`, `CHANGELOG.md`)

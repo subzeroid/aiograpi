@@ -44,7 +44,7 @@ Run these checks before opening a pull request:
 ```bash
 ruff check .
 ruff format --check .
-pytest -q tests.py tests/regression
+pytest -q tests/regression
 ./scripts/check-mypy-baseline.sh
 bandit -c pyproject.toml -r aiograpi
 mkdocs build --strict
@@ -58,9 +58,10 @@ ruff check . --fix
 ruff format .
 ```
 
-Regression tests live in `tests.py` and `tests/regression/`. Live-account tests live in `tests/live/` and require
-`TEST_ACCOUNTS_URL`; do not run or modify live tests in a way that prints credentials, proxies, sessions, or the account
-URL.
+Regression tests live in `tests/regression/`. Some older regression classes remain in `tests/legacy.py` and are run by
+CI with explicit class selectors so live/account-oriented legacy classes are not collected accidentally. Live-account
+tests live in `tests/live/` and require `TEST_ACCOUNTS_URL`; do not run or modify live tests in a way that prints
+credentials, proxies, sessions, or the account URL.
 
 ## Pull Request Checklist
 
