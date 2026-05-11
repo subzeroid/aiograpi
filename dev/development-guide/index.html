@@ -1458,10 +1458,17 @@ coverage rather than decreasing it.</p>
 <li><code>[project].dependencies</code> lists runtime dependencies imported by the library.</li>
 <li><code>[project.optional-dependencies].test</code> lists tools needed for tests, linting, docs, and local development.</li>
 </ul>
-<p>This will trigger the CI system to build a wheel and a source distributions of the package and push them to
-<a href="https://pypi.org/project/aiograpi/">PyPI</a>.</p>
+<p>Publishing is handled by the tag-based <code>publish.yml</code> workflow. Pushes and pull requests run the package workflow first;
+maintainers cut a version tag only after the checks are green.</p>
 <h2 id="continuous-integration-pipeline">Continuous Integration Pipeline</h2>
-<p>TODO: Add CI documentation.</p>
+<p>The <code>Package</code> workflow runs Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs builds. On
+canonical repository pushes it also runs <code>tests/live/smoke.py</code> against the pooled live-account endpoint configured in
+<code>TEST_ACCOUNTS_URL</code>.</p>
+<p>The <code>Publish to PyPI</code> workflow runs only for version tags such as <code>0.9.0</code>. It verifies the tag matches
+<code>pyproject.toml</code>, builds the wheel and sdist, publishes through PyPI trusted publishing, creates the GitHub release, and
+publishes versioned docs with <code>mike</code>.</p>
+<p>The <code>Upstream Sync Tracker</code> workflow can be triggered manually or by repository dispatch when <code>instagrapi</code> publishes a
+new release. It creates a tracking issue with the current async-port baseline and the target upstream tag.</p>
 
 
 

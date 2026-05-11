@@ -2105,7 +2105,7 @@ on <code>0.0.x</code>, upgrade.</p>
 <h3 id="pip-install-aiograpi-succeeds-but-import-aiograpi-fails-on-httpx"><code>pip install aiograpi</code> succeeds but <code>import aiograpi</code> fails on <code>httpx</code></h3>
 <p><code>pyproject.toml</code> pins <code>httpx==0.28.1</code>. If <code>pip</code> resolved a different version
 due to a constraint elsewhere in your project, force-pin:</p>
-<div class="highlight"><pre><span></span><code>aiograpi==0.7.1
+<div class="highlight"><pre><span></span><code>aiograpi&gt;=0.9.0,&lt;1
 httpx==0.28.1
 </code></pre></div>
 <h3 id="runtimeerror-this-event-loop-is-already-running"><code>RuntimeError: This event loop is already running</code></h3>

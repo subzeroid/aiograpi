@@ -1418,8 +1418,11 @@
 <p><a href="https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml"><img alt="Package" src="https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml/badge.svg?branch=main" /></a>
 <a href="https://pypi.org/project/aiograpi/"><img alt="PyPI" src="https://img.shields.io/pypi/v/aiograpi" /></a>
 <a href="https://pypi.org/project/aiograpi/"><img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/aiograpi" /></a></p>
-<p>Asynchronous Instagram Private API wrapper 2024. Use the most recent version of the API from Instagram, which was obtained using <a href="https://github.com/subzeroid/instagrapi/discussions/1182">reverse-engineering with Charles Proxy</a> and <a href="https://proxyman.io/">Proxyman</a>.</p>
+<p>Asynchronous Instagram Private API wrapper without selenium. Use the most recent version of the API from Instagram, which was obtained using <a href="https://github.com/subzeroid/instagrapi/discussions/1182">reverse-engineering with Charles Proxy</a> and <a href="https://proxyman.io/">Proxyman</a>.</p>
 <p>Support <strong>Python &gt;= 3.10</strong></p>
+<p>Video uploads can use a built-in MP4 metadata parser when you provide <code>thumbnail=...</code>. Automatic thumbnail generation,
+<code>StoryBuilder</code>, and video/audio composition still need executable <code>ffmpeg</code>; Android/Pydroid users should see
+<a href="usage-guide/pydroid/">Pydroid and ffmpeg</a>.</p>
 <p>For any other languages (e.g. C++, C#, F#, D, <a href="https://github.com/subzeroid/instagrapi-rest/tree/main/golang">Golang</a>, Erlang, Elixir, Nim, Haskell, Lisp, Closure, Julia, R, Java, Kotlin, Scala, OCaml, JavaScript, Crystal, Ruby, Rust, <a href="https://github.com/subzeroid/instagrapi-rest/tree/main/swift">Swift</a>, Objective-C, Visual Basic, .NET, Pascal, Perl, Lua, PHP and others), I suggest using <a href="https://github.com/subzeroid/instagrapi-rest">instagrapi-rest</a></p>
 <p><a href="https://t.me/aiograpi_support">Support Chat in Telegram</a>
 <img alt="" src="https://gist.githubusercontent.com/m8rge/4c2b36369c9f936c02ee883ca8ec89f1/raw/c03fd44ee2b63d7a2a195ff44e9bb071e87b4a40/telegram-single-path-24px.svg" /> and <a href="https://github.com/subzeroid/aiograpi/discussions">GitHub Discussions</a></p>
@@ -1428,12 +1431,12 @@
 <li>Performs <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/">Public API</a> (web, anonymous) or <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/">Private API</a> (mobile app, authorized) requests depending on the situation (to avoid Instagram limits)</li>
 <li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/">Login</a> by username and password, including 2FA and by sessionid</li>
 <li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/challenge_resolver/">Challenge Resolver</a> have Email and SMS handlers</li>
-<li>Support <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/media/">upload</a> a Photo, Video, IGTV, Reels, Albums and Stories</li>
+<li>Support <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/media/">upload</a> a Photo, Video, IGTV, Reels, Albums, Stories and Trial Reels</li>
 <li>Support work with <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/user/">User</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/media/">Media</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/comment/">Comment</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/">Insights</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/collection/">Collections</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/location/">Location</a> (Place), <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/hashtag/">Hashtag</a> and <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/direct/">Direct Message</a> objects</li>
 <li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/media/">Like</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/user/">Follow</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/account/">Edit account</a> (Bio) and much more else</li>
 <li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/">Insights</a> by account, posts and stories</li>
-<li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/story/">Build stories</a> with custom background, font animation, swipe up link and mention users</li>
-<li>In the next release, account registration and captcha passing will appear</li>
+<li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/story/">Build stories</a> with custom background, font animation, link sticker and mention users</li>
+<li>Account registration helpers and opt-in captcha handler hooks</li>
 </ol>
 <h2 id="example">Example</h2>
 <h3 id="basic-usage">Basic Usage</h3>
