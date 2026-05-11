@@ -5,7 +5,7 @@ import time
 
 import orjson
 
-from aiograpi import httpx_ext
+from aiograpi import config, httpx_ext
 from aiograpi.exceptions import (
     AboutUsError,
     AccountSuspended,
@@ -15,6 +15,7 @@ from aiograpi.exceptions import (
     ClientConnectionError,
     ClientError,
     ClientForbiddenError,
+    ClientGraphqlError,
     ClientJSONDecodeError,
     ClientLoginRequired,
     ClientNotFoundError,
@@ -117,6 +118,49 @@ class GraphQLRequestMixin:
             eqmc = orjson.loads(eqmc)
             return eqmc["f"]
         return None
+
+    async def private_graphql_request(self, data: dict, headers: dict = None, domain: str = None) -> dict:
+        """
+        POST raw form data to the private mobile GraphQL endpoint.
+
+        This mirrors the mobile ``/graphql/query`` surface used by
+        mutation-style calls where the caller already has a prepared payload.
+        """
+        self.last_response = None
+        self.last_json = {}
+        merged = dict(self.base_headers)
+        merged["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8"
+        if self.authorization:
+            merged["Authorization"] = self.authorization
+        friendly_name = data.get("fb_api_req_friendly_name")
+        if friendly_name:
+            merged["X-FB-Friendly-Name"] = friendly_name
+        if headers:
+            merged.update(headers)
+        url = f"https://{domain or config.API_DOMAIN}/graphql/query"
+        response = None
+        try:
+            self.private_requests_count += 1
+            response = await self.private.post(url, data=data, headers=merged, timeout=self.read_timeout)
+            self.request_log(response)
+            self.last_response = response
+            response.raise_for_status()
+            self.last_json = response.json()
+        except orjson.JSONDecodeError as exc:
+            url = response.url if response else url
+            raise ClientJSONDecodeError(
+                "JSONDecodeError {0!s} while opening {1!s}".format(exc, url),
+                response=response,
+            )
+        except httpx_ext.HTTPError as exc:
+            raise ClientError(exc, response=exc.response)
+        except (httpx_ext.ConnectError, httpx_ext.ReadError) as exc:
+            raise ClientConnectionError("{} {}".format(exc.__class__.__name__, str(exc)))
+        if self.last_json.get("errors"):
+            raise ClientGraphqlError(self.last_json.get("errors"))
+        if self.last_json.get("status") == "fail":
+            raise ClientError(response=response, **self.last_json)
+        return self.last_json
 
     async def graphql_request(
         self,
