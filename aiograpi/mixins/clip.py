@@ -12,6 +12,7 @@ from aiograpi import config
 from aiograpi.exceptions import ClientError, ClipConfigureError, ClipNotUpload
 from aiograpi.types import Location, Media, Track, Usertag
 from aiograpi.utils.timing import date_time_original
+from aiograpi.utils.video import analyze_video_for_upload
 
 try:
     from PIL import Image
@@ -383,25 +384,7 @@ def analyze_video(path: Path, thumbnail: Path = None) -> tuple:
     Tuple
         A tuple with (thumbail path, width, height, duration)
     """
-    try:
-        import moviepy.editor as mp
-    except ImportError:
-        try:
-            import moviepy as mp
-        except ImportError:
-            raise Exception("Please install moviepy>=1.0.3 and retry")
-
-    print(f'Analyzing CLIP file "{path}"')
-    with contextlib.ExitStack() as stack:
-        video = mp.VideoFileClip(str(path))
-        stack.enter_context(contextlib.closing(video))
-        width, height = video.size
-        if not thumbnail:
-            thumbnail = f"{path}.jpg"
-            print(f'Generating thumbnail "{thumbnail}"...')
-            video.save_frame(thumbnail, t=(video.duration / 2))
-            crop_thumbnail(thumbnail)
-    return thumbnail, width, height, video.duration
+    return analyze_video_for_upload(path, thumbnail, label="CLIP", crop_thumbnail=crop_thumbnail)
 
 
 def crop_thumbnail(path: Path) -> bool:

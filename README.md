@@ -10,6 +10,10 @@ It will be difficult to find good accounts, good proxies, or resolve challenges,
 
 The aiograpi more suits for testing or research than a working business!
 
+Video uploads can use a built-in MP4 metadata parser when you provide `thumbnail=...`. Automatic thumbnail generation,
+`StoryBuilder`, and video/audio composition still need executable `ffmpeg`; Android/Pydroid users should see
+[Pydroid and ffmpeg](docs/usage-guide/pydroid.md).
+
 ### We recommend using our services:
 
 * [LamaTok](https://lamatok.com/p/X0HatoxX) for TikTok API 🔥

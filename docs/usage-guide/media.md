@@ -264,6 +264,7 @@ Upload medias to your feed. Common arguments:
 | clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {})             | Media   | Upload Reels Clip (Support MP4 files)
 | clip_upload_as_reel_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {}) | Media | Upload Reels Clip as reel with music metadata
 
+For video uploads in Android/Pydroid environments, pass `thumbnail=...` to avoid automatic thumbnail generation or configure executable ffmpeg. See [Pydroid and ffmpeg](pydroid.md).
 
 In `extra_data`, you can pass additional media settings, for example:
 

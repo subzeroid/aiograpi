@@ -1,5 +1,4 @@
 import asyncio
-import contextlib
 import random
 import time
 from pathlib import Path
@@ -30,6 +29,7 @@ from aiograpi.types import (
 )
 from aiograpi.utils.serialization import dumps
 from aiograpi.utils.timing import date_time_original
+from aiograpi.utils.video import analyze_video_for_upload
 
 
 class DownloadVideoMixin:
@@ -963,21 +963,5 @@ def analyze_video(path: Path, thumbnail: Path = None) -> tuple:
         (width, height, duration, thumbnail)
     """
 
-    try:
-        import moviepy.editor as mp
-    except ImportError:
-        try:
-            import moviepy as mp
-        except ImportError:
-            raise Exception("Please install moviepy>=1.0.3 and retry")
-
-    print(f'Analyzing video file "{path}"')
-    with contextlib.ExitStack() as stack:
-        video = mp.VideoFileClip(str(path))
-        stack.enter_context(contextlib.closing(video))
-        width, height = video.size
-        if not thumbnail:
-            thumbnail = f"{path}.jpg"
-            print(f'Generating thumbnail "{thumbnail}"...')
-            video.save_frame(thumbnail, t=(video.duration / 2))
-    return width, height, video.duration, thumbnail
+    thumbnail, width, height, duration = analyze_video_for_upload(path, thumbnail, label="video")
+    return width, height, duration, thumbnail
