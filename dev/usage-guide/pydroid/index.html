@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/challenge_resolver/">
+        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/pydroid/">
       
       
-        <link rel="prev" href="../handle_exception/">
+        <link rel="prev" href="../notes/">
       
       
-        <link rel="next" href="../captcha/">
+        <link rel="next" href="../story/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Challenge Resolver - aiograpi Documentation</title>
+        <title>Pydroid and ffmpeg - aiograpi Documentation</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#new-password-challenge" class="md-skip">
+        <a href="#pydroid-and-ffmpeg" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Challenge Resolver
+              Pydroid and ffmpeg
             
           </span>
         </div>
@@ -468,35 +468,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Challenge Resolver
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../challenge_resolver/" class="md-nav__link">
         
   
   
@@ -512,46 +487,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#new-password-challenge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        New password challenge
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#code-verification-challenge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code verification challenge
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -897,10 +832,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../pydroid/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pydroid and ffmpeg
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -916,6 +878,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-needs-ffmpeg" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What needs ffmpeg
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#minimal-upload-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal upload example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1223,6 +1249,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1231,10 +1259,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#new-password-challenge" class="md-nav__link">
+  <a href="#what-needs-ffmpeg" class="md-nav__link">
     <span class="md-ellipsis">
       
-        New password challenge
+        What needs ffmpeg
       
     </span>
   </a>
@@ -1242,10 +1270,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#code-verification-challenge" class="md-nav__link">
+  <a href="#error" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Code verification challenge
+        Error
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#minimal-upload-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal upload example
       
     </span>
   </a>
@@ -1272,74 +1322,74 @@
   
 
 
-  <h1>Challenge Resolver</h1>
+<h1 id="pydroid-and-ffmpeg">Pydroid and ffmpeg</h1>
+<p>Android/Pydroid can run many <code>aiograpi</code> flows, but video helpers need special care because Android apps often cannot
+execute arbitrary binaries from shared storage.</p>
+<h2 id="what-needs-ffmpeg">What needs ffmpeg</h2>
+<p><code>aiograpi</code> does not need ffmpeg for login, reads, photo uploads, downloads, or normal API requests.</p>
+<p>For standard MP4 files, <code>aiograpi</code> can read video width, height, and duration with its built-in MP4 parser. If you also
+pass a thumbnail file, these upload helpers do not need MoviePy/ffmpeg just to analyze the upload:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<h2 id="new-password-challenge">New password challenge</h2>
-<p>You can automatically change your password to solve the challenge from Instagram.</p>
-<p>Declare <code>change_password_handler</code> which will return a new password.</p>
-<div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">change_password_handler</span><span class="p">(</span><span class="n">username</span><span class="p">):</span>
-    <span class="c1"># Simple way to generate a random string</span>
-    <span class="n">chars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="s2">&quot;abcdefghijklmnopqrstuvwxyz1234567890!&amp;£@#&quot;</span><span class="p">)</span>
-    <span class="n">password</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">chars</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">password</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_upload</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;video.mp4&quot;</span><span class="p">),</span> <span class="s2">&quot;caption&quot;</span><span class="p">,</span> <span class="n">thumbnail</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;thumb.jpg&quot;</span><span class="p">))</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">clip_upload</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel.mp4&quot;</span><span class="p">),</span> <span class="s2">&quot;caption&quot;</span><span class="p">,</span> <span class="n">thumbnail</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;thumb.jpg&quot;</span><span class="p">))</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">igtv_upload</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;video.mp4&quot;</span><span class="p">),</span> <span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;caption&quot;</span><span class="p">,</span> <span class="n">thumbnail</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;thumb.jpg&quot;</span><span class="p">))</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_upload_to_story</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;story.mp4&quot;</span><span class="p">),</span> <span class="n">thumbnail</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;thumb.jpg&quot;</span><span class="p">))</span>
+</code></pre></div>
+<p>MoviePy/ffmpeg is still required when <code>aiograpi</code> has to render or extract media:</p>
+<ul>
+<li>automatic thumbnail generation when <code>thumbnail</code> is not provided</li>
+<li><code>StoryBuilder</code></li>
+<li>video/audio composition helpers</li>
+<li>video album uploads, because album video items currently generate thumbnails internally</li>
+<li>non-standard MP4 files that the built-in parser cannot read</li>
+</ul>
+<h2 id="error">Error</h2>
+<p>If ffmpeg is missing or cannot be executed, video thumbnail generation can fail with:</p>
+<div class="highlight"><pre><span></span><code>RuntimeError: No ffmpeg exe could be found. Install ffmpeg on your system, or set the IMAGEIO_FFMPEG_EXE environment variable.
+</code></pre></div>
+<p>Current <code>aiograpi</code> upload helpers raise a clearer error for this thumbnail path:</p>
+<div class="highlight"><pre><span></span><code>Could not generate video thumbnail. Pass thumbnail=... or install ffmpeg / set IMAGEIO_FFMPEG_EXE.
+</code></pre></div>
+<h2 id="fix">Fix</h2>
+<p>The most reliable Pydroid setup is to pre-process the video outside Pydroid and pass both files:</p>
+<ul>
+<li><code>video.mp4</code> - MP4 file accepted by Instagram, usually H.264 video with AAC audio</li>
+<li><code>thumb.jpg</code> - JPEG thumbnail for the upload</li>
+</ul>
+<p>Then call the upload method with <code>thumbnail=Path("thumb.jpg")</code>.</p>
+<p>If you need automatic thumbnail generation or StoryBuilder inside Pydroid, install an ffmpeg binary that the Pydroid app
+can execute and set <code>IMAGEIO_FFMPEG_EXE</code> before running the upload:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;IMAGEIO_FFMPEG_EXE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/absolute/path/to/ffmpeg&quot;</span>
+</code></pre></div>
+<p>Verify the same Python process can execute it:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+
+<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;IMAGEIO_FFMPEG_EXE&quot;</span><span class="p">],</span> <span class="s2">&quot;-version&quot;</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<p>If this raises <code>PermissionError</code>, the file exists but Android is not allowing Pydroid to execute it. A binary placed
+under shared storage such as <code>/storage/emulated/0/...</code> can hit that limitation. Move ffmpeg to a location executable by
+the app or use a Pydroid package/plugin that provides an executable binary.</p>
+<h2 id="minimal-upload-example">Minimal upload example</h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-<span class="n">cl</span><span class="o">.</span><span class="n">change_password_handler</span> <span class="o">=</span> <span class="n">change_password_handler</span>
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">IG_USERNAME</span><span class="p">,</span> <span class="n">IG_PASSWORD</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="code-verification-challenge">Code verification challenge</h2>
-<p>You can automatically process the codes sent to you to solve the challenge from Instagram.</p>
-<p>You need to declare <code>challenge_code_handler</code> which will return the code received from Instagram via Email or SMS:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi.mixins.challenge</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChallengeChoice</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
 
-
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">challenge_code_handler</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">choice</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">choice</span> <span class="o">==</span> <span class="n">ChallengeChoice</span><span class="o">.</span><span class="n">SMS</span><span class="p">:</span>
-        <span class="k">return</span> <span class="k">await</span> <span class="n">get_code_from_sms</span><span class="p">(</span><span class="n">username</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">choice</span> <span class="o">==</span> <span class="n">ChallengeChoice</span><span class="o">.</span><span class="n">EMAIL</span><span class="p">:</span>
-        <span class="k">return</span> <span class="k">await</span> <span class="n">get_code_from_email</span><span class="p">(</span><span class="n">username</span><span class="p">)</span>
-    <span class="k">return</span> <span class="kc">False</span>
-
-<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-<span class="n">cl</span><span class="o">.</span><span class="n">challenge_code_handler</span> <span class="o">=</span> <span class="n">challenge_code_handler</span>
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">IG_USERNAME</span><span class="p">,</span> <span class="n">IG_PASSWORD</span><span class="p">)</span>
+<span class="n">media</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">clip_upload</span><span class="p">(</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel.mp4&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Uploaded from Pydroid&quot;</span><span class="p">,</span>
+    <span class="n">thumbnail</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel-thumb.jpg&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">media</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
 </code></pre></div>
-<p>For example, you can get the code through the IMAP of Gmail:</p>
-<div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_code_from_email</span><span class="p">(</span><span class="n">username</span><span class="p">):</span>
-    <span class="n">mail</span> <span class="o">=</span> <span class="n">imaplib</span><span class="o">.</span><span class="n">IMAP4_SSL</span><span class="p">(</span><span class="s2">&quot;imap.gmail.com&quot;</span><span class="p">)</span>
-    <span class="n">mail</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">CHALLENGE_EMAIL</span><span class="p">,</span> <span class="n">CHALLENGE_PASSWORD</span><span class="p">)</span>
-    <span class="n">mail</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;inbox&quot;</span><span class="p">)</span>
-    <span class="n">result</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">mail</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;(UNSEEN)&quot;</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="s2">&quot;OK&quot;</span><span class="p">,</span> <span class="s2">&quot;Error1 during get_code_from_email: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">result</span>
-    <span class="n">ids</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">num</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
-        <span class="n">mail</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="s2">&quot;+FLAGS&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">Seen&quot;</span><span class="p">)</span>  <span class="c1"># mark as read</span>
-        <span class="n">result</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">mail</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="s2">&quot;(RFC822)&quot;</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="s2">&quot;OK&quot;</span><span class="p">,</span> <span class="s2">&quot;Error2 during get_code_from_email: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">result</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="n">email</span><span class="o">.</span><span class="n">message_from_string</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
-        <span class="n">payloads</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">get_payload</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">payloads</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="n">payloads</span> <span class="o">=</span> <span class="p">[</span><span class="n">msg</span><span class="p">]</span>
-        <span class="n">code</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">for</span> <span class="n">payload</span> <span class="ow">in</span> <span class="n">payloads</span><span class="p">:</span>
-            <span class="n">body</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get_payload</span><span class="p">(</span><span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-            <span class="k">if</span> <span class="s2">&quot;&lt;div&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">body</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;&gt;([^&gt;]*?(</span><span class="si">{u}</span><span class="s2">)[^&lt;]*?)&lt;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">u</span><span class="o">=</span><span class="n">username</span><span class="p">),</span> <span class="n">body</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Match from email:&quot;</span><span class="p">,</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&gt;(\d</span><span class="si">{6}</span><span class="s2">)&lt;&quot;</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Skip this email, &quot;code&quot; not found&#39;</span><span class="p">)</span>
-                <span class="k">continue</span>
-            <span class="n">code</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">code</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">code</span>
-    <span class="k">return</span> <span class="kc">False</span>
-</code></pre></div>
-<p>All challenges solved in the module <a href="https://github.com/subzeroid/aiograpi/blob/main/aiograpi/mixins/challenge.py">challenge.py</a></p>
-<p>Automatic submission code from SMS/Email in examples <a href="https://github.com/subzeroid/aiograpi/blob/main/examples/challenge_resolvers.py">here</a></p>
+<p>If you omit <code>thumbnail=...</code>, Pydroid must have a working ffmpeg executable so <code>aiograpi</code> can capture a frame from the
+video.</p>
 
 
 
