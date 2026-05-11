@@ -160,6 +160,16 @@ class LocationMixin:
         }
         return json.dumps(data, separators=(",", ":"))
 
+    def location_story_sticker_id(self, location: Location) -> str:
+        """
+        Return the identifier Instagram expects in story location tap models.
+
+        Facebook Places-backed locations use ``external_id`` in the Android
+        story composer payload. Falling back to ``pk`` keeps manually-created
+        or legacy locations usable.
+        """
+        return str(location.external_id or location.pk or "")
+
     async def location_info_a1(self, location_pk: int) -> Location:
         """
         Get a location using location pk
