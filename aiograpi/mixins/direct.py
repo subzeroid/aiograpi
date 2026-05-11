@@ -453,6 +453,162 @@ class DirectMixin:
         )
         return extract_direct_message(result["payload"])
 
+    async def _direct_message_reaction(
+        self,
+        thread_id: int,
+        message_id: int,
+        emoji: str,
+        reaction_status: str,
+        client_context: Optional[str] = None,
+        action_source: str = "double_tap",
+        target_item_type: Optional[str] = None,
+    ) -> bool:
+        assert self.user_id, "Login required"
+        assert reaction_status in ("created", "deleted"), 'Unsupported reaction_status="%s"' % reaction_status
+        token = self.generate_mutation_token()
+        data = {
+            "action": "send_item",
+            "is_x_transport_forward": "false",
+            "send_silently": "false",
+            "is_shh_mode": "0",
+            "send_attribution": "message_reaction",
+            "client_context": token,
+            "device_id": self.android_device_id,
+            "mutation_token": token,
+            "_uuid": self.uuid,
+            "btt_dual_send": "false",
+            "nav_chain": (
+                "1qT:feed_timeline:1,1qT:feed_timeline:2,1qT:feed_timeline:3,"
+                "7Az:direct_inbox:4,7Az:direct_inbox:5,5rG:direct_thread:7"
+            ),
+            "is_ae_dual_send": "false",
+            "offline_threading_id": token,
+            "thread_ids": dumps([str(thread_id)]),
+            "item_type": "reaction",
+            "reaction_type": "like",
+            "reaction_status": reaction_status,
+            "node_type": "item",
+            "item_id": str(message_id),
+            "emoji": emoji,
+            "reaction_action_source": action_source,
+        }
+        if client_context:
+            data["original_message_client_context"] = client_context
+        if target_item_type:
+            data["target_item_type"] = target_item_type
+        result = await self.private_request(
+            "direct_v2/threads/broadcast/reaction/",
+            data=self.with_default_data(data),
+            with_signature=False,
+        )
+        return result.get("status") == "ok"
+
+    async def direct_send_reaction(
+        self,
+        thread_id: int,
+        message_id: int,
+        emoji: str = "❤",
+        client_context: Optional[str] = None,
+        action_source: str = "double_tap",
+        target_item_type: Optional[str] = None,
+    ) -> bool:
+        """
+        Send an emoji reaction to a Direct message item.
+
+        Parameters
+        ----------
+        thread_id: int
+            Direct Message thread id
+        message_id: int
+            Direct Message item id to react to
+        emoji: str, optional
+            Emoji reaction. Default is heart
+        client_context: str, optional
+            Original message client_context when available
+        action_source: str, optional
+            Reaction source. Default is "double_tap"
+        target_item_type: str, optional
+            Original message item type for special items like raven_media or voice_media
+
+        Returns
+        -------
+        bool
+            A boolean value
+        """
+        return await self._direct_message_reaction(
+            thread_id,
+            message_id,
+            emoji,
+            "created",
+            client_context=client_context,
+            action_source=action_source,
+            target_item_type=target_item_type,
+        )
+
+    async def direct_delete_reaction(
+        self,
+        thread_id: int,
+        message_id: int,
+        emoji: str = "❤",
+        client_context: Optional[str] = None,
+        action_source: str = "double_tap",
+        target_item_type: Optional[str] = None,
+    ) -> bool:
+        """
+        Delete the current user's emoji reaction from a Direct message item.
+
+        Parameters
+        ----------
+        thread_id: int
+            Direct Message thread id
+        message_id: int
+            Direct Message item id to remove the reaction from
+        emoji: str, optional
+            Emoji reaction to remove. Default is heart
+        client_context: str, optional
+            Original message client_context when available
+        action_source: str, optional
+            Reaction source. Default is "double_tap"
+        target_item_type: str, optional
+            Original message item type for special items like raven_media or voice_media
+
+        Returns
+        -------
+        bool
+            A boolean value
+        """
+        return await self._direct_message_reaction(
+            thread_id,
+            message_id,
+            emoji,
+            "deleted",
+            client_context=client_context,
+            action_source=action_source,
+            target_item_type=target_item_type,
+        )
+
+    async def direct_message_like(
+        self,
+        thread_id: int,
+        message_id: int,
+        client_context: Optional[str] = None,
+    ) -> bool:
+        """
+        Like a Direct message item with a heart reaction.
+        """
+        return await self.direct_send_reaction(thread_id, message_id, client_context=client_context)
+
+    async def direct_message_unlike(
+        self,
+        thread_id: int,
+        message_id: int,
+        client_context: Optional[str] = None,
+    ) -> bool:
+        """
+        Remove the current user's heart reaction from a Direct message item.
+        """
+        return await self.direct_delete_reaction(thread_id, message_id, client_context=client_context)
+
     async def direct_send_photo(
         self, path: Path, user_ids: List[int] = [], thread_ids: List[int] = []
     ) -> DirectMessage:
@@ -870,6 +1026,31 @@ class DirectMixin:
                 "should_move_future_requests_to_spam": move_to_spam,
                 "_uuid": self.uuid,
             },
+            with_signature=False,
+        )
+        return result.get("status", "") == "ok"
+
+    async def direct_thread_update_title(self, thread_id: int, title: str) -> bool:
+        """
+        Update a direct thread title
+
+        Parameters
+        ----------
+        thread_id: int
+            ID of thread to update
+        title: str
+            New thread title
+
+        Returns
+        -------
+        bool
+            A boolean value
+        """
+        assert self.user_id, "Login required"
+
+        result = await self.private_request(
+            f"direct_v2/threads/{thread_id}/update_title/",
+            data={"_uuid": self.uuid, "title": title},
             with_signature=False,
         )
         return result.get("status", "") == "ok"
