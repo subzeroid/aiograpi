@@ -1434,6 +1434,7 @@ the code:</p>
 ruff<span class="w"> </span>check<span class="w"> </span>.
 ruff<span class="w"> </span>format<span class="w"> </span>--check<span class="w"> </span>.
 bandit<span class="w"> </span>-c<span class="w"> </span>pyproject.toml<span class="w"> </span>-r<span class="w"> </span>aiograpi
+pip-audit<span class="w"> </span>--strict<span class="w"> </span>.
 mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
 </code></pre></div>
 <p>To apply automatic lint and formatting fixes locally:</p>
@@ -1461,9 +1462,9 @@ coverage rather than decreasing it.</p>
 <p>Publishing is handled by the tag-based <code>publish.yml</code> workflow. Pushes and pull requests run the package workflow first;
 maintainers cut a version tag only after the checks are green.</p>
 <h2 id="continuous-integration-pipeline">Continuous Integration Pipeline</h2>
-<p>The <code>Package</code> workflow runs Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs builds. On
-canonical repository pushes it also runs <code>tests/live/smoke.py</code> against the pooled live-account endpoint configured in
-<code>TEST_ACCOUNTS_URL</code>.</p>
+<p>The <code>Package</code> workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs
+builds. On canonical repository pushes it also runs <code>tests/live/smoke.py</code> against the pooled live-account endpoint
+configured in <code>TEST_ACCOUNTS_URL</code>.</p>
 <p>The <code>Publish to PyPI</code> workflow runs only for version tags such as <code>0.9.0</code>. It verifies the tag matches
 <code>pyproject.toml</code>, builds the wheel and sdist, publishes through PyPI trusted publishing, creates the GitHub release, and
 publishes versioned docs with <code>mike</code>.</p>
