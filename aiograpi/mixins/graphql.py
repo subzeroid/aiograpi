@@ -31,6 +31,7 @@ from aiograpi.exceptions import (
     TermsUnblock,
     UserNotFound,
 )
+from aiograpi.utils.logging import truncate_log_text
 from aiograpi.utils.timing import random_delay
 
 GRAPHQL_API_URL = "https://www.instagram.com/api/graphql"
@@ -256,7 +257,7 @@ class GraphQLRequestMixin:
                 "Status %s: JSONDecodeError in graphql_request (url=%s) >>> %s",
                 response.status_code,
                 url,
-                response.text,
+                truncate_log_text(response.text),
             )
             raise ClientJSONDecodeError(
                 "JSONDecodeError {0!s} while opening {1!s}".format(e, url),
