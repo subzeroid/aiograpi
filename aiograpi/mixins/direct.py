@@ -38,6 +38,15 @@ SEND_ATTRIBUTES_MEDIA = (
 )
 BOXES = ("general", "primary")
 
+
+def _direct_id_list(ids) -> List[int]:
+    if ids is None:
+        return []
+    if isinstance(ids, (int, str)):
+        return [int(ids)]
+    return [int(item) for item in ids]
+
+
 try:
     from typing import Literal
 
@@ -471,6 +480,8 @@ class DirectMixin:
             An object of DirectMessage
         """
         assert self.user_id, "Login required"
+        user_ids = _direct_id_list(user_ids)
+        thread_ids = _direct_id_list(thread_ids)
         assert (user_ids or thread_ids) and not (user_ids and thread_ids), (
             "Specify user_ids or thread_ids, but not both"
         )
@@ -716,6 +727,8 @@ class DirectMixin:
             An object of DirectMessage
         """
         assert self.user_id, "Login required"
+        user_ids = _direct_id_list(user_ids)
+        thread_ids = _direct_id_list(thread_ids)
         assert (user_ids or thread_ids) and not (user_ids and thread_ids), (
             "Specify user_ids or thread_ids, but not both"
         )
@@ -757,6 +770,8 @@ class DirectMixin:
             An object of DirectMessage
         """
         assert self.user_id, "Login required"
+        user_ids = _direct_id_list(user_ids)
+        thread_ids = _direct_id_list(thread_ids)
         assert (user_ids or thread_ids) and not (user_ids and thread_ids), (
             "Specify user_ids or thread_ids, but not both"
         )
@@ -832,6 +847,8 @@ class DirectMixin:
             An object of DirectMessage
         """
         assert self.user_id, "Login required"
+        user_ids = _direct_id_list(user_ids)
+        thread_ids = _direct_id_list(thread_ids)
         assert (user_ids or thread_ids) and not (user_ids and thread_ids), (
             "Specify user_ids or thread_ids, but not both"
         )
@@ -879,6 +896,7 @@ class DirectMixin:
             Dict with User's presences
         """
         assert self.user_id, "Login Required"
+        user_ids = _direct_id_list(user_ids)
         data = {
             "_uuid": self.uuid,
             "subscriptions_off": "false",
@@ -1044,6 +1062,7 @@ class DirectMixin:
             Some information about thread.
             List of UserShort under "users" key
         """
+        user_ids = _direct_id_list(user_ids)
         recipient_users = dumps([int(uid) for uid in user_ids])
         result = await self.private_request(
             "direct_v2/threads/get_by_participants/",
@@ -1139,6 +1158,7 @@ class DirectMixin:
         """
         user_id = getattr(self, "user_id", None)
         assert user_id, "Login required"
+        user_ids = _direct_id_list(user_ids)
         assert len(user_ids) >= 2, "Group threads require at least two recipient user_ids"
 
         result = await getattr(self, "private_request")(
@@ -1186,6 +1206,7 @@ class DirectMixin:
         assert self.user_id, "Login required"
         token = self.generate_mutation_token()
         media_id = await self.media_id(media_id)
+        user_ids = _direct_id_list(user_ids)
         recipient_users = dumps([[int(uid) for uid in user_ids]])
         kwargs = {
             "recipient_users": recipient_users,
@@ -1241,6 +1262,8 @@ class DirectMixin:
             An object of DirectMessage
         """
         assert self.user_id, "Login required"
+        user_ids = _direct_id_list(user_ids)
+        thread_ids = _direct_id_list(thread_ids)
         assert (user_ids or thread_ids) and not (user_ids and thread_ids), (
             "Specify user_ids or thread_ids, but not both"
         )
@@ -1427,6 +1450,8 @@ class DirectMixin:
             An object of DirectMessage
         """
         assert self.user_id, "Login required"
+        user_ids = _direct_id_list(user_ids)
+        thread_ids = _direct_id_list(thread_ids)
         assert (user_ids or thread_ids) and not (user_ids and thread_ids), (
             "Specify user_ids or thread_ids, but not both"
         )
