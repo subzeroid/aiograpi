@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -28,6 +29,7 @@ from aiograpi.exceptions import (
     ClientThrottledError,
     ClientUnauthorizedError,
     ClipConfigureError,
+    DirectMessageNotFound,
     DirectThreadNotFound,
     IGTVConfigureError,
     InvalidTargetUser,
@@ -2465,6 +2467,38 @@ class ClientDirectTestCase(ClientPrivateTestCase):
         instagram = await self.user_id_from_username("instagram")
         dm = await self.cl.direct_send_photo(path="examples/kanada.jpg", user_ids=[instagram])
         self.assertIsInstance(dm, DirectMessage)
+
+    async def test_direct_media_share(self):
+        instagram = await self.user_id_from_username("instagram")
+        medias = await self.cl.user_medias(instagram, amount=5)
+        media = next(media for media in medias if media.id)
+        media_type = "video" if media.media_type == 2 else "photo"
+        dm = None
+        try:
+            dm = await self.cl.direct_media_share(media.id, user_ids=[instagram], media_type=media_type)
+            self.assertIsInstance(dm, DirectMessage)
+            self.assertTrue(dm.id)
+            self.assertTrue(dm.thread_id)
+
+            shared = None
+            for _ in range(6):
+                try:
+                    shared = await self.cl.direct_message(dm.thread_id, dm.id, amount=10)
+                except DirectMessageNotFound:
+                    await asyncio.sleep(2)
+                    continue
+                if shared.media_share or shared.xma_share or shared.raw_xma:
+                    break
+                await asyncio.sleep(2)
+            self.assertIsNotNone(shared)
+            self.assertTrue(shared.media_share or shared.xma_share or shared.raw_xma)
+        finally:
+            if dm and dm.thread_id:
+                try:
+                    await self.cl.direct_message_unsend(dm.thread_id, dm.id)
+                    await self.cl.direct_thread_hide(dm.thread_id)
+                except Exception as exc:
+                    logger.warning("Direct media share cleanup failed: %s", exc)
 
     async def test_direct_send_video(self):
         instagram = await self.user_id_from_username("instagram")
