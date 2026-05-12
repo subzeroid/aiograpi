@@ -1358,6 +1358,7 @@
 </table>
 <p>Notes:</p>
 <ul>
+<li>Direct recipient arguments accept either one id (<code>user_ids=123</code>) or a list of ids (<code>user_ids=[123]</code>).</li>
 <li>Direct message requests / invitations are exposed as <code>direct_requests()</code>; <code>direct_pending_inbox()</code> remains as the older name.</li>
 <li><code>direct_message()</code> scans the latest <code>amount</code> messages in a thread and raises <code>DirectMessageNotFound</code> if the id is not present in that window.</li>
 <li>Shared XMA items such as <code>xma_clip</code>, <code>xma_media_share</code>, <code>xma_story_share</code>, and <code>xma_profile</code> keep their original payload in <code>message.raw_xma</code>. When Instagram includes <code>target_url</code>, the normalized link is also available through <code>message.xma_share</code>.</li>
