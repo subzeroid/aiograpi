@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.4] - 2026-05-12
+
+### Fixed
+
+- Accepted scalar Direct recipient ids such as `user_ids=123` and `thread_ids=123` across async Direct send/share helpers.
+
 ## [0.9.3] - 2026-05-12
 
 ### Added
