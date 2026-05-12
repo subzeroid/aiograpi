@@ -43,6 +43,19 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             with_signature=False,
         )
 
+    async def test_direct_thread_add_users_posts_unsigned_user_ids(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.direct_thread_add_users(123, [42, "43"])
+
+        assert result is True
+        client.private_request.assert_awaited_once_with(
+            "direct_v2/threads/123/add_user/",
+            data={"_uuid": "uuid-1", "user_ids": '["42","43"]'},
+            with_signature=False,
+        )
+
     async def test_direct_thread_create_posts_group_payload(self):
         client = _build_client()
         client.generate_mutation_token = lambda: "mutation-token"

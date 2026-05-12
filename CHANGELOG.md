@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added async `direct_thread_add_users(thread_id, user_ids)` for adding users to existing group Direct threads.
+
 ## [0.9.4] - 2026-05-12
 
 ### Fixed
