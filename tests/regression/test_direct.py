@@ -18,6 +18,17 @@ def _build_client():
     return client
 
 
+def _direct_payload():
+    return {
+        "payload": {
+            "item_id": "1",
+            "timestamp": 1761953663000000,
+            "user_id": "1",
+        },
+        "status": "ok",
+    }
+
+
 class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_direct_thread_update_title_posts_unsigned_title(self):
         client = _build_client()
@@ -109,6 +120,37 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         assert result is True
         client.direct_pending_approve.assert_awaited_once_with(123)
+
+    async def test_direct_send_accepts_scalar_user_id(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value=_direct_payload())
+        client.generate_mutation_token = lambda: "mutation-token"
+
+        await client.direct_send("hello", user_ids="42")
+
+        data = client.private_request.call_args.kwargs["data"]
+        assert json.loads(data["recipient_users"]) == [[42]]
+
+    async def test_direct_send_accepts_scalar_thread_id(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value=_direct_payload())
+        client.generate_mutation_token = lambda: "mutation-token"
+
+        await client.direct_send("hello", thread_ids="340282366841710300949128149448121770626")
+
+        data = client.private_request.call_args.kwargs["data"]
+        assert json.loads(data["thread_ids"]) == [340282366841710300949128149448121770626]
+
+    async def test_direct_media_share_accepts_scalar_user_id(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value=_direct_payload())
+        client.generate_mutation_token = lambda: "mutation-token"
+        client.media_id = AsyncMock(return_value="123_1")
+
+        await client.direct_media_share("123", user_ids=42)
+
+        data = client.private_request.call_args.kwargs["data"]
+        assert json.loads(data["recipient_users"]) == [[42]]
 
     async def test_direct_send_reaction_posts_reaction_payload(self):
         client = _build_client()
