@@ -25,11 +25,12 @@ from aiograpi.exceptions import (
     TermsAccept,
     TermsUnblock,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.utils.logging import truncate_log_text
 from aiograpi.utils.timing import random_delay
 
 
-class PublicRequestMixin:
+class PublicRequestMixin(ClientMixin):
     public_requests_count = 0
     PUBLIC_API_URL = "https://www.instagram.com/"
     GRAPHQL_PUBLIC_API_URL = "https://www.instagram.com/graphql/query/"
@@ -391,7 +392,7 @@ class PublicRequestMixin:
         return body_json["data"]
 
 
-class TopSearchesPublicMixin:
+class TopSearchesPublicMixin(ClientMixin):
     async def top_search(self, query):
         """Anonymous IG search request"""
         url = "https://www.instagram.com/web/search/topsearch/"
@@ -404,7 +405,7 @@ class TopSearchesPublicMixin:
         return await self.public_request(url, params=params, return_json=True)
 
 
-class ProfilePublicMixin:
+class ProfilePublicMixin(ClientMixin):
     async def location_feed(self, location_id, count=16, end_cursor=None):
         if count > 50:
             raise ValueError("Count cannot be greater than 50")

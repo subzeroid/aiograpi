@@ -9,12 +9,13 @@ from aiograpi.exceptions import (
     AlbumNotDownload,
     AlbumUnknownFormat,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Location, Media, Track, Usertag
 from aiograpi.utils.serialization import dumps
 from aiograpi.utils.timing import date_time_original
 
 
-class DownloadAlbumMixin:
+class DownloadAlbumMixin(ClientMixin):
     """
     Helper class to download album
     """
@@ -121,7 +122,7 @@ class DownloadAlbumMixin:
         return files
 
 
-class UploadAlbumMixin:
+class UploadAlbumMixin(ClientMixin):
     async def album_upload(
         self,
         paths: List[Path],

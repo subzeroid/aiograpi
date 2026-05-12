@@ -1,4 +1,7 @@
-class MultipleAccountsMixin:
+from aiograpi.mixins.base import ClientMixin
+
+
+class MultipleAccountsMixin(ClientMixin):
     """
     Helpers for multiple accounts.
     """

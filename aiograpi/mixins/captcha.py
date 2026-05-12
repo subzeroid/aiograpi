@@ -1,10 +1,12 @@
 # aiograpi/mixins/captcha.py
 from typing import Callable, Dict, Optional
 
+from aiograpi.mixins.base import ClientMixin
+
 from ..exceptions import CaptchaChallengeRequired, ClientError
 
 
-class CaptchaHandlerMixin:
+class CaptchaHandlerMixin(ClientMixin):
     def __init__(self, *args, **kwargs):
         self._captcha_handler_instance: Optional[Callable[[Dict], str]] = None
         # Ensure compatibility with other mixins/classes by calling super()

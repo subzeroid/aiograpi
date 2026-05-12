@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Union
 from pydantic import (
     BaseModel,
     ConfigDict,
+    Field,
     FilePath,
     HttpUrl,
     ValidationError,
@@ -137,8 +138,8 @@ class UserShort(TypesBaseModel):
     profile_pic_url: Optional[HttpUrl] = None
     profile_pic_url_hd: Optional[HttpUrl] = None
     is_private: Optional[bool] = None
+    stories: List = Field(default_factory=list)
     # is_verified: bool  # not found in hashtag_medias_v1
-    # stories: List = [] # not found in fbsearch_suggested_profiles
 
 
 class Viewer(UserShort):

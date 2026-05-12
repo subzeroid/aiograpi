@@ -5,6 +5,8 @@ import hmac
 import time
 from typing import Any, List, Optional
 
+from aiograpi.mixins.base import ClientMixin
+
 
 class TOTP:
     """
@@ -79,7 +81,7 @@ class TOTP:
         return self.generate_otp(timecode)
 
 
-class TOTPMixin:
+class TOTPMixin(ClientMixin):
     async def totp_generate_seed(self) -> str:
         """
         Generate 2FA TOTP seed

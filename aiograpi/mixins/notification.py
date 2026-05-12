@@ -1,4 +1,5 @@
 from aiograpi.exceptions import UnsupportedSettingValue
+from aiograpi.mixins.base import ClientMixin
 
 MUTE_ALL_ITEMS = ("cancel", "15_minutes", "1_hour", "2_hour", "4_hour", "8_hour")
 SETTING_VALUE_ITEMS = ("off", "following_only", "everyone")
@@ -14,7 +15,7 @@ except ImportError:
     SETTING_VALUE = str
 
 
-class NotificationMixin:
+class NotificationMixin(ClientMixin):
     """
     Helpers for notification settings
     """

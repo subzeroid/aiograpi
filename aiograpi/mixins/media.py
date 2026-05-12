@@ -24,6 +24,7 @@ from aiograpi.extractors import (
     extract_media_v1,
     extract_user_short,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.mixins.graphql import GQL_STUFF
 from aiograpi.types import Location, Media, UserShort, Usertag
 from aiograpi.utils.auth import generate_jazoest
@@ -31,7 +32,7 @@ from aiograpi.utils.ids import InstagramIdCodec
 from aiograpi.utils.serialization import dumps, json_value
 
 
-class MediaMixin:
+class MediaMixin(ClientMixin):
     """
     Helpers for media
     """

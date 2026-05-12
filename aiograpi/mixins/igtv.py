@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from aiograpi import config
 from aiograpi.exceptions import ClientError, IGTVConfigureError, IGTVNotUpload
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Location, Media, Usertag
 from aiograpi.utils.timing import date_time_original
 from aiograpi.utils.video import analyze_video_for_upload
@@ -18,7 +19,7 @@ except ImportError:
     raise Exception("You don't have PIL installed. Please install PIL or Pillow>=8.1.1")
 
 
-class DownloadIGTVMixin:
+class DownloadIGTVMixin(ClientMixin):
     """
     Helpers to download IGTV videos
     """
@@ -60,7 +61,7 @@ class DownloadIGTVMixin:
         return await self.video_download_by_url(url, filename, folder)
 
 
-class UploadIGTVMixin:
+class UploadIGTVMixin(ClientMixin):
     """
     Helpers to upload IGTV videos
     """

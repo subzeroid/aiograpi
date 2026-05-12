@@ -6,10 +6,11 @@ from aiograpi.extractors import (
     extract_track,
     extract_user_short,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Hashtag, Location, Track, UserShort
 
 
-class FbSearchMixin:
+class FbSearchMixin(ClientMixin):
     async def fbsearch_places(self, query: str, lat: float = 40.74, lng: float = -73.94) -> List[Location]:
         params = {
             "search_surface": "places_search_page",

@@ -25,6 +25,7 @@ from aiograpi.exceptions import (
     TwoFactorRequired,
     UnknownError,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.utils.auth import gen_token, generate_jazoest
 from aiograpi.utils.serialization import dumps
 
@@ -48,7 +49,7 @@ except ImportError:
     REELS_TRAY_REASON = str
 
 
-class PreLoginFlowMixin:
+class PreLoginFlowMixin(ClientMixin):
     """
     Helpers for pre login flow
     """
@@ -168,7 +169,7 @@ class PreLoginFlowMixin:
         return await self.private_request("accounts/contact_point_prefill/", data, login=True)
 
 
-class PostLoginFlowMixin:
+class PostLoginFlowMixin(ClientMixin):
     """
     Helpers for post login flow
     """

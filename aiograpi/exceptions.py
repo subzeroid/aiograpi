@@ -1,3 +1,6 @@
+from typing import Any, Dict
+
+
 class ClientError(Exception):
     response = None
     code = None
@@ -132,7 +135,7 @@ class RecaptchaChallengeForm(ChallengeError):
 
 
 class SubmitPhoneNumberForm(ChallengeError):
-    pass
+    challenge: Dict[str, Any]
 
 
 class LegacyForceSetNewPasswordForm(ChallengeError):

@@ -114,7 +114,6 @@ What you can rely on instead:
   `media_pk`, `share_info`, `share_code_from_url`, `share_info_by_url`, `highlight_pk_from_url`,
   `handle_challenge_result`, `challenge_resolve_new_password_form` no longer require `await`.
   See [Migration Guide](https://subzeroid.github.io/aiograpi/latest/migration/) for the full list.
-- **PEP 561 typed** (`py.typed`) — mypy / pyright pick up annotations from the installed package.
 - **CI publish-on-tag** with PyPI trusted publishing — push a version tag, GitHub Actions builds,
   publishes, and creates a release.
 

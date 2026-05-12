@@ -20,10 +20,11 @@ from aiograpi.extractors import (
     extract_user_short,
     extract_viewer,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Story, StoryArchiveDay, UserShort, Viewer
 
 
-class StoryMixin:
+class StoryMixin(ClientMixin):
     _stories_cache = {}  # pk -> object
 
     def story_pk_from_url(self, url: str) -> str:

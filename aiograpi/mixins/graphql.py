@@ -31,6 +31,7 @@ from aiograpi.exceptions import (
     TermsUnblock,
     UserNotFound,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.utils.logging import truncate_log_text
 from aiograpi.utils.timing import random_delay
 
@@ -72,7 +73,7 @@ GQL_STUFF = {
 }
 
 
-class GraphQLRequestMixin:
+class GraphQLRequestMixin(ClientMixin):
     _fb_dtsg = None
     graphql_requests_count = 0
     last_graphql_response = None
@@ -154,7 +155,7 @@ class GraphQLRequestMixin:
                 response=response,
             )
         except httpx_ext.HTTPError as exc:
-            raise ClientError(exc, response=exc.response)
+            raise ClientError(exc, response=getattr(exc, "response", None))
         except (httpx_ext.ConnectError, httpx_ext.ReadError) as exc:
             raise ClientConnectionError("{} {}".format(exc.__class__.__name__, str(exc)))
         if self.last_json.get("errors"):

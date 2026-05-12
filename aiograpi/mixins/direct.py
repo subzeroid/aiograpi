@@ -17,6 +17,7 @@ from aiograpi.extractors import (
     extract_direct_thread,
     extract_user_short,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import (
     DirectMessage,
     DirectShortThread,
@@ -63,7 +64,7 @@ except ImportError:
     BOX = str
 
 
-class DirectMixin:
+class DirectMixin(ClientMixin):
     """
     Helpers for managing Direct Messaging
     """
@@ -1154,14 +1155,13 @@ class DirectMixin:
         bool
             A boolean value
         """
-        user_id = getattr(self, "user_id", None)
-        assert user_id, "Login required"
+        assert self.user_id, "Login required"
         user_ids = _direct_id_list(user_ids)
         assert user_ids, "At least one user_id required"
 
-        result = await getattr(self, "private_request")(
+        result = await self.private_request(
             f"direct_v2/threads/{thread_id}/add_user/",
-            data={"_uuid": getattr(self, "uuid"), "user_ids": dumps([str(uid) for uid in user_ids])},
+            data={"_uuid": self.uuid, "user_ids": dumps([str(uid) for uid in user_ids])},
             with_signature=False,
         )
         return result.get("status", "") == "ok"
@@ -1184,17 +1184,16 @@ class DirectMixin:
         str
             Created Direct thread id.
         """
-        user_id = getattr(self, "user_id", None)
-        assert user_id, "Login required"
+        assert self.user_id, "Login required"
         user_ids = _direct_id_list(user_ids)
         assert len(user_ids) >= 2, "Group threads require at least two recipient user_ids"
 
-        result = await getattr(self, "private_request")(
+        result = await self.private_request(
             "direct_v2/create_group_thread/",
             data={
-                "_uuid": getattr(self, "uuid"),
-                "_uid": str(user_id),
-                "client_context": getattr(self, "generate_mutation_token")(),
+                "_uuid": self.uuid,
+                "_uid": str(self.user_id),
+                "client_context": self.generate_mutation_token(),
                 "is_partnership_folder": "false",
                 "recipient_users": dumps([int(uid) for uid in user_ids]),
                 "thread_title": title,

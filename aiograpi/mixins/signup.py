@@ -15,13 +15,14 @@ from aiograpi.exceptions import (
     InvalidNonce,
 )
 from aiograpi.extractors import extract_user_short
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.mixins.challenge import ChallengeChoice
 from aiograpi.types import UserShort
 
 CHOICE_EMAIL = 1
 
 
-class SignUpMixin:
+class SignUpMixin(ClientMixin):
     waterfall_id = str(uuid4())
     adid = str(uuid4())
     wait_seconds = 5
