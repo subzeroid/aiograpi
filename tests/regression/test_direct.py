@@ -32,6 +32,35 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             with_signature=False,
         )
 
+    async def test_direct_thread_create_posts_group_payload(self):
+        client = _build_client()
+        client.generate_mutation_token = lambda: "mutation-token"
+        client.private_request = AsyncMock(return_value={"thread_id": "3402823668417103"})
+
+        result = await client.direct_thread_create([42, "43"], title="Group title")
+
+        assert result == "3402823668417103"
+        client.private_request.assert_awaited_once_with(
+            "direct_v2/create_group_thread/",
+            data={
+                "_uuid": "uuid-1",
+                "_uid": "1",
+                "client_context": "mutation-token",
+                "is_partnership_folder": "false",
+                "recipient_users": "[42,43]",
+                "thread_title": "Group title",
+            },
+        )
+
+    async def test_direct_thread_create_accepts_nested_thread_id_response(self):
+        client = _build_client()
+        client.generate_mutation_token = lambda: "mutation-token"
+        client.private_request = AsyncMock(return_value={"thread": {"thread_id": "3402823668417104"}})
+
+        result = await client.direct_thread_create([42, 43])
+
+        assert result == "3402823668417104"
+
     async def test_direct_message_returns_matching_message_by_id(self):
         client = _build_client()
         first = DirectMessage(id="111", user_id="1", timestamp=1)
