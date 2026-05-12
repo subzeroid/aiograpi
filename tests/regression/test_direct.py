@@ -3,6 +3,8 @@ import unittest
 from unittest.mock import AsyncMock
 
 from aiograpi import Client
+from aiograpi.exceptions import DirectMessageNotFound
+from aiograpi.types import DirectMessage, DirectThread
 
 
 def _build_client():
@@ -29,6 +31,55 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             data={"_uuid": "uuid-1", "title": "Updated title"},
             with_signature=False,
         )
+
+    async def test_direct_message_returns_matching_message_by_id(self):
+        client = _build_client()
+        first = DirectMessage(id="111", user_id="1", timestamp=1)
+        expected = DirectMessage(id="222", user_id="1", timestamp=2)
+        client.direct_messages = AsyncMock(return_value=[first, expected])
+
+        result = await client.direct_message(123, "222", amount=50)
+
+        assert result is expected
+        client.direct_messages.assert_awaited_once_with(123, 50)
+
+    async def test_direct_message_raises_when_message_is_missing(self):
+        client = _build_client()
+        message = DirectMessage(id="111", user_id="1", timestamp=1)
+        client.direct_messages = AsyncMock(return_value=[message])
+
+        with self.assertRaises(DirectMessageNotFound) as ctx:
+            await client.direct_message(123, 222, amount=1)
+
+        assert "222" in str(ctx.exception)
+
+    async def test_direct_message_unsend_delegates_to_delete_endpoint(self):
+        client = _build_client()
+        client.direct_message_delete = AsyncMock(return_value=True)
+
+        result = await client.direct_message_unsend(123, 456)
+
+        assert result is True
+        client.direct_message_delete.assert_awaited_once_with(123, 456)
+
+    async def test_direct_requests_uses_pending_inbox(self):
+        client = _build_client()
+        expected = [unittest.mock.Mock(spec=DirectThread)]
+        client.direct_pending_inbox = AsyncMock(return_value=expected)
+
+        result = await client.direct_requests(amount=7)
+
+        assert result is expected
+        client.direct_pending_inbox.assert_awaited_once_with(7)
+
+    async def test_direct_request_approve_delegates_to_pending_approve(self):
+        client = _build_client()
+        client.direct_pending_approve = AsyncMock(return_value=True)
+
+        result = await client.direct_request_approve(123)
+
+        assert result is True
+        client.direct_pending_approve.assert_awaited_once_with(123)
 
     async def test_direct_send_reaction_posts_reaction_payload(self):
         client = _build_client()

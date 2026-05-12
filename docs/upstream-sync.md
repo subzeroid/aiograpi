@@ -7,7 +7,7 @@ ported through.
 The current sync baseline is:
 
 ```text
-instagrapi 2.6.0
+instagrapi 2.6.1
 ```
 
 ## Release policy
@@ -16,8 +16,9 @@ instagrapi 2.6.0
 - Keep patch releases for urgent fixes after that sync lands.
 - Mention the upstream range in GitHub, PyPI, and Telegram release notes.
 
-For the 2026-05 sync, the public releases are `aiograpi 0.9.0` and newer,
-covering `instagrapi` releases `2.5.13` through `2.6.0`.
+For the 2026-05 sync, the public releases are `aiograpi 0.9.0` and newer.
+`aiograpi 0.9.0` synced through `instagrapi 2.5.18`, and subsequent
+`aiograpi 0.9.x` patch releases continue that baseline through `instagrapi 2.6.1`.
 
 ## Porting rules
 
