@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-05-12
+
+### Added
+
+- Added async `direct_thread_create(user_ids, title="")` for creating group Direct threads.
+- Preserved raw Direct XMA payloads such as `xma_clip`, `xma_media_share`, `xma_story_share`, and `xma_profile` in
+  `message.raw_xma`.
+
+### Fixed
+
+- Accepted Direct microsecond timestamps returned as strings, including reply timestamps and thread `last_activity_at`.
+
 ## [0.9.2] - 2026-05-12
 
 ### Added
