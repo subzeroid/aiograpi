@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-05-12
+
+### Added
+
+- Synced the async Direct helper API with `instagrapi` `2.6.1`.
+- Added `direct_message(thread_id, message_id, amount=20)` to fetch a Direct message by id.
+- Added clearer Direct message request helpers: `direct_requests()` and `direct_request_approve(thread_id)`.
+- Added `direct_message_unsend(thread_id, message_id)` as the unsend-style alias for the Direct item delete endpoint.
+
+### Changed
+
+- Updated Direct docs with message request, single-message lookup, and unsend examples.
+
 ## [0.9.1] - 2026-05-12
 
 ### Security
