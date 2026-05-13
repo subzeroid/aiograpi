@@ -6,7 +6,6 @@ from orjson import JSONDecodeError
 
 from aiograpi.exceptions import (
     ClientError,
-    ClientGraphqlError,
     ClientJSONDecodeError,
     ClientLoginRequired,
     ClientNotFoundError,
@@ -35,45 +34,11 @@ from aiograpi.types import (
     User,
     UserShort,
 )
-from aiograpi.utils.auth import generate_jazoest
 from aiograpi.utils.serialization import dumps, json_value
 
 MAX_USER_COUNT = 200
 INFO_FROM_MODULES = ("self_profile", "feed_timeline", "reel_feed_timeline")
-GRAPHQL_WEB_API_URL = "https://www.instagram.com/api/graphql"
-GQL_STUFF = {
-    "av": "17841464591314721",
-    "__d": "www",
-    "__user": "0",
-    "__a": "1",
-    "__req": "q",
-    "__hs": "19768.HYP:instagram_web_pkg.2.1..0.1",
-    "dpr": "2",
-    "__ccg": "UNKNOWN",
-    "__rev": "1011444902",
-    "__s": "x82a1q:agr3gd:4nh4nl",
-    "__hsi": "7335888108907652597",
-    "__dyn": (
-        "7xeUjG1mxu1syUbFp40NonwgU7SbzEdF8aUco2qwJxS0k24o0B-"
-        "q1ew65xO0FE2awt81s8hwGwQwoEcE7O2l0Fwqo31w9O7U2cxe0E"
-        "UjwGzEaE7622362W2K0zK5o4q3y1Sx-0iS2Sq2-azqwt8dUaob8"
-        "2cwMwrUdUbGwmk0KU6O1FwlE6PhA6bxy4VUKUnAwHw"
-    ),
-    "__csr": (
-        "g9cj5kxfs8lifTitQDqhdhalmDEAJaKBRJFdkAGHBkPy9HgCA-A"
-        "rtucm5bCBBGpyAoz-mLJpXJufKWGQ9hHhAhnKECuFUZ3Q8Jkmmp"
-        "eWyGAzkEj_CjyoZUgK-E8bwYzaxy00ktMGx20XU3gw4KAo3MChU"
-        "jw3N80poolwiA1d7G2yu2ucxi1nwEw16OE1JsS043Etw63wkSEgg1Mu00yiU"
-    ),
-    "__comet_req": "7",
-    "lsd": "6b2800R9u4biJOYjcdXFEI",
-    "__spin_r": "1011444902",
-    "__spin_b": "trunk",
-    "__spin_t": "1708019550",
-    "fb_api_caller_class": "RelayModern",
-    "fb_api_req_friendly_name": "PolarisProfilePageContentQuery",
-    "server_timestamps": "true",
-}
+USER_WEB_PROFILE_DOC_ID = "26762473490008061"
 
 logger = logging.getLogger(__name__)
 
@@ -129,24 +94,13 @@ class UserMixin(ClientMixin):
         UserShort
             An object of UserShort type
         """
-        variables = {
-            "user_id": str(user_id),
-            "include_reel": True,
-        }
-        try:
-            data = await self.public_graphql_request(variables, query_hash="ad99dd9d3646cc3c0dda65debcd266a7")
-            if not data["user"]:
-                raise UserNotFound(user_id=user_id, **data)
-            user = extract_user_short(data["user"]["reel"]["user"])
-        except ClientGraphqlError:
-            user = extract_user_short(await self.user_web_profile_info_gql(user_id))
-        return user
+        return extract_user_short(await self.user_web_profile_info_gql(user_id))
 
     async def user_web_profile_info_gql(self, user_id: str) -> dict:
         """
         Fetch a user profile via the public-host PolarisProfilePageContentQuery.
 
-        ``POST /api/graphql`` with ``doc_id="26762473490008061"`` —
+        ``POST /graphql/query/`` with ``doc_id="26762473490008061"`` —
         the modern web-profile GraphQL surface that replaced the old
         ``query_hash`` profile lookups. Requires a logged-in
         ``sessionid`` (the doc_id rejects anonymous callers).
@@ -172,14 +126,10 @@ class UserMixin(ClientMixin):
             ``sessionid`` is not available to inject.
         UserNotFound
             Response contained no ``user`` block.
-        ClientGraphqlError
-            GraphQL ``errors`` array was non-empty and ``data`` was
-            missing.
         """
         user_id = str(user_id)
         if not self.inject_sessionid_to_public():
             raise ClientLoginRequired("Session is required for web profile GraphQL")
-        doc_id = "26762473490008061"
         variables = {
             "enable_integrity_filters": True,
             "id": user_id,
@@ -188,37 +138,14 @@ class UserMixin(ClientMixin):
             "__relay_internal__pv__PolarisCASB976ProfileEnabledrelayprovider": False,
             "__relay_internal__pv__PolarisRepostsConsumptionEnabledrelayprovider": False,
         }
-        headers = {
-            "Origin": "https://www.instagram.com",
-            "Authority": "www.instagram.com",
-            "Sec-Fetch-Site": "same-origin",
-            "X-FB-Friendly-Name": "PolarisProfilePageContentQuery",
-        }
-        body = await self.public_request(
-            GRAPHQL_WEB_API_URL,
-            data={
-                "variables": dumps(variables),
-                "doc_id": doc_id,
-                "fb_dtsg": await self.fb_dtsg,
-                "jazoest": generate_jazoest(self.phone_id),
-                **GQL_STUFF,
-            },
-            headers=headers,
-            update_headers=False,
-            return_json=True,
+        data = await self.public_doc_id_graphql_request(
+            USER_WEB_PROFILE_DOC_ID,
+            variables,
+            referer=f"https://www.instagram.com/{user_id}/",
+            headers={"X-FB-Friendly-Name": "PolarisProfilePageContentQuery"},
         )
-        if errs := body.get("errors"):
-            if "data" not in body:
-                summary = errs[0].get("summary")
-                description = errs[0].get("description")
-                raise ClientGraphqlError(
-                    "GraphQL user profile fallback failed. Summary: '{}'. Description: '{}'".format(
-                        summary, description
-                    )
-                )
-        data = body.get("data")
         if not data or not data.get("user"):
-            raise UserNotFound(user_id=user_id, **body)
+            raise UserNotFound(user_id=user_id, **(data or {}))
         return data["user"]
 
     async def username_from_user_id_gql(self, user_id: str) -> str:

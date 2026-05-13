@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import AsyncMock
 
+import orjson
+
 from aiograpi import Client
 from aiograpi.exceptions import ClientError
 
@@ -104,3 +106,53 @@ class LocationPaginationRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         assert medias == []
         assert next_max_id is None
+
+
+class UserMediasGraphQLRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    def _xdt_media_payload(self):
+        return {
+            "id": "1",
+            "code": "abc",
+            "1ltaken_at": 1710000000,
+            "media_type": 1,
+            "usertags": None,
+            "carousel_media": None,
+            "user": {
+                "pk": "2",
+                "username": "example",
+                "profile_pic_url": "https://example.com/profile.jpg",
+            },
+            "image_versions2": {
+                "candidates": [{"url": "https://example.com/x.jpg", "width": 100, "height": 100}],
+                "scrubber_spritesheet_info_candidates": {"default": {"video_length": 15.4}},
+            },
+        }
+
+    async def test_user_medias_chunk_gql_uses_app_timeline_doc_id(self):
+        client = Client()
+        response = {
+            "data": {
+                "xdt_api__v1__profile_timeline": {
+                    "profile_grid_items": [{"media": self._xdt_media_payload()}],
+                    "more_available": True,
+                    "next_max_id": "next-page",
+                }
+            }
+        }
+        client.private_graphql_request = AsyncMock(return_value=response)
+        client.public_graphql_request = AsyncMock(side_effect=AssertionError("legacy query_hash should not be used"))
+
+        medias, end_cursor = await client.user_medias_chunk_gql("123", amount=1, end_cursor="cursor-1")
+
+        client.private_graphql_request.assert_awaited_once()
+        client.public_graphql_request.assert_not_called()
+        data = client.private_graphql_request.call_args.args[0]
+        variables = orjson.loads(data["variables"])
+        self.assertEqual(data["fb_api_req_friendly_name"], "IGProfileTimelineQuery")
+        self.assertEqual(data["client_doc_id"], "56030350814417327502004290437")
+        self.assertEqual(variables["user_id"], "123")
+        self.assertEqual(variables["count"], 1)
+        self.assertEqual(variables["max_id"], "cursor-1")
+        self.assertEqual(end_cursor, "next-page")
+        self.assertEqual([media.pk for media in medias], ["1"])
+        self.assertEqual(medias[0].id, "1_2")

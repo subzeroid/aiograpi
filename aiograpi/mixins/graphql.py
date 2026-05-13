@@ -102,6 +102,54 @@ class GraphQLRequestMixin(ClientMixin):
         )
         super().__init__(*args, **kwargs)
 
+    def _merge_incremental_graphql_payload(self, base: dict, payload: dict) -> None:
+        path = payload.get("path")
+        if not isinstance(path, list) or not path or "data" not in payload:
+            return
+        target = base
+        if path and path[0] != "data":
+            target = base.get("data", {})
+        elif path and path[0] == "data":
+            path = path[1:]
+        if not path:
+            return
+        try:
+            for key in path[:-1]:
+                target = target[key]
+        except (KeyError, IndexError, TypeError):
+            return
+        key = path[-1]
+        value = payload["data"]
+        if isinstance(target, list):
+            if not isinstance(key, int):
+                return
+            try:
+                current = target[key]
+            except IndexError:
+                return
+            if isinstance(current, dict) and isinstance(value, dict):
+                current.update(value)
+            else:
+                target[key] = value
+            return
+        current = target.get(key)
+        if isinstance(current, dict) and isinstance(value, dict):
+            current.update(value)
+        else:
+            target[key] = value
+
+    def _json_from_graphql_response(self, response):
+        try:
+            return response.json()
+        except orjson.JSONDecodeError:
+            chunks = [orjson.loads(line) for line in response.text.splitlines() if line.strip()]
+            if not chunks:
+                raise
+            body = chunks[0]
+            for chunk in chunks[1:]:
+                self._merge_incremental_graphql_payload(body, chunk)
+            return body
+
     @property
     async def fb_dtsg(self):
         if not self._fb_dtsg:
@@ -147,7 +195,7 @@ class GraphQLRequestMixin(ClientMixin):
             self.request_log(response)
             self.last_response = response
             response.raise_for_status()
-            self.last_json = response.json()
+            self.last_json = self._json_from_graphql_response(response)
         except orjson.JSONDecodeError as exc:
             url = response.url if response else url
             raise ClientJSONDecodeError(
