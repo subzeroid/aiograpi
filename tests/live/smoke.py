@@ -1,8 +1,9 @@
 """Live end-to-end smoke for aiograpi.
 
 Exits 0 if all REQUIRED checks pass; non-zero otherwise. Optional
-checks (chapi-style new endpoints) are reported but never fail the
-build — IG rotates doc_ids and we don't want a flaky CI gate.
+checks (anonymous public web paths and chapi-style new endpoints) are
+reported but never fail the build — IG rotates doc_ids and throttles
+anonymous web requests, and we don't want a flaky CI gate.
 
 Required env: TEST_ACCOUNTS_URL pointing at an accounts endpoint
 that returns at least one usable account (with TOTP seed if 2FA is
@@ -64,15 +65,15 @@ async def main():
 
     failures = []
 
-    # REQUIRED: anonymous public path
+    # OPTIONAL: anonymous public path. IG often throttles this web endpoint
+    # with 429 while logged-in app-backed checks are healthy.
     try:
         c = Client()
         u = await c.user_info_by_username_gql("instagram")
         assert u.username == "instagram" and u.pk == "25025320"
-        print(f"REQ public_gql: {u.username}/{u.pk}")
+        print(f"opt anonymous_public_gql: {u.username}/{u.pk}")
     except Exception as e:
-        failures.append(("public_gql", e))
-        print(f"REQ public_gql FAIL: {type(e).__name__}: {e}")
+        print(f"opt anonymous_public_gql: {type(e).__name__}: {str(e)[:140]}")
 
     # REQUIRED: login (TOTP) + private path
     cl = await _login_first_usable(accs)

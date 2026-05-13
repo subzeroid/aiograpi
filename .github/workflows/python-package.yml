@@ -146,11 +146,11 @@ jobs:
         with:
           test: "true"
       - name: Run end-to-end smoke
-        # Required: anonymous public_gql + login(TOTP) + private_v1 +
-        # private_v2_gql + user_short_gql + hashtag_info_v1 +
-        # user_medias_v1 + user_medias_gql + user_followers +
-        # highlight_info.
-        # Optional (reports but never fails): all chapi-ported endpoints.
+        # Required: login(TOTP) + private_v1 + private_v2_gql +
+        # user_short_gql + hashtag_info_v1 + user_medias_v1 +
+        # user_medias_gql + user_followers + highlight_info.
+        # Optional (reports but never fails): anonymous public web
+        # lookup + all chapi-ported endpoints.
         # PYTHONPATH=. so `from aiograpi import Client` resolves without
         # `pip install -e .` (install-dependencies action installs deps
         # only, not the package itself).
