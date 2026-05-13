@@ -8,12 +8,13 @@ from urllib.parse import urlparse
 from aiograpi import config
 from aiograpi.exceptions import HighlightNotFound
 from aiograpi.extractors import extract_highlight_v1
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Highlight
 from aiograpi.utils.serialization import dumps
 from aiograpi.utils.validation import vassert
 
 
-class HighlightMixin:
+class HighlightMixin(ClientMixin):
     def highlight_pk_from_url(self, url: str) -> str:
         """
         Get Highlight PK from URL

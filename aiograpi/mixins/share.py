@@ -2,10 +2,11 @@ import base64
 from urllib.parse import urlparse
 
 from aiograpi.exceptions import ShareDecodeError
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Share
 
 
-class ShareMixin:
+class ShareMixin(ClientMixin):
     def share_info(self, code: str) -> Share:
         """
         Get Share object by code

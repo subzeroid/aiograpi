@@ -14,6 +14,7 @@ from aiograpi.exceptions import (
     PhotoNotUpload,
 )
 from aiograpi.image_util import prepare_image
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import (
     Location,
     Media,
@@ -37,7 +38,7 @@ except ImportError:
     raise Exception("You don't have PIL installed. Please install PIL or Pillow>=8.1.1")
 
 
-class DownloadPhotoMixin:
+class DownloadPhotoMixin(ClientMixin):
     """
     Helpers for downloading photo
     """
@@ -127,7 +128,7 @@ class DownloadPhotoMixin:
         return response
 
 
-class UploadPhotoMixin:
+class UploadPhotoMixin(ClientMixin):
     """
     Helpers for downloading photo
     """
@@ -666,16 +667,16 @@ class UploadPhotoMixin:
                 tap_models.extend(reel_mentions)
         if hashtags:
             story_sticker_ids.append("hashtag_sticker")
-            for mention in hashtags:
+            for hashtag in hashtags:
                 item = {
-                    "x": mention.x,
-                    "y": mention.y,
+                    "x": hashtag.x,
+                    "y": hashtag.y,
                     "z": 0,
-                    "width": mention.width,
-                    "height": mention.height,
+                    "width": hashtag.width,
+                    "height": hashtag.height,
                     "rotation": 0.0,
                     "type": "hashtag",
-                    "tag_name": mention.hashtag.name,
+                    "tag_name": hashtag.hashtag.name,
                     "is_sticker": True,
                     "tap_state": 0,
                     "tap_state_str_id": "hashtag_sticker_gradient",
@@ -683,17 +684,17 @@ class UploadPhotoMixin:
                 tap_models.append(item)
         if locations:
             story_sticker_ids.append("location_sticker")
-            for mention in locations:
-                mention.location = await self.location_complete(mention.location)
+            for location in locations:
+                location.location = await self.location_complete(location.location)
                 item = {
-                    "x": mention.x,
-                    "y": mention.y,
+                    "x": location.x,
+                    "y": location.y,
                     "z": 0,
-                    "width": mention.width,
-                    "height": mention.height,
+                    "width": location.width,
+                    "height": location.height,
                     "rotation": 0.0,
                     "type": "location",
-                    "location_id": self.location_story_sticker_id(mention.location),
+                    "location_id": self.location_story_sticker_id(location.location),
                     "is_sticker": True,
                     "tap_state": 0,
                     "tap_state_str_id": "location_sticker_vibrant",

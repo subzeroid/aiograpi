@@ -63,6 +63,8 @@ CI with explicit class selectors so live/account-oriented legacy classes are not
 tests live in `tests/live/` and require `TEST_ACCOUNTS_URL`; do not run or modify live tests in a way that prints
 credentials, proxies, sessions, or the account URL.
 
+Mixin classes should inherit from `aiograpi.mixins.base.ClientMixin`. It is a typing-only contract for shared client attributes and helper methods provided by sibling mixins; use normal `self.user_id`, `self.private_request`, etc. in feature code instead of `getattr` workarounds for mypy.
+
 ## Pull Request Checklist
 
 1. Branch from `main` and keep the change scoped.

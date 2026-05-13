@@ -11,13 +11,14 @@ from aiograpi.exceptions import (  # CommentsDisabled,
     PrivateError,
 )
 from aiograpi.extractors import extract_comment
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.mixins.graphql import GQL_STUFF
 from aiograpi.types import Comment
 from aiograpi.utils.auth import generate_jazoest
 from aiograpi.utils.serialization import dumps
 
 
-class CommentMixin:
+class CommentMixin(ClientMixin):
     """
     Helpers for managing comments on a Media
     """

@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from aiograpi import config
 from aiograpi.exceptions import ClientError, ClipConfigureError, ClipNotUpload
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Location, Media, Track, Usertag
 from aiograpi.utils.timing import date_time_original
 from aiograpi.utils.video import analyze_video_for_upload
@@ -19,7 +20,7 @@ except ImportError:
     raise Exception("You don't have PIL installed. Please install PIL or Pillow>=8.1.1")
 
 
-class ClipMixin:
+class ClipMixin(ClientMixin):
     """
     Helpers for CLIP/Reel actions
     """
@@ -62,7 +63,7 @@ class ClipMixin:
         return await self.clip_pin(media_pk, True)
 
 
-class DownloadClipMixin:
+class DownloadClipMixin(ClientMixin):
     """
     Helpers to download CLIP videos
     """
@@ -106,7 +107,7 @@ class DownloadClipMixin:
         return await self.video_download_by_url(url, filename, folder)
 
 
-class UploadClipMixin:
+class UploadClipMixin(ClientMixin):
     """
     Helpers to upload CLIP videos
     """

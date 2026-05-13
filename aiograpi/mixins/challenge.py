@@ -19,6 +19,7 @@ from aiograpi.exceptions import (
     SelectContactPointRecoveryForm,
     SubmitPhoneNumberForm,
 )
+from aiograpi.mixins.base import ClientMixin
 
 logger = logging.getLogger(__name__)
 WAIT_SECONDS = 5
@@ -40,7 +41,7 @@ def extract_messages(challenge):
     return messages
 
 
-class ChallengeResolveMixin:
+class ChallengeResolveMixin(ClientMixin):
     """
     Helpers for resolving login challenge
     """

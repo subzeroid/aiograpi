@@ -6,9 +6,10 @@ from Cryptodome.PublicKey import RSA
 from Cryptodome.Random import get_random_bytes
 
 from aiograpi.exceptions import ClientError
+from aiograpi.mixins.base import ClientMixin
 
 
-class PasswordMixin:
+class PasswordMixin(ClientMixin):
     async def password_encrypt(self, password):
         publickeyid, publickey = await self.password_publickeys()
         session_key = get_random_bytes(32)

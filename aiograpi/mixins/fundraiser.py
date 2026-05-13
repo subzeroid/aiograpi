@@ -1,4 +1,7 @@
-class FundraiserMixin:
+from aiograpi.mixins.base import ClientMixin
+
+
+class FundraiserMixin(ClientMixin):
     """
     Helpers for the fundraisers.
     """

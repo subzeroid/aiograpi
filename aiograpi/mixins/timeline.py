@@ -1,10 +1,11 @@
 from typing import List
 
 from aiograpi.extractors import extract_media_v1
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Media
 
 
-class ReelsMixin:
+class ReelsMixin(ClientMixin):
     """
     Helpers for Reels
     """

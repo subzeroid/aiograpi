@@ -4,13 +4,14 @@ from typing import List, Tuple
 
 from aiograpi.exceptions import ClientNotFoundError, LocationNotFound, WrongCursorError
 from aiograpi.extractors import extract_guide_v1, extract_location, extract_media_v1
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Guide, Location, Media
 
 tab_keys_a1 = ("edge_location_to_top_posts", "edge_location_to_media")
 tab_keys_v1 = ("ranked", "recent")
 
 
-class LocationMixin:
+class LocationMixin(ClientMixin):
     """
     Helper class to get location
     """

@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added async `direct_thread_add_users(thread_id, user_ids)` for adding users to existing group Direct threads.
 
+### Changed
+
+- Added an internal typing-only `ClientMixin` contract so mixins can use shared client attributes directly without `getattr` workarounds, eliminating the remaining `[attr-defined]` errors and reducing the internal mypy regression baseline from 1176 to 270 errors.
+- Removed the `py.typed` package marker and user-facing PEP 561 messaging until aiograpi's annotations are ready to be supported as a public typing surface.
+
 ## [0.9.4] - 2026-05-12
 
 ### Fixed

@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional, Union
 
 from aiograpi.exceptions import ClientGraphqlError
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Note, Track, UserShort
 from aiograpi.utils.serialization import dumps
 
@@ -9,7 +10,7 @@ CREATE_INBOX_TRAY_ITEM_CLIENT_DOC_ID = "3510400299951610199199089856"
 CREATE_INBOX_TRAY_ITEM_FRIENDLY_NAME = "CreateInboxTrayItemRequest"
 
 
-class NoteMixin:
+class NoteMixin(ClientMixin):
     @staticmethod
     def _track_value(track: Union[Track, Dict], key: str):
         if isinstance(track, dict):

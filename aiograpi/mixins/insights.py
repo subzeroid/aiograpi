@@ -8,6 +8,7 @@ from aiograpi.exceptions import (
     UnsupportedError,
     UserError,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.utils.serialization import json_value
 
 POST_TYPES = ("ALL", "CAROUSEL_V2", "IMAGE", "SHOPPING", "VIDEO")
@@ -43,7 +44,7 @@ except ImportError:
     POST_TYPE = TIME_FRAME = DATA_ORDERING = str
 
 
-class InsightsMixin:
+class InsightsMixin(ClientMixin):
     """
     Helper class to get insights
     """

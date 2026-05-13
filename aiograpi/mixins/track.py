@@ -5,11 +5,12 @@ from urllib.parse import urlparse
 from aiograpi import httpx_ext
 from aiograpi.exceptions import ClientError, TrackNotFound
 from aiograpi.extractors import extract_track
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Track
 from aiograpi.utils.serialization import json_value
 
 
-class TrackMixin:
+class TrackMixin(ClientMixin):
     @staticmethod
     def _track_value(track: Union[Track, Dict], key: str):
         if isinstance(track, dict):
@@ -46,7 +47,7 @@ class TrackMixin:
             raise Exception("The URL must contain the path to the file (m4a or mp3).")
         filename = "%s.%s" % (filename, fname.rsplit(".", 1)[1]) if filename else fname
         path = Path(folder) / filename
-        response = await httpx_ext.get(url, timeout=self.request_timeout)
+        response = await httpx_ext.request("GET", url, timeout=self.request_timeout)
         response.raise_for_status()
         with open(path, "wb") as f:
             f.write(response.read())

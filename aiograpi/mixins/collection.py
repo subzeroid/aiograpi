@@ -2,10 +2,11 @@ from typing import List, Tuple
 
 from aiograpi.exceptions import CollectionNotFound, PreLoginRequired, PrivateError
 from aiograpi.extractors import extract_collection, extract_media_v1
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Collection, Media
 
 
-class CollectionMixin:
+class CollectionMixin(ClientMixin):
     """
     Helpers for collection
     """

@@ -215,14 +215,6 @@ httpx==0.28.1
 You're calling `await ...` outside an async function. Wrap in
 `asyncio.run(main())` or use `nest_asyncio` for Jupyter.
 
-### `mypy` complains about cross-mixin attributes
-
-Known issue (`.mypy-baseline = 1095`). aiograpi mixins reference each
-other's attributes (`self.user_id`, `self.private_request`) which mypy
-sees as `[attr-defined]` because each mixin is checked in isolation.
-We ratchet the baseline down per release. For now, suppress with
-`# type: ignore[attr-defined]` if you subclass.
-
 ## When in doubt
 
 1. Check `client.last_json` — Instagram's actual response body is often

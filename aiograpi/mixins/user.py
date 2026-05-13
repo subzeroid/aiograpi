@@ -26,6 +26,7 @@ from aiograpi.extractors import (
     extract_user_short,
     extract_user_v1,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import (
     About,
     Guide,
@@ -84,7 +85,7 @@ except Exception:
     INFO_FROM_MODULE = str
 
 
-class UserMixin:
+class UserMixin(ClientMixin):
     """
     Helpers to manage user
     """
@@ -262,7 +263,7 @@ class UserMixin:
         try:
             username = await self.username_from_user_id_gql(user_id)
         except ClientError:
-            username = await self.user_info_v1(user_id).username
+            username = (await self.user_info_v1(user_id)).username
         return username
 
     async def user_info_by_username_a1(self, username: str) -> dict:

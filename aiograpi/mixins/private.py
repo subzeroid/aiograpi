@@ -45,6 +45,7 @@ from aiograpi.exceptions import (
     UserNotFound,
     VideoTooLongException,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.utils.auth import generate_signature
 from aiograpi.utils.serialization import dumps
 from aiograpi.utils.timing import random_delay
@@ -81,7 +82,7 @@ async def manual_change_password(self, username: str):
     return pwd
 
 
-class PrivateRequestMixin:
+class PrivateRequestMixin(ClientMixin):
     """
     Helpers for private request
     """

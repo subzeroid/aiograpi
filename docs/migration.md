@@ -171,8 +171,6 @@ After updating, run:
 
 ```bash
 python -m compileall your_code/      # catches syntax errors
-mypy your_code/                      # picks up aiograpi's PEP 561
-                                     # types (added in 0.4.0)
 ```
 
 Then exercise your hot paths against a single account before rolling

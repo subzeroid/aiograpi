@@ -16,13 +16,14 @@ from aiograpi.extractors import (
     extract_hashtag_v1,
     extract_media_v1,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Hashtag, Media
 from aiograpi.utils.serialization import dumps
 
 logger = logging.getLogger(__name__)
 
 
-class HashtagMixin:
+class HashtagMixin(ClientMixin):
     """
     Helpers for managing Hashtag
     """

@@ -1,4 +1,7 @@
-class ExploreMixin:
+from aiograpi.mixins.base import ClientMixin
+
+
+class ExploreMixin(ClientMixin):
     """
     Helpers for the explore page
     """

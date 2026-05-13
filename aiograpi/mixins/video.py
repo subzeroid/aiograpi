@@ -13,6 +13,7 @@ from aiograpi.exceptions import (
     VideoNotDownload,
     VideoNotUpload,
 )
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import (
     DirectMessage,
     Location,
@@ -32,7 +33,7 @@ from aiograpi.utils.timing import date_time_original
 from aiograpi.utils.video import analyze_video_for_upload
 
 
-class DownloadVideoMixin:
+class DownloadVideoMixin(ClientMixin):
     """
     Helpers for downloading video
     """
@@ -147,7 +148,7 @@ class DownloadVideoMixin:
         return response.content
 
 
-class UploadVideoMixin:
+class UploadVideoMixin(ClientMixin):
     """
     Helpers for downloading video
     """
@@ -710,16 +711,16 @@ class UploadVideoMixin:
             tap_models.extend(reel_mentions)
         if hashtags:
             story_sticker_ids.append("hashtag_sticker")
-            for mention in hashtags:
+            for hashtag in hashtags:
                 item = {
-                    "x": mention.x,
-                    "y": mention.y,
+                    "x": hashtag.x,
+                    "y": hashtag.y,
                     "z": 0,
-                    "width": mention.width,
-                    "height": mention.height,
+                    "width": hashtag.width,
+                    "height": hashtag.height,
                     "rotation": 0.0,
                     "type": "hashtag",
-                    "tag_name": mention.hashtag.name,
+                    "tag_name": hashtag.hashtag.name,
                     "is_sticker": True,
                     "tap_state": 0,
                     "tap_state_str_id": "hashtag_sticker_gradient",
@@ -727,17 +728,17 @@ class UploadVideoMixin:
                 tap_models.append(item)
         if locations:
             story_sticker_ids.append("location_sticker")
-            for mention in locations:
-                mention.location = await self.location_complete(mention.location)
+            for location in locations:
+                location.location = await self.location_complete(location.location)
                 item = {
-                    "x": mention.x,
-                    "y": mention.y,
+                    "x": location.x,
+                    "y": location.y,
                     "z": 0,
-                    "width": mention.width,
-                    "height": mention.height,
+                    "width": location.width,
+                    "height": location.height,
                     "rotation": 0.0,
                     "type": "location",
-                    "location_id": self.location_story_sticker_id(mention.location),
+                    "location_id": self.location_story_sticker_id(location.location),
                     "is_sticker": True,
                     "tap_state": 0,
                     "tap_state_str_id": "location_sticker_vibrant",

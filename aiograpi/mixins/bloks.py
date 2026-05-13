@@ -1,7 +1,8 @@
+from aiograpi.mixins.base import ClientMixin
 from aiograpi.utils.serialization import dumps
 
 
-class BloksMixin:
+class BloksMixin(ClientMixin):
     bloks_versioning_id = ""
 
     async def bloks_action(self, action: str, data: dict) -> bool:
