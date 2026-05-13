@@ -1505,6 +1505,11 @@
 <td>Get one page of medias by user_id</td>
 </tr>
 <tr>
+<td>user_medias_paginated(user_id: str, amount: int = 0, end_cursor: str = "")</td>
+<td>Tuple[List[Media], str]</td>
+<td>Get one page of medias by user_id; compatibility alias for <code>instagrapi</code></td>
+</tr>
+<tr>
 <td>user_clips(user_id: str, amount: int = 50)</td>
 <td>List[Media]</td>
 <td>Get list of clips (reels) by user_id</td>
@@ -1632,6 +1637,11 @@
 <td>Get a page of user's media by Public Graphql API</td>
 </tr>
 <tr>
+<td>user_medias_paginated_gql(user_id: str, amount: int = 0, sleep: int = 2, end_cursor=None)</td>
+<td>Tuple[List[Media], str]</td>
+<td>Get one GraphQL page of user's media; compatibility alias for <code>instagrapi</code></td>
+</tr>
+<tr>
 <td>user_medias_v1(user_id: str, amount: int = 18)</td>
 <td>List[Media]</td>
 <td>Get a user's media by Private Mobile API</td>
@@ -1640,6 +1650,11 @@
 <td>user_medias_chunk_v1(user_id: str, end_cursor: str = "")</td>
 <td>Tuple[List[Media], str]</td>
 <td>Get a page of user's media by Private Mobile API</td>
+</tr>
+<tr>
+<td>user_medias_paginated_v1(user_id: str, amount: int = 33, end_cursor: str = "")</td>
+<td>Tuple[List[Media], str]</td>
+<td>Get one private API page of user's media; compatibility alias for <code>instagrapi</code></td>
 </tr>
 <tr>
 <td>user_clips_v1(user_id: str, amount: int = 50)</td>
@@ -1652,6 +1667,11 @@
 <td>Get a page of user's clip by Private Mobile API</td>
 </tr>
 <tr>
+<td>user_clips_paginated_v1(user_id: str, amount: int = 50, end_cursor: str = "")</td>
+<td>Tuple[List[Media], str]</td>
+<td>Get one private API page of user's clips; compatibility alias for <code>instagrapi</code></td>
+</tr>
+<tr>
 <td>user_videos_v1(user_id: str, amount: int = 50)</td>
 <td>List[Media]</td>
 <td>Get a user's video by Private Mobile API</td>
@@ -1660,6 +1680,11 @@
 <td>user_videos_chunk_v1(user_id: int, end_cursor: str = "")</td>
 <td>Tuple[List[Media], str]</td>
 <td>Get a page of user's video by Private Mobile API</td>
+</tr>
+<tr>
+<td>user_videos_paginated_v1(user_id: str, amount: int = 50, end_cursor: str = "")</td>
+<td>Tuple[List[Media], str]</td>
+<td>Get one private API page of user's videos; compatibility alias for <code>instagrapi</code></td>
 </tr>
 <tr>
 <td>usertag_medias_gql(user_id: str, amount: int = 20)</td>
@@ -1951,6 +1976,16 @@
 <td>clip_upload_as_reel_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {})</td>
 <td>Media</td>
 <td>Upload Reels Clip as reel with music metadata</td>
+</tr>
+<tr>
+<td>clip_info_for_creation()</td>
+<td>Dict</td>
+<td>Get Reel creation preflight configuration for the current user</td>
+</tr>
+<tr>
+<td>clip_trial_eligible()</td>
+<td>bool</td>
+<td>Check whether Reel creation preflight reports Trial Reels enabled</td>
 </tr>
 <tr>
 <td>clip_share_to_fb_config()</td>

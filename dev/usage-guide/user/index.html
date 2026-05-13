@@ -1244,6 +1244,31 @@
 <td>Unfollow user</td>
 </tr>
 <tr>
+<td>user_follow_requests(amount: int = 0)</td>
+<td>List[UserShort]</td>
+<td>Get pending incoming follow requests</td>
+</tr>
+<tr>
+<td>user_follow_request_approve(user_id: str)</td>
+<td>bool</td>
+<td>Approve a pending incoming follow request</td>
+</tr>
+<tr>
+<td>user_follow_request_decline(user_id: str)</td>
+<td>bool</td>
+<td>Decline a pending incoming follow request</td>
+</tr>
+<tr>
+<td>user_follow_requests_approve(user_ids: List[str])</td>
+<td>Dict[str, bool]</td>
+<td>Approve pending incoming follow requests</td>
+</tr>
+<tr>
+<td>user_follow_requests_decline(user_ids: List[str])</td>
+<td>Dict[str, bool]</td>
+<td>Decline pending incoming follow requests</td>
+</tr>
+<tr>
 <td>user_id_from_username(username: str)</td>
 <td>int</td>
 <td>Get user_id by username</td>
@@ -1364,6 +1389,11 @@
 <td>user_following_gql(user_id: str, amount: int = 0)</td>
 <td>List[UserShort]</td>
 <td>Get user's following information by Public Graphql API</td>
+</tr>
+<tr>
+<td>user_follow_requests_chunk(max_amount: int = 0, max_id: str = "")</td>
+<td>Tuple[List[UserShort], str]</td>
+<td>Get pending incoming follow requests by Private Mobile API and max_id</td>
 </tr>
 <tr>
 <td>search_followers_v1(user_id: str, query: str)</td>

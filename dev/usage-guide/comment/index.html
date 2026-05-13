@@ -1216,6 +1216,16 @@
 <td>Get chunk of comments on a media and end_cursor</td>
 </tr>
 <tr>
+<td>media_comment_replies(media_id: str, comment_id: str, amount: int = 0)</td>
+<td>List[Comment]</td>
+<td>Get replies for a parent media comment</td>
+</tr>
+<tr>
+<td>media_comment_replies_chunk(media_id: str, comment_id: str, max_amount: int, min_id: str = None)</td>
+<td>Tuple[List[Comment], str]</td>
+<td>Get chunk of replies and the next child cursor</td>
+</tr>
+<tr>
 <td>comment_like(comment_pk: int)</td>
 <td>bool</td>
 <td>Like a comment</td>
