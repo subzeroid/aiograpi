@@ -14,8 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Synced profile GraphQL lookups with the current upstream flow: `user_short_gql` now uses the web profile `doc_id`, `user_medias_gql` uses the app `IGProfileTimelineQuery` `client_doc_id`, and private GraphQL accepts incremental JSON-lines responses.
 - Added an internal typing-only `ClientMixin` contract so mixins can use shared client attributes directly without `getattr` workarounds, eliminating the remaining `[attr-defined]` errors and reducing the internal mypy regression baseline from 1176 to 270 errors.
 - Removed the `py.typed` package marker and user-facing PEP 561 messaging until aiograpi's annotations are ready to be supported as a public typing surface.
+
+### Fixed
+
+- Normalized nullable XDT media fields returned by profile timeline GraphQL so media extraction accepts missing usertags, missing carousel resources, and incomplete scrubber spritesheet blocks.
 
 ## [0.9.4] - 2026-05-12
 

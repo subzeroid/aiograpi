@@ -39,6 +39,29 @@ class RequestLoggingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIn("truncated", logged_body)
         self.assertNotEqual(logged_body, long_body)
 
+    async def test_private_graphql_request_accepts_incremental_json_lines(self):
+        client = Client()
+        response = Mock()
+        response.url = "https://i.instagram.com/graphql/query"
+        response.text = (
+            '{"data":{"timeline":{"items":[{"media":{"id":"1"}}]}},"status":"ok"}\n'
+            '{"path":["timeline","items",0,"media"],"data":{"code":"abc"}}\n'
+        )
+        response.json.side_effect = _json_decode_error()
+        response.raise_for_status.return_value = None
+        client.private.post = AsyncMock(return_value=response)
+        client.request_log = Mock()
+
+        result = await client.private_graphql_request(
+            {
+                "fb_api_req_friendly_name": "ExampleQuery",
+                "variables": "{}",
+            }
+        )
+
+        self.assertEqual(result["data"]["timeline"]["items"][0]["media"]["id"], "1")
+        self.assertEqual(result["data"]["timeline"]["items"][0]["media"]["code"], "abc")
+
     async def test_graphql_json_decode_error_log_truncates_response_body(self):
         client = Client()
         client.last_response_ts = 0

@@ -82,8 +82,10 @@ async def main():
         for name, fn in [
             ("private_v1", lambda: cl.user_info_by_username_v1("instagram")),
             ("private_v2_gql", lambda: cl.user_info_by_username_v2_gql("instagram")),
+            ("user_short_gql", lambda: cl.user_short_gql("25025320")),
             ("hashtag_info_v1", lambda: cl.hashtag_info_v1("python")),
             ("user_medias_v1", lambda: cl.user_medias_v1("25025320", amount=3)),
+            ("user_medias_gql", lambda: cl.user_medias_gql("25025320", amount=3)),
             ("user_followers", lambda: cl.user_followers("25025320", amount=10)),
             ("highlight_info", lambda: cl.highlight_info(17983407089364361)),
         ]:
