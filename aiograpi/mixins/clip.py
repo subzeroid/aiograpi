@@ -112,6 +112,34 @@ class UploadClipMixin(ClientMixin):
     Helpers to upload CLIP videos
     """
 
+    async def clip_info_for_creation(self) -> Dict:
+        """
+        Get Reel creation preflight configuration for the current user.
+
+        Returns
+        -------
+        Dict
+            A dictionary of response from the call
+        """
+        return await self.private_request("clips/clips_info_for_creation/")
+
+    async def clip_trial_eligible(self) -> bool:
+        """
+        Check whether Reel creation preflight reports Trial Reels enabled.
+
+        Instagram can still reject Trial Reel publishing later during
+        configure, so keep upload-side error handling for backend
+        eligibility decisions.
+
+        Returns
+        -------
+        bool
+            A boolean value
+        """
+        result = await self.clip_info_for_creation()
+        trial_config = result.get("trial_config") or {}
+        return bool(trial_config.get("is_enabled"))
+
     async def clip_share_to_fb_config(self, device_status: Optional[Dict[str, object]] = None) -> Dict:
         """
         Get Reel Facebook sharing configuration for the current user.

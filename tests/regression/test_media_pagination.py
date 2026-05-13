@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import orjson
 
 from aiograpi import Client
-from aiograpi.exceptions import ClientError
+from aiograpi.exceptions import ClientError, ClientForbiddenError
 
 
 class UsertagMediasPaginationRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -156,3 +156,145 @@ class UserMediasGraphQLRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(end_cursor, "next-page")
         self.assertEqual([media.pk for media in medias], ["1"])
         self.assertEqual(medias[0].id, "1_2")
+
+    async def test_user_medias_paginated_aliases_chunk_gql(self):
+        client = Client()
+        client.user_medias_chunk_gql = AsyncMock(return_value=(["media"], "next-page"))
+
+        medias, end_cursor = await client.user_medias_paginated_gql("123", amount=7, sleep=1, end_cursor="cursor-1")
+
+        assert medias == ["media"]
+        assert end_cursor == "next-page"
+        client.user_medias_chunk_gql.assert_awaited_once_with("123", sleep=1, end_cursor="cursor-1", amount=7)
+
+    async def test_user_medias_paginated_v1_sends_count_and_cursor(self):
+        client = Client()
+        payload = UsertagMediasPaginationRegressionTestCase()._media_v1_payload()
+        client.private_request = AsyncMock(return_value={"items": [payload], "next_max_id": "next-page"})
+
+        medias, end_cursor = await client.user_medias_paginated_v1("123", amount=5, end_cursor="cursor-1")
+
+        client.private_request.assert_awaited_once()
+        assert client.private_request.call_args.args[0] == "feed/user/123/"
+        params = client.private_request.call_args.kwargs["params"]
+        assert params["max_id"] == "cursor-1"
+        assert params["count"] == 5
+        assert end_cursor == "next-page"
+        assert [media.pk for media in medias] == ["1"]
+
+    async def test_user_medias_paginated_falls_back_to_v1_for_v1_cursor(self):
+        client = Client()
+        client.user_medias_paginated_gql = AsyncMock(side_effect=AssertionError("gql should not be used"))
+        client.user_medias_paginated_v1 = AsyncMock(return_value=(["media"], "next-page"))
+
+        medias, end_cursor = await client.user_medias_paginated("123", amount=5, end_cursor="v1_cursor")
+
+        assert medias == ["media"]
+        assert end_cursor == "next-page"
+        client.user_medias_paginated_gql.assert_not_called()
+        client.user_medias_paginated_v1.assert_awaited_once_with("123", 5, end_cursor="v1_cursor")
+
+    async def test_user_videos_paginated_v1_sends_count_and_cursor(self):
+        client = Client()
+        payload = UsertagMediasPaginationRegressionTestCase()._media_v1_payload()
+        client.private_request = AsyncMock(return_value={"items": [payload], "next_max_id": "next-page"})
+
+        medias, end_cursor = await client.user_videos_paginated_v1("123", amount=6, end_cursor="cursor-1")
+
+        client.private_request.assert_awaited_once_with(
+            "igtv/channel/",
+            params={"id": "uservideo_123", "count": 6, "max_id": "cursor-1"},
+        )
+        assert end_cursor == "next-page"
+        assert [media.pk for media in medias] == ["1"]
+
+    async def test_user_clips_paginated_v1_sends_page_size_and_cursor(self):
+        client = Client()
+        payload = UsertagMediasPaginationRegressionTestCase()._media_v1_payload()
+        client.private_request = AsyncMock(
+            return_value={"items": [{"media": payload}], "paging_info": {"max_id": "next-page"}}
+        )
+
+        medias, end_cursor = await client.user_clips_paginated_v1("123", amount=8, end_cursor="cursor-1")
+
+        client.private_request.assert_awaited_once_with(
+            "clips/user/",
+            data={
+                "target_user_id": 123,
+                "max_id": "cursor-1",
+                "page_size": 8,
+                "include_feed_video": "true",
+            },
+        )
+        assert end_cursor == "next-page"
+        assert [media.pk for media in medias] == ["1"]
+
+
+class MediaInfoGraphQLRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    def _media_gql_payload(self):
+        return {
+            "__typename": "GraphImage",
+            "id": "1",
+            "shortcode": "abc",
+            "taken_at_timestamp": 1710000000,
+            "owner": {
+                "id": "2",
+                "username": "example",
+                "profile_pic_url": "https://example.com/profile.jpg",
+            },
+            "display_resources": [{"src": "https://example.com/x.jpg", "config_width": 100, "config_height": 100}],
+            "edge_media_to_comment": {"count": 0},
+            "edge_media_preview_like": {"count": 0},
+            "edge_media_to_caption": {"edges": []},
+            "edge_media_to_tagged_user": {"edges": []},
+            "location": None,
+        }
+
+    async def test_media_info_gql_falls_back_to_doc_id_endpoint(self):
+        client = Client()
+        client.public_graphql_request = AsyncMock(side_effect=ClientForbiddenError("blocked"))
+        client.public_doc_id_graphql_request = AsyncMock(
+            return_value={"xdt_shortcode_media": self._media_gql_payload()}
+        )
+        client.media_info_a1 = AsyncMock(side_effect=AssertionError("a1 should not be used when doc_id works"))
+
+        media = await client.media_info_gql("1")
+
+        client.public_doc_id_graphql_request.assert_awaited_once_with(
+            "8845758582119845",
+            {"shortcode": "B"},
+            referer="https://www.instagram.com/p/B/",
+        )
+        assert media.pk == "1"
+
+
+class MediaLikersGraphQLRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_media_likers_gql_chunk_posts_doc_id_query(self):
+        client = Client()
+        client._fb_dtsg = "token"
+        client.graphql_request = AsyncMock(
+            return_value={
+                "data": {"xdt_api__v1__likes__media_id__likers": {"users": [{"id": "1", "username": "alice"}]}}
+            }
+        )
+
+        users = await client.media_likers_gql_chunk("123")
+
+        assert users == [{"id": "1", "username": "alice"}]
+        data = client.graphql_request.await_args.kwargs["data"]
+        assert data["doc_id"] == "24452425501069647"
+        assert '"id":"123"' in data["variables"]
+
+    async def test_media_likers_gql_truncates_chunk_without_cursor_unpack(self):
+        client = Client()
+        client.media_likers_gql_chunk = AsyncMock(
+            return_value=[
+                {"id": "1", "username": "alice"},
+                {"id": "2", "username": "bob"},
+            ]
+        )
+
+        users = await client.media_likers_gql("123", amount=1)
+
+        assert users == [{"id": "1", "username": "alice"}]
+        client.media_likers_gql_chunk.assert_awaited_once_with("123")

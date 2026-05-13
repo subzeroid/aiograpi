@@ -29,6 +29,7 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | media_pk_from_url(url: str)                                     | int                | Return media_pk
 | user_medias(user_id: str, amount: int = 20)                     | List\[Media]       | Get list of medias by user_id
 | user_medias_chunk(user_id: str, end_cursor: str = "")           | Tuple\[List\[Media], str] | Get one page of medias by user_id
+| user_medias_paginated(user_id: str, amount: int = 0, end_cursor: str = "") | Tuple\[List\[Media], str] | Get one page of medias by user_id; compatibility alias for `instagrapi`
 | user_clips(user_id: str, amount: int = 50)                      | List\[Media]       | Get list of clips (reels) by user_id
 | usertag_medias(user_id: str, amount: int = 20)                  | List\[Media]       | Get medias where a user is tagged
 | media_info(media_pk: int)                                       | Media              | Return media info
@@ -57,12 +58,16 @@ Low level methods:
 | media_info_v1(media_pk: int)                                    | Media        | Get Media from PK by Private Mobile API
 | user_medias_gql(user_id: str, amount: int = 50, sleep: int = 2) | List\[Media] | Get a user's media by Public Graphql API
 | user_medias_chunk_gql(user_id: str, sleep: int = 2, end_cursor=None) | Tuple\[List\[Media], str] | Get a page of user's media by Public Graphql API
+| user_medias_paginated_gql(user_id: str, amount: int = 0, sleep: int = 2, end_cursor=None) | Tuple\[List\[Media], str] | Get one GraphQL page of user's media; compatibility alias for `instagrapi`
 | user_medias_v1(user_id: str, amount: int = 18)                  | List\[Media] | Get a user's media by Private Mobile API
 | user_medias_chunk_v1(user_id: str, end_cursor: str = "") | Tuple\[List\[Media], str] | Get a page of user's media by Private Mobile API
+| user_medias_paginated_v1(user_id: str, amount: int = 33, end_cursor: str = "") | Tuple\[List\[Media], str] | Get one private API page of user's media; compatibility alias for `instagrapi`
 | user_clips_v1(user_id: str, amount: int = 50)                  | List\[Media] | Get a user's clip by Private Mobile API
 | user_clips_chunk_v1(user_id: str, end_cursor: str = "") | Tuple\[List\[Media], str] | Get a page of user's clip by Private Mobile API
+| user_clips_paginated_v1(user_id: str, amount: int = 50, end_cursor: str = "") | Tuple\[List\[Media], str] | Get one private API page of user's clips; compatibility alias for `instagrapi`
 | user_videos_v1(user_id: str, amount: int = 50)                  | List\[Media] | Get a user's video by Private Mobile API
 | user_videos_chunk_v1(user_id: int, end_cursor: str = "") | Tuple\[List\[Media], str] | Get a page of user's video by Private Mobile API
+| user_videos_paginated_v1(user_id: str, amount: int = 50, end_cursor: str = "") | Tuple\[List\[Media], str] | Get one private API page of user's videos; compatibility alias for `instagrapi`
 | usertag_medias_gql(user_id: str, amount: int = 20)              | List\[Media] | Get medias where a user is tagged by Public Graphql API
 | usertag_medias_v1(user_id: str, amount: int = 20)               | List\[Media] | Get medias where a user is tagged by Private Mobile API
 | usertag_medias_paginated(user_id: str, amount: int = 20, end_cursor: str = "") | Tuple\[List\[Media], str] | Get tagged medias with pagination cursor
@@ -269,6 +274,8 @@ Upload medias to your feed. Common arguments:
 | igtv_upload(path: Path, title: str, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}) | Media   | Upload IGTV (Support MP4 files)
 | clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, trial: bool = False) | Media | Upload Reels Clip (Support MP4 files), optionally as a Trial Reel
 | clip_upload_as_reel_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {}) | Media | Upload Reels Clip as reel with music metadata
+| clip_info_for_creation()                                      | Dict    | Get Reel creation preflight configuration for the current user
+| clip_trial_eligible()                                         | bool    | Check whether Reel creation preflight reports Trial Reels enabled
 | clip_share_to_fb_config()                                      | Dict    | Get Reel Facebook sharing configuration for the current user
 
 For video uploads in Android/Pydroid environments, pass `thumbnail=...` to avoid automatic thumbnail generation or configure executable ffmpeg. See [Pydroid and ffmpeg](pydroid.md).

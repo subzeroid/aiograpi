@@ -1,9 +1,12 @@
 import random
 import re
+import secrets
 import time
+import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+from aiograpi import httpx_ext
 from aiograpi.exceptions import (
     ClientError,
     ClientNotFoundError,
@@ -26,6 +29,7 @@ from aiograpi.types import (
     UserShort,
 )
 from aiograpi.utils.serialization import dumps
+from aiograpi.utils.video import read_video_metadata, read_video_metadata_with_moviepy
 
 SELECTED_FILTERS = ("flagged", "unread")
 SEARCH_MODES = ("raven", "universal")
@@ -707,16 +711,50 @@ class DirectMixin(ClientMixin):
         """
         return await self.direct_send_file(path, user_ids, thread_ids, content_type="photo")
 
+    def _direct_video_metadata(self, path: Path) -> Tuple[int, int, float]:
+        width, height, duration_sec = 720, 1280, 1.0
+        try:
+            metadata = read_video_metadata(path)
+        except Exception:
+            try:
+                metadata = read_video_metadata_with_moviepy(path)
+            except ImportError:
+                return width, height, duration_sec
+            except Exception:  # noqa: BLE001
+                return width, height, duration_sec
+        return metadata.width, metadata.height, metadata.duration or duration_sec
+
+    async def _direct_thread_id_from_user_ids(self, user_ids: List[int], media_kind: str) -> int:
+        user_ids = _direct_id_list(user_ids)
+        thread = await self.direct_thread_by_participants(user_ids)
+        thread_id = thread.get("thread_v2_id") or thread.get("thread_id")
+        if not thread_id and isinstance(self.last_json, dict):
+            thread = self.last_json.get("thread") or {}
+            thread_id = thread.get("thread_v2_id") or thread.get("thread_id")
+        if not thread_id:
+            raise DirectThreadNotFound(
+                "No existing direct thread found for participants; "
+                f"direct {media_kind} send currently requires an existing thread",
+                user_ids=user_ids,
+                **(self.last_json if isinstance(self.last_json, dict) else {}),
+            )
+        return int(thread_id)
+
     async def direct_send_video(
         self, path: Path, user_ids: List[int] = [], thread_ids: List[int] = []
     ) -> DirectMessage:
         """
-        Send a direct video to list of users or threads
+        Send a direct video to a list of users or threads.
+
+        Replicates the IG Android client's current three-step protocol:
+        upload the MP4 bytes to ``rupload.facebook.com/messenger_video``,
+        then broadcast ``direct_v2/threads/broadcast/raven_attachment/?video=1``
+        with the returned media id.
 
         Parameters
         ----------
         path: Path
-            Path to video that will be posted on the thread
+            Path to a .mp4 file (H.264 + AAC).
         user_ids: List[int]
             List of unique identifier of Users id
         thread_ids: List[int]
@@ -734,17 +772,254 @@ class DirectMixin(ClientMixin):
             "Specify user_ids or thread_ids, but not both"
         )
         if user_ids:
-            thread = await self.direct_thread_by_participants(user_ids)
-            thread_id = thread.get("thread_v2_id") or thread.get("thread_id")
-            if not thread_id:
-                raise DirectThreadNotFound(
-                    "No existing direct thread found for participants; "
-                    "direct video send currently requires an existing thread",
-                    user_ids=user_ids,
-                    **(self.last_json if isinstance(self.last_json, dict) else {}),
-                )
-            thread_ids = [int(thread_id)]
-        return await self.video_upload_to_direct(Path(path), thread_ids=thread_ids)
+            thread_ids = [await self._direct_thread_id_from_user_ids(user_ids, "video")]
+
+        path = Path(path)
+        video_bytes = path.read_bytes()
+        size = len(video_bytes)
+        width, height, duration_sec = self._direct_video_metadata(path)
+
+        hex_id = secrets.token_hex(16)
+        ms = int(time.time() * 1000)
+        entity = f"{hex_id}-0-{size}-{ms}-{ms}"
+        upload_id = str(random.randint(10**11, 10**12 - 1))
+        waterfall_id = f"{upload_id}_{hex_id[:12].upper()}_Mixed_0"
+        media_id = await self._video_rupload(video_bytes, entity, waterfall_id)
+
+        token = self.generate_mutation_token()
+        composition_id = str(uuid.uuid4())
+        camera_session_id = str(uuid.uuid4())
+        data = {
+            "recipient_users": "[]",
+            "view_mode": "permanent",
+            "has_camera_metadata": "1",
+            "camera_entry_point": "3",
+            "thread_ids": dumps([str(tid) for tid in thread_ids]),
+            "reshare_mode": "allow_reshare",
+            "original_media_type": "2",
+            "send_attribution": "direct_composer",
+            "client_context": token,
+            "camera_session_id": camera_session_id,
+            "attachment_fbid": str(media_id),
+            "include_e2ee_mentioned_user_list": "1",
+            "hide_from_profile_grid": "false",
+            "timezone_offset": "0",
+            "client_shared_at": str(int(time.time())),
+            "configure_mode": "2",
+            "source_type": "3",
+            "camera_position": "back",
+            "video_result": str(media_id),
+            "_uid": str(self.user_id),
+            "device_id": self.android_device_id,
+            "composition_id": composition_id,
+            "mutation_token": token,
+            "_uuid": self.uuid,
+            "creation_surface": "camera",
+            "has_ig_camera_edits": "false",
+            "capture_type": "normal",
+            "audience": "default",
+            "upload_id": upload_id,
+            "client_timestamp": str(int(time.time())),
+            "media_transformation_info": dumps(
+                {
+                    "width": str(width),
+                    "height": str(height),
+                    "x_transform": "0",
+                    "y_transform": "0",
+                    "zoom": "1.0",
+                    "rotation": "0.0",
+                    "background_coverage": "0.0",
+                }
+            ),
+            "clips": [{"length": duration_sec, "source_type": "3", "camera_position": "back"}],
+            "poster_frame_index": 0,
+            "length": duration_sec,
+            "audio_muted": False,
+            "edits": {"filter_type": 0, "filter_strength": 1.0},
+            "extra": {"source_width": width, "source_height": height},
+            "device": {
+                "manufacturer": "Google",
+                "model": "sdk_gphone_arm64",
+                "android_version": 30,
+                "android_release": "11",
+            },
+        }
+        result = await self.private_request(
+            "direct_v2/threads/broadcast/raven_attachment/?video=1",
+            data=self.with_default_data(data),
+            with_signature=True,
+        )
+        return extract_direct_message(result["payload"])
+
+    def _messenger_rupload_headers(self, extra_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+        bearer = self.private.headers.get("Authorization") or self.authorization
+        user_id = str(self.user_id)
+        rur = self.private.headers.get("IG-U-RUR", "")
+        mid = self.private.headers.get("X-MID", "")
+        headers = {
+            "authorization": bearer,
+            "ig-intended-user-id": user_id,
+            "ig-u-ds-user-id": user_id,
+            # The real client may send zstd; rupload accepts gzip for these
+            # Direct attachment flows.
+            "accept-encoding": "gzip",
+            "accept-language": "en-US",
+            "priority": "u=6, i",
+            "user-agent": self.user_agent,
+            "x-fb-client-ip": "True",
+            "x-fb-friendly-name": "undefined:media-upload",
+            "x-fb-http-engine": "Tigon/MNS/TCP",
+            "x-fb-request-analytics-tags": (
+                '{"network_tags":{"product":"567067343352427",'
+                '"surface":"undefined","request_category":"media_upload",'
+                '"purpose":"none","retry_attempt":"0"}}'
+            ),
+            "x-fb-rmd": "state=URL_ELIGIBLE",
+            "x-fb-server-cluster": "True",
+            "x-tigon-is-retry": "False",
+            "x-ig-salt-ids": "51052545",
+        }
+        if rur:
+            headers["ig-u-rur"] = rur
+        if mid:
+            headers["x-mid"] = mid
+        if extra_headers:
+            headers.update(extra_headers)
+        return headers
+
+    async def _video_rupload(self, video_bytes: bytes, entity_name: str, waterfall_id: str) -> int:
+        """Upload mp4 bytes to ``rupload.facebook.com/messenger_video/...``."""
+        url = f"https://rupload.facebook.com/messenger_video/{entity_name}"
+        headers = self._messenger_rupload_headers(
+            {
+                "video_type": "FILE_ATTACHMENT",
+                "segment-start-offset": "0",
+                "segment-type": "3",
+                "ephemeral_media_view_mode": "2",
+                "ig_raven_metadata": "{}",
+                "x_fb_video_waterfall_id": waterfall_id,
+            }
+        )
+        proxy = getattr(self, "proxy", None)
+        response = await httpx_ext.request("GET", url, headers=headers, proxy=proxy, timeout=30)
+        if response.status_code != 200:
+            raise ClientError(f"messenger_video offset GET failed: {response.status_code} {response.text[:300]}")
+        try:
+            offset = int(response.json().get("offset", 0))
+        except Exception:
+            offset = 0
+        post_headers = dict(headers)
+        post_headers.update(
+            {
+                "content-type": "application/octet-stream",
+                "offset": str(offset),
+                "x-entity-length": str(len(video_bytes)),
+                "x-entity-name": entity_name,
+                "x-entity-type": "video/mp4",
+            }
+        )
+        response = await httpx_ext.request(
+            "POST",
+            url,
+            data=video_bytes[offset:],
+            headers=post_headers,
+            proxy=proxy,
+            timeout=300,
+        )
+        if response.status_code != 200:
+            raise ClientError(f"messenger_video upload POST failed: {response.status_code} {response.text[:300]}")
+        try:
+            return int(response.json()["media_id"])
+        except Exception as exc:
+            raise ClientError(f"messenger_video response missing media_id: {response.text[:300]}") from exc
+
+    async def direct_send_voice(
+        self,
+        path: Path,
+        user_ids: List[int] = [],
+        thread_ids: List[int] = [],
+        waveform: Optional[List[float]] = None,
+    ) -> DirectMessage:
+        """
+        Send a voice (audio) DM to a list of users or threads.
+
+        The audio file MUST be AAC in an MP4 container (``.m4a``).
+        """
+        assert self.user_id, "Login required"
+        user_ids = _direct_id_list(user_ids)
+        thread_ids = _direct_id_list(thread_ids)
+        assert (user_ids or thread_ids) and not (user_ids and thread_ids), (
+            "Specify user_ids or thread_ids, but not both"
+        )
+        if user_ids:
+            thread_ids = [await self._direct_thread_id_from_user_ids(user_ids, "voice")]
+
+        audio_bytes = Path(path).read_bytes()
+        upload_id = str(int(time.time() * 1000))
+        rand_key = random.randint(-(2**31), 2**31 - 1)
+        media_id = await self._voice_rupload(audio_bytes, upload_id, rand_key)
+
+        if waveform is None:
+            waveform = [round(random.uniform(0.2, 0.95), 3) for _ in range(70)]
+        token = self.generate_mutation_token()
+        data = {
+            "action": "send_item",
+            "thread_ids": dumps([int(tid) for tid in thread_ids]),
+            "send_attribution": "inbox",
+            "client_context": token,
+            "attachment_fbid": str(media_id),
+            "device_id": self.android_device_id,
+            "mutation_token": token,
+            "_uuid": self.uuid,
+            "waveform": dumps(waveform),
+            "waveform_sampling_frequency_hz": "10",
+            "upload_id": upload_id,
+            "offline_threading_id": token,
+        }
+        result = await self.private_request(
+            "direct_v2/threads/broadcast/voice_attachment/",
+            data=self.with_default_data(data),
+            with_signature=False,
+        )
+        return extract_direct_message(result["payload"])
+
+    async def _voice_rupload(self, audio_bytes: bytes, upload_id: str, rand_key: int) -> int:
+        """Upload m4a bytes to ``rupload.facebook.com/messenger_audio/...``."""
+        entity = f"{upload_id}_0_{rand_key}"
+        url = f"https://rupload.facebook.com/messenger_audio/{entity}"
+        headers = self._messenger_rupload_headers({"audio_type": "FILE_ATTACHMENT"})
+        proxy = getattr(self, "proxy", None)
+        response = await httpx_ext.request("GET", url, headers=headers, proxy=proxy, timeout=30)
+        if response.status_code != 200:
+            raise ClientError(f"messenger_audio offset GET failed: {response.status_code} {response.text[:300]}")
+        try:
+            offset = int(response.json().get("offset", 0))
+        except Exception:
+            offset = 0
+        post_headers = dict(headers)
+        post_headers.update(
+            {
+                "content-type": "application/octet-stream",
+                "offset": str(offset),
+                "x-entity-length": str(len(audio_bytes)),
+                "x-entity-name": entity,
+                "x-entity-type": "audio/mp4",
+            }
+        )
+        response = await httpx_ext.request(
+            "POST",
+            url,
+            data=audio_bytes[offset:],
+            headers=post_headers,
+            proxy=proxy,
+            timeout=120,
+        )
+        if response.status_code != 200:
+            raise ClientError(f"messenger_audio upload POST failed: {response.status_code} {response.text[:300]}")
+        try:
+            return int(response.json()["media_id"])
+        except Exception as exc:
+            raise ClientError(f"messenger_audio response missing media_id: {response.text[:300]}") from exc
 
     async def direct_send_file(
         self,

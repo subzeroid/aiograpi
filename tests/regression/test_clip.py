@@ -112,6 +112,29 @@ class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert device_status["hw_av1_dec"] is False
         assert result == expected
 
+    async def test_clip_info_for_creation_requests_reel_creation_config(self):
+        client = _build_client()
+        expected = {"status": "ok", "trial_config": {"is_enabled": True}}
+        client.private_request = AsyncMock(return_value=expected)
+
+        result = await client.clip_info_for_creation()
+
+        assert result == expected
+        client.private_request.assert_awaited_once_with("clips/clips_info_for_creation/")
+
+    async def test_clip_trial_eligible_reads_creation_trial_config(self):
+        client = _build_client()
+        client.clip_info_for_creation = AsyncMock(return_value={"trial_config": {"is_enabled": True}})
+
+        assert await client.clip_trial_eligible() is True
+        client.clip_info_for_creation.assert_awaited_once_with()
+
+    async def test_clip_trial_eligible_returns_false_when_creation_trial_config_is_missing(self):
+        client = _build_client()
+        client.clip_info_for_creation = AsyncMock(return_value={"status": "ok"})
+
+        assert await client.clip_trial_eligible() is False
+
     async def test_clip_upload_uses_current_reel_rupload_flow(self):
         client = _build_client()
         client.last_json = {"media": _build_media_payload()}

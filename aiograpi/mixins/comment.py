@@ -381,6 +381,54 @@ class CommentMixin(ClientMixin):
             comments = comments[:amount]
         return comments
 
+    async def media_comments_chunk(
+        self, media_id: str, max_amount: int, min_id: str = None
+    ) -> Tuple[List[Comment], str]:
+        """
+        Get chunk of comments on a media and end_cursor.
+
+        Parameters
+        ----------
+        media_id: str
+            Unique identifier of a Media
+        max_amount: int
+            Limit number of comments to fetch, default is 100
+        min_id: str, optional
+            End Cursor of previous chunk that had more comments, default value is None
+
+        Returns
+        -------
+        Tuple[List[Comment], str]
+            A list of objects of Comment and an end_cursor
+        """
+
+        def get_comments():
+            if result.get("comments"):
+                for comment in result.get("comments"):
+                    comments.append(extract_comment(comment))
+
+        media_id = await self.media_id(media_id)
+        params = {"min_id": min_id} if min_id else None
+        comments = []
+        result = await self.private_request(f"media/{media_id}/comments/", params)
+        get_comments()
+        while result.get("has_more_headload_comments") and result.get("next_min_id"):
+            try:
+                params = {"min_id": result.get("next_min_id")}
+                if not (result.get("next_min_id") or result.get("comments")):
+                    break
+                result = await self.private_request(f"media/{media_id}/comments/", params)
+                get_comments()
+            except ClientNotFoundError as e:
+                raise MediaNotFound(e, media_id=media_id, **self.last_json)
+            except ClientError as e:
+                if "Media not found" in str(e):
+                    raise MediaNotFound(e, media_id=media_id, **self.last_json)
+                raise e
+            if len(comments) >= max_amount:
+                break
+        return comments, result.get("next_min_id")
+
     async def media_comments(self, media_id: str, amount: int = 20) -> List[Comment]:
         """
         Fetch comments for a media via the most-likely-to-succeed path.
@@ -421,6 +469,90 @@ class CommentMixin(ClientMixin):
             # Or private account
             comments = await self.media_comments_v1(media_id, amount)
         return comments
+
+    async def media_comment_replies(self, media_id: str, comment_id: str, amount: int = 0) -> List[Comment]:
+        """
+        Get replies for a media comment.
+
+        Parameters
+        ----------
+        media_id: str
+            Unique identifier of a Media
+        comment_id: str
+            Unique identifier of a parent Comment
+        amount: int, optional
+            Maximum number of replies to return, default is 0 - Inf
+
+        Returns
+        -------
+        List[Comment]
+            A list of objects of Comment
+        """
+        media_id = await self.media_id(media_id)
+        comment_id = str(comment_id)
+        params = None
+        replies = []
+        while True:
+            try:
+                result = await self.private_request(
+                    f"media/{media_id}/comments/{comment_id}/inline_child_comments/",
+                    params,
+                )
+            except ClientNotFoundError as e:
+                raise MediaNotFound(e, media_id=media_id, **self.last_json)
+            except ClientError as e:
+                if "Media not found" in str(e):
+                    raise MediaNotFound(e, media_id=media_id, **self.last_json)
+                raise e
+
+            replies.extend(extract_comment(comment) for comment in result.get("child_comments", []))
+            if amount and len(replies) >= amount:
+                break
+            if not (result.get("has_more_head_child_comments") and result.get("next_min_child_cursor")):
+                break
+            params = {"min_id": result.get("next_min_child_cursor")}
+        if amount:
+            replies = replies[:amount]
+        return replies
+
+    async def media_comment_replies_chunk(
+        self, media_id: str, comment_id: str, max_amount: int, min_id: str = None
+    ) -> Tuple[List[Comment], str]:
+        """
+        Get one chunk of replies for a media comment and end_cursor.
+
+        Parameters
+        ----------
+        media_id: str
+            Unique identifier of a Media
+        comment_id: str
+            Unique identifier of a parent Comment
+        max_amount: int
+            Limit number of replies to fetch
+        min_id: str, optional
+            End Cursor of previous reply chunk that had more replies, default value is None
+
+        Returns
+        -------
+        Tuple[List[Comment], str]
+            A list of objects of Comment and an end_cursor
+        """
+        media_id = await self.media_id(media_id)
+        comment_id = str(comment_id)
+        params = {"min_id": min_id} if min_id else None
+        try:
+            result = await self.private_request(
+                f"media/{media_id}/comments/{comment_id}/inline_child_comments/",
+                params,
+            )
+        except ClientNotFoundError as e:
+            raise MediaNotFound(e, media_id=media_id, **self.last_json)
+        except ClientError as e:
+            if "Media not found" in str(e):
+                raise MediaNotFound(e, media_id=media_id, **self.last_json)
+            raise e
+        replies = [extract_comment(comment) for comment in result.get("child_comments", [])][:max_amount]
+        return replies, result.get("next_min_child_cursor")
 
     async def media_comment(self, media_id: str, text: str, replied_to_comment_id: Optional[int] = None) -> Comment:
         """

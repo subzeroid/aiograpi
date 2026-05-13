@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 from aiograpi import httpx_ext
 from aiograpi.exceptions import (
     ClientError,
+    ClientForbiddenError,
     ClientGraphqlError,
     ClientLoginRequired,
     ClientNotFoundError,
@@ -33,6 +34,7 @@ from aiograpi.utils.ids import InstagramIdCodec
 from aiograpi.utils.serialization import dumps, json_value
 
 IG_PROFILE_TIMELINE_DOC_ID = "56030350814417327502004290437"
+MEDIA_INFO_DOC_ID = "8845758582119845"
 
 
 class MediaMixin(ClientMixin):
@@ -386,8 +388,25 @@ class MediaMixin(ClientMixin):
         }
         try:
             data = await self.public_graphql_request(variables, query_hash="477b65a610463740ccdb83135b2014db")
-        except (ClientLoginRequired, ClientUnauthorizedError):
-            return await self.media_info_a1(media_pk)
+        except (
+            ClientForbiddenError,
+            ClientGraphqlError,
+            ClientLoginRequired,
+            ClientNotFoundError,
+            ClientUnauthorizedError,
+        ):
+            try:
+                data = await self.public_doc_id_graphql_request(
+                    MEDIA_INFO_DOC_ID,
+                    {"shortcode": shortcode},
+                    referer=f"https://www.instagram.com/p/{shortcode}/",
+                )
+            except (ClientForbiddenError, ClientLoginRequired, ClientUnauthorizedError):
+                return await self.media_info_a1(media_pk)
+            media = data.get("xdt_shortcode_media") or data.get("shortcode_media")
+            if not media:
+                raise MediaNotFound(media_pk=media_pk, **data)
+            return extract_media_gql(media)
         if not data.get("shortcode_media"):
             raise MediaNotFound(media_pk=media_pk, **data)
         if data["shortcode_media"]["location"] and self.authorization:
@@ -674,6 +693,16 @@ class MediaMixin(ClientMixin):
         except ClientError:
             return await self._user_medias_chunk_public_gql(user_id, amount, end_cursor=end_cursor)
 
+    async def user_medias_paginated_gql(
+        self, user_id: str, amount: int = 0, sleep: int = 2, end_cursor=None
+    ) -> Tuple[List[Media], str]:
+        """
+        Get a page of a user's media by Public Graphql API.
+
+        Compatibility alias for instagrapi's paginated naming.
+        """
+        return await self.user_medias_chunk_gql(user_id, sleep=sleep, end_cursor=end_cursor, amount=amount)
+
     async def user_medias_gql(self, user_id: int, amount: int = 0, sleep: int = 0) -> List[Media]:
         """
         Get a user's media by Public Graphql API
@@ -715,7 +744,9 @@ class MediaMixin(ClientMixin):
             medias = medias[:amount]
         return medias
 
-    async def user_videos_chunk_v1(self, user_id: int, end_cursor: str = "") -> Tuple[List[Media], str]:
+    async def user_videos_paginated_v1(
+        self, user_id: str, amount: int = 50, end_cursor: str = ""
+    ) -> Tuple[List[Media], str]:
         """
         Get a page of user's video by Private Mobile API
 
@@ -733,7 +764,7 @@ class MediaMixin(ClientMixin):
             A tuple containing a list of medias and the next end_cursor value
         """
         items = []
-        # amount = int(amount)
+        amount = int(amount)
         user_id = int(user_id)
         medias = []
         next_max_id = end_cursor
@@ -742,12 +773,9 @@ class MediaMixin(ClientMixin):
                 "igtv/channel/",
                 params={
                     "id": f"uservideo_{user_id}",
-                    # "count": amount,
+                    "count": amount,
                     "max_id": next_max_id,
                 },
-                # "min_timestamp": min_timestamp,
-                # "rank_token": self.rank_token,
-                # "ranked_content": "true",
             )
             items = resp["items"]
         except PrivateError as e:
@@ -757,10 +785,18 @@ class MediaMixin(ClientMixin):
             # return [], None
             raise e
         medias.extend(items)
-        next_max_id = self.last_json.get("next_max_id", "") or self.last_json.get("max_id", "")
-        # if amount:
-        #     medias = medias[:amount]
+        next_max_id = resp.get("next_max_id", "") or resp.get("max_id", "")
+        if amount:
+            medias = medias[:amount]
         return ([extract_media_v1(media) for media in medias], next_max_id)
+
+    async def user_videos_chunk_v1(self, user_id: int, end_cursor: str = "") -> Tuple[List[Media], str]:
+        """
+        Get a page of user's video by Private Mobile API.
+
+        Compatibility alias for aiograpi's original chunk naming.
+        """
+        return await self.user_videos_paginated_v1(user_id, amount=50, end_cursor=end_cursor)
 
     async def user_videos_v1(self, user_id: int, amount: int = 0) -> List[Media]:
         """
@@ -798,7 +834,9 @@ class MediaMixin(ClientMixin):
             medias = medias[:amount]
         return medias
 
-    async def user_medias_chunk_v1(self, user_id: int, end_cursor: str = "") -> Tuple[List[Media], str]:
+    async def user_medias_paginated_v1(
+        self, user_id: str, amount: int = 33, end_cursor: str = ""
+    ) -> Tuple[List[Media], str]:
         """
         Get a page of user's media by Private Mobile API
 
@@ -815,7 +853,7 @@ class MediaMixin(ClientMixin):
         Tuple[List[Media], str]
             A tuple containing a list of medias and the next end_cursor value
         """
-        # amount = int(amount)
+        amount = int(amount)
         user_id = int(user_id)
         medias = []
         next_max_id = end_cursor
@@ -825,7 +863,7 @@ class MediaMixin(ClientMixin):
                 f"feed/user/{user_id}/",
                 params={
                     "max_id": next_max_id,
-                    # "count": amount,
+                    "count": amount,
                     "min_timestamp": min_timestamp,
                     "rank_token": self.rank_token,
                     "ranked_content": "true",
@@ -839,10 +877,18 @@ class MediaMixin(ClientMixin):
             # return [], None
             raise e
         medias.extend(items)
-        next_max_id = self.last_json.get("next_max_id", "") or self.last_json.get("max_id", "")
-        # if amount:
-        #     medias = medias[:amount]
+        next_max_id = resp.get("next_max_id", "") or resp.get("max_id", "")
+        if amount:
+            medias = medias[:amount]
         return ([extract_media_v1(media) for media in medias], next_max_id)
+
+    async def user_medias_chunk_v1(self, user_id: int, end_cursor: str = "") -> Tuple[List[Media], str]:
+        """
+        Get a page of user's media by Private Mobile API.
+
+        Compatibility alias for aiograpi's original chunk naming.
+        """
+        return await self.user_medias_paginated_v1(user_id, amount=33, end_cursor=end_cursor)
 
     async def user_medias_v1(self, user_id: int, amount: int = 0) -> List[Media]:
         """
@@ -921,6 +967,37 @@ class MediaMixin(ClientMixin):
             medias, end_cursor = await self.user_medias_chunk_v1(user_id, end_cursor=end_cursor)
         return medias, end_cursor
 
+    async def user_medias_paginated(
+        self, user_id: str, amount: int = 0, end_cursor: str = ""
+    ) -> Tuple[List[Media], str]:
+        """
+        Get a page of user's media.
+
+        Compatibility alias for instagrapi's paginated naming.
+        """
+
+        class EndCursorIsV1(Exception):
+            pass
+
+        try:
+            if end_cursor and "_" in end_cursor:
+                raise EndCursorIsV1
+            try:
+                medias, end_cursor = await self.user_medias_paginated_gql(user_id, amount, end_cursor=end_cursor)
+            except ClientLoginRequired as e:
+                if not self.inject_sessionid_to_public():
+                    raise e
+                medias, end_cursor = await self.user_medias_paginated_gql(user_id, amount, end_cursor=end_cursor)
+        except PrivateError as e:
+            raise e
+        except Exception as e:
+            if isinstance(e, EndCursorIsV1):
+                pass
+            elif not isinstance(e, ClientError):
+                self.logger.exception(e)
+            medias, end_cursor = await self.user_medias_paginated_v1(user_id, amount, end_cursor=end_cursor)
+        return medias, end_cursor
+
     async def user_pinned_medias(self, user_id) -> List[Media]:
         """
         Get a pinned medias
@@ -990,7 +1067,9 @@ class MediaMixin(ClientMixin):
             medias = await self.user_medias_v1(user_id, amount)
         return medias
 
-    async def user_clips_chunk_v1(self, user_id: int, end_cursor: str = "") -> Tuple[List[Media], str]:
+    async def user_clips_paginated_v1(
+        self, user_id: str, amount: int = 50, end_cursor: str = ""
+    ) -> Tuple[List[Media], str]:
         """
         Get a page of user's clip (reels) by Private Mobile API
 
@@ -1007,7 +1086,7 @@ class MediaMixin(ClientMixin):
         Tuple[List[Media], str]
             A tuple containing a list of medias and the next end_cursor value
         """
-        # amount = int(amount)
+        amount = int(amount)
         user_id = int(user_id)
         medias = []
         next_max_id = end_cursor
@@ -1017,7 +1096,7 @@ class MediaMixin(ClientMixin):
                 data={
                     "target_user_id": user_id,
                     "max_id": next_max_id,
-                    # "page_size": amount,  # default from app: 12
+                    "page_size": amount,
                     "include_feed_video": "true",
                 },
             )
@@ -1029,10 +1108,18 @@ class MediaMixin(ClientMixin):
             # return [], None
             raise e
         medias.extend(items)
-        next_max_id = json_value(self.last_json, "paging_info", "max_id", default="")
-        # if amount:
-        #     medias = medias[:amount]
+        next_max_id = json_value(resp, "paging_info", "max_id", default="")
+        if amount:
+            medias = medias[:amount]
         return ([extract_media_v1(media["media"]) for media in medias], next_max_id)
+
+    async def user_clips_chunk_v1(self, user_id: int, end_cursor: str = "") -> Tuple[List[Media], str]:
+        """
+        Get a page of user's clip (reels) by Private Mobile API.
+
+        Compatibility alias for aiograpi's original chunk naming.
+        """
+        return await self.user_clips_paginated_v1(user_id, amount=50, end_cursor=end_cursor)
 
     async def user_clips_v1(self, user_id: int, amount: int = 0) -> List[Media]:
         """
@@ -1167,16 +1254,7 @@ class MediaMixin(ClientMixin):
         List[dict]
             A list of objects of Likers
         """
-        media_pk = self.media_pk(media_pk)
-        end_cursor = ""
-        likers = []
-        while True:
-            items, end_cursor = await self.media_likers_gql_chunk(media_pk, end_cursor=end_cursor)
-            likers.extend(items)
-            if not end_cursor or len(items) == 0:
-                break
-            if amount and len(likers) >= amount:
-                break
+        likers = await self.media_likers_gql_chunk(self.media_pk(media_pk))
         if amount:
             likers = likers[:amount]
         return likers
