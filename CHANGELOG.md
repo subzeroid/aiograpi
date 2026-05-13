@@ -8,12 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.6] - 2026-05-13
+
 ### Changed
 
 - Made the anonymous public web lookup in `tests/live/smoke.py` optional so Instagram 429 throttling does not fail otherwise healthy logged-in live checks.
 - Updated the recorded upstream sync baseline to `instagrapi` 2.6.4.
-- Synced the remaining non-Facebook `instagrapi` 2.6.4 client methods into the async API: Trial Reel preflight, Direct voice/video attachments, follow request helpers, comment reply helpers, friends reels, media pagination aliases, and the media-info GraphQL `doc_id` fallback.
-- Dropped the mypy regression baseline to zero errors.
+- Synced the remaining non-Facebook `instagrapi` 2.6.4 client methods into the async API: Trial Reel preflight, Direct voice/video attachments, follow request helpers, comment reply helpers, friends reels, media pagination aliases, media likers GraphQL parity, and the media-info GraphQL `doc_id` fallback.
+- Deduplicated Direct messenger rupload header construction for video and voice attachment uploads.
+- Hardened the mypy regression gate so it runs via `python -m mypy`, reports parse failures, and compares against the current legacy baseline instead of silently passing when `mypy` is unavailable.
 
 ## [0.9.5] - 2026-05-13
 
