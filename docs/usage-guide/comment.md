@@ -7,6 +7,8 @@ Post comment, viewing, like and unlike comments
 | media_comment(media_id: str, text: str, replied_to_comment_id: Optional[int] = None) | Comment            | Add new comment to media
 | media_comments(media_id: str, amount: int = 0)                                          | List\[Comment]     | Get a list comments for media (amount=0 - all comments)
 | media_comments_chunk(media_id: str, max_amount: int, min_id: str = None) | Tuple[List[Comment], str] | Get chunk of comments on a media and end_cursor
+| media_comment_replies(media_id: str, comment_id: str, amount: int = 0) | List\[Comment] | Get replies for a parent media comment
+| media_comment_replies_chunk(media_id: str, comment_id: str, max_amount: int, min_id: str = None) | Tuple[List[Comment], str] | Get chunk of replies and the next child cursor
 | comment_like(comment_pk: int)                                                           | bool               | Like a comment
 | comment_unlike(comment_pk: int)                                                         | bool               | Unlike a comment
 | comment_pin(media_id: str,comment_pk: int)                                              | bool               | Pin a comment

@@ -14,6 +14,11 @@ View a list of a user's medias, following and followers
 | user_info_by_username(username: str)          | User                  | Get user info by username                                    |
 | user_follow(user_id: str)                     | bool                  | Follow user                                                  |
 | user_unfollow(user_id: str)                   | bool                  | Unfollow user                                                |
+| user_follow_requests(amount: int = 0)         | List[UserShort]       | Get pending incoming follow requests                         |
+| user_follow_request_approve(user_id: str)     | bool                  | Approve a pending incoming follow request                    |
+| user_follow_request_decline(user_id: str)     | bool                  | Decline a pending incoming follow request                    |
+| user_follow_requests_approve(user_ids: List[str]) | Dict[str, bool]  | Approve pending incoming follow requests                     |
+| user_follow_requests_decline(user_ids: List[str]) | Dict[str, bool]  | Decline pending incoming follow requests                     |
 | user_id_from_username(username: str)          | int                   | Get user_id by username                                      |
 | username_from_user_id(user_id: str)           | str                   | Get username by user_id                                      |
 | user_remove_follower(user_id: str)            | bool                  | Remove your follower                                         |
@@ -41,6 +46,7 @@ Low level methods:
 | user_followers_v1(user_id: str, amount: int = 0)                                    | List[UserShort]             | Get user's followers information by Private Mobile API                     |
 | user_following_v1(user_id: str, amount: int = 0)                                    | List[UserShort]             | Get user's following users information by Private Mobile API               |
 | user_following_gql(user_id: str, amount: int = 0)                                   | List[UserShort]             | Get user's following information by Public Graphql API                     |
+| user_follow_requests_chunk(max_amount: int = 0, max_id: str = "")                   | Tuple[List[UserShort], str] | Get pending incoming follow requests by Private Mobile API and max_id      |
 | search_followers_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by followers by Private Mobile API                                  |
 | search_following_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by following by Private Mobile API                                  |
 

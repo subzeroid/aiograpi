@@ -4,10 +4,10 @@
 independent, but every sync release records the `instagrapi` tag it has been
 ported through.
 
-The current sync baseline is:
+The current non-Facebook sync baseline is:
 
 ```text
-instagrapi 2.6.1
+instagrapi 2.6.4
 ```
 
 ## Release policy
@@ -18,7 +18,8 @@ instagrapi 2.6.1
 
 For the 2026-05 sync, the public releases are `aiograpi 0.9.0` and newer.
 `aiograpi 0.9.0` synced through `instagrapi 2.5.18`, and subsequent
-`aiograpi 0.9.x` patch releases continue that baseline through `instagrapi 2.6.1`.
+`aiograpi 0.9.x` patch releases continue that non-Facebook baseline through
+`instagrapi 2.6.4`. Facebook-linked account helpers are tracked separately.
 
 ## Porting rules
 

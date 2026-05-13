@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Made the anonymous public web lookup in `tests/live/smoke.py` optional so Instagram 429 throttling does not fail otherwise healthy logged-in live checks.
 - Updated the recorded upstream sync baseline to `instagrapi` 2.6.4.
+- Synced the remaining non-Facebook `instagrapi` 2.6.4 client methods into the async API: Trial Reel preflight, Direct voice/video attachments, follow request helpers, comment reply helpers, friends reels, media pagination aliases, and the media-info GraphQL `doc_id` fallback.
+- Dropped the mypy regression baseline to zero errors.
 
 ## [0.9.5] - 2026-05-13
 

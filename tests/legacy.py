@@ -431,11 +431,15 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.public_graphql_request = AsyncMock(
             side_effect=ClientUnauthorizedError("401", response=Mock(status_code=401))
         )
+        client.public_doc_id_graphql_request = AsyncMock(
+            side_effect=ClientUnauthorizedError("401", response=Mock(status_code=401))
+        )
         client.media_info_a1 = AsyncMock(return_value=expected)
 
         result = await client.media_info_gql("2110901750722920960")
 
         self.assertIs(result, expected)
+        client.public_doc_id_graphql_request.assert_called_once()
         client.media_info_a1.assert_called_once_with("2110901750722920960")
 
     async def test_public_head_uses_httpx_ext_request_with_follow_redirects_off(
@@ -2864,15 +2868,27 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.last_json = {}
         return client
 
-    async def test_direct_send_video_uses_direct_story_flow_for_thread_ids(self):
+    async def test_direct_send_video_uses_raven_attachment_for_thread_ids(self):
         client = self.build_client()
         expected = Mock(spec=DirectMessage)
 
-        client.video_upload_to_direct = AsyncMock(return_value=expected)
-        result = await client.direct_send_video("clip.mp4", thread_ids=[123])
+        with (
+            mock.patch.object(Path, "read_bytes", return_value=b"video-bytes"),
+            mock.patch.object(client, "_direct_video_metadata", return_value=(720, 1280, 1.5)),
+            mock.patch.object(client, "_video_rupload", return_value=987654321) as rupload,
+            mock.patch.object(client, "generate_mutation_token", return_value="mutation-token"),
+            mock.patch("aiograpi.mixins.direct.extract_direct_message", return_value=expected),
+        ):
+            client.private_request = AsyncMock(return_value={"payload": {"item_id": "1"}, "status": "ok"})
+            result = await client.direct_send_video("clip.mp4", thread_ids=[123])
 
         self.assertIs(result, expected)
-        client.video_upload_to_direct.assert_called_once_with(Path("clip.mp4"), thread_ids=[123])
+        rupload.assert_awaited_once()
+        client.private_request.assert_called_once()
+        self.assertEqual(
+            client.private_request.call_args.args[0], "direct_v2/threads/broadcast/raven_attachment/?video=1"
+        )
+        self.assertTrue(client.private_request.call_args.kwargs["with_signature"])
 
     async def test_direct_send_video_resolves_existing_thread_for_user_ids(self):
         client = self.build_client()
@@ -2881,15 +2897,20 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.direct_thread_by_participants = AsyncMock(
             return_value={"thread_v2_id": "340282366841710300949128149448121770626"}
         )
-        client.video_upload_to_direct = AsyncMock(return_value=expected)
-        result = await client.direct_send_video("clip.mp4", user_ids=[42])
+        with (
+            mock.patch.object(Path, "read_bytes", return_value=b"video-bytes"),
+            mock.patch.object(client, "_direct_video_metadata", return_value=(720, 1280, 1.5)),
+            mock.patch.object(client, "_video_rupload", return_value=987654321),
+            mock.patch.object(client, "generate_mutation_token", return_value="mutation-token"),
+            mock.patch("aiograpi.mixins.direct.extract_direct_message", return_value=expected),
+        ):
+            client.private_request = AsyncMock(return_value={"payload": {"item_id": "1"}, "status": "ok"})
+            result = await client.direct_send_video("clip.mp4", user_ids=[42])
 
         self.assertIs(result, expected)
         client.direct_thread_by_participants.assert_called_once_with([42])
-        client.video_upload_to_direct.assert_called_once_with(
-            Path("clip.mp4"),
-            thread_ids=[340282366841710300949128149448121770626],
-        )
+        data = client.private_request.call_args.kwargs["data"]
+        self.assertEqual(json.loads(data["thread_ids"]), ["340282366841710300949128149448121770626"])
 
     async def test_direct_send_video_raises_when_existing_thread_is_missing(self):
         client = self.build_client()

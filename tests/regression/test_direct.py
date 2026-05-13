@@ -1,9 +1,12 @@
 import json
+import tempfile
 import unittest
-from unittest.mock import AsyncMock
+from pathlib import Path
+from unittest import mock
+from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
-from aiograpi.exceptions import DirectMessageNotFound
+from aiograpi.exceptions import DirectMessageNotFound, DirectThreadNotFound
 from aiograpi.types import DirectMessage, DirectThread
 
 
@@ -27,6 +30,13 @@ def _direct_payload():
         },
         "status": "ok",
     }
+
+
+def _temp_file(suffix, data):
+    tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+    tmp.write(data)
+    tmp.close()
+    return Path(tmp.name)
 
 
 class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -214,3 +224,227 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert data["emoji"] == "❤"
         assert data["reaction_type"] == "like"
         assert data["original_message_client_context"] == "original-client-context"
+
+    async def test_direct_send_video_uploads_and_broadcasts_raven_attachment_for_thread_ids(self):
+        client = _build_client()
+        path = _temp_file(".mp4", b"video-bytes")
+        expected = Mock(spec=DirectMessage)
+
+        try:
+            with (
+                mock.patch("aiograpi.mixins.direct.time.time", return_value=1234.567),
+                mock.patch("aiograpi.mixins.direct.secrets.token_hex", return_value="a" * 32),
+                mock.patch("aiograpi.mixins.direct.random.randint", return_value=111111111111),
+                mock.patch.object(client, "_direct_video_metadata", return_value=(720, 1280, 1.5)),
+                mock.patch.object(client, "_video_rupload", return_value=987654321) as rupload,
+                mock.patch.object(client, "generate_mutation_token", return_value="mutation-token"),
+                mock.patch("aiograpi.mixins.direct.extract_direct_message", return_value=expected),
+            ):
+                client.private_request = AsyncMock(return_value=_direct_payload())
+                result = await client.direct_send_video(path, thread_ids=[123])
+        finally:
+            path.unlink(missing_ok=True)
+
+        assert result is expected
+        rupload.assert_called_once_with(
+            b"video-bytes",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-0-11-1234567-1234567",
+            "111111111111_AAAAAAAAAAAA_Mixed_0",
+        )
+        client.private_request.assert_awaited_once_with(
+            "direct_v2/threads/broadcast/raven_attachment/?video=1",
+            data=mock.ANY,
+            with_signature=True,
+        )
+        data = client.private_request.call_args.kwargs["data"]
+        assert json.loads(data["thread_ids"]) == ["123"]
+        assert data["recipient_users"] == "[]"
+        assert data["attachment_fbid"] == "987654321"
+        assert data["video_result"] == "987654321"
+        assert data["client_context"] == "mutation-token"
+        assert data["mutation_token"] == "mutation-token"
+
+    async def test_direct_send_video_resolves_existing_thread_from_last_json(self):
+        client = _build_client()
+        path = _temp_file(".mp4", b"video-bytes")
+        thread_id = "340282366841710300949128149448121770626"
+
+        async def thread_lookup(user_ids):
+            client.last_json = {"thread": {"thread_v2_id": thread_id}}
+            return {"users": []}
+
+        try:
+            with (
+                mock.patch.object(client, "direct_thread_by_participants", side_effect=thread_lookup) as lookup,
+                mock.patch.object(client, "_direct_video_metadata", return_value=(720, 1280, 1.5)),
+                mock.patch.object(client, "_video_rupload", return_value=123),
+                mock.patch.object(client, "generate_mutation_token", return_value="mutation-token"),
+            ):
+                client.private_request = AsyncMock(return_value=_direct_payload())
+                await client.direct_send_video(path, user_ids=[42])
+        finally:
+            path.unlink(missing_ok=True)
+
+        lookup.assert_awaited_once_with([42])
+        data = client.private_request.call_args.kwargs["data"]
+        assert json.loads(data["thread_ids"]) == [thread_id]
+
+    async def test_direct_send_voice_uploads_and_broadcasts_for_thread_ids(self):
+        client = _build_client()
+        path = _temp_file(".m4a", b"voice-bytes")
+        expected = Mock(spec=DirectMessage)
+
+        try:
+            with (
+                mock.patch("aiograpi.mixins.direct.time.time", return_value=1234.567),
+                mock.patch("aiograpi.mixins.direct.random.randint", return_value=-99),
+                mock.patch.object(client, "_voice_rupload", return_value=987654321) as rupload,
+                mock.patch.object(client, "generate_mutation_token", return_value="mutation-token"),
+                mock.patch("aiograpi.mixins.direct.extract_direct_message", return_value=expected),
+            ):
+                client.private_request = AsyncMock(return_value=_direct_payload())
+                result = await client.direct_send_voice(path, thread_ids=[123], waveform=[0.1, 0.2])
+        finally:
+            path.unlink(missing_ok=True)
+
+        assert result is expected
+        rupload.assert_called_once_with(b"voice-bytes", "1234567", -99)
+        client.private_request.assert_awaited_once_with(
+            "direct_v2/threads/broadcast/voice_attachment/",
+            data=mock.ANY,
+            with_signature=False,
+        )
+        data = client.private_request.call_args.kwargs["data"]
+        assert json.loads(data["thread_ids"]) == [123]
+        assert data["attachment_fbid"] == "987654321"
+        assert data["client_context"] == "mutation-token"
+        assert data["mutation_token"] == "mutation-token"
+        assert data["offline_threading_id"] == "mutation-token"
+        assert data["upload_id"] == "1234567"
+        assert json.loads(data["waveform"]) == [0.1, 0.2]
+        assert data["waveform_sampling_frequency_hz"] == "10"
+
+    async def test_direct_send_voice_resolves_existing_thread_from_last_json(self):
+        client = _build_client()
+        path = _temp_file(".m4a", b"voice-bytes")
+        thread_id = "340282366841710300949128149448121770626"
+
+        async def thread_lookup(user_ids):
+            client.last_json = {"thread": {"thread_v2_id": thread_id}}
+            return {"users": []}
+
+        try:
+            with (
+                mock.patch.object(client, "direct_thread_by_participants", side_effect=thread_lookup) as lookup,
+                mock.patch.object(client, "_voice_rupload", return_value=123),
+                mock.patch.object(client, "generate_mutation_token", return_value="mutation-token"),
+            ):
+                client.private_request = AsyncMock(return_value=_direct_payload())
+                await client.direct_send_voice(path, user_ids=[42], waveform=[0.3])
+        finally:
+            path.unlink(missing_ok=True)
+
+        lookup.assert_awaited_once_with([42])
+        data = client.private_request.call_args.kwargs["data"]
+        assert json.loads(data["thread_ids"]) == [int(thread_id)]
+        assert data["attachment_fbid"] == "123"
+        assert json.loads(data["waveform"]) == [0.3]
+
+    async def test_direct_send_voice_raises_when_existing_thread_is_missing(self):
+        client = _build_client()
+        path = _temp_file(".m4a", b"voice-bytes")
+
+        try:
+            client.direct_thread_by_participants = AsyncMock(return_value={})
+            client._voice_rupload = Mock()
+            with self.assertRaises(DirectThreadNotFound):
+                await client.direct_send_voice(path, user_ids=[42])
+        finally:
+            path.unlink(missing_ok=True)
+
+        client.direct_thread_by_participants.assert_awaited_once_with([42])
+        client._voice_rupload.assert_not_called()
+
+    async def test_messenger_rupload_headers_merges_common_optional_and_extra_headers(self):
+        client = _build_client()
+        client._user_id = "123"
+        client.authorization_data = {"ds_user_id": "123", "sessionid": "raw-session"}
+        client.private.headers["Authorization"] = "Bearer token"
+        client.private.headers["IG-U-RUR"] = "rur-token"
+        client.private.headers["X-MID"] = "mid-token"
+
+        headers = client._messenger_rupload_headers({"audio_type": "FILE_ATTACHMENT"})
+
+        assert headers["authorization"] == "Bearer token"
+        assert headers["ig-intended-user-id"] == "123"
+        assert headers["ig-u-ds-user-id"] == "123"
+        assert headers["accept-encoding"] == "gzip"
+        assert headers["accept-language"] == "en-US"
+        assert headers["priority"] == "u=6, i"
+        assert headers["user-agent"] == client.user_agent
+        assert headers["audio_type"] == "FILE_ATTACHMENT"
+        assert headers["ig-u-rur"] == "rur-token"
+        assert headers["x-mid"] == "mid-token"
+
+    async def test_video_rupload_delegates_base_headers_to_helper(self):
+        client = _build_client()
+
+        class FakeResponse:
+            status_code = 200
+            text = "{}"
+
+            def __init__(self, payload):
+                self.payload = payload
+
+            def json(self):
+                return self.payload
+
+        with (
+            mock.patch.object(
+                client, "_messenger_rupload_headers", return_value={"authorization": "Bearer token"}
+            ) as headers,
+            mock.patch(
+                "aiograpi.mixins.direct.httpx_ext.request",
+                new=AsyncMock(side_effect=[FakeResponse({"offset": 0}), FakeResponse({"media_id": 987654321})]),
+            ),
+        ):
+            media_id = await client._video_rupload(b"video-bytes", "entity-name", "waterfall-id")
+
+        assert media_id == 987654321
+        headers.assert_called_once_with(
+            {
+                "video_type": "FILE_ATTACHMENT",
+                "segment-start-offset": "0",
+                "segment-type": "3",
+                "ephemeral_media_view_mode": "2",
+                "ig_raven_metadata": "{}",
+                "x_fb_video_waterfall_id": "waterfall-id",
+            }
+        )
+
+    async def test_voice_rupload_delegates_base_headers_to_helper(self):
+        client = _build_client()
+
+        class FakeResponse:
+            status_code = 200
+            text = "{}"
+
+            def __init__(self, payload):
+                self.payload = payload
+
+            def json(self):
+                return self.payload
+
+        with (
+            mock.patch.object(
+                client, "_messenger_rupload_headers", return_value={"authorization": "Bearer token"}
+            ) as headers,
+            mock.patch(
+                "aiograpi.mixins.direct.httpx_ext.request",
+                new=AsyncMock(side_effect=[FakeResponse({"offset": 0}), FakeResponse({"media_id": 987654321})]),
+            ),
+        ):
+            media_id = await client._voice_rupload(b"voice-bytes", "1234567", -99)
+
+        assert media_id == 987654321
+        headers.assert_called_once_with({"audio_type": "FILE_ATTACHMENT"})

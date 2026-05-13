@@ -16,15 +16,30 @@ if [ ! -f "$BASELINE_FILE" ]; then
   exit 2
 fi
 BASELINE=$(tr -d '[:space:]' < "$BASELINE_FILE")
+PYTHON_BIN="${PYTHON:-python}"
+if [ -x "$ROOT/.venv/bin/python" ]; then
+  PYTHON_BIN="$ROOT/.venv/bin/python"
+fi
 
 # Run mypy and capture last summary line. mypy returns nonzero when errors
 # exist — that's expected, so don't propagate via pipefail.
 set +e
-OUTPUT=$(cd "$ROOT" && mypy aiograpi/ 2>&1)
+OUTPUT=$(cd "$ROOT" && "$PYTHON_BIN" -m mypy --python-version 3.10 aiograpi/ 2>&1)
+STATUS=$?
 set -e
 
 SUMMARY=$(printf '%s\n' "$OUTPUT" | tail -1)
-CURRENT=$(printf '%s' "$SUMMARY" | grep -oE 'Found [0-9]+ error' | grep -oE '[0-9]+' | head -1 || echo "0")
+if printf '%s' "$SUMMARY" | grep -q '^Success:'; then
+  CURRENT=0
+else
+  CURRENT=$(printf '%s' "$SUMMARY" | grep -oE 'Found [0-9]+ error' | grep -oE '[0-9]+' | head -1 || true)
+fi
+
+if [ -z "${CURRENT:-}" ]; then
+  echo "::error::unable to parse mypy output" >&2
+  printf '%s\n' "$OUTPUT" >&2
+  exit "$STATUS"
+fi
 
 echo "mypy baseline: $BASELINE"
 echo "mypy current : $CURRENT"

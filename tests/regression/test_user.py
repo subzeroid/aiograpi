@@ -6,6 +6,13 @@ from aiograpi.exceptions import ClientError
 
 
 class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    def _build_private_client(self):
+        client = Client()
+        client._user_id = "1"
+        client.uuid = "uuid"
+        client.with_action_data = lambda data: data
+        return client
+
     async def test_username_from_user_id_fallback_awaits_user_info(self):
         client = Client()
         client.username_from_user_id_gql = AsyncMock(side_effect=ClientError("graphql failed"))
@@ -58,3 +65,77 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(args[1]["id"], "25025320")
         self.assertEqual(args[1]["render_surface"], "PROFILE")
         self.assertEqual(kwargs["referer"], "https://www.instagram.com/25025320/")
+
+    async def test_user_follow_requests_chunk_fetches_pending_users(self):
+        client = self._build_private_client()
+        client.private_request = AsyncMock(
+            return_value={
+                "users": [
+                    {
+                        "pk": "42",
+                        "username": "pending",
+                        "full_name": "Pending User",
+                        "profile_pic_url": None,
+                    }
+                ],
+                "next_max_id": "next",
+            }
+        )
+
+        users, next_max_id = await client.user_follow_requests_chunk(max_amount=1)
+
+        self.assertEqual(next_max_id, "next")
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0].pk, "42")
+        client.private_request.assert_awaited_once_with("friendships/pending/", params={"count": 1})
+
+    async def test_user_follow_requests_chunk_sends_non_empty_max_id(self):
+        client = self._build_private_client()
+        client.private_request = AsyncMock(return_value={"users": [], "next_max_id": None})
+
+        await client.user_follow_requests_chunk(max_amount=20, max_id="cursor")
+
+        client.private_request.assert_awaited_once_with(
+            "friendships/pending/",
+            params={"count": 20, "max_id": "cursor"},
+        )
+
+    async def test_user_follow_request_approve_posts_action_data_and_returns_status(self):
+        client = self._build_private_client()
+        client.private_request = AsyncMock(return_value={"friendship_status": {"followed_by": True}})
+
+        result = await client.user_follow_request_approve("42")
+
+        self.assertTrue(result)
+        endpoint, data = client.private_request.call_args.args
+        self.assertEqual(endpoint, "friendships/approve/42/")
+        self.assertEqual(data["user_id"], "42")
+
+    async def test_user_follow_request_decline_posts_action_data_and_returns_status(self):
+        client = self._build_private_client()
+        client.private_request = AsyncMock(return_value={"friendship_status": {"followed_by": False}})
+
+        result = await client.user_follow_request_decline("42")
+
+        self.assertTrue(result)
+        endpoint, data = client.private_request.call_args.args
+        self.assertEqual(endpoint, "friendships/ignore/42/")
+        self.assertEqual(data["user_id"], "42")
+
+    async def test_user_follow_requests_approve_batches_results(self):
+        client = self._build_private_client()
+        client.user_follow_request_approve = AsyncMock(side_effect=[True, False])
+
+        result = await client.user_follow_requests_approve(["1", "2"])
+
+        self.assertEqual(result, {"1": True, "2": False})
+        client.user_follow_request_approve.assert_has_awaits([unittest.mock.call("1"), unittest.mock.call("2")])
+
+    async def test_user_follow_requests_decline_batches_results(self):
+        client = self._build_private_client()
+        client.user_follow_request_decline = AsyncMock(side_effect=[False, True])
+
+        result = await client.user_follow_requests_decline(["1", "2"])
+
+        self.assertEqual(result, {"1": False, "2": True})
+        client.user_follow_request_decline.assert_has_awaits([unittest.mock.call("1"), unittest.mock.call("2")])

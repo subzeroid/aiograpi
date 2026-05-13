@@ -33,11 +33,14 @@
 | direct_thread_unmute_video_call(thread_id: int)                           | bool                    | Unmute video call for the thread
 | direct_send_photo(path: Path, user_ids: List[int], thread_ids: List[int]) | DirectMessage           | Send a direct photo to list of users or threads
 | direct_send_video(path: Path, user_ids: List[int], thread_ids: List[int]) | DirectMessage           | Send a direct video to list of users or threads
+| direct_send_voice(path: Path, user_ids: List[int], thread_ids: List[int], waveform: Optional[List[float]] = None) | DirectMessage | Send an m4a/AAC voice message to list of users or threads
 | video_upload_to_direct(path: Path, caption: str, thumbnail: Path, mentions: List[StoryMention], thread_ids: List[int] = [], extra_data: Dict[str, str] = {}) | DirectMessage | Upload video to direct thread as a story and configure it
 
 Notes:
 
 * Direct recipient arguments accept either one id (`user_ids=123`) or a list of ids (`user_ids=[123]`).
+* For `direct_send()`, `direct_send_photo()`, `direct_send_video()`, and `direct_send_voice()`, pass exactly one of `user_ids` or `thread_ids`.
+* `direct_send_video()` uses the current direct video attachment flow. `video_upload_to_direct()` remains available for the older story-to-direct flow.
 * Direct message requests / invitations are exposed as `direct_requests()`; `direct_pending_inbox()` remains as the older name.
 * `direct_message()` scans the latest `amount` messages in a thread and raises `DirectMessageNotFound` if the id is not present in that window.
 * Shared XMA items such as `xma_clip`, `xma_media_share`, `xma_story_share`, and `xma_profile` keep their original payload in `message.raw_xma`. When Instagram includes `target_url`, the normalized link is also available through `message.xma_share`.
