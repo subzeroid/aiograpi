@@ -1457,17 +1457,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#mypy-complains-about-cross-mixin-attributes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mypy complains about cross-mixin attributes
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1919,17 +1908,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#mypy-complains-about-cross-mixin-attributes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mypy complains about cross-mixin attributes
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -2111,12 +2089,6 @@ httpx==0.28.1
 <h3 id="runtimeerror-this-event-loop-is-already-running"><code>RuntimeError: This event loop is already running</code></h3>
 <p>You're calling <code>await ...</code> outside an async function. Wrap in
 <code>asyncio.run(main())</code> or use <code>nest_asyncio</code> for Jupyter.</p>
-<h3 id="mypy-complains-about-cross-mixin-attributes"><code>mypy</code> complains about cross-mixin attributes</h3>
-<p>Known issue (<code>.mypy-baseline = 1095</code>). aiograpi mixins reference each
-other's attributes (<code>self.user_id</code>, <code>self.private_request</code>) which mypy
-sees as <code>[attr-defined]</code> because each mixin is checked in isolation.
-We ratchet the baseline down per release. For now, suppress with
-<code># type: ignore[attr-defined]</code> if you subclass.</p>
 <h2 id="when-in-doubt">When in doubt</h2>
 <ol>
 <li>Check <code>client.last_json</code> — Instagram's actual response body is often

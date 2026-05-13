@@ -1599,8 +1599,6 @@ an httpx shim, not a stable API), update to <code>from aiograpi.httpx_ext</code>
 <h2 id="verifying-the-migration">Verifying the migration</h2>
 <p>After updating, run:</p>
 <div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>compileall<span class="w"> </span>your_code/<span class="w">      </span><span class="c1"># catches syntax errors</span>
-mypy<span class="w"> </span>your_code/<span class="w">                      </span><span class="c1"># picks up aiograpi&#39;s PEP 561</span>
-<span class="w">                                     </span><span class="c1"># types (added in 0.4.0)</span>
 </code></pre></div>
 <p>Then exercise your hot paths against a single account before rolling
 out to your full pool — the auth/session hardening in 0.1.1 changed
