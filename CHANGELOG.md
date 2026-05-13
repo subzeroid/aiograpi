@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Made the anonymous public web lookup in `tests/live/smoke.py` optional so Instagram 429 throttling does not fail otherwise healthy logged-in live checks.
+- Updated the recorded upstream sync baseline to `instagrapi` 2.6.4.
+
 ## [0.9.5] - 2026-05-13
 
 ### Added
