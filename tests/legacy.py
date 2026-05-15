@@ -3669,7 +3669,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             def __init__(self, path):
                 self.path = path
 
-            def subclip(self, start, end):
+            def subclipped(self, start, end):
                 return self
 
             def close(self):
@@ -3680,7 +3680,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 self.path = path
                 self.duration = 2.5
 
-            def set_audio(self, audio_clip):
+            def with_audio(self, audio_clip):
                 self.audio_clip = audio_clip
                 return self
 
@@ -3690,7 +3690,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             def close(self):
                 return None
 
-        fake_mp = types.ModuleType("moviepy.editor")
+        fake_mp = types.ModuleType("moviepy")
         fake_mp.VideoFileClip = FakeVideoClip
         fake_mp.AudioFileClip = FakeAudioClip
 
@@ -3704,7 +3704,6 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 "sys.modules",
                 {
                     "moviepy": fake_mp,
-                    "moviepy.editor": fake_mp,
                 },
             ):
                 with mock.patch("tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]):
@@ -3738,7 +3737,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             def __init__(self, path):
                 self.path = path
 
-            def subclip(self, start, end):
+            def subclipped(self, start, end):
                 return self
 
             def close(self):
@@ -3749,7 +3748,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 self.path = path
                 self.duration = 2.5
 
-            def set_audio(self, audio_clip):
+            def with_audio(self, audio_clip):
                 self.audio_clip = audio_clip
                 return self
 
@@ -3759,7 +3758,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             def close(self):
                 return None
 
-        fake_mp = types.ModuleType("moviepy.editor")
+        fake_mp = types.ModuleType("moviepy")
         fake_mp.VideoFileClip = FakeVideoClip
         fake_mp.AudioFileClip = FakeAudioClip
 
@@ -3773,7 +3772,6 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 "sys.modules",
                 {
                     "moviepy": fake_mp,
-                    "moviepy.editor": fake_mp,
                 },
             ):
                 with mock.patch("tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]):
@@ -3808,7 +3806,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             def __init__(self, path):
                 self.path = path
 
-            def subclip(self, start, end):
+            def subclipped(self, start, end):
                 return self
 
             def close(self):
@@ -3819,7 +3817,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 self.path = path
                 self.duration = 2.5
 
-            def set_audio(self, audio_clip):
+            def with_audio(self, audio_clip):
                 self.audio_clip = audio_clip
                 return self
 
@@ -3829,7 +3827,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             def close(self):
                 return None
 
-        fake_mp = types.ModuleType("moviepy.editor")
+        fake_mp = types.ModuleType("moviepy")
         fake_mp.VideoFileClip = FakeVideoClip
         fake_mp.AudioFileClip = FakeAudioClip
 
@@ -3843,7 +3841,6 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 "sys.modules",
                 {
                     "moviepy": fake_mp,
-                    "moviepy.editor": fake_mp,
                 },
             ):
                 with mock.patch("tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]):
@@ -3870,14 +3867,13 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             def close(self):
                 closed["value"] = True
 
-        fake_mp = types.ModuleType("moviepy.editor")
+        fake_mp = types.ModuleType("moviepy")
         fake_mp.VideoFileClip = FakeVideoClip
 
         with mock.patch.dict(
             "sys.modules",
             {
                 "moviepy": fake_mp,
-                "moviepy.editor": fake_mp,
             },
         ):
             result = clip_mixin.analyze_video(Path("input.mp4"), thumbnail=Path("thumb.jpg"))
@@ -3901,14 +3897,13 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             def close(self):
                 closed["value"] = True
 
-        fake_mp = types.ModuleType("moviepy.editor")
+        fake_mp = types.ModuleType("moviepy")
         fake_mp.VideoFileClip = FakeVideoClip
 
         with mock.patch.dict(
             "sys.modules",
             {
                 "moviepy": fake_mp,
-                "moviepy.editor": fake_mp,
             },
         ):
             with self.assertRaises(RuntimeError):
@@ -3932,14 +3927,13 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             def close(self):
                 closed["value"] = True
 
-        fake_mp = types.ModuleType("moviepy.editor")
+        fake_mp = types.ModuleType("moviepy")
         fake_mp.VideoFileClip = FakeVideoClip
 
         with mock.patch.dict(
             "sys.modules",
             {
                 "moviepy": fake_mp,
-                "moviepy.editor": fake_mp,
             },
         ):
             with self.assertRaises(RuntimeError):

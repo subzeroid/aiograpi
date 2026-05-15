@@ -31,12 +31,15 @@ This path does not need MoviePy, NumPy, or ffmpeg.
 
 ## Optional Video Helpers
 
-Install the optional video extra only if you need automatic thumbnail generation, `StoryBuilder`, `prepare_video()`, or audio/video composition helpers:
+Install the optional video dependencies only if you need automatic thumbnail generation, `StoryBuilder`, `prepare_video()`, or audio/video composition helpers:
 
 ```bash
 pkg install ffmpeg
 python -m pip install "aiograpi[video]"
+python -m pip install --no-deps "moviepy==2.2.1"
 ```
+
+MoviePy `2.2.1` currently declares `Pillow<12`, but aiograpi keeps `Pillow>=12.2.0` for security fixes; the `--no-deps` install keeps the safe Pillow version. MoviePy `1.x` is no longer supported by aiograpi's optional video helpers.
 
 If MoviePy cannot find ffmpeg, point ImageIO at the Termux binary before running the script:
 
