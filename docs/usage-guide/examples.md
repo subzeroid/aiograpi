@@ -17,11 +17,11 @@ Common scripts:
 
 | Script | Purpose |
 | --- | --- |
-| `public_lookup.py` | Public profile lookup with optional `public_transport="curl"`. |
-| `download_user_media.py` | Login, list recent media for a username, and download photos/videos/albums. |
-| `upload_media.py` | Upload a feed photo, feed video, Reel, or Trial Reel. |
-| `upload_story.py` | Upload a photo or video story, optionally with a link sticker. |
-| `direct_message.py` | Send a Direct text message to user IDs or thread IDs. |
+| [`public_lookup.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/public_lookup.py) | Public profile lookup with optional `public_transport="curl"`. |
+| [`download_user_media.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/download_user_media.py) | Login, list recent media for a username, and download photos/videos/albums. |
+| [`upload_media.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/upload_media.py) | Upload a feed photo, feed video, Reel, or Trial Reel. |
+| [`upload_story.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/upload_story.py) | Upload a photo or video story, optionally with a link sticker. |
+| [`direct_message.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/direct_message.py) | Send a Direct text message to user IDs or thread IDs. |
 
 Examples:
 
