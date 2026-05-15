@@ -95,6 +95,7 @@ async def media_info(media_pk):
 To learn more about the various ways `aiograpi` can be used, read the [Usage Guide](usage-guide/fundamentals.md) page.
 
 * [Getting Started](getting-started.md)
+* [Runnable Examples](usage-guide/examples.md)
 * [Usage Guide](usage-guide/fundamentals.md)
 * [Interactions](usage-guide/interactions.md)
   * [`Media`](usage-guide/media.md) - Publication (also called post): Photo, Video, Album, IGTV and Reels

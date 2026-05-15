@@ -58,6 +58,7 @@ work anonymously. Methods with `_v1` need login.
 
 ## What's Next?
 
+* [Runnable examples](usage-guide/examples.md) — practical async scripts
 * [Usage Guide](usage-guide/fundamentals.md) — every method, grouped by topic
 * [Interactions](usage-guide/interactions.md) — like, follow, comment, edit
 * [Private GraphQL & doc_id](usage-guide/private-graphql.md) — newer mobile-app API surface (followers, clips, search, inbox)
