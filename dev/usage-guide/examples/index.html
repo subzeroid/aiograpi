@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/highlight/">
+        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/examples/">
       
       
-        <link rel="prev" href="../hashtag/">
+        <link rel="prev" href="../../upstream-sync/">
       
       
-        <link rel="next" href="../insight/">
+        <link rel="next" href="../fundamentals/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Highlight - aiograpi Documentation</title>
+        <title>Examples - aiograpi Documentation</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#highlight" class="md-skip">
+        <a href="#examples" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Highlight
+              Examples
             
           </span>
         </div>
@@ -384,10 +384,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../examples/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -403,6 +412,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -720,19 +730,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../highlight/" class="md-nav__link">
         
   
   
@@ -748,7 +749,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -1245,113 +1245,58 @@
   
 
 
-<h1 id="highlight">Highlight</h1>
+<h1 id="examples">Examples</h1>
+<p>Runnable async examples live in the repository:</p>
+<ul>
+<li><a href="https://github.com/subzeroid/aiograpi/blob/main/examples/README.md">examples/README.md</a></li>
+<li><a href="https://github.com/subzeroid/aiograpi/tree/main/examples">examples directory</a></li>
+</ul>
+<p>The examples read credentials and runtime options from environment variables instead of hard-coding secrets:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">IG_USERNAME</span><span class="o">=</span><span class="s2">&quot;your_username&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">IG_PASSWORD</span><span class="o">=</span><span class="s2">&quot;your_password&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">IG_SESSION_FILE</span><span class="o">=</span><span class="s2">&quot;./ig_settings.json&quot;</span>
+</code></pre></div>
+<p>Common scripts:</p>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Return</th>
-<th>Description</th>
+<th>Script</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>highlight_pk_from_url(url: str)</td>
-<td>int</td>
-<td>Get Highlight PK from URL</td>
+<td><code>public_lookup.py</code></td>
+<td>Public profile lookup with optional <code>public_transport="curl"</code>.</td>
 </tr>
 <tr>
-<td>highlight_info(highlight_pk: int)</td>
-<td>Highlight</td>
-<td>Get Highlight by pk or id</td>
+<td><code>download_user_media.py</code></td>
+<td>Login, list recent media for a username, and download photos/videos/albums.</td>
 </tr>
 <tr>
-<td>user_highlights(user_id: str, amount: int = 0)</td>
-<td>List[Highlight]</td>
-<td>Get a user's highlights</td>
+<td><code>upload_media.py</code></td>
+<td>Upload a feed photo, feed video, Reel, or Trial Reel.</td>
 </tr>
 <tr>
-<td>highlight_create(title: str, story_ids: List[str], cover_story_id: str = "", crop_rect: List[float] = [0.0, 0.21830457, 1.0, 0.78094524])</td>
-<td>Highlight</td>
-<td>Create highlight</td>
+<td><code>upload_story.py</code></td>
+<td>Upload a photo or video story, optionally with a link sticker.</td>
 </tr>
 <tr>
-<td>highlight_change_title(highlight_pk: str, title: str)</td>
-<td>Highlight</td>
-<td>Change title for highlight</td>
-</tr>
-<tr>
-<td>highlight_change_cover(highlight_pk: str, cover_path: Path)</td>
-<td>Highlight</td>
-<td>Change cover for highlight</td>
-</tr>
-<tr>
-<td>highlight_add_stories(highlight_pk: str, added_media_ids: List[str])</td>
-<td>Highlight</td>
-<td>Add stories to highlight</td>
-</tr>
-<tr>
-<td>highlight_remove_stories(highlight_pk: str, removed_media_ids: List[str])</td>
-<td>Highlight</td>
-<td>Remove stories from highlight</td>
-</tr>
-<tr>
-<td>highlight_delete(highlight_pk: str)</td>
-<td>bool</td>
-<td>Delete highlight</td>
+<td><code>direct_message.py</code></td>
+<td>Send a Direct text message to user IDs or thread IDs.</td>
 </tr>
 </tbody>
 </table>
-<p>Example:</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="p">(</span><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">highlight_info</span><span class="p">(</span><span class="mi">17895485201104054</span><span class="p">))</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="s1">&#39;pk&#39;</span><span class="p">:</span> <span class="mi">17895485201104054</span><span class="p">,</span>
-    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;highlight:17895485201104054&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;latest_reel_media&#39;</span><span class="p">:</span> <span class="mi">1622366765</span><span class="p">,</span>
-    <span class="s1">&#39;cover_media&#39;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s1">&#39;cropped_image_version&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;width&#39;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span> <span class="s1">&#39;height&#39;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span> <span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="s1">&#39;https://instagram.frix7-1.fna.fbcdn.net/v/t51.2885-...&#39;</span><span class="p">},</span>
-        <span class="s1">&#39;crop_rect&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.21855760773966576</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.7814423922603342</span><span class="p">],</span>
-        <span class="s1">&#39;media_id&#39;</span><span class="p">:</span> <span class="s1">&#39;2584323966581791455_8641392340&#39;</span>
-    <span class="p">},</span>
-    <span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s1">&#39;pk&#39;</span><span class="p">:</span> <span class="mi">8641392340</span><span class="p">,</span>
-        <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;bestskatetrick&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;full_name&#39;</span><span class="p">:</span> <span class="s1">&#39;The Best Skate Tricks&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;profile_pic_url&#39;</span><span class="p">:</span> <span class="n">HttpUrl</span><span class="p">(</span><span class="s1">&#39;https://instagram.frix7-1.fna.fbcdn.net/v/t51.2885-19/s150x150/6526...&#39;</span><span class="p">),</span>
-        <span class="s1">&#39;profile_pic_url_hd&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="s1">&#39;is_private&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s1">&#39;stories&#39;</span><span class="p">:</span> <span class="p">[]</span>
-    <span class="p">},</span>
-    <span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="s1">&#39;Picnic 2021&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;created_at&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">39</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
-    <span class="s1">&#39;is_pinned_highlight&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="s1">&#39;media_count&#39;</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span>
-    <span class="s1">&#39;media_ids&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2584323966581791455</span><span class="p">,</span> <span class="mi">2584328925731679183</span><span class="p">,</span> <span class="mi">2584328595757338887</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>  <span class="c1"># story ids</span>
-    <span class="s1">&#39;items&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">Story</span><span class="p">,</span> <span class="n">Story</span><span class="p">,</span> <span class="n">Story</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
-<span class="p">}</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_highlights</span><span class="p">(</span><span class="mi">29817608135</span><span class="p">)</span>
-<span class="p">[</span><span class="n">Highlight</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="s1">&#39;17907771728171896&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;highlight:17907771728171896&#39;</span><span class="p">,</span> <span class="n">latest_reel_media</span><span class="o">=</span><span class="mi">1638039687</span><span class="p">,</span> <span class="o">...</span><span class="p">),</span> <span class="o">...</span><span class="p">]</span>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>examples/public_lookup.py<span class="w"> </span>instagram
+<span class="nv">IG_PUBLIC_TRANSPORT</span><span class="o">=</span>curl<span class="w"> </span>python<span class="w"> </span>examples/public_lookup.py<span class="w"> </span>instagram
+python<span class="w"> </span>examples/download_user_media.py<span class="w"> </span>instagram<span class="w"> </span>--amount<span class="w"> </span><span class="m">5</span><span class="w"> </span>--folder<span class="w"> </span>./downloads
+python<span class="w"> </span>examples/upload_media.py<span class="w"> </span>reel<span class="w"> </span>./reel.mp4<span class="w"> </span>--thumbnail<span class="w"> </span>./thumb.jpg<span class="w"> </span>--caption<span class="w"> </span><span class="s2">&quot;Reel&quot;</span>
+python<span class="w"> </span>examples/upload_story.py<span class="w"> </span>photo<span class="w"> </span>./story.jpg<span class="w"> </span>--caption<span class="w"> </span><span class="s2">&quot;Story&quot;</span>
+python<span class="w"> </span>examples/direct_message.py<span class="w"> </span>--user-ids<span class="w"> </span><span class="m">123456789</span><span class="w"> </span>--text<span class="w"> </span><span class="s2">&quot;Hello&quot;</span>
 </code></pre></div>
-<p>Change highlight:</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">highlight_create</span><span class="p">(</span><span class="s2">&quot;Test&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;2722223419628084989_29817608135&quot;</span><span class="p">])</span>
-<span class="n">Highlight</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="s1">&#39;17920472818962144&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;highlight:17920472818962144&#39;</span><span class="p">,</span> <span class="n">latest_reel_media</span><span class="o">=</span><span class="mi">1638734336</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">highlight_change_title</span><span class="p">(</span><span class="mi">17907771728171896</span><span class="p">,</span> <span class="s2">&quot;Example title&quot;</span><span class="p">)</span>
-<span class="n">Highlight</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="s1">&#39;17907771728171896&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;highlight:17907771728171896&#39;</span><span class="p">,</span> <span class="n">latest_reel_media</span><span class="o">=</span><span class="mi">1638039687</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">highlight_change_cover</span><span class="p">(</span><span class="mi">17907771728171896</span><span class="p">,</span> <span class="s2">&quot;/tmp/test.jpg&quot;</span><span class="p">)</span>  <span class="c1"># recommend 720x720</span>
-<span class="n">Highlight</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="s1">&#39;17907771728171896&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;highlight:17907771728171896&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">highlight_add_stories</span><span class="p">(</span><span class="mi">17907771728171896</span><span class="p">,</span> <span class="p">[</span><span class="mi">2722223419628084989</span><span class="p">])</span>
-<span class="n">Highlight</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="s1">&#39;17907771728171896&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;highlight:17907771728171896&#39;</span><span class="p">,</span> <span class="n">latest_reel_media</span><span class="o">=</span><span class="mi">1638734336</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">highlight_remove_stories</span><span class="p">(</span><span class="mi">17907771728171896</span><span class="p">,</span> <span class="p">[</span><span class="mi">2722223419628084989</span><span class="p">])</span>
-<span class="n">Highlight</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="s1">&#39;17907771728171896&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;highlight:17907771728171896&#39;</span><span class="p">,</span> <span class="n">latest_reel_media</span><span class="o">=</span><span class="mi">1638039687</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">highlight_delete</span><span class="p">(</span><span class="mi">17920472818962144</span><span class="p">)</span>
-<span class="kc">True</span>
-</code></pre></div>
+<p>Video uploads in Android/Pydroid environments should pass <code>--thumbnail</code> or configure executable <code>ffmpeg</code>.
+See <a href="../pydroid/">Pydroid and ffmpeg</a>.</p>
 
 
 
