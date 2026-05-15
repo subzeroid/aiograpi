@@ -2052,9 +2052,9 @@
 <td>Upload IGTV (Support MP4 files)</td>
 </tr>
 <tr>
-<td>clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, trial: bool = False)</td>
+<td>clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, trial: bool = False, share_to_facebook: bool = False)</td>
 <td>Media</td>
-<td>Upload Reels Clip (Support MP4 files), optionally as a Trial Reel</td>
+<td>Upload Reels Clip (Support MP4 files), optionally as a Trial Reel or cross-posted to Facebook</td>
 </tr>
 <tr>
 <td>clip_upload_as_reel_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {})</td>
@@ -2076,6 +2076,11 @@
 <td>Dict</td>
 <td>Get Reel Facebook sharing configuration for the current user</td>
 </tr>
+<tr>
+<td>clip_share_to_fb_extra_data(config: Dict = None, destination_id: str = None, destination_type: str = None)</td>
+<td>Dict</td>
+<td>Build modern Reel Facebook cross-post configure fields for manual <code>extra_data</code></td>
+</tr>
 </tbody>
 </table>
 <p>For video uploads in Android environments, pass <code>thumbnail=...</code> to avoid automatic thumbnail generation, or install the optional video dependencies, MoviePy <code>2.2.1</code>, and executable ffmpeg. See <a href="../pydroid/">Pydroid and ffmpeg</a> and <a href="../termux/">Termux</a>.</p>
@@ -2085,6 +2090,36 @@
     <span class="s2">&quot;Trying a new format&quot;</span><span class="p">,</span>
     <span class="n">thumbnail</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel-thumb.jpg&quot;</span><span class="p">),</span>
     <span class="n">trial</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Facebook Reel sharing requires a Facebook account/page linked in the Instagram app. Modern Android app builds no longer
+use only <code>{"share_to_facebook": 1}</code> for Reels; they also send destination and cross-posting fields such as
+<code>share_to_fb_destination_id</code>, <code>share_to_fb_destination_type</code>, <code>no_token_crosspost</code>, and <code>attempt_id</code>.</p>
+<p><code>clip_share_to_fb_config()</code> calls the lightweight Reel sharing preflight endpoint. On recent app versions this response
+contains availability flags, not the full Account Center destination state, and some linked accounts can still return
+<code>share_to_fb_unavailable=True</code> even when the Instagram app can cross-post manually. For those accounts, pass
+<code>fb_destination_id</code> and <code>fb_destination_type="USER"</code> or <code>"PAGE"</code> to <code>clip_upload(...)</code>, or build <code>extra_data</code> manually
+with <code>clip_share_to_fb_extra_data(...)</code>. If neither the preflight/config data nor the caller provides a destination,
+aiograpi raises <code>ClientError</code> before uploading video bytes. The Reel cross-post <code>attempt_id</code> is generated automatically;
+only pass it to <code>clip_share_to_fb_extra_data(...)</code> when replaying or testing a specific low-level payload.</p>
+<div class="highlight"><pre><span></span><code><span class="n">media</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">clip_upload</span><span class="p">(</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel.mp4&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Cross-posting this Reel to Facebook&quot;</span><span class="p">,</span>
+    <span class="n">thumbnail</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel-thumb.jpg&quot;</span><span class="p">),</span>
+    <span class="n">share_to_facebook</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">fb_destination_id</span><span class="o">=</span><span class="s2">&quot;FACEBOOK_DESTINATION_ID&quot;</span><span class="p">,</span>
+    <span class="n">fb_destination_type</span><span class="o">=</span><span class="s2">&quot;USER&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">fb_extra</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">clip_share_to_fb_extra_data</span><span class="p">(</span>
+    <span class="n">destination_id</span><span class="o">=</span><span class="s2">&quot;FACEBOOK_DESTINATION_ID&quot;</span><span class="p">,</span>
+    <span class="n">destination_type</span><span class="o">=</span><span class="s2">&quot;USER&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">media</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">clip_upload</span><span class="p">(</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel.mp4&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Cross-posting with explicit Facebook destination&quot;</span><span class="p">,</span>
+    <span class="n">thumbnail</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel-thumb.jpg&quot;</span><span class="p">),</span>
+    <span class="n">extra_data</span><span class="o">=</span><span class="n">fb_extra</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 <p>Feed music helpers attach Instagram music metadata to photo and carousel posts:</p>
