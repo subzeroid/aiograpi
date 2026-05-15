@@ -4,11 +4,15 @@
 independent, but every sync release records the `instagrapi` tag it has been
 ported through.
 
-The current non-Facebook sync baseline is:
+The current recorded API baseline is:
 
 ```text
-instagrapi 2.6.4
+instagrapi 2.6.6
 ```
+
+`aiograpi 0.9.8` also includes the video dependency split and MoviePy 2 helper migration from `instagrapi 2.6.7`.
+Current `main` includes the next Reel Facebook cross-post payload follow-up from `instagrapi` after 2.6.7; release
+notes should call that out separately until the next version tag records a new baseline.
 
 ## Release policy
 
@@ -18,8 +22,8 @@ instagrapi 2.6.4
 
 For the 2026-05 sync, the public releases are `aiograpi 0.9.0` and newer.
 `aiograpi 0.9.0` synced through `instagrapi 2.5.18`, and subsequent
-`aiograpi 0.9.x` patch releases continue that non-Facebook baseline through
-`instagrapi 2.6.4`. Facebook-linked account helpers are tracked separately.
+`aiograpi 0.9.x` patch releases continue that baseline through `instagrapi 2.6.6`, plus targeted maintenance ports
+such as the MoviePy 2 video helper update and Reel Facebook cross-post payload helpers.
 
 ## Porting rules
 
