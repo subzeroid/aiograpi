@@ -8,28 +8,28 @@
       
       
       
-        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/upstream-sync/">
+        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/termux/">
       
       
-        <link rel="prev" href="../migration/">
+        <link rel="prev" href="../story/">
       
       
-        <link rel="next" href="../usage-guide/examples/">
+        <link rel="next" href="../totp/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Upstream Sync - aiograpi Documentation</title>
+        <title>Termux - aiograpi Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
       
 
@@ -48,11 +48,11 @@
       
     
     
-      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="../css/mkdocstrings.css">
+      <link rel="stylesheet" href="../../css/mkdocstrings.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#upstream-sync-policy" class="md-skip">
+        <a href="#termux" class="md-skip">
           Skip to content
         </a>
       
@@ -90,7 +90,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="aiograpi Documentation" class="md-header__button md-logo" aria-label="aiograpi Documentation" data-md-component="logo">
+    <a href="../.." title="aiograpi Documentation" class="md-header__button md-logo" aria-label="aiograpi Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Upstream Sync
+              Termux
             
           </span>
         </div>
@@ -200,7 +200,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="aiograpi Documentation" class="md-nav__button md-logo" aria-label="aiograpi Documentation" data-md-component="logo">
+    <a href="../.." title="aiograpi Documentation" class="md-nav__button md-logo" aria-label="aiograpi Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -230,7 +230,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -257,7 +257,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../../getting-started/" class="md-nav__link">
         
   
   
@@ -284,7 +284,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../migration/" class="md-nav__link">
+      <a href="../../migration/" class="md-nav__link">
         
   
   
@@ -308,37 +308,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Upstream Sync
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../upstream-sync/" class="md-nav__link">
         
   
   
@@ -354,59 +327,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#release-policy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Release policy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#porting-rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Porting rules
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#future-automation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Future automation
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -415,18 +335,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -447,7 +369,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -465,7 +387,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/examples/" class="md-nav__link">
+      <a href="../examples/" class="md-nav__link">
         
   
   
@@ -493,7 +415,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/fundamentals/" class="md-nav__link">
+      <a href="../fundamentals/" class="md-nav__link">
         
   
   
@@ -521,7 +443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/interactions/" class="md-nav__link">
+      <a href="../interactions/" class="md-nav__link">
         
   
   
@@ -549,7 +471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/handle_exception/" class="md-nav__link">
+      <a href="../handle_exception/" class="md-nav__link">
         
   
   
@@ -577,7 +499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/challenge_resolver/" class="md-nav__link">
+      <a href="../challenge_resolver/" class="md-nav__link">
         
   
   
@@ -605,7 +527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/captcha/" class="md-nav__link">
+      <a href="../captcha/" class="md-nav__link">
         
   
   
@@ -633,7 +555,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/collection/" class="md-nav__link">
+      <a href="../collection/" class="md-nav__link">
         
   
   
@@ -661,7 +583,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/comment/" class="md-nav__link">
+      <a href="../comment/" class="md-nav__link">
         
   
   
@@ -689,7 +611,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/direct/" class="md-nav__link">
+      <a href="../direct/" class="md-nav__link">
         
   
   
@@ -717,7 +639,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/explore/" class="md-nav__link">
+      <a href="../explore/" class="md-nav__link">
         
   
   
@@ -745,7 +667,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/fundraiser/" class="md-nav__link">
+      <a href="../fundraiser/" class="md-nav__link">
         
   
   
@@ -773,7 +695,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/hashtag/" class="md-nav__link">
+      <a href="../hashtag/" class="md-nav__link">
         
   
   
@@ -801,7 +723,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/highlight/" class="md-nav__link">
+      <a href="../highlight/" class="md-nav__link">
         
   
   
@@ -829,7 +751,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/insight/" class="md-nav__link">
+      <a href="../insight/" class="md-nav__link">
         
   
   
@@ -857,7 +779,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/location/" class="md-nav__link">
+      <a href="../location/" class="md-nav__link">
         
   
   
@@ -885,7 +807,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/media/" class="md-nav__link">
+      <a href="../media/" class="md-nav__link">
         
   
   
@@ -913,7 +835,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/notes/" class="md-nav__link">
+      <a href="../notes/" class="md-nav__link">
         
   
   
@@ -941,7 +863,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/pydroid/" class="md-nav__link">
+      <a href="../pydroid/" class="md-nav__link">
         
   
   
@@ -969,7 +891,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/public-transport/" class="md-nav__link">
+      <a href="../public-transport/" class="md-nav__link">
         
   
   
@@ -997,7 +919,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/story/" class="md-nav__link">
+      <a href="../story/" class="md-nav__link">
         
   
   
@@ -1022,10 +944,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../usage-guide/termux/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Termux
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1041,6 +990,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#video-uploads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Video Uploads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-video-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Video Helpers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1053,7 +1055,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/totp/" class="md-nav__link">
+      <a href="../totp/" class="md-nav__link">
         
   
   
@@ -1081,7 +1083,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/track/" class="md-nav__link">
+      <a href="../track/" class="md-nav__link">
         
   
   
@@ -1109,7 +1111,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/user/" class="md-nav__link">
+      <a href="../user/" class="md-nav__link">
         
   
   
@@ -1137,7 +1139,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/account/" class="md-nav__link">
+      <a href="../account/" class="md-nav__link">
         
   
   
@@ -1165,7 +1167,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/private-graphql/" class="md-nav__link">
+      <a href="../private-graphql/" class="md-nav__link">
         
   
   
@@ -1193,7 +1195,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/best-practices/" class="md-nav__link">
+      <a href="../best-practices/" class="md-nav__link">
         
   
   
@@ -1221,7 +1223,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage-guide/troubleshooting/" class="md-nav__link">
+      <a href="../troubleshooting/" class="md-nav__link">
         
   
   
@@ -1256,7 +1258,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development-guide/" class="md-nav__link">
+      <a href="../../development-guide/" class="md-nav__link">
         
   
   
@@ -1283,7 +1285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../exceptions/" class="md-nav__link">
+      <a href="../../exceptions/" class="md-nav__link">
         
   
   
@@ -1330,10 +1332,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#release-policy" class="md-nav__link">
+  <a href="#install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Release policy
+        Install
       
     </span>
   </a>
@@ -1341,10 +1343,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#porting-rules" class="md-nav__link">
+  <a href="#video-uploads" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Porting rules
+        Video Uploads
       
     </span>
   </a>
@@ -1352,10 +1354,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#future-automation" class="md-nav__link">
+  <a href="#optional-video-helpers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Future automation
+        Optional Video Helpers
       
     </span>
   </a>
@@ -1382,43 +1384,35 @@
   
 
 
-<h1 id="upstream-sync-policy">Upstream sync policy</h1>
-<p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain
-independent, but every sync release records the <code>instagrapi</code> tag it has been
-ported through.</p>
-<p>The current non-Facebook sync baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 2.6.4
+<h1 id="termux">Termux</h1>
+<p>Termux can run many <code>aiograpi</code> flows, but Android does not use the same binary wheel ecosystem as desktop Linux. Keep the default install small and add media tooling only when the script really needs it.</p>
+<h2 id="install">Install</h2>
+<div class="highlight"><pre><span></span><code>pkg<span class="w"> </span>update
+pkg<span class="w"> </span>install<span class="w"> </span>python<span class="w"> </span>python-pillow
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>pip<span class="w"> </span>setuptools<span class="w"> </span>wheel
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>aiograpi
 </code></pre></div>
-<h2 id="release-policy">Release policy</h2>
-<ul>
-<li>Use one <code>aiograpi</code> feature release for a large upstream sync.</li>
-<li>Keep patch releases for urgent fixes after that sync lands.</li>
-<li>Mention the upstream range in GitHub, PyPI, and Telegram release notes.</li>
-</ul>
-<p>For the 2026-05 sync, the public releases are <code>aiograpi 0.9.0</code> and newer.
-<code>aiograpi 0.9.0</code> synced through <code>instagrapi 2.5.18</code>, and subsequent
-<code>aiograpi 0.9.x</code> patch releases continue that non-Facebook baseline through
-<code>instagrapi 2.6.4</code>. Facebook-linked account helpers are tracked separately.</p>
-<h2 id="porting-rules">Porting rules</h2>
-<ul>
-<li>Preserve the async public API.</li>
-<li>Convert <code>instagrapi</code> imports to <code>aiograpi</code>.</li>
-<li>Await network-bound methods such as <code>private_request</code>, <code>public_request</code>, and
-  <code>public_graphql_request</code>.</li>
-<li>Keep pure helpers synchronous.</li>
-<li>Add or port regression tests before behavior changes when practical.</li>
-<li>Run Ruff, regression tests, docs build, and package build before tagging.</li>
-</ul>
-<h2 id="future-automation">Future automation</h2>
-<p>When <code>instagrapi</code> publishes a release, <code>aiograpi</code> should get a visible follow-up
-task even when no async changes are needed. The preferred workflow is a GitHub
-Actions <code>workflow_dispatch</code> or <code>repository_dispatch</code> job that records:</p>
-<ul>
-<li>previous <code>instagrapi</code> baseline;</li>
-<li>new <code>instagrapi</code> tag;</li>
-<li>compare URL;</li>
-<li>checklist of changed files and release-note items.</li>
-</ul>
+<p><code>python-pillow</code> is recommended because photo uploads use Pillow through <code>aiograpi.image_util</code>. Installing it with <code>pkg</code> avoids a slow or fragile Pillow source build in pip.</p>
+<h2 id="video-uploads">Video Uploads</h2>
+<p>For standard MP4 uploads, pass your own thumbnail and <code>aiograpi</code> can read width, height, and duration with its built-in MP4 parser:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">media</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">clip_upload</span><span class="p">(</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel.mp4&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Uploaded from Termux&quot;</span><span class="p">,</span>
+    <span class="n">thumbnail</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel-thumb.jpg&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>This path does not need MoviePy, NumPy, or ffmpeg.</p>
+<h2 id="optional-video-helpers">Optional Video Helpers</h2>
+<p>Install the optional video extra only if you need automatic thumbnail generation, <code>StoryBuilder</code>, <code>prepare_video()</code>, or audio/video composition helpers:</p>
+<div class="highlight"><pre><span></span><code>pkg<span class="w"> </span>install<span class="w"> </span>ffmpeg
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;aiograpi[video]&quot;</span>
+</code></pre></div>
+<p>If MoviePy cannot find ffmpeg, point ImageIO at the Termux binary before running the script:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">IMAGEIO_FFMPEG_EXE</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">command</span><span class="w"> </span>-v<span class="w"> </span>ffmpeg<span class="k">)</span><span class="s2">&quot;</span>
+</code></pre></div>
+<p>If <code>pip install "aiograpi[video]"</code> tries to build NumPy and fails, avoid the optional video helpers on-device: prepare the MP4 and thumbnail elsewhere, then use upload methods with <code>thumbnail=...</code>.</p>
 
 
 
@@ -1468,10 +1462,10 @@ Actions <code>workflow_dispatch</code> or <code>repository_dispatch</code> job t
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
