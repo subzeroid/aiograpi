@@ -301,7 +301,7 @@ await cl.video_upload_to_story(
 * [Fundraiser](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundraiser/) - Fundraiser info
 * [Best Practices](https://subzeroid.github.io/aiograpi/latest/usage-guide/best-practices/)
 * [Pydroid and ffmpeg](https://subzeroid.github.io/aiograpi/latest/usage-guide/pydroid/) - Android/Pydroid video upload notes
-* [Termux](https://subzeroid.github.io/aiograpi/latest/usage-guide/termux/) - Termux install notes and optional video helpers
+* [Termux](https://subzeroid.github.io/aiograpi/dev/usage-guide/termux/) - Termux install notes and optional video helpers
 * [Development Guide](https://subzeroid.github.io/aiograpi/latest/development-guide/)
 * [Handle Exceptions](https://subzeroid.github.io/aiograpi/latest/usage-guide/handle_exception/)
 * [Challenge Resolver](https://subzeroid.github.io/aiograpi/latest/usage-guide/challenge_resolver/)
