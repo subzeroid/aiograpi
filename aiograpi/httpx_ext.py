@@ -171,7 +171,7 @@ class CurlSession:
     def __init__(self, verify=True, impersonate="chrome136"):
         try:
             import requests
-            from curl_adapter import CurlCffiAdapter  # type: ignore[import-untyped]
+            from curl_adapter import CurlCffiAdapter  # type: ignore[import-not-found, import-untyped]
         except ImportError as exc:
             raise RuntimeError(
                 "curl public transport requires the optional curl extra: pip install aiograpi[curl]"
