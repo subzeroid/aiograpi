@@ -414,6 +414,18 @@ Now let's mention users (Usertag) and location:
 
 Reels:
 
+Timeline helpers:
+
+```python
+>>> first_page = await cl.get_timeline_feed("cold_start_fetch")
+>>> second_page = await cl.get_timeline_feed(max_id=first_page["next_max_id"])
+>>> await cl.reels(amount=10)
+>>> await cl.explore_reels(amount=10)
+>>> await cl.friends_reels(amount=10)
+```
+
+`get_timeline_feed()` remembers media ids from the previous response and sends `seen_posts` plus minimal `feed_view_info` when `max_id` is used. For stateless pagination, pass `seen_posts=...` and `feed_view_info=...` explicitly.
+
 ```python
 >>> clips = await cl.user_clips_v1(25025320, amount=2)
 >>> clips[0].dict()
