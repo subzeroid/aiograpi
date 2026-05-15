@@ -530,6 +530,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#optional-curl-public-transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional curl public transport
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -982,6 +993,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../public-transport/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Public Transport
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../story/" class="md-nav__link">
         
   
@@ -1342,6 +1381,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#optional-curl-public-transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional curl public transport
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1441,6 +1491,14 @@
 <td>request_timeout</td>
 <td>Timeout in seconds between requests (1 second by default)</td>
 </tr>
+<tr>
+<td>public_transport</td>
+<td>Public web transport: <code>requests</code>-compatible async transport by default, or <code>curl</code> when <code>aiograpi[curl]</code> is installed</td>
+</tr>
+<tr>
+<td>public_transport_impersonate</td>
+<td>Browser fingerprint used by the optional curl public transport</td>
+</tr>
 </tbody>
 </table>
 <h3 id="login">Login</h3>
@@ -1508,7 +1566,9 @@
       <span class="s2">&quot;android_release&quot;</span><span class="p">:</span> <span class="s2">&quot;6.0.1&quot;</span><span class="p">,</span>
       <span class="s2">&quot;android_version&quot;</span><span class="p">:</span> <span class="mi">23</span>
    <span class="p">},</span>
-   <span class="s2">&quot;user_agent&quot;</span><span class="p">:</span> <span class="s2">&quot;Instagram 117.0.0.28.123 Android (23/6.0.1; ...US; 168361634)&quot;</span>
+   <span class="s2">&quot;user_agent&quot;</span><span class="p">:</span> <span class="s2">&quot;Instagram 117.0.0.28.123 Android (23/6.0.1; ...US; 168361634)&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;public_transport&quot;</span><span class="p">:</span> <span class="s2">&quot;requests&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;public_transport_impersonate&quot;</span><span class="p">:</span> <span class="s2">&quot;chrome136&quot;</span>
 <span class="p">}</span>
 
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span>
@@ -1665,6 +1725,15 @@
     <span class="s1">&#39;timezone_offset&#39;</span><span class="p">:</span> <span class="mi">10800</span>
 <span class="p">}</span>
 </code></pre></div>
+<h3 id="optional-curl-public-transport">Optional curl public transport</h3>
+<p>For public web endpoints that are sensitive to browser TLS fingerprints, install the optional curl transport:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;aiograpi[curl]&quot;</span>
+</code></pre></div>
+<p>Then opt in explicitly:</p>
+<div class="highlight"><pre><span></span><code><span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">public_transport</span><span class="o">=</span><span class="s2">&quot;curl&quot;</span><span class="p">,</span> <span class="n">public_transport_impersonate</span><span class="o">=</span><span class="s2">&quot;chrome136&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>The default remains <code>public_transport="requests"</code>. Private mobile API requests still use the regular mobile session.
+See <a href="../public-transport/">Public Transport</a> for live comparison results and caveats.</p>
 <h2 id="whats-next">What's Next?</h2>
 <ul>
 <li><a href="../../getting-started/">Getting Started</a></li>

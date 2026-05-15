@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/notes/">
+        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/public-transport/">
       
       
-        <link rel="prev" href="../media/">
+        <link rel="prev" href="../pydroid/">
       
       
-        <link rel="next" href="../pydroid/">
+        <link rel="next" href="../story/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Notes - aiograpi Documentation</title>
+        <title>Public Transport - aiograpi Documentation</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#notes" class="md-skip">
+        <a href="#public-transport" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Notes
+              Public Transport
             
           </span>
         </div>
@@ -804,37 +804,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Notes
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../notes/" class="md-nav__link">
         
   
   
@@ -850,37 +823,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#get-notes-post-notes-delete-notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Get Notes | Post Notes | Delete Notes
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -918,10 +860,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../public-transport/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Public Transport
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -937,6 +906,48 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#live-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live Comparison
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1254,10 +1265,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#get-notes-post-notes-delete-notes" class="md-nav__link">
+  <a href="#live-comparison" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Get Notes | Post Notes | Delete Notes
+        Live Comparison
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendation
       
     </span>
   </a>
@@ -1284,99 +1306,86 @@
   
 
 
-<h1 id="notes">Notes</h1>
+<h1 id="public-transport">Public Transport</h1>
+<p><code>aiograpi</code> uses two network surfaces:</p>
+<ul>
+<li>private mobile API requests, used for authenticated mobile flows;</li>
+<li>public web requests, used by helpers such as public profile and public media lookups.</li>
+</ul>
+<p>The default public web transport is <code>public_transport="requests"</code>: a requests-compatible async HTTP transport based on
+<code>httpx</code>. It has the smallest dependency footprint and keeps the existing async public request behavior.</p>
+<p>For public web endpoints that are sensitive to browser TLS fingerprints, you can install the optional curl transport:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;aiograpi[curl]&quot;</span>
+</code></pre></div>
+<p>Then opt in explicitly:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
+
+<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">public_transport</span><span class="o">=</span><span class="s2">&quot;curl&quot;</span><span class="p">,</span> <span class="n">public_transport_impersonate</span><span class="o">=</span><span class="s2">&quot;chrome136&quot;</span><span class="p">)</span>
+<span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username_gql</span><span class="p">(</span><span class="s2">&quot;instagram&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Private mobile API requests still use the regular mobile session. The curl transport only changes the public web
+session.</p>
+<h2 id="live-comparison">Live Comparison</h2>
+<p>This is a point-in-time live comparison from May 15, 2026. Instagram public web behavior changes frequently, so treat
+these numbers as a practical signal, not a guarantee.</p>
+<p>Method:</p>
+<ul>
+<li>branch: curl public transport sync branch;</li>
+<li>environment: fresh remote Linux clone with <code>aiograpi[curl]</code> installed;</li>
+<li>Python: 3.12;</li>
+<li>rounds: 4;</li>
+<li>public request retry loop: disabled with <code>public_request_retries_count = 1</code>;</li>
+<li>curl impersonation: <code>chrome136</code>;</li>
+<li>identical inputs for both transports.</li>
+</ul>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Return</th>
-<th>Description</th>
+<th>Public web helper</th>
+<th style="text-align: right;"><code>requests</code></th>
+<th style="text-align: right;"><code>curl</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>get_notes()</td>
-<td>List[Note]</td>
-<td>Retrieve direct Notes</td>
+<td><code>user_info_by_username_gql("instagram")</code></td>
+<td style="text-align: right;">0/4 ok, p50 0.01s</td>
+<td style="text-align: right;">0/4 ok, p50 0.19s</td>
 </tr>
 <tr>
-<td>create_note(text: str, audience: int = 0)</td>
-<td>Note</td>
-<td>Post a new Note</td>
+<td><code>user_info_by_username_gql("1fexd")</code></td>
+<td style="text-align: right;">0/4 ok, p50 0.01s</td>
+<td style="text-align: right;">0/4 ok, p50 0.18s</td>
 </tr>
 <tr>
-<td>notes_music_browser()</td>
-<td>Dict</td>
-<td>Retrieve music candidates for Notes</td>
+<td><code>media_pk_from_url("https://www.instagram.com/p/C_BM2yAN4Rm/")</code></td>
+<td style="text-align: right;">4/4 ok, p50 0.00s</td>
+<td style="text-align: right;">4/4 ok, p50 0.00s</td>
 </tr>
 <tr>
-<td>create_music_note(track, text: str = "", audience: int = 0)</td>
-<td>Note</td>
-<td>Post a new music Note</td>
-</tr>
-<tr>
-<td>delete_note(note_id: int)</td>
-<td>bool</td>
-<td>Delete a posted Note</td>
-</tr>
-<tr>
-<td>last_seen_update_note()</td>
-<td>bool</td>
-<td>Update the last seen time</td>
+<td><code>media_info_gql("3441088131388376166")</code></td>
+<td style="text-align: right;">0/4 ok, p50 2.48s</td>
+<td style="text-align: right;">0/4 ok, p50 2.49s</td>
 </tr>
 </tbody>
 </table>
-<p>Example:</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">note</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">create_note</span><span class="p">(</span><span class="s2">&quot;Hello from Instagrapi, everyone can see it!&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="n">note</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
-<span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;17849203563031468&#39;</span><span class="p">,</span>
-<span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;Hello from Instagrapi, everyone can see it!&#39;</span><span class="p">,</span>
-<span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="mi">12312312312</span><span class="p">,</span>
-<span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="p">{</span>
-  <span class="s1">&#39;pk&#39;</span><span class="p">:</span> <span class="s1">&#39;12312312312&#39;</span><span class="p">,</span>
-  <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;something&#39;</span><span class="p">,</span>
-  <span class="s1">&#39;full_name&#39;</span><span class="p">:</span> <span class="s1">&#39;merimi on top&#39;</span><span class="p">,</span>
-  <span class="s1">&#39;profile_pic_url&#39;</span><span class="p">:</span> <span class="n">HttpUrl</span><span class="p">(</span><span class="s1">&#39;https://scontent-dus1-1.cdninstagram.com/v/t51.2885-19/364347953_6289474204435297_7603222331512295081_n.jpg?stp=dst-jpg_s150x150&amp;_nc_ht=scontent-dus1-1.cdninstagram.com&amp;_nc_cat=101&amp;_nc_ohc=DVaE0MQwn0YAX8-S8dm&amp;edm=AE-H4JwBAAAA&amp;ccb=7-5&amp;oh=00_AfAnH4mHGMl7B5tqzU7b9PMz9qSC4QE_-EX067lwPHnN1w&amp;oe=64DDA1CB&amp;_nc_sid=cff473&#39;</span><span class="p">,</span> <span class="p">),</span>
-  <span class="s1">&#39;profile_pic_url_hd&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-  <span class="s1">&#39;is_private&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-  <span class="s1">&#39;stories&#39;</span><span class="p">:</span> <span class="p">[]},</span>
-<span class="s1">&#39;audience&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-<span class="s1">&#39;created_at&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2023</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">43</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
-<span class="s1">&#39;expires_at&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2023</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">43</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
-<span class="s1">&#39;is_emoji_only&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-<span class="s1">&#39;has_translation&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-<span class="s1">&#39;note_style&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">notes</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">get_notes</span><span class="p">()</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="n">notes</span><span class="p">)</span>
-<span class="p">[</span><span class="n">Note</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s1">&#39;17849203563031468&#39;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">&#39;Hello from Instagrapi, everyone can see it!&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">has_translation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">note_style</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">Note</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s1">&#39;17902958207826742&#39;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">&#39;Am so happy 💃💃💃💃🙈🤭&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">has_translation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">note_style</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">last_seen_update_note</span><span class="p">()</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">delete_note</span><span class="p">(</span><span class="n">note</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-</code></pre></div>
-<p>Music Notes use the music browser response:</p>
-<div class="highlight"><pre><span></span><code><span class="n">browser</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">notes_music_browser</span><span class="p">()</span>
-<span class="n">track</span> <span class="o">=</span> <span class="n">browser</span><span class="p">[</span><span class="s2">&quot;items&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;track&quot;</span><span class="p">]</span>
-<span class="n">note</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">create_music_note</span><span class="p">(</span>
-    <span class="n">track</span><span class="p">,</span>
-    <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Now playing&quot;</span><span class="p">,</span>
-    <span class="n">alacorn_session_id</span><span class="o">=</span><span class="n">browser</span><span class="p">[</span><span class="s2">&quot;alacorn_session_id&quot;</span><span class="p">],</span>
-<span class="p">)</span>
-</code></pre></div>
-<h2 id="get-notes-post-notes-delete-notes">Get Notes  |  Post Notes  |  Delete Notes</h2>
+<p>Observed failures:</p>
 <ul>
-<li><em>Get Notes from Direct</em></li>
-<li><em>Publish a new note with the ability to select an audience</em></li>
-<li><em>Delete posted Notes</em></li>
-<li><em>Update last seen of Notes</em></li>
+<li><code>requests</code> repeatedly hit <code>429</code> on <code>users/web_profile_info</code>;</li>
+<li><code>curl</code> avoided those <code>429</code> responses but received <code>401</code> on the same public endpoint in this run;</li>
+<li>both transports hit <code>404</code> on the tested public media info path.</li>
 </ul>
-<p>The note should not exceed 60 characters. The rate in between Notes requests should be fairly high <em>(</em>i.e : 1 request/ 2 min)* to avoid triggering Instagram API</p>
-<p>Common arguments:</p>
+<h2 id="recommendation">Recommendation</h2>
+<p>Use the default <code>requests</code> transport unless you specifically need public web endpoints that are being rate limited or
+blocked by TLS fingerprint checks.</p>
+<p>Use <code>public_transport="curl"</code> when:</p>
 <ul>
-<li><code>note_id</code> - ID of the Note object</li>
-<li><code>text</code> - Content of the Note</li>
-<li><code>audience</code> - Who can see the note <strong>(0 = Followers you follow back, 1 = Close Friends only)</strong></li>
+<li>public profile web lookups return repeated <code>429</code> responses with the default transport;</li>
+<li>you can install the optional native dependencies pulled by <code>aiograpi[curl]</code>;</li>
+<li>you understand that public web access is still opportunistic: curl can change the failure mode without guaranteeing a
+  successful response, and public endpoints can return <code>401</code>, <code>403</code>, <code>404</code>, or <code>429</code>.</li>
 </ul>
+<p>Prefer authenticated private API helpers for production workflows when an equivalent private/mobile path exists.</p>
 
 
 
