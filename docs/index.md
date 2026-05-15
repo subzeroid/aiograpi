@@ -14,11 +14,14 @@ Asynchronous Instagram Private API wrapper without selenium. Use the most recent
 
 Support **Python >= 3.10**
 
-Video uploads can use a built-in MP4 metadata parser when you provide `thumbnail=...`. Automatic thumbnail generation, `StoryBuilder`, and video/audio composition still need the optional video extra and executable `ffmpeg`:
+Video uploads can use a built-in MP4 metadata parser when you provide `thumbnail=...`. Automatic thumbnail generation, `StoryBuilder`, and video/audio composition still need the optional video dependencies, MoviePy `2.2.1`, and executable `ffmpeg`:
 
 ```bash
 pip install "aiograpi[video]"
+pip install --no-deps "moviepy==2.2.1"
 ```
+
+MoviePy `2.2.1` currently declares `Pillow<12`, but aiograpi keeps `Pillow>=12.2.0` for security fixes; the `--no-deps` install keeps the safe Pillow version. If your project imports MoviePy directly, migrate any MoviePy `1.x` code from `moviepy.editor`, `set_*`, `resize`, and `subclip` APIs to the MoviePy `2.x` API before upgrading.
 
 Android users should see [Pydroid and ffmpeg](usage-guide/pydroid.md) and [Termux](usage-guide/termux.md).
 

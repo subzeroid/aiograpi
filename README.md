@@ -10,11 +10,14 @@ It will be difficult to find good accounts, good proxies, or resolve challenges,
 
 The aiograpi more suits for testing or research than a working business!
 
-Video uploads can use a built-in MP4 metadata parser when you provide `thumbnail=...`. Automatic thumbnail generation, `StoryBuilder`, and video/audio composition still need the optional video extra and executable `ffmpeg`:
+Video uploads can use a built-in MP4 metadata parser when you provide `thumbnail=...`. Automatic thumbnail generation, `StoryBuilder`, and video/audio composition still need the optional video dependencies, MoviePy `2.2.1`, and executable `ffmpeg`:
 
 ```bash
 pip install "aiograpi[video]"
+pip install --no-deps "moviepy==2.2.1"
 ```
+
+MoviePy `2.2.1` currently declares `Pillow<12`, but aiograpi keeps `Pillow>=12.2.0` for security fixes; the `--no-deps` install keeps the safe Pillow version. If your project imports MoviePy directly, migrate any MoviePy `1.x` code from `moviepy.editor`, `set_*`, `resize`, and `subclip` APIs to the MoviePy `2.x` API before upgrading.
 
 Android users should see [Pydroid and ffmpeg](docs/usage-guide/pydroid.md) and [Termux](docs/usage-guide/termux.md).
 
@@ -99,8 +102,8 @@ What you can rely on instead:
   feed photo/carousel music, music Notes, archive readers, tagged media pagination,
   Direct reactions, thread title updates, message request helpers, single-message lookup, and Direct unsend.
 - **Android/Pydroid/Termux-friendly video uploads** — when you pass `thumbnail=...`, aiograpi can read
-  MP4 dimensions/duration without importing MoviePy/ffmpeg. MoviePy is now available through the optional
-  `video` extra for automatic thumbnails, StoryBuilder, `prepare_video()`, and audio/video composition.
+  MP4 dimensions/duration without importing MoviePy/ffmpeg. The optional `video` dependencies plus
+  MoviePy `2.2.1` cover automatic thumbnails, StoryBuilder, `prepare_video()`, and audio/video composition.
 - **Modern dev tooling** — `uv.lock`, Ruff formatting/checks, updated test pins, and an
   upstream sync tracking workflow.
 - **Sync with instagrapi 2.4.4** — every mixin and infrastructure module ported, plus three new mixins:

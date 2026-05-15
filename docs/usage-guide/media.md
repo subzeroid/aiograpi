@@ -278,7 +278,7 @@ Upload medias to your feed. Common arguments:
 | clip_trial_eligible()                                         | bool    | Check whether Reel creation preflight reports Trial Reels enabled
 | clip_share_to_fb_config()                                      | Dict    | Get Reel Facebook sharing configuration for the current user
 
-For video uploads in Android environments, pass `thumbnail=...` to avoid automatic thumbnail generation, or install the optional video extra and configure executable ffmpeg. See [Pydroid and ffmpeg](pydroid.md) and [Termux](termux.md).
+For video uploads in Android environments, pass `thumbnail=...` to avoid automatic thumbnail generation, or install the optional video dependencies, MoviePy `2.2.1`, and executable ffmpeg. See [Pydroid and ffmpeg](pydroid.md) and [Termux](termux.md).
 
 Trial Reels use the same upload method:
 

@@ -1,6 +1,11 @@
 import builtins
+import contextlib
 import importlib
+import importlib.metadata
+import os
+import shutil
 import struct
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -42,6 +47,39 @@ def _sample_mp4(width: int = 720, height: int = 1280, duration: float = 3.5) -> 
 def _write_sample_mp4(folder: Path, name: str = "sample.mp4") -> Path:
     path = folder / name
     path.write_bytes(_sample_mp4())
+    return path
+
+
+def _ffmpeg_exe() -> str:
+    try:
+        import imageio_ffmpeg
+
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        ffmpeg = shutil.which("ffmpeg")
+        if ffmpeg:
+            return ffmpeg
+    pytest.skip("ffmpeg is required for MoviePy video generation coverage")
+
+
+def _write_real_mp4(folder: Path, name: str = "source.mp4", duration: float = 4.0) -> Path:
+    path = folder / name
+    subprocess.run(
+        [
+            _ffmpeg_exe(),
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            f"color=c=black:s=640x360:d={duration}",
+            "-pix_fmt",
+            "yuv420p",
+            str(path),
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
     return path
 
 
@@ -116,7 +154,8 @@ def test_core_install_does_not_require_moviepy():
 
     assert "moviepy" not in required_dependencies
     assert "video = [" in optional_dependencies
-    assert '"moviepy==1.0.3"' in optional_dependencies
+    assert '"imageio-ffmpeg>=0.2.0"' in optional_dependencies
+    assert '"moviepy==1.0.3"' not in optional_dependencies
 
 
 def test_story_builder_import_does_not_require_moviepy():
@@ -137,7 +176,10 @@ def test_story_builder_render_reports_video_extra_without_moviepy():
         with pytest.raises(RuntimeError) as ctx:
             story.StoryBuilder(Path("video.mp4")).video()
 
-    assert "aiograpi[video]" in str(ctx.value)
+    message = str(ctx.value)
+    assert "aiograpi[video]" in message
+    assert "moviepy==2.2.1" in message
+    assert "--no-deps" in message
 
 
 def test_prepare_video_reports_video_extra_without_moviepy():
@@ -147,4 +189,51 @@ def test_prepare_video_reports_video_extra_without_moviepy():
         with pytest.raises(RuntimeError) as ctx:
             prepare_video("video.mp4")
 
-    assert "aiograpi[video]" in str(ctx.value)
+    message = str(ctx.value)
+    assert "aiograpi[video]" in message
+    assert "moviepy==2.2.1" in message
+    assert "--no-deps" in message
+
+
+def test_story_builder_photo_generates_video_with_moviepy_2():
+    from PIL import Image
+
+    from aiograpi.story import StoryBuilder
+    from aiograpi.utils.video import read_video_metadata
+
+    assert importlib.metadata.version("moviepy") == "2.2.1"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+        image = tmpdir / "photo.jpg"
+        Image.new("RGB", (720, 1280), "white").save(image)
+
+        build = StoryBuilder(image).photo(max_duration=1)
+        try:
+            output = Path(build.path)
+            assert output.exists()
+            assert output.stat().st_size > 0
+            metadata = read_video_metadata(output)
+            assert (metadata.width, metadata.height) == (720, 1280)
+            assert metadata.duration == pytest.approx(1.0, abs=0.25)
+        finally:
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(build.path)
+
+
+def test_prepare_video_generates_thumbnail_with_moviepy_2():
+    from aiograpi.image_util import prepare_video
+
+    assert importlib.metadata.version("moviepy") == "2.2.1"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = _write_real_mp4(Path(tmpdir))
+        video_data, size, duration, thumbnail_data = prepare_video(
+            str(path),
+            max_size=None,
+            aspect_ratios=None,
+            skip_reencoding=True,
+        )
+
+    assert len(video_data) > 0
+    assert size == [640, 360]
+    assert duration == pytest.approx(4.0, abs=0.25)
+    assert len(thumbnail_data) > 0
