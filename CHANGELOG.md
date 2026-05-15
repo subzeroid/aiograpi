@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.7] - 2026-05-15
+
+### Added
+
+- Added optional curl-backed public web transport with Chrome impersonation for public lookup requests: install with
+  `pip install "aiograpi[curl]"` and use `Client(public_transport="curl")`.
+- Added public transport docs, README examples, settings roundtrip coverage, and optional live smoke coverage for curl
+  public GraphQL lookups.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.6.6.
+- Synced timeline feed pagination telemetry with upstream: paginated `get_timeline_feed()` calls now send
+  `seen_posts`, `feed_view_info`, and `reason="pagination"` by default.
+
 ## [0.9.6] - 2026-05-13
 
 ### Changed
