@@ -1504,9 +1504,11 @@
 <a href="https://pypi.org/project/aiograpi/"><img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/aiograpi" /></a></p>
 <p>Asynchronous Instagram Private API wrapper without selenium. Use the most recent version of the API from Instagram, which was obtained using <a href="https://github.com/subzeroid/instagrapi/discussions/1182">reverse-engineering with Charles Proxy</a> and <a href="https://proxyman.io/">Proxyman</a>.</p>
 <p>Support <strong>Python &gt;= 3.10</strong></p>
-<p>Video uploads can use a built-in MP4 metadata parser when you provide <code>thumbnail=...</code>. Automatic thumbnail generation, <code>StoryBuilder</code>, and video/audio composition still need the optional video extra and executable <code>ffmpeg</code>:</p>
+<p>Video uploads can use a built-in MP4 metadata parser when you provide <code>thumbnail=...</code>. Automatic thumbnail generation, <code>StoryBuilder</code>, and video/audio composition still need the optional video dependencies, MoviePy <code>2.2.1</code>, and executable <code>ffmpeg</code>:</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;aiograpi[video]&quot;</span>
+pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span><span class="s2">&quot;moviepy==2.2.1&quot;</span>
 </code></pre></div>
+<p>MoviePy <code>2.2.1</code> currently declares <code>Pillow&lt;12</code>, but aiograpi keeps <code>Pillow&gt;=12.2.0</code> for security fixes; the <code>--no-deps</code> install keeps the safe Pillow version. If your project imports MoviePy directly, migrate any MoviePy <code>1.x</code> code from <code>moviepy.editor</code>, <code>set_*</code>, <code>resize</code>, and <code>subclip</code> APIs to the MoviePy <code>2.x</code> API before upgrading.</p>
 <p>Android users should see <a href="usage-guide/pydroid/">Pydroid and ffmpeg</a> and <a href="usage-guide/termux/">Termux</a>.</p>
 <p>For any other languages (e.g. C++, C#, F#, D, <a href="https://github.com/subzeroid/instagrapi-rest/tree/main/golang">Golang</a>, Erlang, Elixir, Nim, Haskell, Lisp, Closure, Julia, R, Java, Kotlin, Scala, OCaml, JavaScript, Crystal, Ruby, Rust, <a href="https://github.com/subzeroid/instagrapi-rest/tree/main/swift">Swift</a>, Objective-C, Visual Basic, .NET, Pascal, Perl, Lua, PHP and others), I suggest using <a href="https://github.com/subzeroid/instagrapi-rest">instagrapi-rest</a></p>
 <p><a href="https://t.me/aiograpi_support">Support Chat in Telegram</a>
