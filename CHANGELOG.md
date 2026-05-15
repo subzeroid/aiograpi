@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.8] - 2026-05-16
+
 ### Added
 
 - Added a `video` optional extra for MoviePy-backed helpers and Termux install notes.
@@ -15,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Removed MoviePy/NumPy from the default install path; standard MP4 video uploads with `thumbnail=...` continue to use the built-in parser without MoviePy.
+- Migrated optional video helpers to the MoviePy 2 API and added real MoviePy 2.2.1 video-generation regression coverage for `StoryBuilder.photo()` and `prepare_video()`.
+- Documented the Pillow 12.2.0 security floor and the temporary `pip install --no-deps "moviepy==2.2.1"` install step required while MoviePy 2.2.1 declares `Pillow<12`.
 
 ## [0.9.7] - 2026-05-15
 
