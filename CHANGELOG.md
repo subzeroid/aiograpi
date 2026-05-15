@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added a `video` optional extra for MoviePy-backed helpers and Termux install notes.
+
+### Changed
+
+- Removed MoviePy/NumPy from the default install path; standard MP4 video uploads with `thumbnail=...` continue to use the built-in parser without MoviePy.
+
 ## [0.9.7] - 2026-05-15
 
 ### Added

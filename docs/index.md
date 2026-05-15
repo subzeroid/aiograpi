@@ -14,9 +14,13 @@ Asynchronous Instagram Private API wrapper without selenium. Use the most recent
 
 Support **Python >= 3.10**
 
-Video uploads can use a built-in MP4 metadata parser when you provide `thumbnail=...`. Automatic thumbnail generation,
-`StoryBuilder`, and video/audio composition still need executable `ffmpeg`; Android/Pydroid users should see
-[Pydroid and ffmpeg](usage-guide/pydroid.md).
+Video uploads can use a built-in MP4 metadata parser when you provide `thumbnail=...`. Automatic thumbnail generation, `StoryBuilder`, and video/audio composition still need the optional video extra and executable `ffmpeg`:
+
+```bash
+pip install "aiograpi[video]"
+```
+
+Android users should see [Pydroid and ffmpeg](usage-guide/pydroid.md) and [Termux](usage-guide/termux.md).
 
 For any other languages (e.g. C++, C#, F#, D, [Golang](https://github.com/subzeroid/instagrapi-rest/tree/main/golang), Erlang, Elixir, Nim, Haskell, Lisp, Closure, Julia, R, Java, Kotlin, Scala, OCaml, JavaScript, Crystal, Ruby, Rust, [Swift](https://github.com/subzeroid/instagrapi-rest/tree/main/swift), Objective-C, Visual Basic, .NET, Pascal, Perl, Lua, PHP and others), I suggest using [instagrapi-rest](https://github.com/subzeroid/instagrapi-rest)
 
@@ -113,6 +117,7 @@ To learn more about the various ways `aiograpi` can be used, read the [Usage Gui
   * [`Highlight`](usage-guide/highlight.md) - Highlights
   * [`Notes`](usage-guide/notes.md) - Notes
   * [`Pydroid and ffmpeg`](usage-guide/pydroid.md) - Android/Pydroid video upload setup
+  * [`Termux`](usage-guide/termux.md) - Termux install notes and optional video helpers
   * [`Public Transport`](usage-guide/public-transport.md) - Optional curl transport for public web requests
   * [`Story`](usage-guide/story.md) - Story
   * [`StoryLink`](usage-guide/story.md) - Link (Swipe up)

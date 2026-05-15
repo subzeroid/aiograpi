@@ -10,9 +10,13 @@ It will be difficult to find good accounts, good proxies, or resolve challenges,
 
 The aiograpi more suits for testing or research than a working business!
 
-Video uploads can use a built-in MP4 metadata parser when you provide `thumbnail=...`. Automatic thumbnail generation,
-`StoryBuilder`, and video/audio composition still need executable `ffmpeg`; Android/Pydroid users should see
-[Pydroid and ffmpeg](docs/usage-guide/pydroid.md).
+Video uploads can use a built-in MP4 metadata parser when you provide `thumbnail=...`. Automatic thumbnail generation, `StoryBuilder`, and video/audio composition still need the optional video extra and executable `ffmpeg`:
+
+```bash
+pip install "aiograpi[video]"
+```
+
+Android users should see [Pydroid and ffmpeg](docs/usage-guide/pydroid.md) and [Termux](docs/usage-guide/termux.md).
 
 ### We recommend using our services:
 
@@ -94,9 +98,9 @@ What you can rely on instead:
   `override_app_version` constructor support, Trial Reels, current Reel rupload flow, Reel pin/unpin,
   feed photo/carousel music, music Notes, archive readers, tagged media pagination,
   Direct reactions, thread title updates, message request helpers, single-message lookup, and Direct unsend.
-- **Android/Pydroid-friendly video uploads** — when you pass `thumbnail=...`, aiograpi can read
-  MP4 dimensions/duration without importing MoviePy/ffmpeg. If thumbnail generation is needed,
-  the error now explains how to install ffmpeg or set `IMAGEIO_FFMPEG_EXE`.
+- **Android/Pydroid/Termux-friendly video uploads** — when you pass `thumbnail=...`, aiograpi can read
+  MP4 dimensions/duration without importing MoviePy/ffmpeg. MoviePy is now available through the optional
+  `video` extra for automatic thumbnails, StoryBuilder, `prepare_video()`, and audio/video composition.
 - **Modern dev tooling** — `uv.lock`, Ruff formatting/checks, updated test pins, and an
   upstream sync tracking workflow.
 - **Sync with instagrapi 2.4.4** — every mixin and infrastructure module ported, plus three new mixins:
@@ -297,6 +301,7 @@ await cl.video_upload_to_story(
 * [Fundraiser](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundraiser/) - Fundraiser info
 * [Best Practices](https://subzeroid.github.io/aiograpi/latest/usage-guide/best-practices/)
 * [Pydroid and ffmpeg](https://subzeroid.github.io/aiograpi/latest/usage-guide/pydroid/) - Android/Pydroid video upload notes
+* [Termux](https://subzeroid.github.io/aiograpi/latest/usage-guide/termux/) - Termux install notes and optional video helpers
 * [Development Guide](https://subzeroid.github.io/aiograpi/latest/development-guide/)
 * [Handle Exceptions](https://subzeroid.github.io/aiograpi/latest/usage-guide/handle_exception/)
 * [Challenge Resolver](https://subzeroid.github.io/aiograpi/latest/usage-guide/challenge_resolver/)

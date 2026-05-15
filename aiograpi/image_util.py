@@ -19,6 +19,11 @@ except ImportError:
 
 import httpx
 
+VIDEO_EXTRA_MESSAGE = (
+    'prepare_video() requires MoviePy and ffmpeg. Install it with pip install "aiograpi[video]" '
+    "and make sure ffmpeg is executable or set IMAGEIO_FFMPEG_EXE."
+)
+
 # Whitelist of image formats Pillow is allowed to decode for remote
 # fetches. Restricts the parser surface to the formats Instagram
 # actually accepts as media uploads — drops PSD/FITS/TIFF/etc.
@@ -245,8 +250,16 @@ def prepare_video(
          choose ultrafast when you are in a hurry and file size does not matter.
     :return:
     """
-    from moviepy.video.fx.all import crop, resize
-    from moviepy.video.io.VideoFileClip import VideoFileClip
+    try:
+        from moviepy.video.fx.all import crop, resize
+        from moviepy.video.io.VideoFileClip import VideoFileClip
+    except ImportError as exc:
+        raise RuntimeError(VIDEO_EXTRA_MESSAGE) from exc
+    except Exception as exc:
+        message = str(exc).lower()
+        if "ffmpeg" in message or "imageio_ffmpeg_exe" in message or "no ffmpeg exe" in message:
+            raise RuntimeError(VIDEO_EXTRA_MESSAGE) from exc
+        raise
 
     min_size = kwargs.pop("min_size", (612, 320))
     progress_bar = True if kwargs.pop("progress_bar", None) else False
