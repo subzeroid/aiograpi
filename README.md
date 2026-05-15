@@ -127,6 +127,20 @@ See the [Migration Guide](https://subzeroid.github.io/aiograpi/latest/migration/
 pip install aiograpi
 ```
 
+Optional public web TLS impersonation support is available as an extra:
+
+```bash
+pip install "aiograpi[curl]"
+```
+
+Use it only for public web endpoints that are sensitive to browser TLS fingerprints:
+
+```python
+cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
+```
+
+See the [public transport guide](docs/usage-guide/public-transport.md) for live comparison results and caveats.
+
 ### Basic Usage
 
 ``` python

@@ -1,3 +1,5 @@
+import asyncio
+
 import httpx
 import orjson
 import zstandard as zstd
@@ -127,6 +129,124 @@ class Session:
         return await self.request("post", *args, **kwargs)
 
 
+class CurlResponse:
+    def __init__(self, response):
+        self._response = response
+
+    def __getattr__(self, name):
+        return getattr(self._response, name)
+
+    @property
+    def status_code(self):
+        return self._response.status_code
+
+    @property
+    def url(self):
+        return self._response.url
+
+    @property
+    def text(self):
+        return self._response.text
+
+    @property
+    def content(self):
+        return self._response.content
+
+    @property
+    def headers(self):
+        return self._response.headers
+
+    def json(self):
+        return self._response.json()
+
+    def raise_for_status(self):
+        if self.status_code < 400:
+            return None
+        request = httpx.Request("GET", str(self.url))
+        response = httpx.Response(self.status_code, request=request, content=self.content)
+        raise HTTPStatusError(f"{self.status_code} response for {self.url}", request=request, response=response)
+
+
+class CurlSession:
+    def __init__(self, verify=True, impersonate="chrome136"):
+        try:
+            import requests
+            from curl_adapter import CurlCffiAdapter  # type: ignore[import-untyped]
+        except ImportError as exc:
+            raise RuntimeError(
+                "curl public transport requires the optional curl extra: pip install aiograpi[curl]"
+            ) from exc
+
+        self.headers = {}
+        self.verify = verify
+        self.impersonate = impersonate
+        self._proxy = None
+        self._requests = requests
+        self._client = requests.Session()
+        self._client.verify = verify
+        adapter = CurlCffiAdapter(impersonate_browser_type=impersonate)
+        self._client.mount("https://", adapter)
+        self._client.mount("http://", adapter)
+
+    @property
+    def cookies(self):
+        return self._client.cookies
+
+    def cookies_dict(self):
+        return self._requests.utils.dict_from_cookiejar(self._client.cookies)
+
+    def set_cookies(self, d):
+        self._client.cookies.update(self._requests.utils.cookiejar_from_dict(d))
+
+    @property
+    def proxy(self):
+        return self._proxy
+
+    @proxy.setter
+    def proxy(self, p):
+        self._proxy = p
+        self._client.proxies = {"http": p, "https": p} if p else {}
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args, **kwargs):
+        await self._close()
+
+    async def _close(self):
+        self._client.close()
+
+    async def request(self, method, url, headers=None, proxy=None, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = DEFAULT_TIMEOUT
+        headers = self.headers | (headers or {})
+        headers = {k: v for k, v in headers.items() if v is not None}
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        try:
+            response = await asyncio.to_thread(
+                self._client.request,
+                method,
+                url,
+                headers=headers,
+                proxies={"http": proxy, "https": proxy} if proxy else None,
+                **kwargs,
+            )
+        except (self._requests.exceptions.ConnectTimeout, self._requests.exceptions.ReadTimeout) as exc:
+            raise ReadError(str(exc)) from exc
+        except self._requests.exceptions.RequestException as exc:
+            raise ConnectError(str(exc)) from exc
+        return CurlResponse(response)
+
+    async def get(self, *args, **kwargs):
+        return await self.request("get", *args, **kwargs)
+
+    async def post(self, *args, **kwargs):
+        return await self.request("post", *args, **kwargs)
+
+    async def head(self, *args, **kwargs):
+        return await self.request("head", *args, **kwargs)
+
+
 __all__ = [
     "HTTPError",
     "RequestError",
@@ -154,4 +274,5 @@ __all__ = [
     "ZstdDecoder",
     "request",
     "Session",
+    "CurlSession",
 ]

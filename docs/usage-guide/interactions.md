@@ -55,6 +55,8 @@ We recommend using [these proxies](https://soax.com/?r=sEysufQI)
 | ------------------- | --------------------------------------------------------------
 | request\_logger     | Logger in which various actions from Instagram are registered
 | request\_timeout    | Timeout in seconds between requests (1 second by default)
+| public\_transport   | Public web transport: `requests`-compatible async transport by default, or `curl` when `aiograpi[curl]` is installed
+| public\_transport\_impersonate | Browser fingerprint used by the optional curl public transport
 
 
 ### Login
@@ -93,7 +95,9 @@ settings = {
       "android_release": "6.0.1",
       "android_version": 23
    },
-   "user_agent": "Instagram 117.0.0.28.123 Android (23/6.0.1; ...US; 168361634)"
+   "user_agent": "Instagram 117.0.0.28.123 Android (23/6.0.1; ...US; 168361634)",
+   "public_transport": "requests",
+   "public_transport_impersonate": "chrome136"
 }
 
 cl = Client(settings)
@@ -177,6 +181,23 @@ cl.get_settings()
     'timezone_offset': 10800
 }
 ```
+
+### Optional curl public transport
+
+For public web endpoints that are sensitive to browser TLS fingerprints, install the optional curl transport:
+
+```bash
+pip install "aiograpi[curl]"
+```
+
+Then opt in explicitly:
+
+```python
+cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
+```
+
+The default remains `public_transport="requests"`. Private mobile API requests still use the regular mobile session.
+See [Public Transport](public-transport.md) for live comparison results and caveats.
 
 ## What's Next?
 

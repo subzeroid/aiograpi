@@ -72,6 +72,9 @@ Issues = "https://github.com/subzeroid/aiograpi/issues"
 Changelog = "https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
+curl = [
+    "curl-adapter>=1.2.1",
+]
 test = [
     "mypy==1.20.2",
     "Pillow==12.2.0",
