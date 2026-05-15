@@ -12,6 +12,7 @@ nav:
   - Migration Guide: migration.md
   - Upstream Sync: upstream-sync.md
   - Usage Guide:
+    - Examples: usage-guide/examples.md
     - Fundamentals: usage-guide/fundamentals.md
     - Interactions: usage-guide/interactions.md
     - Handle Exceptions: usage-guide/handle_exception.md

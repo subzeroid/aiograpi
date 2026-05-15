@@ -153,6 +153,12 @@ user_id = await cl.user_id_from_username(ACCOUNT_USERNAME)
 medias = await cl.user_medias(user_id, 20)
 ```
 
+### Runnable Examples
+
+Practical async scripts live in [examples/README.md](examples/README.md). They cover session login, public lookups, media
+downloads, feed uploads, Reels and Trial Reels, story uploads, Direct messages, proxies, and optional curl-backed public
+transport.
+
 ### Session Persistence
 
 Logging in fresh on every run is the fastest way to get your account flagged.
@@ -258,6 +264,7 @@ await cl.video_upload_to_story(
 * [Index](https://subzeroid.github.io/aiograpi/latest/)
 * [Getting Started](https://subzeroid.github.io/aiograpi/latest/getting-started/)
 * [Migration Guide](https://subzeroid.github.io/aiograpi/latest/migration/) — for users coming from `0.0.x`
+* [Runnable Examples](https://subzeroid.github.io/aiograpi/latest/usage-guide/examples/)
 * [Usage Guide](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/)
 * [Interactions](https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/)
   * [`Media`](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/) - Publication (also called post): Photo, Video, Album, IGTV and Reels
