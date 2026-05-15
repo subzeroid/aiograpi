@@ -40,6 +40,10 @@ if TYPE_CHECKING:
         private: Any
         private_requests_count: int
         public: Any
+        public_accept_language: str
+        public_transport: str
+        public_transport_impersonate: str
+        public_user_agent: str
         read_timeout: int
         request_id: str
         request_timeout: int
@@ -127,6 +131,12 @@ if TYPE_CHECKING:
         async def media_seen(self, *args: Any, **kwargs: Any) -> Any: ...
 
         def parse_authorization(self, *args: Any, **kwargs: Any) -> Dict[str, Any]: ...
+
+        def _configure_public_transport(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        def _default_public_user_agent(self, *args: Any, **kwargs: Any) -> str: ...
+
+        def _normalize_public_transport(self, *args: Any, **kwargs: Any) -> str: ...
 
         async def password_encrypt(self, *args: Any, **kwargs: Any) -> str: ...
 

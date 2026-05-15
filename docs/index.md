@@ -111,6 +111,8 @@ To learn more about the various ways `aiograpi` can be used, read the [Usage Gui
   * [`Comment`](usage-guide/comment.md) - Comments to Media
   * [`Highlight`](usage-guide/highlight.md) - Highlights
   * [`Notes`](usage-guide/notes.md) - Notes
+  * [`Pydroid and ffmpeg`](usage-guide/pydroid.md) - Android/Pydroid video upload setup
+  * [`Public Transport`](usage-guide/public-transport.md) - Optional curl transport for public web requests
   * [`Story`](usage-guide/story.md) - Story
   * [`StoryLink`](usage-guide/story.md) - Link (Swipe up)
   * [`StoryLocation`](usage-guide/story.md) - Tag Location in Story (as sticker)

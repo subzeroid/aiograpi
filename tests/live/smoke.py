@@ -75,6 +75,18 @@ async def main():
     except Exception as e:
         print(f"opt anonymous_public_gql: {type(e).__name__}: {str(e)[:140]}")
 
+    try:
+        import curl_adapter  # noqa: F401
+
+        c = Client(public_transport="curl", public_request_retries_count=2)
+        u = await c.user_info_by_username_gql("instagram")
+        assert u.username == "instagram" and u.pk == "25025320"
+        print(f"opt curl_public_gql: {u.username}/{u.pk}")
+    except ImportError:
+        print("opt curl_public_gql: skipped (install aiograpi[curl])")
+    except Exception as e:
+        print(f"opt curl_public_gql: {type(e).__name__}: {str(e)[:140]}")
+
     # REQUIRED: login (TOTP) + private path
     cl = await _login_first_usable(accs)
     if cl is None:

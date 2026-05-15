@@ -40,9 +40,36 @@ class PublicRequestMixin(ClientMixin):
     public_request_retries_count = 3
     public_request_retries_timeout = 2
     last_response_ts = 0
+    public_transport = "requests"
+    public_transport_impersonate = "chrome136"
+    public_user_agent = (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) "
+        "AppleWebKit/605.1.15 (KHTML, like Gecko) "
+        "Version/11.1.2 Safari/605.1.15"
+    )
+    public_curl_user_agents = {
+        "chrome136": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        ),
+    }
+    public_accept_language = "en-US"
 
     def __init__(self, *args, **kwargs):
-        self.public = httpx_ext.Session()
+        self.public_transport = self._normalize_public_transport(
+            kwargs.pop("public_transport", getattr(self, "public_transport", self.public_transport))
+        )
+        self.public_transport_impersonate = kwargs.pop(
+            "public_transport_impersonate",
+            getattr(self, "public_transport_impersonate", self.public_transport_impersonate),
+        )
+        self.public_user_agent = kwargs.pop(
+            "public_user_agent",
+            self._default_public_user_agent(self.public_transport, self.public_transport_impersonate),
+        )
+        self.public_accept_language = kwargs.pop(
+            "public_accept_language", getattr(self, "public_accept_language", self.public_accept_language)
+        )
+        self.public = self._build_public_session()
         # NB: TLS verification is ON. To disable for a misbehaving
         # MITM proxy, set self.public.verify = False AFTER construction.
         self.public.headers.update(
@@ -50,12 +77,8 @@ class PublicRequestMixin(ClientMixin):
                 "Connection": "Keep-Alive",
                 "Accept": "*/*",
                 "Accept-Encoding": "gzip,deflate",
-                "Accept-Language": "en-US",
-                "User-Agent": (
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) "
-                    "AppleWebKit/605.1.15 (KHTML, like Gecko) "
-                    "Version/11.1.2 Safari/605.1.15"
-                ),
+                "Accept-Language": self.public_accept_language,
+                "User-Agent": self.public_user_agent,
             }
         )
         self.public_request_retries_count = kwargs.pop(
@@ -75,6 +98,38 @@ class PublicRequestMixin(ClientMixin):
             ),
         )
         super().__init__(*args, **kwargs)
+
+    @classmethod
+    def _normalize_public_transport(cls, public_transport: str) -> str:
+        public_transport = public_transport or "requests"
+        if public_transport not in {"requests", "curl"}:
+            raise ValueError("public_transport must be 'requests' or 'curl'")
+        return public_transport
+
+    @classmethod
+    def _default_public_user_agent(cls, public_transport: str, impersonate: str) -> str:
+        if public_transport == "curl":
+            return cls.public_curl_user_agents.get(impersonate, cls.public_curl_user_agents["chrome136"])
+        return cls.public_user_agent
+
+    def _build_public_session(self):
+        if self.public_transport == "curl":
+            return httpx_ext.CurlSession(impersonate=self.public_transport_impersonate)
+        return httpx_ext.Session()
+
+    def _configure_public_transport(self):
+        old_public = getattr(self, "public", None)
+        old_proxy = getattr(old_public, "proxy", None)
+        old_verify = getattr(old_public, "verify", True)
+        old_headers = dict(getattr(old_public, "headers", {}))
+        old_cookies = old_public.cookies_dict() if old_public is not None else {}
+
+        self.public = self._build_public_session()
+        self.public.verify = old_verify
+        self.public.proxy = old_proxy
+        self.public.headers.update(old_headers)
+        if old_cookies:
+            self.public.set_cookies(old_cookies)
 
     async def public_head(self, url: str, follow_redirects: bool = False):
         """
@@ -104,6 +159,8 @@ class PublicRequestMixin(ClientMixin):
             307 / 308.
         """
         self.public_requests_count += 1
+        if self.public_transport == "curl":
+            return await self.public.head(url, headers=self.public.headers, allow_redirects=follow_redirects)
         return await httpx_ext.request(
             "HEAD",
             url,
