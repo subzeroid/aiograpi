@@ -97,8 +97,9 @@ What you can rely on instead:
 
 ### What's new in 0.6.x through 0.9.x
 
-- **Sync with instagrapi 2.6.1** — current Android app profile defaults,
+- **Sync with instagrapi 2.6.x** — current Android app profile defaults,
   `override_app_version` constructor support, Trial Reels, current Reel rupload flow, Reel pin/unpin,
+  Reel Facebook cross-post payload helpers,
   feed photo/carousel music, music Notes, archive readers, tagged media pagination,
   Direct reactions, thread title updates, message request helpers, single-message lookup, and Direct unsend.
 - **Android/Pydroid/Termux-friendly video uploads** — when you pass `thumbnail=...`, aiograpi can read
