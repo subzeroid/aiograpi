@@ -5,6 +5,7 @@ from unittest import mock
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
+from aiograpi.exceptions import ClientError
 
 
 def _build_client():
@@ -111,6 +112,96 @@ class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert device_status["chip_vendor"] == "others"
         assert device_status["hw_av1_dec"] is False
         assert result == expected
+
+    async def test_clip_share_to_fb_extra_data_builds_current_reel_crosspost_payload(self):
+        client = _build_client()
+        config = {
+            "enabled": True,
+            "is_account_linked": True,
+            "reels_share_to_facebook": True,
+            "reels_destination_id": "fb-destination-id",
+            "posting_type": "USER",
+            "reels_cross_app_share_type": "CROSSPOST",
+            "reels_cross_app_share_fb_validation_check_bypass": True,
+            "status": "ok",
+        }
+
+        result = await client.clip_share_to_fb_extra_data(config=config, attempt_id="attempt-id")
+
+        assert result == {
+            "share_to_facebook": "1",
+            "is_reel_shared_to_fb": True,
+            "share_to_facebook_reels": True,
+            "share_to_fb_destination_id": "fb-destination-id",
+            "share_to_fb_destination_type": "USER",
+            "cross_app_share_fb_validation_check_bypass": True,
+            "xpost_surface": "IG_REELS_COMPOSER",
+            "no_token_crosspost": "1",
+            "attempt_id": "attempt-id",
+        }
+
+    async def test_clip_share_to_fb_extra_data_allows_explicit_destination_when_preflight_is_unavailable(self):
+        client = _build_client()
+
+        result = await client.clip_share_to_fb_extra_data(
+            config={
+                "share_to_fb_unavailable": True,
+                "status": "ok",
+            },
+            destination_id="fb-destination-id",
+            destination_type="USER",
+            attempt_id="attempt-id",
+        )
+
+        assert result["share_to_fb_destination_id"] == "fb-destination-id"
+        assert result["share_to_fb_destination_type"] == "USER"
+        assert result["attempt_id"] == "attempt-id"
+
+    async def test_clip_share_to_fb_extra_data_allows_config_destination_when_preflight_is_unavailable(self):
+        client = _build_client()
+
+        result = await client.clip_share_to_fb_extra_data(
+            config={
+                "share_to_fb_unavailable": True,
+                "reels_destination_id": "fb-destination-id",
+                "posting_type": "PAGE",
+                "status": "ok",
+            },
+            attempt_id="attempt-id",
+        )
+
+        assert result["share_to_fb_destination_id"] == "fb-destination-id"
+        assert result["share_to_fb_destination_type"] == "PAGE"
+
+    async def test_clip_share_to_fb_extra_data_does_not_use_cross_app_share_type_as_destination_type(self):
+        client = _build_client()
+
+        with self.assertRaises(ClientError) as ctx:
+            await client.clip_share_to_fb_extra_data(
+                config={
+                    "enabled": True,
+                    "is_account_linked": True,
+                    "reels_destination_id": "fb-destination-id",
+                    "reels_cross_app_share_type": "CROSSPOST",
+                    "status": "ok",
+                }
+            )
+
+        assert "destination type" in str(ctx.exception)
+
+    async def test_clip_share_to_fb_extra_data_raises_without_destination(self):
+        client = _build_client()
+
+        with self.assertRaises(ClientError) as ctx:
+            await client.clip_share_to_fb_extra_data(
+                config={
+                    "enabled": True,
+                    "default_share_to_fb_enabled": False,
+                    "status": "ok",
+                }
+            )
+
+        assert "Facebook Reel sharing configuration has no destination" in str(ctx.exception)
 
     async def test_clip_info_for_creation_requests_reel_creation_config(self):
         client = _build_client()
@@ -256,3 +347,54 @@ class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             "graduation_strategy": "ss_performance",
             "custom_field": "1",
         }
+
+    async def test_clip_upload_share_to_facebook_adds_crosspost_params_before_upload(self):
+        client = _build_client()
+        client.last_json = {"media": _build_media_payload()}
+        ok_response = Mock(status_code=200)
+        client.private.get = AsyncMock(return_value=ok_response)
+        client.private.post = AsyncMock(side_effect=[ok_response, ok_response])
+        client.clip_configure = AsyncMock(return_value={"status": "ok", "media": _build_media_payload()})
+        extra_data = {"disable_comments": "1"}
+        fb_extra = {
+            "share_to_facebook": "1",
+            "is_reel_shared_to_fb": True,
+            "share_to_facebook_reels": True,
+            "share_to_fb_destination_id": "fb-destination-id",
+            "share_to_fb_destination_type": "USER",
+            "cross_app_share_fb_validation_check_bypass": False,
+            "xpost_surface": "IG_REELS_COMPOSER",
+            "no_token_crosspost": "1",
+            "attempt_id": "attempt-id",
+        }
+        client.clip_share_to_fb_extra_data = AsyncMock(return_value=fb_extra)
+
+        with mock.patch(
+            "aiograpi.mixins.clip.analyze_video",
+            return_value=(Path("/tmp/thumb.jpg"), 720, 1280, 6.023),
+        ):
+            with mock.patch("builtins.open", mock.mock_open(read_data=b"video-bytes")):
+                with mock.patch("aiograpi.mixins.clip.asyncio.sleep", new=AsyncMock()):
+                    await client.clip_upload(
+                        Path("example.mp4"),
+                        "caption",
+                        share_to_facebook=True,
+                        fb_destination_id="fb-destination-id",
+                        fb_destination_type="USER",
+                        extra_data=extra_data,
+                    )
+
+        client.clip_share_to_fb_extra_data.assert_awaited_once_with(
+            destination_id="fb-destination-id",
+            destination_type="USER",
+            destination_audience_type=None,
+            xpost_surface="IG_REELS_COMPOSER",
+            validation_check_bypass=None,
+        )
+        assert extra_data == {"disable_comments": "1"}
+        configure_extra = client.clip_configure.call_args.kwargs["extra_data"]
+        assert configure_extra["disable_comments"] == "1"
+        assert configure_extra["share_to_fb_destination_id"] == "fb-destination-id"
+        assert configure_extra["share_to_fb_destination_type"] == "USER"
+        assert configure_extra["share_to_facebook_reels"] is True
+        assert configure_extra["xpost_surface"] == "IG_REELS_COMPOSER"

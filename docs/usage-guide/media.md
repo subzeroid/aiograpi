@@ -272,11 +272,12 @@ Upload medias to your feed. Common arguments:
 | album_upload(paths: List[Path], caption: str, usertags: List[Usertag], location: Location, extra_data: Dict = {})                      | Media   | Upload Album (Support JPG/MP4 files)
 | album_upload_with_music(paths: List[Path], caption: str, track: Track, extra_data: Dict = {}) | Media | Upload feed album/carousel with music metadata
 | igtv_upload(path: Path, title: str, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}) | Media   | Upload IGTV (Support MP4 files)
-| clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, trial: bool = False) | Media | Upload Reels Clip (Support MP4 files), optionally as a Trial Reel
+| clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, trial: bool = False, share_to_facebook: bool = False) | Media | Upload Reels Clip (Support MP4 files), optionally as a Trial Reel or cross-posted to Facebook
 | clip_upload_as_reel_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {}) | Media | Upload Reels Clip as reel with music metadata
 | clip_info_for_creation()                                      | Dict    | Get Reel creation preflight configuration for the current user
 | clip_trial_eligible()                                         | bool    | Check whether Reel creation preflight reports Trial Reels enabled
 | clip_share_to_fb_config()                                      | Dict    | Get Reel Facebook sharing configuration for the current user
+| clip_share_to_fb_extra_data(config: Dict = None, destination_id: str = None, destination_type: str = None) | Dict | Build modern Reel Facebook cross-post configure fields for manual `extra_data`
 
 For video uploads in Android environments, pass `thumbnail=...` to avoid automatic thumbnail generation, or install the optional video dependencies, MoviePy `2.2.1`, and executable ffmpeg. See [Pydroid and ffmpeg](pydroid.md) and [Termux](termux.md).
 
@@ -288,6 +289,40 @@ media = await cl.clip_upload(
     "Trying a new format",
     thumbnail=Path("reel-thumb.jpg"),
     trial=True,
+)
+```
+
+Facebook Reel sharing requires a Facebook account/page linked in the Instagram app. Modern Android app builds no longer
+use only `{"share_to_facebook": 1}` for Reels; they also send destination and cross-posting fields such as
+`share_to_fb_destination_id`, `share_to_fb_destination_type`, `no_token_crosspost`, and `attempt_id`.
+
+`clip_share_to_fb_config()` calls the lightweight Reel sharing preflight endpoint. On recent app versions this response
+contains availability flags, not the full Account Center destination state, and some linked accounts can still return
+`share_to_fb_unavailable=True` even when the Instagram app can cross-post manually. For those accounts, pass
+`fb_destination_id` and `fb_destination_type="USER"` or `"PAGE"` to `clip_upload(...)`, or build `extra_data` manually
+with `clip_share_to_fb_extra_data(...)`. If neither the preflight/config data nor the caller provides a destination,
+aiograpi raises `ClientError` before uploading video bytes. The Reel cross-post `attempt_id` is generated automatically;
+only pass it to `clip_share_to_fb_extra_data(...)` when replaying or testing a specific low-level payload.
+
+``` python
+media = await cl.clip_upload(
+    Path("reel.mp4"),
+    "Cross-posting this Reel to Facebook",
+    thumbnail=Path("reel-thumb.jpg"),
+    share_to_facebook=True,
+    fb_destination_id="FACEBOOK_DESTINATION_ID",
+    fb_destination_type="USER",
+)
+
+fb_extra = await cl.clip_share_to_fb_extra_data(
+    destination_id="FACEBOOK_DESTINATION_ID",
+    destination_type="USER",
+)
+media = await cl.clip_upload(
+    Path("reel.mp4"),
+    "Cross-posting with explicit Facebook destination",
+    thumbnail=Path("reel-thumb.jpg"),
+    extra_data=fb_extra,
 )
 ```
 
