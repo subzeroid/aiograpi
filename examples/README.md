@@ -30,12 +30,12 @@ export IG_PUBLIC_TRANSPORT_IMPERSONATE="chrome136"
 
 | Script | Purpose |
 | --- | --- |
-| `_common.py` | Shared async login, proxy, session, and environment helpers used by the examples. |
-| `public_lookup.py` | Public profile lookup with optional `public_transport="curl"`. |
-| `download_user_media.py` | Login, list recent media for a username, and download photos/videos/albums. |
-| `upload_media.py` | Upload a feed photo, feed video, Reel, or Trial Reel. |
-| `upload_story.py` | Upload a photo or video story, optionally with a link sticker. |
-| `direct_message.py` | Send a Direct text message to user IDs or thread IDs. |
+| [`_common.py`](_common.py) | Shared async login, proxy, session, and environment helpers used by the examples. |
+| [`public_lookup.py`](public_lookup.py) | Public profile lookup with optional `public_transport="curl"`. |
+| [`download_user_media.py`](download_user_media.py) | Login, list recent media for a username, and download photos/videos/albums. |
+| [`upload_media.py`](upload_media.py) | Upload a feed photo, feed video, Reel, or Trial Reel. |
+| [`upload_story.py`](upload_story.py) | Upload a photo or video story, optionally with a link sticker. |
+| [`direct_message.py`](direct_message.py) | Send a Direct text message to user IDs or thread IDs. |
 
 ## Public lookup
 
