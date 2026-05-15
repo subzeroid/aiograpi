@@ -89,7 +89,11 @@ await cl.video_upload_to_story(
 
 ## Build Story to Upload
 
-If you want to format your story correctly (correct resolution, user mentions, etc) use StoryBuilder:
+If you want to format your story correctly (correct resolution, user mentions, etc) use StoryBuilder. StoryBuilder renders media with MoviePy and ffmpeg, so install the optional video extra first:
+
+```bash
+pip install "aiograpi[video]"
+```
 
 | Method                                                | Return     | Description                              |
 | ----------------------------------------------------- | ---------- | ---------------------------------------- |

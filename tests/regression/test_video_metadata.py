@@ -1,5 +1,7 @@
 import builtins
+import importlib
 import struct
+import sys
 import tempfile
 from pathlib import Path
 from unittest import mock
@@ -105,3 +107,44 @@ def test_missing_thumbnail_reports_ffmpeg_fix():
     assert "thumbnail=" in message
     assert "ffmpeg" in message.lower()
     assert "IMAGEIO_FFMPEG_EXE" in message
+
+
+def test_core_install_does_not_require_moviepy():
+    pyproject = Path("pyproject.toml").read_text()
+    required_dependencies = pyproject.split("[project.optional-dependencies]", 1)[0]
+    optional_dependencies = pyproject.split("[project.optional-dependencies]", 1)[1]
+
+    assert "moviepy" not in required_dependencies
+    assert "video = [" in optional_dependencies
+    assert '"moviepy==1.0.3"' in optional_dependencies
+
+
+def test_story_builder_import_does_not_require_moviepy():
+    sys.modules.pop("aiograpi.story", None)
+    with _block_moviepy_imports(ImportError("no moviepy")):
+        try:
+            story = importlib.import_module("aiograpi.story")
+        except Exception as exc:
+            pytest.fail(f"StoryBuilder import should not require MoviePy: {exc}")
+
+    assert story.StoryBuilder(Path("photo.jpg")).path == Path("photo.jpg")
+
+
+def test_story_builder_render_reports_video_extra_without_moviepy():
+    sys.modules.pop("aiograpi.story", None)
+    with _block_moviepy_imports(ImportError("no moviepy")):
+        story = importlib.import_module("aiograpi.story")
+        with pytest.raises(RuntimeError) as ctx:
+            story.StoryBuilder(Path("video.mp4")).video()
+
+    assert "aiograpi[video]" in str(ctx.value)
+
+
+def test_prepare_video_reports_video_extra_without_moviepy():
+    from aiograpi.image_util import prepare_video
+
+    with _block_moviepy_imports(ImportError("no moviepy")):
+        with pytest.raises(RuntimeError) as ctx:
+            prepare_video("video.mp4")
+
+    assert "aiograpi[video]" in str(ctx.value)

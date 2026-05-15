@@ -32,6 +32,7 @@ nav:
     - Pydroid and ffmpeg: usage-guide/pydroid.md
     - Public Transport: usage-guide/public-transport.md
     - Story: usage-guide/story.md
+    - Termux: usage-guide/termux.md
     - TOTP: usage-guide/totp.md
     - Track: usage-guide/track.md
     - User: usage-guide/user.md

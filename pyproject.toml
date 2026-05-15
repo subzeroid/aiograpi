@@ -58,7 +58,6 @@ dependencies = [
     "httpx==0.28.1",
     "orjson==3.11.8",
     "pydantic==2.13.4",
-    "moviepy==1.0.3",
     "pycryptodomex==3.23.0",
     "zstandard==0.25.0",
     "Pillow>=12.2.0",
@@ -74,6 +73,9 @@ Changelog = "https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md"
 [project.optional-dependencies]
 curl = [
     "curl-adapter>=1.2.1",
+]
+video = [
+    "moviepy==1.0.3",
 ]
 test = [
     "mypy==1.20.2",
