@@ -3,6 +3,7 @@ import base64
 import random
 import secrets
 import time
+from urllib.parse import urlsplit
 from uuid import uuid4
 
 from aiograpi.exceptions import (
@@ -26,6 +27,26 @@ class SignUpMixin(ClientMixin):
     waterfall_id = str(uuid4())
     adid = str(uuid4())
     wait_seconds = 5
+
+    @staticmethod
+    def _safe_challenge_api_path(api_path: str, field_name: str = "api_path") -> str:
+        if not isinstance(api_path, str) or not api_path:
+            raise ClientError(f"Malformed challenge data from Instagram (missing {field_name}).")
+        parts = urlsplit(api_path)
+        has_control_chars = any(ord(char) < 32 or ord(char) == 127 for char in api_path)
+        if (
+            parts.scheme
+            or parts.netloc
+            or not api_path.startswith("/")
+            or api_path.startswith("//")
+            or "\\" in api_path
+            or has_control_chars
+        ):
+            raise ClientError(f"Unsafe challenge path from Instagram: {field_name}")
+        return api_path
+
+    def _challenge_url(self, api_path: str, prefix: str = "", field_name: str = "api_path") -> str:
+        return f"https://i.instagram.com{prefix}{self._safe_challenge_api_path(api_path, field_name)}"
 
     async def signup(
         self,
@@ -256,7 +277,7 @@ class SignUpMixin(ClientMixin):
 
     async def challenge_api(self, data):
         resp = await self.private.get(
-            f"https://i.instagram.com/api/v1{data['api_path']}",
+            self._challenge_url(data.get("api_path"), prefix="/api/v1"),
             params={
                 "guid": self.uuid,
                 "device_id": self.android_device_id,
@@ -276,7 +297,7 @@ class SignUpMixin(ClientMixin):
             )
             raise ClientError("Malformed captcha challenge data from Instagram (missing site_key or api_path).")
 
-        challenge_post_url = f"https://i.instagram.com{api_path}"
+        challenge_post_url = self._challenge_url(api_path)
         captcha_details_for_solver = {
             "site_key": site_key,
             "challenge_type": challenge_type,
@@ -307,7 +328,7 @@ class SignUpMixin(ClientMixin):
     async def challenge_submit_phone_number(self, data, phone_number):
         api_path = data.get("navigation", {}).get("forward")
         resp = await self.private.post(
-            f"https://i.instagram.com{api_path}",
+            self._challenge_url(api_path, field_name="navigation.forward"),
             data={
                 "phone_number": phone_number,
                 "challenge_context": data["challenge_context"],
@@ -318,7 +339,7 @@ class SignUpMixin(ClientMixin):
     async def challenge_verify_sms_captcha(self, data, security_code):
         api_path = data.get("navigation", {}).get("forward")
         resp = await self.private.post(
-            f"https://i.instagram.com{api_path}",
+            self._challenge_url(api_path, field_name="navigation.forward"),
             data={
                 "security_code": security_code,
                 "challenge_context": data["challenge_context"],
