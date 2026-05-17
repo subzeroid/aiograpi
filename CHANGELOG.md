@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added async Reel Facebook cross-post payload helpers for linked Facebook users/pages, including explicit
   `fb_destination_id` and `fb_destination_type` support when Instagram's lightweight preflight does not return a usable
   destination.
+- Added `Client(tls_verify=...)` and `client.set_tls_verify(...)` so users can keep TLS verification enabled by default,
+  pass a trusted CA bundle for debugging proxies, or explicitly disable verification for local captures.
 
 ### Security
 

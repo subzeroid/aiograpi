@@ -901,7 +901,14 @@ class DirectMixin(ClientMixin):
             }
         )
         proxy = getattr(self, "proxy", None)
-        response = await httpx_ext.request("GET", url, headers=headers, proxy=proxy, timeout=30)
+        response = await httpx_ext.request(
+            "GET",
+            url,
+            headers=headers,
+            proxy=proxy,
+            verify=self.tls_verify,
+            timeout=30,
+        )
         if response.status_code != 200:
             raise ClientError(f"messenger_video offset GET failed: {response.status_code} {response.text[:300]}")
         try:
@@ -924,6 +931,7 @@ class DirectMixin(ClientMixin):
             data=video_bytes[offset:],
             headers=post_headers,
             proxy=proxy,
+            verify=self.tls_verify,
             timeout=300,
         )
         if response.status_code != 200:
@@ -989,7 +997,14 @@ class DirectMixin(ClientMixin):
         url = f"https://rupload.facebook.com/messenger_audio/{entity}"
         headers = self._messenger_rupload_headers({"audio_type": "FILE_ATTACHMENT"})
         proxy = getattr(self, "proxy", None)
-        response = await httpx_ext.request("GET", url, headers=headers, proxy=proxy, timeout=30)
+        response = await httpx_ext.request(
+            "GET",
+            url,
+            headers=headers,
+            proxy=proxy,
+            verify=self.tls_verify,
+            timeout=30,
+        )
         if response.status_code != 200:
             raise ClientError(f"messenger_audio offset GET failed: {response.status_code} {response.text[:300]}")
         try:
@@ -1012,6 +1027,7 @@ class DirectMixin(ClientMixin):
             data=audio_bytes[offset:],
             headers=post_headers,
             proxy=proxy,
+            verify=self.tls_verify,
             timeout=120,
         )
         if response.status_code != 200:

@@ -103,6 +103,7 @@ class Client(
         override_app_version: bool = False,
         **kwargs,
     ):
+        self.tls_verify = kwargs.pop("tls_verify", True)
         super().__init__(**kwargs)
         self.settings = deepcopy(settings or {})
         self.override_app_version = override_app_version

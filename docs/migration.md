@@ -47,18 +47,17 @@ with `TypeError: 'NoneType' object is not subscriptable`.
 `httpx_ext.Session` and the three Client sessions
 (`client.private` / `.public` / `.graphql`) ship with `verify=True`
 now. If your proxy is a known SSL-MITM (e.g. corporate inspection
-gateway), you'll need to opt out explicitly **after** construction:
+gateway), pass its CA bundle or opt out explicitly at construction:
 
 ```python
-client = Client()
-client.private.verify = False
-client.public.verify = False
-client.graphql.verify = False
+client = Client(tls_verify="/path/to/proxy-ca.pem")
+# or, for short trusted local debugging only:
+client = Client(tls_verify=False)
 ```
 
 Most residential / CONNECT-tunnel proxies don't terminate SSL — they
 just pass packets — so they keep working with the new default. Only
-flip `verify=False` if you actually see SSL errors and you've verified
+flip `tls_verify=False` if you actually see SSL errors and you've verified
 the proxy is trustworthy.
 
 ### 0.3.0 — six pure helpers go sync
