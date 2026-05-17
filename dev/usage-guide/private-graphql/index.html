@@ -1552,11 +1552,11 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 </tr>
 <tr>
 <td>Followers list (mobile-app surface)</td>
-<td><code>Client.private_graphql_followers_list(user_id, rank_token)</code></td>
+<td><code>Client.private_graphql_followers_list(user_id, rank_token, order=None)</code></td>
 </tr>
 <tr>
 <td>Following list (mobile-app surface)</td>
-<td><code>Client.private_graphql_following_list(user_id, rank_token)</code></td>
+<td><code>Client.private_graphql_following_list(user_id, rank_token, order=None)</code></td>
 </tr>
 <tr>
 <td>Profile reels stream</td>
@@ -1650,6 +1650,7 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">private_graphql_followers_list</span><span class="p">(</span>
     <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;25025320&quot;</span><span class="p">,</span>
     <span class="n">rank_token</span><span class="o">=</span><span class="n">rank_token</span><span class="p">,</span>
+    <span class="n">order</span><span class="o">=</span><span class="s2">&quot;date_followed_latest&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="c1"># Returns the raw GraphQL envelope: {&quot;data&quot;: {...}, &quot;status&quot;: &quot;ok&quot;, ...}.</span>
 <span class="c1"># Schema is large and varies — pick what you need from data[&quot;data&quot;].</span>
@@ -1702,6 +1703,7 @@ working mobile-app session, but you can override per-call:</p>
 <div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">private_graphql_followers_list</span><span class="p">(</span>
     <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;25025320&quot;</span><span class="p">,</span>
     <span class="n">rank_token</span><span class="o">=</span><span class="n">rank_token</span><span class="p">,</span>
+    <span class="n">order</span><span class="o">=</span><span class="s2">&quot;date_followed_latest&quot;</span><span class="p">,</span>
     <span class="n">client_doc_id</span><span class="o">=</span><span class="s2">&quot;&lt;freshly captured doc_id&gt;&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
