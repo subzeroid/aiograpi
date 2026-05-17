@@ -29,8 +29,8 @@ query) and as **named convenience wrappers** (`user_info_v2_gql`,
 | Audio/track clips-pivot stream | `Client.track_stream_info_by_id(track_id, max_id="")` |
 | Media info via discover/media_metadata fallback | `Client.media_info_v2(media_id)` |
 | Lightweight offensive-comment check (raw payload) | `Client.media_check_offensive_comment_v2(media_id, comment)` |
-| Followers list (mobile-app surface) | `Client.private_graphql_followers_list(user_id, rank_token)` |
-| Following list (mobile-app surface) | `Client.private_graphql_following_list(user_id, rank_token)` |
+| Followers list (mobile-app surface) | `Client.private_graphql_followers_list(user_id, rank_token, order=None)` |
+| Following list (mobile-app surface) | `Client.private_graphql_following_list(user_id, rank_token, order=None)` |
 | Profile reels stream | `Client.private_graphql_clips_profile(target_user_id)` |
 | Direct inbox tray digest | `Client.private_graphql_inbox_tray_for_user(user_id)` |
 | Realtime region hints | `Client.private_graphql_realtime_region_hint()` |
@@ -79,6 +79,7 @@ rank_token = str(uuid.uuid4())
 data = await cl.private_graphql_followers_list(
     user_id="25025320",
     rank_token=rank_token,
+    order="date_followed_latest",
 )
 # Returns the raw GraphQL envelope: {"data": {...}, "status": "ok", ...}.
 # Schema is large and varies — pick what you need from data["data"].
@@ -139,6 +140,7 @@ working mobile-app session, but you can override per-call:
 await cl.private_graphql_followers_list(
     user_id="25025320",
     rank_token=rank_token,
+    order="date_followed_latest",
     client_doc_id="<freshly captured doc_id>",
 )
 ```

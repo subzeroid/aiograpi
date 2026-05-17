@@ -236,6 +236,7 @@ import uuid
 data = await cl.private_graphql_followers_list(
     user_id="25025320",
     rank_token=str(uuid.uuid4()),
+    order="date_followed_latest",
 )
 # Raw GraphQL envelope: {"data": {...}, "status": "ok", ...}
 ```
