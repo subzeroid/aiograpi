@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.12] - 2026-05-17
+
+### Changed
+
+- Mirrored targeted `instagrapi` maintenance updates for Android 428 private transport/network headers while keeping
+  device-bound integrity headers out of default generation.
+
+### Fixed
+
+- Fixed `search_music()` crashes when Instagram returns artist, playlist, or null-track rows mixed with valid tracks.
+
 ## [0.9.11] - 2026-05-17
 
 ### Fixed
