@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.9] - 2026-05-17
+
 ### Added
 
 - Added async Reel Facebook cross-post payload helpers for linked Facebook users/pages, including explicit
@@ -15,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   destination.
 - Added `Client(tls_verify=...)` and `client.set_tls_verify(...)` so users can keep TLS verification enabled by default,
   pass a trusted CA bundle for debugging proxies, or explicitly disable verification for local captures.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.6.8.
 
 ### Security
 

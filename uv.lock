@@ -9,11 +9,10 @@ resolution-markers = [
 
 [[package]]
 name = "aiograpi"
-version = "0.9.7"
+version = "0.9.9"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
-    { name = "moviepy" },
     { name = "orjson" },
     { name = "pillow" },
     { name = "pycryptodomex" },
@@ -27,47 +26,74 @@ curl = [
 ]
 test = [
     { name = "bandit" },
+    { name = "decorator" },
+    { name = "imageio" },
+    { name = "imageio-ffmpeg" },
     { name = "markdown-include" },
     { name = "mike" },
     { name = "mkdocs-material" },
     { name = "mkdocs-minify-plugin" },
     { name = "mkdocstrings", extra = ["python"] },
     { name = "mypy" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pillow" },
     { name = "pip-audit" },
     { name = "pre-commit" },
+    { name = "proglog" },
     { name = "pytest" },
     { name = "pytest-xdist" },
+    { name = "python-dotenv" },
     { name = "ruff" },
     { name = "setuptools" },
+]
+video = [
+    { name = "decorator" },
+    { name = "imageio" },
+    { name = "imageio-ffmpeg" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "proglog" },
+    { name = "python-dotenv" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "bandit", marker = "extra == 'test'", specifier = "==1.9.4" },
     { name = "curl-adapter", marker = "extra == 'curl'", specifier = ">=1.2.1" },
+    { name = "decorator", marker = "extra == 'test'", specifier = ">=4.0.2,<6.0" },
+    { name = "decorator", marker = "extra == 'video'", specifier = ">=4.0.2,<6.0" },
     { name = "httpx", specifier = "==0.28.1" },
+    { name = "imageio", marker = "extra == 'test'", specifier = ">=2.5,<3.0" },
+    { name = "imageio", marker = "extra == 'video'", specifier = ">=2.5,<3.0" },
+    { name = "imageio-ffmpeg", marker = "extra == 'test'", specifier = ">=0.2.0" },
+    { name = "imageio-ffmpeg", marker = "extra == 'video'", specifier = ">=0.2.0" },
     { name = "markdown-include", marker = "extra == 'test'", specifier = "==0.8.1" },
     { name = "mike", marker = "extra == 'test'", specifier = "==2.2.0" },
     { name = "mkdocs-material", marker = "extra == 'test'", specifier = "==9.7.6" },
     { name = "mkdocs-minify-plugin", marker = "extra == 'test'", specifier = "==0.8.0" },
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'test'", specifier = "==1.0.4" },
-    { name = "moviepy", specifier = "==1.0.3" },
     { name = "mypy", marker = "extra == 'test'", specifier = "==1.20.2" },
+    { name = "numpy", marker = "extra == 'test'", specifier = ">=1.25.0" },
+    { name = "numpy", marker = "extra == 'video'", specifier = ">=1.25.0" },
     { name = "orjson", specifier = "==3.11.8" },
     { name = "pillow", specifier = ">=12.2.0" },
     { name = "pillow", marker = "extra == 'test'", specifier = "==12.2.0" },
     { name = "pip-audit", marker = "extra == 'test'", specifier = "==2.10.0" },
     { name = "pre-commit", marker = "extra == 'test'", specifier = "==4.6.0" },
+    { name = "proglog", marker = "extra == 'test'", specifier = "<=1.0.0" },
+    { name = "proglog", marker = "extra == 'video'", specifier = "<=1.0.0" },
     { name = "pycryptodomex", specifier = "==3.23.0" },
     { name = "pydantic", specifier = "==2.13.4" },
     { name = "pytest", marker = "extra == 'test'", specifier = "==9.0.3" },
     { name = "pytest-xdist", marker = "extra == 'test'", specifier = "==3.8.0" },
+    { name = "python-dotenv", marker = "extra == 'test'", specifier = ">=0.10" },
+    { name = "python-dotenv", marker = "extra == 'video'", specifier = ">=0.10" },
     { name = "ruff", marker = "extra == 'test'", specifier = "==0.15.12" },
     { name = "setuptools", marker = "extra == 'test'", specifier = "==82.0.1" },
     { name = "zstandard", specifier = "==0.25.0" },
 ]
-provides-extras = ["curl", "test"]
+provides-extras = ["curl", "video", "test"]
 
 [[package]]
 name = "annotated-types"
@@ -1092,22 +1118,6 @@ wheels = [
 ]
 
 [[package]]
-name = "moviepy"
-version = "1.0.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "decorator" },
-    { name = "imageio" },
-    { name = "imageio-ffmpeg" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "proglog" },
-    { name = "requests" },
-    { name = "tqdm" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/18/54/01a8c4e35c75ca9724d19a7e4de9dc23f0ceb8769102c7de056113af61c3/moviepy-1.0.3.tar.gz", hash = "sha256:2884e35d1788077db3ff89e763c5ba7bfddbd7ae9108c9bc809e7ba58fa433f5", size = 388311, upload-time = "2020-05-07T16:27:46.856Z" }
-
-[[package]]
 name = "msgpack"
 version = "1.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2030,6 +2040,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ae/e0/cc5a8653e9a24f6cf84768f05064aa8ed5a83dcefd5e2a043db14a1c5f44/python_discovery-1.3.0.tar.gz", hash = "sha256:d098f1e86be5d45fe4d14bf1029294aabbd332f4321179dec85e76cddce834b0", size = 63925, upload-time = "2026-05-05T14:38:39.769Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/30/d4/24d543ab8b8158b7f5a97113c831205f5c900c92c8762b1e7f44b7ea0405/python_discovery-1.3.0-py3-none-any.whl", hash = "sha256:441d9ced3dfce36e113beb35ca302c71c7ef06f3c0f9c227a0b9bb3bd49b9e9f", size = 33124, upload-time = "2026-05-05T14:38:38.539Z" },
+]
+
+[[package]]
+name = "python-dotenv"
+version = "1.2.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/ed/0301aeeac3e5353ef3d94b6ec08bbcabd04a72018415dcb29e588514bba8/python_dotenv-1.2.2.tar.gz", hash = "sha256:2c371a91fbd7ba082c2c1dc1f8bf89ca22564a087c2c287cd9b662adde799cf3", size = 50135, upload-time = "2026-03-01T16:00:26.196Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0b/d7/1959b9648791274998a9c3526f6d0ec8fd2233e4d4acce81bbae76b44b2a/python_dotenv-1.2.2-py3-none-any.whl", hash = "sha256:1d8214789a24de455a8b8bd8ae6fe3c6b69a5e3d64aa8a8e5d68e694bbcb285a", size = 22101, upload-time = "2026-03-01T16:00:25.09Z" },
 ]
 
 [[package]]
