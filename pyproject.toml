@@ -57,7 +57,8 @@ keywords = [
 dependencies = [
     "httpx==0.28.1",
     "orjson==3.11.8",
-    "pydantic==2.13.4",
+    "pydantic==2.12.5; sys_platform == 'android'",
+    "pydantic>=2.12.5,<2.14; sys_platform != 'android'",
     "pycryptodomex==3.23.0",
     "zstandard==0.25.0",
     "Pillow>=12.2.0",
