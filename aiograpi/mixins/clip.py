@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import json
+import os
 import tempfile
 import time
 from pathlib import Path
@@ -18,6 +19,13 @@ try:
     from PIL import Image
 except ImportError:
     raise Exception("You don't have PIL installed. Please install PIL or Pillow>=8.1.1")
+
+
+def _make_tmp_path(suffix: str) -> str:
+    """Create a uniquely-named tempfile path safely."""
+    fd, path = tempfile.mkstemp(suffix=suffix)
+    os.close(fd)
+    return path
 
 
 class ClipMixin(ClientMixin):
@@ -581,7 +589,7 @@ class UploadClipMixin(ClientMixin):
         Media
             A Media response from the call
         """
-        tmpaudio = Path(tempfile.mktemp(".m4a"))
+        tmpaudio = Path(_make_tmp_path(".m4a"))
         tmpaudio = await self.track_download_by_url(track.uri, "track", tmpaudio.parent)
         tmpvideo = None
         try:
@@ -607,7 +615,7 @@ class UploadClipMixin(ClientMixin):
             video = video.with_audio(audio_clip)
             video_duration = video.duration
             # save the media in tmp folder
-            tmpvideo = Path(tempfile.mktemp(".mp4"))
+            tmpvideo = Path(_make_tmp_path(".mp4"))
             video.write_videofile(str(tmpvideo))
             # create the extra data to upload with it
             data = dict(extra_data or {})
