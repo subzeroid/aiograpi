@@ -2,9 +2,58 @@ import unittest
 from unittest.mock import AsyncMock
 
 from aiograpi import Client
+from aiograpi.exceptions import ClientNotFoundError
+from aiograpi.types import Hashtag
 
 
 class HashtagRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_hashtag_info_a1_falls_back_to_private_when_public_page_is_gone(self):
+        client = Client()
+        hashtag = Hashtag(id="1", name="pizza")
+        client.public_a1_request = AsyncMock(side_effect=ClientNotFoundError("gone"))
+        client.hashtag_info_v1 = AsyncMock(return_value=hashtag)
+
+        result = await client.hashtag_info_a1("pizza")
+
+        self.assertEqual(result, hashtag)
+        client.public_a1_request.assert_awaited_once()
+        client.hashtag_info_v1.assert_awaited_once_with("pizza")
+
+    async def test_hashtag_medias_a1_chunk_falls_back_to_private_when_public_page_is_gone(self):
+        client = Client()
+        client.public_a1_request = AsyncMock(side_effect=ClientNotFoundError("gone"))
+        client.hashtag_medias_v1_chunk = AsyncMock(return_value=(["media"], "cursor"))
+
+        medias, cursor = await client.hashtag_medias_a1_chunk("pizza", max_amount=2, tab_key="recent")
+
+        self.assertEqual(medias, ["media"])
+        self.assertEqual(cursor, "cursor")
+        client.public_a1_request.assert_awaited_once()
+        client.hashtag_medias_v1_chunk.assert_awaited_once_with("pizza", 2, "recent", None)
+
+    async def test_hashtag_medias_a1_chunk_falls_back_to_private_when_public_page_is_short(self):
+        client = Client()
+        client.public_a1_request = AsyncMock(
+            return_value={"data": {"recent": {"sections": [], "more_available": False}}}
+        )
+        client.hashtag_medias_v1_chunk = AsyncMock(return_value=(["media"], "cursor"))
+
+        medias, cursor = await client.hashtag_medias_a1_chunk("pizza", max_amount=2, tab_key="recent")
+
+        self.assertEqual(medias, ["media"])
+        self.assertEqual(cursor, "cursor")
+        client.hashtag_medias_v1_chunk.assert_awaited_once_with("pizza", 2, "recent", None)
+
+    async def test_hashtag_medias_a1_uses_full_private_fallback_when_chunk_is_short(self):
+        client = Client()
+        client.hashtag_medias_a1_chunk = AsyncMock(return_value=(["media"], "cursor"))
+        client.hashtag_medias_v1 = AsyncMock(return_value=["media", "media2"])
+
+        medias = await client.hashtag_medias_a1("pizza", amount=2, tab_key="recent")
+
+        self.assertEqual(medias, ["media", "media2"])
+        client.hashtag_medias_v1.assert_awaited_once_with("pizza", 2, "recent")
+
     async def test_hashtag_medias_recent_strips_leading_hash_and_warns(self):
         client = Client()
         client.hashtag_medias_recent_a1 = AsyncMock(return_value=["media"])
