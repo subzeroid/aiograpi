@@ -63,7 +63,7 @@ class FbSearchMixin(ClientMixin):
             "browse_session_id": self.generate_uuid(),
         }
         result = await self.private_request("music/audio_global_search/", params=params)
-        return [extract_track(item["track"]) for item in result["items"]]
+        return [extract_track(item["track"]) for item in result["items"] if item.get("track")]
 
     async def search_hashtags(self, query: str) -> List[Hashtag]:
         params = {
