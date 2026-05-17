@@ -149,6 +149,8 @@ cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
 
 See the [public transport guide](docs/usage-guide/public-transport.md) for live comparison results and caveats.
 
+TLS certificate verification is enabled by default. For a trusted debugging MITM proxy, prefer `Client(tls_verify="/path/to/proxy-ca.pem")`; use `Client(tls_verify=False)` only for temporary local debugging because it allows session interception.
+
 ### Basic Usage
 
 ``` python

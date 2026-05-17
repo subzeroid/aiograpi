@@ -70,8 +70,6 @@ class PublicRequestMixin(ClientMixin):
             "public_accept_language", getattr(self, "public_accept_language", self.public_accept_language)
         )
         self.public = self._build_public_session()
-        # NB: TLS verification is ON. To disable for a misbehaving
-        # MITM proxy, set self.public.verify = False AFTER construction.
         self.public.headers.update(
             {
                 "Connection": "Keep-Alive",
@@ -112,10 +110,11 @@ class PublicRequestMixin(ClientMixin):
             return cls.public_curl_user_agents.get(impersonate, cls.public_curl_user_agents["chrome136"])
         return cls.public_user_agent
 
-    def _build_public_session(self):
+    def _build_public_session(self, verify=None):
+        verify = getattr(self, "tls_verify", True) if verify is None else verify
         if self.public_transport == "curl":
-            return httpx_ext.CurlSession(impersonate=self.public_transport_impersonate)
-        return httpx_ext.Session()
+            return httpx_ext.CurlSession(verify=verify, impersonate=self.public_transport_impersonate)
+        return httpx_ext.Session(verify=verify)
 
     def _configure_public_transport(self):
         old_public = getattr(self, "public", None)
@@ -124,8 +123,7 @@ class PublicRequestMixin(ClientMixin):
         old_headers = dict(getattr(old_public, "headers", {}))
         old_cookies = old_public.cookies_dict() if old_public is not None else {}
 
-        self.public = self._build_public_session()
-        self.public.verify = old_verify
+        self.public = self._build_public_session(verify=old_verify)
         self.public.proxy = old_proxy
         self.public.headers.update(old_headers)
         if old_cookies:

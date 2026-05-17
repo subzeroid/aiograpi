@@ -85,17 +85,14 @@ Connection-level failure. Most common causes:
 ### `ssl.SSLCertVerificationError` / TLS handshake failures
 
 Since 0.6.6 aiograpi verifies TLS by default. If your proxy is a known
-SSL-MITM (corporate inspection gateway), opt out **after** construction:
+SSL-MITM (corporate inspection gateway), pass its CA bundle:
 
 ```python
-client = Client()
-client.private.verify = False
-client.public.verify = False
-client.graphql.verify = False
+client = Client(tls_verify="/path/to/proxy-ca.pem")
 ```
 
-Don't blindly disable on residential proxies — that's how MITM attackers
-intercept your sessionid.
+For short trusted local debugging only, use `Client(tls_verify=False)`.
+Don't blindly disable verification on residential proxies because MITM attackers can intercept your sessionid.
 
 ### `AuthRequiredProxyError: 302 Found`
 

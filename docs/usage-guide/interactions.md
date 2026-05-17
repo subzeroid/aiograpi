@@ -31,7 +31,7 @@
 
 `aiograpi` provides the following `Interactions` that can be used to control and get the information about your `Instagram` account:
 
-* Client(settings: dict = {}, proxy: str = ""): bool - Init `aiograpi` client
+* Client(settings: dict = {}, proxy: str = "", tls_verify: Union[bool, str] = True): bool - Init `aiograpi` client
 
 ``` python
 await cl.login("aiograpi", "42")
@@ -57,6 +57,7 @@ We recommend using [these proxies](https://soax.com/?r=sEysufQI)
 | request\_timeout    | Timeout in seconds between requests (1 second by default)
 | public\_transport   | Public web transport: `requests`-compatible async transport by default, or `curl` when `aiograpi[curl]` is installed
 | public\_transport\_impersonate | Browser fingerprint used by the optional curl public transport
+| tls\_verify | TLS certificate verification: `True` by default, `False` for temporary trusted MITM debugging, or a CA bundle path
 
 
 ### Login
@@ -97,7 +98,8 @@ settings = {
    },
    "user_agent": "Instagram 117.0.0.28.123 Android (23/6.0.1; ...US; 168361634)",
    "public_transport": "requests",
-   "public_transport_impersonate": "chrome136"
+   "public_transport_impersonate": "chrome136",
+   "tls_verify": True
 }
 
 cl = Client(settings)
@@ -148,6 +150,7 @@ await cl.get_timeline_feed()  # check session
 | set_country_code(country_code: int = 1)  | bool | Set country calling code. Default: +1 (USA)
 | set_locale(locale: str = "en_US")        | bool | Set locale (advice: use the locale of your proxy)
 | set_timezone_offset(seconds: int)        | bool | Set timezone offset in seconds
+| set_tls_verify(tls_verify: bool \| str)  | bool | Update TLS certificate verification for existing public, private and GraphQL sessions
 
 ``` python
 cl = Client()
@@ -198,6 +201,24 @@ cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
 
 The default remains `public_transport="requests"`. Private mobile API requests still use the regular mobile session.
 See [Public Transport](public-transport.md) for live comparison results and caveats.
+
+### TLS verification and debugging proxies
+
+By default `aiograpi` verifies TLS certificates on all client sessions. Keep this enabled for production, residential proxies, and normal CONNECT-tunnel proxies.
+
+If you use a trusted local debugging proxy that intercepts TLS, prefer installing its CA certificate and pointing the client at that bundle:
+
+```python
+cl = Client(tls_verify="/path/to/proxy-ca.pem")
+```
+
+For short local captures you can disable verification explicitly:
+
+```python
+cl = Client(tls_verify=False)
+```
+
+Do not disable TLS verification on untrusted networks or shared proxies because session cookies and passwords can be intercepted.
 
 ## What's Next?
 

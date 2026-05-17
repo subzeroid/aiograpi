@@ -1,4 +1,5 @@
 import asyncio
+import ssl
 
 import httpx
 import orjson
@@ -61,10 +62,20 @@ SUPPORTED_DECODERS["zstd"] = ZstdDecoder
 DEFAULT_TIMEOUT = 45
 
 
+def _httpx_verify_value(verify):
+    if isinstance(verify, str):
+        return ssl.create_default_context(cafile=verify)
+    return verify
+
+
 async def request(method, url, proxy=None, verify=True, follow_redirects=True, **kwargs):
     if "timeout" not in kwargs:
         kwargs["timeout"] = DEFAULT_TIMEOUT
-    async with httpx.AsyncClient(proxy=proxy, verify=verify, follow_redirects=follow_redirects) as client:
+    async with httpx.AsyncClient(
+        proxy=proxy,
+        verify=_httpx_verify_value(verify),
+        follow_redirects=follow_redirects,
+    ) as client:
         return await client.request(method, url, **kwargs)
 
 
@@ -100,7 +111,16 @@ class Session:
         self._set_client()
 
     def _set_client(self):
-        self._client = httpx.AsyncClient(proxy=self._proxy, verify=self.verify, follow_redirects=True)
+        self._client = httpx.AsyncClient(
+            proxy=self._proxy,
+            verify=_httpx_verify_value(self.verify),
+            follow_redirects=True,
+        )
+
+    def set_verify(self, verify):
+        self.verify = verify
+        if self._client is not None:
+            self._set_client()
 
     async def __aenter__(self):
         return self
@@ -206,6 +226,10 @@ class CurlSession:
     def proxy(self, p):
         self._proxy = p
         self._client.proxies = {"http": p, "https": p} if p else {}
+
+    def set_verify(self, verify):
+        self.verify = verify
+        self._client.verify = verify
 
     async def __aenter__(self):
         return self

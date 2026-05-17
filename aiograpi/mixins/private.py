@@ -103,9 +103,7 @@ class PrivateRequestMixin(ClientMixin):
     last_json = {}
 
     def __init__(self, *args, **kwargs):
-        self.private = httpx_ext.Session()
-        # NB: TLS verification is ON. To disable for a misbehaving
-        # MITM proxy, set self.private.verify = False AFTER construction.
+        self.private = httpx_ext.Session(verify=getattr(self, "tls_verify", True))
         self.email = kwargs.pop("email", None)
         self.phone_number = kwargs.pop("phone_number", None)
         self.request_timeout = kwargs.pop("request_timeout", getattr(self, "request_timeout", self.request_timeout))

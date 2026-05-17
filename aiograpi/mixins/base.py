@@ -50,6 +50,7 @@ if TYPE_CHECKING:
         settings: Dict[str, Any]
         timezone_offset: int
         tray_session_id: str
+        tls_verify: Any
         user_agent: str
         username: str
         uuid: str
