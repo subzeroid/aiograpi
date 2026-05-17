@@ -4938,6 +4938,43 @@ class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(users, [])
 
+    async def test_search_music_skips_non_track_items(self):
+        client = self.build_client()
+        client.private_request = AsyncMock(
+            return_value={
+                "items": [
+                    {"artist": {"pk": "123", "username": "hanszimmer"}, "track": None},
+                    {"playlist": {"id": "456", "title": "Hans Zimmer Essentials"}},
+                    {
+                        "track": {
+                            "id": "789",
+                            "title": "Time",
+                            "subtitle": "Hans Zimmer",
+                            "display_artist": "Hans Zimmer",
+                            "audio_cluster_id": 111,
+                            "cover_artwork_uri": None,
+                            "cover_artwork_thumbnail_uri": None,
+                            "highlight_start_times_in_ms": [0],
+                            "is_explicit": False,
+                            "dash_manifest": "",
+                            "has_lyrics": False,
+                            "audio_asset_id": 222,
+                            "duration_in_ms": 123000,
+                            "allows_saving": True,
+                        }
+                    },
+                ]
+            }
+        )
+
+        tracks = await client.search_music("Hans Zimmer")
+
+        self.assertEqual([track.title for track in tracks], ["Time"])
+        client.private_request.assert_awaited_once()
+        args, kwargs = client.private_request.call_args
+        self.assertEqual(args[0], "music/audio_global_search/")
+        self.assertIn("params", kwargs)
+
     # --- track ---
 
     async def test_track_stream_info_by_id_uses_clips_pivot_endpoint(self):
