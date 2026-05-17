@@ -35,11 +35,25 @@ def test_private_headers_use_current_android_transport_values():
     client = Client()
 
     assert client.private.headers["X-FB-HTTP-Engine"] == "Tigon/MNS/TCP"
+    assert client.private.headers["X-Tigon-Is-Retry"] == "False"
     assert client.private.headers["X-IG-Capabilities"] == "3brTv10="
     assert client.private.headers["X-IG-App-ID"] == "567067343352427"
+    assert client.private.headers["X-Zero-Balance"] == "INIT"
+    assert client.private.headers["X-Zero-Eh"] == ""
+    assert client.private.headers["X-Zero-State"] == "unknown"
+    assert client.private.headers["Zero-HTTP-Network-Interface"] == "wifi"
     assert client.private.headers["X-Bloks-Version-Id"] == (
         "7189b949425f9bf80ea8bd880cf5a3080b292d9b1c4b38a18d112f7c4b71e7a8"
     )
+
+
+def test_default_private_headers_omit_signed_integrity_values():
+    client = Client()
+    lower_headers = {key.lower() for key in client.private.headers}
+
+    assert "x-meta-zca" not in lower_headers
+    assert "x-meta-usdid" not in lower_headers
+    assert "x-ig-attest-params" not in lower_headers
 
 
 def test_saved_legacy_app_profile_is_not_overridden_by_default():
