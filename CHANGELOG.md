@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.10] - 2026-05-17
+
+### Security
+
+- Hardened signup challenge path handling so server-supplied challenge paths must be safe relative Instagram API paths
+  before aiograpi builds request URLs, starts captcha solving, or submits phone/SMS challenge forms.
+
 ## [0.9.9] - 2026-05-17
 
 ### Added
