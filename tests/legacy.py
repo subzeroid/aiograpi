@@ -3706,7 +3706,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                     "moviepy": fake_mp,
                 },
             ):
-                with mock.patch("tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]):
+                with mock.patch("aiograpi.mixins.clip._make_tmp_path", side_effect=[str(audio_path), str(video_path)]):
                     result = await client.clip_upload_as_reel_with_music(
                         Path("input.mp4"),
                         "caption",
@@ -3774,7 +3774,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                     "moviepy": fake_mp,
                 },
             ):
-                with mock.patch("tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]):
+                with mock.patch("aiograpi.mixins.clip._make_tmp_path", side_effect=[str(audio_path), str(video_path)]):
                     await client.clip_upload_as_reel_with_music(
                         Path("input.mp4"),
                         "caption",
@@ -3843,7 +3843,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                     "moviepy": fake_mp,
                 },
             ):
-                with mock.patch("tempfile.mktemp", side_effect=[str(audio_path), str(video_path)]):
+                with mock.patch("aiograpi.mixins.clip._make_tmp_path", side_effect=[str(audio_path), str(video_path)]):
                     with self.assertRaises(ClipConfigureError):
                         await client.clip_upload_as_reel_with_music(
                             Path("input.mp4"),

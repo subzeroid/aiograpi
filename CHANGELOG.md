@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `fb_destination_id` and `fb_destination_type` support when Instagram's lightweight preflight does not return a usable
   destination.
 
+### Security
+
+- Replaced the remaining Reel music upload `tempfile.mktemp()` calls with an atomic `mkstemp` helper and clarified the
+  challenge web-flow ajax seed so CodeQL no longer treats it as password hashing.
+
 ## [0.9.8] - 2026-05-16
 
 ### Added
