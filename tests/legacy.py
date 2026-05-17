@@ -5111,6 +5111,7 @@ class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             client_doc_id="111",
             max_id=50,
             priority="u=3, i",
+            order="date_followed_latest",
         )
 
         self.assertIn("data", result)
@@ -5124,11 +5125,16 @@ class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         variables = captured["variables"]
         self.assertEqual(variables["user_id"], "42")
         self.assertEqual(variables["max_id"], 50)
+        self.assertEqual(variables["order"], "date_followed_latest")
         self.assertEqual(
             variables["request_data"],
             {"rank_token": "rank-1", "enableGroups": True},
         )
         self.assertEqual(variables["search_surface"], "follow_list_page")
+        self.assertTrue(variables["skip_suggested_users"])
+        self.assertTrue(variables["skip_page_size"])
+        self.assertTrue(variables["skip_pending_admins"])
+        self.assertEqual(captured["extra_headers"]["X-FB-RMD"], "state=URL_ELIGIBLE")
 
     async def test_private_graphql_following_list_builds_variables(self):
         client = self.build_client()
@@ -5139,16 +5145,26 @@ class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             return {"data": {}}
 
         client.private_graphql_query_request = fake_call
-        await client.private_graphql_following_list(user_id="77", rank_token="rank-2")
+        await client.private_graphql_following_list(
+            user_id="77",
+            rank_token="rank-2",
+            order="date_followed_earliest",
+        )
 
         self.assertEqual(captured["friendly_name"], "FollowingList")
         self.assertEqual(
             captured["root_field_name"],
             "xdt_api__v1__friendships__following",
         )
+        self.assertEqual(captured["client_doc_id"], "161046392817718486717479294775")
         self.assertEqual(captured["variables"]["user_id"], "77")
+        self.assertEqual(captured["variables"]["order"], "date_followed_earliest")
         self.assertEqual(captured["variables"]["request_data"]["rank_token"], "rank-2")
         self.assertTrue(captured["variables"]["request_data"]["includes_hashtags"])
+        self.assertTrue(captured["variables"]["skip_use_clickable_see_more"])
+        self.assertTrue(captured["variables"]["skip_page_size"])
+        self.assertTrue(captured["variables"]["skip_friend_requests"])
+        self.assertEqual(captured["extra_headers"]["X-FB-RMD"], "state=URL_ELIGIBLE")
 
     async def test_private_graphql_clips_profile_includes_initial_stream_count(
         self,

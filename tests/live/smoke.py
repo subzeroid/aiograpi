@@ -174,11 +174,19 @@ async def main():
             ("feed_user_stream_item", lambda: cl.feed_user_stream_item(instagram_pk)),
             (
                 "private_graphql_followers_list",
-                lambda: cl.private_graphql_followers_list(instagram_pk, rank_token=rank_token),
+                lambda: cl.private_graphql_followers_list(
+                    instagram_pk,
+                    rank_token=rank_token,
+                    order="date_followed_latest",
+                ),
             ),
             (
                 "private_graphql_following_list",
-                lambda: cl.private_graphql_following_list(instagram_pk, rank_token=rank_token),
+                lambda: cl.private_graphql_following_list(
+                    instagram_pk,
+                    rank_token=rank_token,
+                    order="date_followed_earliest",
+                ),
             ),
             (
                 "private_graphql_clips_profile",
