@@ -2,6 +2,8 @@
 
 Viewing hashtag info and medias by hashtag
 
+Pass hashtag names without the leading `#`, for example `pizza`. If a leading `#` is provided, aiograpi strips it and emits a warning; an empty hashtag name raises `ValueError`.
+
 | Method                                             | Return              | Description
 | -------------------------------------------------- | ------------------- | ---------------------------------------
 | hashtag_info(name: str)                            | Hashtag             | Return Hashtag info (id, name, picture)
