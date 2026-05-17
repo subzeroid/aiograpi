@@ -1586,15 +1586,14 @@ with <code>TypeError: 'NoneType' object is not subscriptable</code>.</p>
 <p><code>httpx_ext.Session</code> and the three Client sessions
 (<code>client.private</code> / <code>.public</code> / <code>.graphql</code>) ship with <code>verify=True</code>
 now. If your proxy is a known SSL-MITM (e.g. corporate inspection
-gateway), you'll need to opt out explicitly <strong>after</strong> construction:</p>
-<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-<span class="n">client</span><span class="o">.</span><span class="n">private</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="kc">False</span>
-<span class="n">client</span><span class="o">.</span><span class="n">public</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="kc">False</span>
-<span class="n">client</span><span class="o">.</span><span class="n">graphql</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="kc">False</span>
+gateway), pass its CA bundle or opt out explicitly at construction:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">tls_verify</span><span class="o">=</span><span class="s2">&quot;/path/to/proxy-ca.pem&quot;</span><span class="p">)</span>
+<span class="c1"># or, for short trusted local debugging only:</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">tls_verify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 <p>Most residential / CONNECT-tunnel proxies don't terminate SSL — they
 just pass packets — so they keep working with the new default. Only
-flip <code>verify=False</code> if you actually see SSL errors and you've verified
+flip <code>tls_verify=False</code> if you actually see SSL errors and you've verified
 the proxy is trustworthy.</p>
 <h3 id="030-six-pure-helpers-go-sync">0.3.0 — six pure helpers go sync</h3>
 <p>Drop the <code>await</code>:</p>

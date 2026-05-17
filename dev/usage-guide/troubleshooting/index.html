@@ -2085,14 +2085,11 @@ so your retry logic can branch on it correctly.</p>
 </ul>
 <h3 id="sslsslcertverificationerror-tls-handshake-failures"><code>ssl.SSLCertVerificationError</code> / TLS handshake failures</h3>
 <p>Since 0.6.6 aiograpi verifies TLS by default. If your proxy is a known
-SSL-MITM (corporate inspection gateway), opt out <strong>after</strong> construction:</p>
-<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-<span class="n">client</span><span class="o">.</span><span class="n">private</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="kc">False</span>
-<span class="n">client</span><span class="o">.</span><span class="n">public</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="kc">False</span>
-<span class="n">client</span><span class="o">.</span><span class="n">graphql</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="kc">False</span>
+SSL-MITM (corporate inspection gateway), pass its CA bundle:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">tls_verify</span><span class="o">=</span><span class="s2">&quot;/path/to/proxy-ca.pem&quot;</span><span class="p">)</span>
 </code></pre></div>
-<p>Don't blindly disable on residential proxies — that's how MITM attackers
-intercept your sessionid.</p>
+<p>For short trusted local debugging only, use <code>Client(tls_verify=False)</code>.
+Don't blindly disable verification on residential proxies because MITM attackers can intercept your sessionid.</p>
 <h3 id="authrequiredproxyerror-302-found"><code>AuthRequiredProxyError: 302 Found</code></h3>
 <p>Your proxy provider redirected you to their captive portal. Usually means:</p>
 <ul>
