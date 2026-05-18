@@ -7,11 +7,12 @@ ported through.
 The current recorded API baseline is:
 
 ```text
-instagrapi 2.7.0
+instagrapi 2.7.1
 ```
 
-`aiograpi 1.0.0` includes the video dependency split, MoviePy 2 helper migration, Reel Facebook cross-post payload
-follow-up, client TLS verification setting, and public A1 API removal from `instagrapi` through 2.7.0.
+`aiograpi 1.0.1` includes the video dependency split, MoviePy 2 helper migration, Reel Facebook cross-post payload
+follow-up, client TLS verification setting, public A1 API removal, current flow request metadata alignment, and social
+action payload updates from `instagrapi` through 2.7.1.
 
 ## Release policy
 
@@ -22,7 +23,7 @@ follow-up, client TLS verification setting, and public A1 API removal from `inst
 For the 2026-05 sync, the public releases are `aiograpi 0.9.0` and newer.
 `aiograpi 0.9.0` synced through `instagrapi 2.5.18`, and subsequent
 `aiograpi 0.9.x` patch releases continued that baseline through `instagrapi 2.6.8`, plus targeted maintenance
-ports. `aiograpi 1.0.0` records the current SemVer baseline synced through `instagrapi 2.7.0`.
+ports. `aiograpi 1.0.1` records the current SemVer baseline synced through `instagrapi 2.7.1`.
 
 ## Porting rules
 

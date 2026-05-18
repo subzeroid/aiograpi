@@ -8,6 +8,23 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-05-19
+
+### Added
+
+- Added `Client(push_disabled=...)`, `settings["push_disabled"]`, and
+  `client.set_push_disabled(...)` so request metadata can report the push state
+  explicitly.
+- Added `timezone_name` session metadata support. Timeline feed requests now use
+  `settings["timezone_name"]` when present, otherwise derive a GMT offset name
+  from `timezone_offset`.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.7.1.
+- Aligned current Android 428 timeline, Direct inbox, Reel creation preflight,
+  media social action, and user follow/unfollow request payload metadata.
+
 ## [1.0.0] - 2026-05-18
 
 ### Changed
@@ -1333,6 +1350,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[1.0.1]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.1
 [1.0.0]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.0
 [0.7.2]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.2
 [0.7.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.1
