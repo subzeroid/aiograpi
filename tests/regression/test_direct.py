@@ -135,6 +135,55 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert result is expected
         client.direct_pending_inbox.assert_awaited_once_with(7)
 
+    async def test_direct_threads_chunk_sends_current_inbox_query_params(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value={"inbox": {"threads": []}})
+
+        threads, cursor = await client.direct_threads_chunk()
+
+        assert threads == []
+        assert cursor is None
+        params = client.private_request.call_args.kwargs["params"]
+        assert params["eb_device_id"] == "0"
+        self.assertRegex(params["igd_request_log_tracking_id"], r"^[0-9a-f-]{36}$")
+        assert params["fetch_reason"] == "initial_snapshot"
+        assert params["include_old_mrs"] == "false"
+        assert params["no_pending_badge"] == "true"
+        assert params["push_disabled"] == "true"
+
+    async def test_direct_search_sends_current_ranked_recipient_limits(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value={"ranked_recipients": []})
+
+        result = await client.direct_search("alice")
+
+        assert result == []
+        params = client.private_request.call_args.kwargs["params"]
+        assert params["max_ai_bot_results"] == "0"
+        assert params["max_ibc_results"] == "20"
+
+    async def test_direct_message_search_hides_locked_threads(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value={"status": "ok", "message_search_results": {}})
+
+        result = await client.direct_message_search("alice")
+
+        assert result == []
+        params = client.private_request.call_args.kwargs["params"]
+        assert params["hide_locked_threads"] == '{"message_content":"false"}'
+
+    async def test_direct_media_sends_current_thread_media_query_params(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value={"items": [], "more_available": False})
+
+        result = await client.direct_media(123)
+
+        assert result == []
+        params = client.private_request.call_args.kwargs["params"]
+        assert params["eb_device_id"] == "0"
+        self.assertRegex(params["igd_request_log_tracking_id"], r"^[0-9a-f-]{36}$")
+        assert params["media_type"] == "media_shares"
+
     async def test_direct_request_approve_delegates_to_pending_approve(self):
         client = _build_client()
         client.direct_pending_approve = AsyncMock(return_value=True)

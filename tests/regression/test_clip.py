@@ -211,7 +211,11 @@ class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         result = await client.clip_info_for_creation()
 
         assert result == expected
-        client.private_request.assert_awaited_once_with("clips/clips_info_for_creation/")
+        client.private_request.assert_awaited_once()
+        assert client.private_request.call_args.args[0] == "clips/clips_info_for_creation/"
+        device_status = json.loads(client.private_request.call_args.kwargs["params"]["device_status"])
+        assert device_status["chip_vendor"] == "others"
+        assert device_status["hw_av1_dec"] is False
 
     async def test_clip_trial_eligible_reads_creation_trial_config(self):
         client = _build_client()
