@@ -1670,8 +1670,7 @@ an httpx shim, not a stable API), update to <code>from aiograpi.httpx_ext</code>
 <h2 id="what-didnt-change">What didn't change</h2>
 <ul>
 <li><strong>Async surface for IO methods</strong> — every <code>private_request</code>,
-  <code>public_request</code>, <code>public_graphql_request</code>, <code>public_a1_request</code>,
-  upload, download, and login helper is still <code>async def</code>. Your
+  <code>public_request</code>, <code>public_graphql_request</code>, upload, download, and login helper is still <code>async def</code>. Your
   existing <code>await client.user_info_by_username_v1(...)</code> keeps working.</li>
 <li><strong><code>GraphQLRequestMixin</code></strong> — aiograpi-only mixin, still wired in
   the same MRO position.</li>
