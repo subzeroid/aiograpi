@@ -256,8 +256,6 @@ class MediaInfoGraphQLRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.public_doc_id_graphql_request = AsyncMock(
             return_value={"xdt_shortcode_media": self._media_gql_payload()}
         )
-        client.media_info_a1 = AsyncMock(side_effect=AssertionError("a1 should not be used when doc_id works"))
-
         media = await client.media_info_gql("1")
 
         client.public_doc_id_graphql_request.assert_awaited_once_with(

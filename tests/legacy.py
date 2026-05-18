@@ -424,9 +424,8 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.user_stories_v1.assert_not_called()
         self.assertIn("Incorrect Query", str(cm.exception))
 
-    async def test_media_info_gql_falls_back_to_a1_on_public_401(self):
+    async def test_media_info_gql_does_not_fallback_to_private_on_doc_id_401(self):
         client = Client()
-        expected = Mock(spec=Media)
 
         client.public_graphql_request = AsyncMock(
             side_effect=ClientUnauthorizedError("401", response=Mock(status_code=401))
@@ -434,13 +433,13 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.public_doc_id_graphql_request = AsyncMock(
             side_effect=ClientUnauthorizedError("401", response=Mock(status_code=401))
         )
-        client.media_info_a1 = AsyncMock(return_value=expected)
+        client.media_info_v1 = AsyncMock(side_effect=AssertionError("private fallback"))
 
-        result = await client.media_info_gql("2110901750722920960")
+        with self.assertRaises(ClientUnauthorizedError):
+            await client.media_info_gql("2110901750722920960")
 
-        self.assertIs(result, expected)
         client.public_doc_id_graphql_request.assert_called_once()
-        client.media_info_a1.assert_called_once_with("2110901750722920960")
+        client.media_info_v1.assert_not_called()
 
     async def test_public_head_uses_httpx_ext_request_with_follow_redirects_off(
         self,
@@ -4158,14 +4157,6 @@ class ClientLocationTestCase(ClientPrivateTestCase):
         self.assertEqual(len(medias), 2)
         self.assertIsInstance(medias[0], Media)
 
-    # def test_extract_location_medias_top(self):
-    #     medias_a1 = await self.cl.location_medias_top_a1(197780767581661, amount=9)
-    #     medias_v1 = await self.cl.location_medias_top_v1(197780767581661, amount=9)
-    #     self.assertEqual(len(medias_a1), 9)
-    #     self.assertIsInstance(medias_a1[0], Media)
-    #     self.assertEqual(len(medias_v1), 9)
-    #     self.assertIsInstance(medias_v1[0], Media)
-
     async def test_location_medias_recent(self):
         medias = await self.cl.location_medias_recent(197780767581661, amount=2)
         self.assertEqual(len(medias), 2)
@@ -4447,14 +4438,15 @@ class ClientHashtagTestCase(ClientPrivateTestCase):
         self.assertEqual("instagram", hashtag.name)
 
     async def test_extract_hashtag_info(self):
-        hashtag_a1 = await self.cl.hashtag_info_a1("instagram")
+        hashtag = await self.cl.hashtag_info("instagram")
         hashtag_v1 = await self.cl.hashtag_info_v1("instagram")
-        self.assertIsInstance(hashtag_a1, Hashtag)
+        self.assertIsInstance(hashtag, Hashtag)
         self.assertIsInstance(hashtag_v1, Hashtag)
-        self.assertEqual("instagram", hashtag_a1.name)
-        self.assertEqual(hashtag_a1.id, hashtag_v1.id)
-        self.assertEqual(hashtag_a1.name, hashtag_v1.name)
-        self.assertEqual(hashtag_a1.media_count, hashtag_v1.media_count)
+        self.assertEqual("instagram", hashtag.name)
+        self.assertEqual(hashtag.id, hashtag_v1.id)
+        self.assertEqual(hashtag.name, hashtag_v1.name)
+        self.assertGreater(hashtag.media_count, 0)
+        self.assertGreater(hashtag_v1.media_count, 0)
 
     async def test_hashtag_medias_top(self):
         medias = await self.cl.hashtag_medias_top("instagram", amount=2)
@@ -4462,10 +4454,10 @@ class ClientHashtagTestCase(ClientPrivateTestCase):
         self.assertIsInstance(medias[0], Media)
 
     async def test_extract_hashtag_medias_top(self):
-        medias_a1 = await self.cl.hashtag_medias_top_a1("instagram", amount=9)
+        medias = await self.cl.hashtag_medias_top("instagram", amount=9)
         medias_v1 = await self.cl.hashtag_medias_top_v1("instagram", amount=9)
-        self.assertEqual(len(medias_a1), 9)
-        self.assertIsInstance(medias_a1[0], Media)
+        self.assertEqual(len(medias), 9)
+        self.assertIsInstance(medias[0], Media)
         self.assertEqual(len(medias_v1), 9)
         self.assertIsInstance(medias_v1[0], Media)
 
@@ -4476,32 +4468,19 @@ class ClientHashtagTestCase(ClientPrivateTestCase):
 
     async def test_extract_hashtag_medias_recent(self):
         medias_v1 = await self.cl.hashtag_medias_recent_v1("instagram", amount=31)
-        medias_a1 = await self.cl.hashtag_medias_recent_a1("instagram", amount=31)
-        self.assertEqual(len(medias_a1), 31)
-        self.assertIsInstance(medias_a1[0], Media)
+        medias = await self.cl.hashtag_medias_recent("instagram", amount=31)
+        self.assertEqual(len(medias), 31)
+        self.assertIsInstance(medias[0], Media)
         self.assertEqual(len(medias_v1), 31)
         self.assertIsInstance(medias_v1[0], Media)
-        for i, a1 in enumerate(medias_a1[:10]):
-            a1 = a1.dict()
-            v1 = medias_v1[i].dict()
+        for media in [*medias[:10], *medias_v1[:10]]:
+            data = media.model_dump()
             for f in self.REQUIRED_MEDIA_FIELDS:
-                a1_val, v1_val = a1[f], v1[f]
-                is_album = a1["media_type"] == 8
-                is_video = v1.get("video_duration") > 0
-                if f == "thumbnail_url" and not is_album:
-                    a1_val = a1[f].path.rsplit("/", 1)[1]
-                    v1_val = v1[f].path.rsplit("/", 1)[1]
-                if f == "video_url" and is_video:
-                    a1_val = a1[f].path.rsplit(".", 1)[1]
-                    v1_val = v1[f].path.rsplit(".", 1)[1]
-                if f in ("view_count", "like_count"):
-                    # instagram can different counts for public and private
-                    if f == "view_count" and not is_video:
-                        continue
-                    self.assertTrue(a1_val > 1)
-                    self.assertTrue(v1_val > 1)
-                    continue
-                self.assertEqual(a1_val, v1_val)
+                self.assertIn(f, data)
+            self.assertTrue(data["pk"])
+            self.assertTrue(data["id"])
+            self.assertTrue(data["code"])
+            self.assertTrue(data["media_type"])
 
 
 class ClientStoryTestCase(ClientPrivateTestCase):
