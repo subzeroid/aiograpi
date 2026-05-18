@@ -151,6 +151,17 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert params["no_pending_badge"] == "true"
         assert params["push_disabled"] == "true"
 
+    async def test_direct_threads_chunk_uses_configured_push_state(self):
+        client = _build_client()
+        client.set_push_disabled(False)
+        client.private_request = AsyncMock(return_value={"inbox": {"threads": []}})
+
+        await client.direct_threads_chunk()
+
+        params = client.private_request.call_args.kwargs["params"]
+        assert params["push_disabled"] == "false"
+        assert client.get_settings()["push_disabled"] is False
+
     async def test_direct_search_sends_current_ranked_recipient_limits(self):
         client = _build_client()
         client.private_request = AsyncMock(return_value={"ranked_recipients": []})
