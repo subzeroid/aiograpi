@@ -16,6 +16,18 @@ def _load_live_smoke_module():
 
 class _FakeLiveClient:
     user_id = "1"
+    sessionid = "1%3Asession"
+    proxy = None
+
+    async def login_by_sessionid(self, sessionid):
+        self.sessionid = sessionid
+        return True
+
+    async def account_info(self):
+        return types.SimpleNamespace(pk=self.user_id)
+
+    async def get_timeline_feed(self, reason="cold_start_fetch"):
+        return {"reason": reason}
 
     async def user_info_by_username_gql(self, username):
         raise RuntimeError("429 Too Many Requests")
