@@ -424,9 +424,8 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.user_stories_v1.assert_not_called()
         self.assertIn("Incorrect Query", str(cm.exception))
 
-    async def test_media_info_gql_falls_back_to_private_on_public_401(self):
+    async def test_media_info_gql_does_not_fallback_to_private_on_doc_id_401(self):
         client = Client()
-        expected = Mock(spec=Media)
 
         client.public_graphql_request = AsyncMock(
             side_effect=ClientUnauthorizedError("401", response=Mock(status_code=401))
@@ -434,13 +433,13 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.public_doc_id_graphql_request = AsyncMock(
             side_effect=ClientUnauthorizedError("401", response=Mock(status_code=401))
         )
-        client.media_info_v1 = AsyncMock(return_value=expected)
+        client.media_info_v1 = AsyncMock(side_effect=AssertionError("private fallback"))
 
-        result = await client.media_info_gql("2110901750722920960")
+        with self.assertRaises(ClientUnauthorizedError):
+            await client.media_info_gql("2110901750722920960")
 
-        self.assertIs(result, expected)
         client.public_doc_id_graphql_request.assert_called_once()
-        client.media_info_v1.assert_called_once_with("2110901750722920960")
+        client.media_info_v1.assert_not_called()
 
     async def test_public_head_uses_httpx_ext_request_with_follow_redirects_off(
         self,
