@@ -13,6 +13,13 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.with_action_data = lambda data: data
         return client
 
+    def _build_action_client(self):
+        client = Client()
+        client._user_id = "1"
+        client.uuid = "uuid"
+        client.android_device_id = "android-device"
+        return client
+
     async def test_username_from_user_id_fallback_awaits_user_info(self):
         client = Client()
         client.username_from_user_id_gql = AsyncMock(side_effect=ClientError("graphql failed"))
@@ -139,3 +146,32 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result, {"1": False, "2": True})
         client.user_follow_request_decline.assert_has_awaits([unittest.mock.call("1"), unittest.mock.call("2")])
+
+    async def test_user_follow_posts_current_action_context(self):
+        client = self._build_action_client()
+        client.private_request = AsyncMock(return_value={"friendship_status": {"following": True}})
+
+        self.assertTrue(await client.user_follow("42"))
+
+        endpoint, data = client.private_request.call_args.args
+        self.assertEqual(endpoint, "friendships/create/42/")
+        self.assertEqual(data["user_id"], "42")
+        self.assertEqual(data["_uid"], "1")
+        self.assertEqual(data["device_id"], "android-device")
+        self.assertEqual(data["radio_type"], "wifi-none")
+        self.assertEqual(data["include_follow_friction_check"], "1")
+        self.assertEqual(data["container_module"], "profile")
+
+    async def test_user_unfollow_posts_current_action_context(self):
+        client = self._build_action_client()
+        client.private_request = AsyncMock(return_value={"friendship_status": {"following": False}})
+
+        self.assertTrue(await client.user_unfollow("42"))
+
+        endpoint, data = client.private_request.call_args.args
+        self.assertEqual(endpoint, "friendships/destroy/42/")
+        self.assertEqual(data["user_id"], "42")
+        self.assertEqual(data["_uid"], "1")
+        self.assertEqual(data["device_id"], "android-device")
+        self.assertEqual(data["radio_type"], "wifi-none")
+        self.assertEqual(data["container_module"], "profile")
