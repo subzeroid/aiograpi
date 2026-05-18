@@ -43,11 +43,13 @@ if TYPE_CHECKING:
         public_accept_language: str
         public_transport: str
         public_transport_impersonate: str
+        push_disabled: bool
         public_user_agent: str
         read_timeout: int
         request_id: str
         request_timeout: int
         settings: Dict[str, Any]
+        timezone_name: str
         timezone_offset: int
         tray_session_id: str
         tls_verify: Any
@@ -86,6 +88,8 @@ if TYPE_CHECKING:
         def _extract_configured_direct_message_or_raise(self, *args: Any, **kwargs: Any) -> Any: ...
 
         def _extract_configured_media_or_raise(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        def _bool_to_ig_string(self, *args: Any, **kwargs: Any) -> str: ...
 
         async def _feed_music_params(self, *args: Any, **kwargs: Any) -> Dict[str, Any]: ...
 
@@ -170,6 +174,10 @@ if TYPE_CHECKING:
         def set_ig_www_claim(self, *args: Any, **kwargs: Any) -> Any: ...
 
         def set_locale(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        def set_push_disabled(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        def set_timezone_name(self, *args: Any, **kwargs: Any) -> Any: ...
 
         def set_timezone_offset(self, *args: Any, **kwargs: Any) -> Any: ...
 

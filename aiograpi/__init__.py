@@ -104,6 +104,9 @@ class Client(
         **kwargs,
     ):
         self.tls_verify = kwargs.pop("tls_verify", True)
+        self.timezone_offset = kwargs.pop("timezone_offset", -14400)
+        self.timezone_name = kwargs.pop("timezone_name", "")
+        self.push_disabled = kwargs.pop("push_disabled", True)
         super().__init__(**kwargs)
         self.settings = deepcopy(settings or {})
         self.override_app_version = override_app_version
