@@ -4,9 +4,30 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
-(with the pre-1.0 caveat that minor bumps may include breaking changes).
+starting with 1.0.0.
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-05-18
+
+### Changed
+
+- Graduated aiograpi from ZeroVer to SemVer 1.0.0.
+- Synced the recorded upstream baseline to `instagrapi` 2.7.0.
+- Removed the legacy public A1 API surface (`public_a1_request`,
+  `public_a1_request_user_info_by_username`, and the async `*_a1`
+  media/user/location/hashtag helpers) because Instagram's old `?__a=1`
+  public web payload is no longer reliable.
+- High-level hashtag and location helpers now use authenticated private/mobile
+  `_v1` flows directly.
+- Kept `media_info_gql()` GraphQL-only: it can fall back from legacy
+  `query_hash` GraphQL to current `doc_id` GraphQL, but no longer falls back to
+  `media_info_v1()`.
+
+### Removed
+
+- Removed `hashtag_related_hashtags()` because it depended on the removed public
+  related-tags web payload.
 
 ## [0.9.12] - 2026-05-17
 
@@ -1312,6 +1333,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[1.0.0]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.0
 [0.7.2]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.2
 [0.7.1]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.1
 [0.7.0]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.0

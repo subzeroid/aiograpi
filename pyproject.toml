@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiograpi"
-version = "0.9.12"
+version = "1.0.0"
 authors = [
     { name = "Mark Subzeroid", email = "143403577+subzeroid@users.noreply.github.com" },
 ]
@@ -13,7 +13,7 @@ readme = { file = "README.md", content-type = "text/markdown" }
 license = "MIT"
 requires-python = ">=3.10"
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Framework :: AsyncIO",

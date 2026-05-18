@@ -12,7 +12,7 @@ resolution-markers = [
 
 [[package]]
 name = "aiograpi"
-version = "0.9.11"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },

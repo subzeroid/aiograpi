@@ -32,7 +32,7 @@ Android users should see [Pydroid and ffmpeg](docs/usage-guide/pydroid.md) and [
 [![License](https://img.shields.io/pypi/l/aiograpi)](LICENSE)
 [![Package](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml/badge.svg)](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml)
 [![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://subzeroid.github.io/aiograpi/latest/)
-[![ZeroVer](https://img.shields.io/badge/zer0ver-0.x.y-blue)](https://0ver.org/)
+[![SemVer](https://img.shields.io/badge/semver-1.0.0-blue)](https://semver.org/spec/v2.0.0.html)
 
 
 Features:
@@ -74,29 +74,30 @@ Support chat in Telegram: https://t.me/aiograpi_support
 8. [Build stories](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) with custom background, font animation, link sticker and mention users
 9. Account [registration](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/mixins/signup.py) and captcha passing will appear
 
-### Versioning policy — we stay in 0.x
+### Versioning policy
 
-aiograpi follows [ZeroVer](https://0ver.org/). We will not ship 1.0,
-because it would be a misleading promise. Instagram's private API
-rotates `doc_id`s, deprecates endpoints, and changes response shapes
-without notice — we cannot guarantee a stable API surface across
-versions. Pretending otherwise hurts users who'd take "1.0" to mean
-"safe to pin and forget".
+Starting with `1.0.0`, aiograpi follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+for the Python library API surface. Instagram's private API still rotates
+`doc_id`s, deprecates endpoints, and changes response shapes without notice, so
+`1.0.0` is not a promise that every Instagram-side flow will stay stable forever.
 
 What you can rely on instead:
 
-- **Breaking changes are flagged in the [CHANGELOG](https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md)** with a `Breaking` section
-  per affected release. No silent breakage.
+- **Breaking library API changes use major releases** when they are under our control.
+- **Instagram-driven endpoint removals are flagged in the [CHANGELOG](https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md)** with migration notes.
 - **Deprecated methods stay around for ≥2 minor releases** with
   `DeprecationWarning` before removal — you'll get loud warnings, not
   surprise `AttributeError`s.
 - **Live CI smoke** runs on every push: `tests/live/smoke.py` against a
   real account through a real proxy. If we ship something that breaks
   the basic happy path, CI catches it.
-- **Migration Guide** at [docs/migration.md](https://subzeroid.github.io/aiograpi/latest/migration/) — every breaking change documented with before/after.
+- **Migration Guide** at [docs/migration.md](https://subzeroid.github.io/aiograpi/latest/migration/) — breaking changes are documented with before/after examples.
 
-### What's new in 0.6.x through 0.9.x
+### What's new in 1.0.0 and recent releases
 
+- **1.0.0 SemVer baseline** — synced with `instagrapi 2.7.0`, removed the dead public `?__a=1`
+  API surface, kept `media_info_gql()` GraphQL-only, and moved high-level hashtag/location helpers
+  to authenticated private/mobile flows.
 - **Sync with instagrapi 2.6.x** — current Android app profile defaults,
   `override_app_version` constructor support, Trial Reels, current Reel rupload flow, Reel pin/unpin,
   Reel Facebook cross-post payload helpers,
