@@ -335,32 +335,6 @@ class MediaMixin(ClientMixin):
                 return await self.media_pk_from_url(location)
         return self.media_pk_from_code(parts.pop())
 
-    async def media_info_a1(self, media_pk: str, max_id: str = None) -> Media:
-        """
-        Get Media from PK by Public Web API
-
-        Parameters
-        ----------
-        media_pk: str
-            Unique identifier of the media
-        max_id: str, optional
-            Max ID, default value is None
-
-        Returns
-        -------
-        Media
-            An object of Media type
-        """
-        media_pk = self.media_pk(media_pk)
-        shortcode = self.media_code_from_pk(media_pk)
-        """Use Client.media_info
-        """
-        params = {"max_id": max_id} if max_id else None
-        data = await self.public_a1_request("/p/{shortcode!s}/".format(**{"shortcode": shortcode}), params=params)
-        if not data.get("shortcode_media"):
-            raise MediaNotFound(media_pk=media_pk, **data)
-        return extract_media_gql(data["shortcode_media"])
-
     async def media_info_gql(self, media_pk: str) -> Media:
         """
         Get Media from PK by Public Graphql API
@@ -402,7 +376,7 @@ class MediaMixin(ClientMixin):
                     referer=f"https://www.instagram.com/p/{shortcode}/",
                 )
             except (ClientForbiddenError, ClientLoginRequired, ClientUnauthorizedError):
-                return await self.media_info_a1(media_pk)
+                return await self.media_info_v1(media_pk)
             media = data.get("xdt_shortcode_media") or data.get("shortcode_media")
             if not media:
                 raise MediaNotFound(media_pk=media_pk, **data)

@@ -782,8 +782,8 @@ rejects pre-login ones.
 
 - **Namespace objects** (`client.search.*`, `client.audio.*`,
   `client.user.followers_list_gql()`, etc.) — flat 433-method `Client`
-  surface is the biggest remaining DX friction (4 suffix families:
-  `_v1` / `_gql` / `_v2_gql` / `_a1` plus `private_graphql_*` prefix
+  surface is the biggest remaining DX friction (current suffix families:
+  `_v1` / `_gql` / `_v2_gql` plus `private_graphql_*` prefix
   that reads as "internal" but isn't). Big refactor with deprecation
   aliases on every old name; needs its own minor.
 

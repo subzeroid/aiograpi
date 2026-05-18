@@ -310,22 +310,6 @@ class PublicRequestMixin(ClientMixin):
         finally:
             self.last_response_ts = time.time()
 
-    async def public_a1_request(self, endpoint, data=None, params=None, headers=None, full=False):
-        url = self.PUBLIC_API_URL + endpoint.lstrip("/")
-        params = params or {}
-        params |= {"__a": 1, "__d": "dis"}
-        response = await self.public_request(url, data=data, params=params, headers=headers, return_json=True)
-        if full:
-            return response
-        return response.get("graphql") or response
-
-    async def public_a1_request_user_info_by_username(self, username, data=None, params=None):
-        params = params or {}
-        url = self.PUBLIC_API_URL + f"api/v1/users/web_profile_info/?username={username}"
-        headers = {"x-ig-app-id": "936619743392459"}
-        response = await self.public_request(url, data=data, params=params, headers=headers, return_json=True)
-        return response.get("user") or response
-
     async def public_graphql_request(
         self,
         variables,

@@ -53,7 +53,6 @@ Low level methods:
 
 | Method                                                          | Return       | Description
 | --------------------------------------------------------------- | ------------ | --------------------------------------------
-| media_info_a1(media_pk: int, max_id: str = None)                | Media        | Get Media from PK by Public Web API
 | media_info_gql(media_pk: int)                                   | Media        | Get Media from PK by Public Graphql API
 | media_info_v1(media_pk: int)                                    | Media        | Get Media from PK by Private Mobile API
 | user_medias_gql(user_id: str, amount: int = 50, sleep: int = 2) | List\[Media] | Get a user's media by Public Graphql API

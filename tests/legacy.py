@@ -424,7 +424,7 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.user_stories_v1.assert_not_called()
         self.assertIn("Incorrect Query", str(cm.exception))
 
-    async def test_media_info_gql_falls_back_to_a1_on_public_401(self):
+    async def test_media_info_gql_falls_back_to_private_on_public_401(self):
         client = Client()
         expected = Mock(spec=Media)
 
@@ -434,13 +434,13 @@ class PublicRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.public_doc_id_graphql_request = AsyncMock(
             side_effect=ClientUnauthorizedError("401", response=Mock(status_code=401))
         )
-        client.media_info_a1 = AsyncMock(return_value=expected)
+        client.media_info_v1 = AsyncMock(return_value=expected)
 
         result = await client.media_info_gql("2110901750722920960")
 
         self.assertIs(result, expected)
         client.public_doc_id_graphql_request.assert_called_once()
-        client.media_info_a1.assert_called_once_with("2110901750722920960")
+        client.media_info_v1.assert_called_once_with("2110901750722920960")
 
     async def test_public_head_uses_httpx_ext_request_with_follow_redirects_off(
         self,
@@ -4158,14 +4158,6 @@ class ClientLocationTestCase(ClientPrivateTestCase):
         self.assertEqual(len(medias), 2)
         self.assertIsInstance(medias[0], Media)
 
-    # def test_extract_location_medias_top(self):
-    #     medias_a1 = await self.cl.location_medias_top_a1(197780767581661, amount=9)
-    #     medias_v1 = await self.cl.location_medias_top_v1(197780767581661, amount=9)
-    #     self.assertEqual(len(medias_a1), 9)
-    #     self.assertIsInstance(medias_a1[0], Media)
-    #     self.assertEqual(len(medias_v1), 9)
-    #     self.assertIsInstance(medias_v1[0], Media)
-
     async def test_location_medias_recent(self):
         medias = await self.cl.location_medias_recent(197780767581661, amount=2)
         self.assertEqual(len(medias), 2)
@@ -4447,14 +4439,14 @@ class ClientHashtagTestCase(ClientPrivateTestCase):
         self.assertEqual("instagram", hashtag.name)
 
     async def test_extract_hashtag_info(self):
-        hashtag_a1 = await self.cl.hashtag_info_a1("instagram")
+        hashtag = await self.cl.hashtag_info("instagram")
         hashtag_v1 = await self.cl.hashtag_info_v1("instagram")
-        self.assertIsInstance(hashtag_a1, Hashtag)
+        self.assertIsInstance(hashtag, Hashtag)
         self.assertIsInstance(hashtag_v1, Hashtag)
-        self.assertEqual("instagram", hashtag_a1.name)
-        self.assertEqual(hashtag_a1.id, hashtag_v1.id)
-        self.assertEqual(hashtag_a1.name, hashtag_v1.name)
-        self.assertGreater(hashtag_a1.media_count, 0)
+        self.assertEqual("instagram", hashtag.name)
+        self.assertEqual(hashtag.id, hashtag_v1.id)
+        self.assertEqual(hashtag.name, hashtag_v1.name)
+        self.assertGreater(hashtag.media_count, 0)
         self.assertGreater(hashtag_v1.media_count, 0)
 
     async def test_hashtag_medias_top(self):
@@ -4463,10 +4455,10 @@ class ClientHashtagTestCase(ClientPrivateTestCase):
         self.assertIsInstance(medias[0], Media)
 
     async def test_extract_hashtag_medias_top(self):
-        medias_a1 = await self.cl.hashtag_medias_top_a1("instagram", amount=9)
+        medias = await self.cl.hashtag_medias_top("instagram", amount=9)
         medias_v1 = await self.cl.hashtag_medias_top_v1("instagram", amount=9)
-        self.assertEqual(len(medias_a1), 9)
-        self.assertIsInstance(medias_a1[0], Media)
+        self.assertEqual(len(medias), 9)
+        self.assertIsInstance(medias[0], Media)
         self.assertEqual(len(medias_v1), 9)
         self.assertIsInstance(medias_v1[0], Media)
 
@@ -4477,12 +4469,12 @@ class ClientHashtagTestCase(ClientPrivateTestCase):
 
     async def test_extract_hashtag_medias_recent(self):
         medias_v1 = await self.cl.hashtag_medias_recent_v1("instagram", amount=31)
-        medias_a1 = await self.cl.hashtag_medias_recent_a1("instagram", amount=31)
-        self.assertEqual(len(medias_a1), 31)
-        self.assertIsInstance(medias_a1[0], Media)
+        medias = await self.cl.hashtag_medias_recent("instagram", amount=31)
+        self.assertEqual(len(medias), 31)
+        self.assertIsInstance(medias[0], Media)
         self.assertEqual(len(medias_v1), 31)
         self.assertIsInstance(medias_v1[0], Media)
-        for media in [*medias_a1[:10], *medias_v1[:10]]:
+        for media in [*medias[:10], *medias_v1[:10]]:
             data = media.model_dump()
             for f in self.REQUIRED_MEDIA_FIELDS:
                 self.assertIn(f, data)
