@@ -2,6 +2,10 @@
 
 Post comment, viewing, like and unlike comments
 
+Comment creation is a write action and can still trigger Instagram spam or
+trust checks. Reuse saved sessions, keep volume low on new accounts, and stop
+when Instagram returns feedback/challenge responses.
+
 | Method                                                                                  | Return             | Description
 | --------------------------------------------------------------------------------------- | ------------------ | --------------------------
 | media_comment(media_id: str, text: str, replied_to_comment_id: Optional[int] = None) | Comment            | Add new comment to media
