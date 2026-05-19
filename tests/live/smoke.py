@@ -92,6 +92,21 @@ async def main():
     if cl is None:
         failures.append(("login", "all pool accounts unusable"))
     else:
+        try:
+            if not cl.sessionid:
+                raise RuntimeError("logged-in client did not expose sessionid")
+            by_session = Client()
+            proxy = getattr(cl, "proxy", None)
+            if isinstance(proxy, str) and proxy:
+                by_session.set_proxy(proxy)
+            await by_session.login_by_sessionid(cl.sessionid)
+            account = await by_session.account_info()
+            assert str(account.pk) == str(cl.user_id)
+            await by_session.get_timeline_feed("cold_start_fetch")
+            print("REQ sessionid_login: account_info/timeline")
+        except Exception as e:
+            failures.append(("sessionid_login", f"{type(e).__name__}: {str(e)[:140]}"))
+
         for name, fn in [
             ("private_v1", lambda: cl.user_info_by_username_v1("instagram")),
             ("private_v2_gql", lambda: cl.user_info_by_username_v2_gql("instagram")),

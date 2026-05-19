@@ -207,9 +207,9 @@ cl = Client()
 await cl.login_by_sessionid("<your_sessionid>")
 ```
 
-`login_by_sessionid()` is a lightweight compatibility path. For long-lived
-automation prefer the regular `login()` → `dump_settings()` →
-`load_settings()` / `set_settings()` flow.
+`login_by_sessionid()` is a lightweight compatibility path. For long-lived automation prefer the regular `login()` → `dump_settings()` → `load_settings()` / `set_settings()` flow.
+
+If a browser/web `sessionid` returns `login_required` or logs the browser out, Instagram rejected that session for the private mobile API. Use a stable password login once, save settings with `dump_settings()`, and reuse those settings instead of repeatedly importing browser cookies.
 
 ### Typical Tasks
 
