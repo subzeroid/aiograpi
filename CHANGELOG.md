@@ -8,6 +8,19 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-05-19
+
+### Fixed
+
+- Mirrored the `instagrapi` 2.7.3 story upload read-back fallback: async
+  photo/video story uploads now return the newly uploaded story when Instagram
+  accepts `configure_to_story` but omits the `media` object from the configure
+  response.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.7.3.
+
 ## [1.0.2] - 2026-05-19
 
 ### Added
