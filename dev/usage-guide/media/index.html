@@ -1639,6 +1639,16 @@
 <td>Unlike media</td>
 </tr>
 <tr>
+<td>media_note_create(media_id: str, text: str = "", audience: int = 7, note_style: int = 13, extra_data: Optional[Dict] = None)</td>
+<td>dict</td>
+<td>Create a note attached to a media item</td>
+</tr>
+<tr>
+<td>media_note_delete(note_id: str, extra_data: Optional[Dict] = None)</td>
+<td>bool</td>
+<td>Delete a note attached to a media item</td>
+</tr>
+<tr>
 <td>media_seen(media_ids: List[str], skipped_media_ids: List[str])</td>
 <td>bool</td>
 <td>Mark a media as seen</td>
@@ -1685,6 +1695,7 @@
 </tr>
 </tbody>
 </table>
+<p>Media notes are separate from Direct inbox Notes. Use <code>media_note_create()</code> and <code>media_note_delete()</code> for the note surface attached to a post or Reel; use the <a href="../notes/">Notes guide</a> for Direct inbox Notes.</p>
 <p>Low level methods:</p>
 <table>
 <thead>
@@ -2052,9 +2063,19 @@
 <td>Upload Reels Clip (Support MP4 files), optionally as a Trial Reel or cross-posted to Facebook</td>
 </tr>
 <tr>
+<td>clip_music_extra_data(track: Track or dict, extra_data: Dict = {})</td>
+<td>dict</td>
+<td>Build Reels music configure fields for manual <code>clip_upload(..., extra_data=...)</code></td>
+</tr>
+<tr>
+<td>clip_upload_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, extra_data: Dict = {})</td>
+<td>Media</td>
+<td>Upload a Reel with music metadata without local audio muxing</td>
+</tr>
+<tr>
 <td>clip_upload_as_reel_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {})</td>
 <td>Media</td>
-<td>Upload Reels Clip as reel with music metadata</td>
+<td>Upload a Reel after locally muxing the track into the video with MoviePy</td>
 </tr>
 <tr>
 <td>clip_info_for_creation()</td>
@@ -2096,7 +2117,8 @@ contains availability flags, not the full Account Center destination state, and 
 <code>fb_destination_id</code> and <code>fb_destination_type="USER"</code> or <code>"PAGE"</code> to <code>clip_upload(...)</code>, or build <code>extra_data</code> manually
 with <code>clip_share_to_fb_extra_data(...)</code>. If neither the preflight/config data nor the caller provides a destination,
 aiograpi raises <code>ClientError</code> before uploading video bytes. The Reel cross-post <code>attempt_id</code> is generated automatically;
-only pass it to <code>clip_share_to_fb_extra_data(...)</code> when replaying or testing a specific low-level payload.</p>
+only pass it to <code>clip_share_to_fb_extra_data(...)</code> when replaying or testing a specific low-level payload.
+<code>bloks_fxcal_link_reels_share()</code> exposes the raw Account Center Bloks link action seen on the Reel composer surface, but it starts an app linking flow and does not replace the interactive Facebook linking step in Instagram.</p>
 <div class="highlight"><pre><span></span><code><span class="n">media</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">clip_upload</span><span class="p">(</span>
     <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel.mp4&quot;</span><span class="p">),</span>
     <span class="s2">&quot;Cross-posting this Reel to Facebook&quot;</span><span class="p">,</span>
