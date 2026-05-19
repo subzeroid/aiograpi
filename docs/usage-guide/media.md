@@ -39,6 +39,8 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | media_oembed(url: str)                                          | MediaOembed        | Return short media info by media URL
 | media_like(media_id: str)                                       | bool               | Like media
 | media_unlike(media_id: str)                                     | bool               | Unlike media
+| media_note_create(media_id: str, text: str = "", audience: int = 7, note_style: int = 13, extra_data: Optional[Dict] = None) | dict | Create a note attached to a media item
+| media_note_delete(note_id: str, extra_data: Optional[Dict] = None) | bool | Delete a note attached to a media item
 | media_seen(media_ids: List[str], skipped_media_ids: List[str])  | bool               | Mark a media as seen
 | media_likers(media_id: str)                                     | List\[UserShort]   | Return list of users who liked this post (due to Instagram limitations, this may not return a complete list)
 | media_archive(media_id: str)                                    | bool               | Archive a media
@@ -48,6 +50,8 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | media_unpin(media_id: str)                                      | bool               | Unpin a media to user profile
 | clip_pin(media_pk: str)                                         | bool               | Pin a Reel to the Reels tab/profile Reels grid
 | clip_unpin(media_pk: str)                                       | bool               | Unpin a Reel from the Reels tab/profile Reels grid
+
+Media notes are separate from Direct inbox Notes. Use `media_note_create()` and `media_note_delete()` for the note surface attached to a post or Reel; use the [Notes guide](notes.md) for Direct inbox Notes.
 
 Low level methods:
 
@@ -272,7 +276,9 @@ Upload medias to your feed. Common arguments:
 | album_upload_with_music(paths: List[Path], caption: str, track: Track, extra_data: Dict = {}) | Media | Upload feed album/carousel with music metadata
 | igtv_upload(path: Path, title: str, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}) | Media   | Upload IGTV (Support MP4 files)
 | clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, trial: bool = False, share_to_facebook: bool = False) | Media | Upload Reels Clip (Support MP4 files), optionally as a Trial Reel or cross-posted to Facebook
-| clip_upload_as_reel_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {}) | Media | Upload Reels Clip as reel with music metadata
+| clip_music_extra_data(track: Track or dict, extra_data: Dict = {}) | dict | Build Reels music configure fields for manual `clip_upload(..., extra_data=...)`
+| clip_upload_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, extra_data: Dict = {}) | Media | Upload a Reel with music metadata without local audio muxing
+| clip_upload_as_reel_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {}) | Media | Upload a Reel after locally muxing the track into the video with MoviePy
 | clip_info_for_creation()                                      | Dict    | Get Reel creation preflight configuration for the current user
 | clip_trial_eligible()                                         | bool    | Check whether Reel creation preflight reports Trial Reels enabled
 | clip_share_to_fb_config()                                      | Dict    | Get Reel Facebook sharing configuration for the current user
@@ -302,6 +308,7 @@ contains availability flags, not the full Account Center destination state, and 
 with `clip_share_to_fb_extra_data(...)`. If neither the preflight/config data nor the caller provides a destination,
 aiograpi raises `ClientError` before uploading video bytes. The Reel cross-post `attempt_id` is generated automatically;
 only pass it to `clip_share_to_fb_extra_data(...)` when replaying or testing a specific low-level payload.
+`bloks_fxcal_link_reels_share()` exposes the raw Account Center Bloks link action seen on the Reel composer surface, but it starts an app linking flow and does not replace the interactive Facebook linking step in Instagram.
 
 ``` python
 media = await cl.clip_upload(

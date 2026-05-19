@@ -40,6 +40,8 @@ cl.challenge_code_handler = challenge_code_handler
 await cl.login(IG_USERNAME, IG_PASSWORD)
 ```
 
+Signup SMS challenges use the `phone_number` passed to `signup(...)` and call `challenge_code_handler(username, ChallengeChoice.SMS)` for the received code.
+
 For example, you can get the code through the IMAP of Gmail:
 
 ``` python

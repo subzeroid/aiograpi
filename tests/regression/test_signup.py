@@ -2,7 +2,8 @@ import unittest
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
-from aiograpi.exceptions import ClientError
+from aiograpi.exceptions import ChallengeRequired, ClientError
+from aiograpi.mixins.challenge import ChallengeChoice
 
 
 class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -70,3 +71,108 @@ class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             )
 
         client.private.post.assert_not_awaited()
+
+    async def test_challenge_flow_submits_phone_number_then_sms_code(self):
+        client = Client()
+        start = {"api_path": "/challenge/start", "challenge_context": "{}"}
+        submit_phone_step = {
+            "challengeType": "SubmitPhoneNumberForm",
+            "navigation": {"forward": "/challenge/phone"},
+            "challenge_context": "{}",
+        }
+        verify_sms_step = {
+            "challengeType": "VerifySMSCodeFormForSMSCaptcha",
+            "navigation": {"forward": "/challenge/sms"},
+            "challenge_context": "{}",
+        }
+        client.challenge_api = AsyncMock(return_value=submit_phone_step)
+        client.challenge_submit_phone_number = AsyncMock(return_value=verify_sms_step)
+        client.challenge_verify_sms_captcha = AsyncMock(return_value={"status": "ok"})
+        client.challenge_code_handler = AsyncMock(return_value="123456")
+
+        result = await client.challenge_flow(
+            start,
+            phone_number="+15551234567",
+            username="example",
+            wait_seconds=0,
+        )
+
+        self.assertTrue(result)
+        client.challenge_submit_phone_number.assert_awaited_once_with(submit_phone_step, "+15551234567")
+        client.challenge_code_handler.assert_awaited_once()
+        self.assertEqual(client.challenge_code_handler.call_args.args[0], "example")
+        self.assertEqual(client.challenge_code_handler.call_args.args[1], ChallengeChoice.SMS)
+        client.challenge_verify_sms_captcha.assert_awaited_once_with(verify_sms_step, "123456")
+
+    async def test_challenge_flow_requires_phone_number_for_sms_challenge(self):
+        client = Client()
+        start = {"api_path": "/challenge/start", "challenge_context": "{}"}
+        submit_phone_step = {
+            "challengeType": "SubmitPhoneNumberForm",
+            "navigation": {"forward": "/challenge/phone"},
+            "challenge_context": "{}",
+        }
+        client.challenge_api = AsyncMock(return_value=submit_phone_step)
+
+        with self.assertRaises(ClientError) as ctx:
+            await client.challenge_flow(start, username="example", wait_seconds=0)
+
+        self.assertIn("phone_number is required", str(ctx.exception))
+
+    async def test_challenge_flow_requires_sms_code(self):
+        client = Client()
+        start = {"api_path": "/challenge/start", "challenge_context": "{}"}
+        verify_sms_step = {
+            "challengeType": "VerifySMSCodeFormForSMSCaptcha",
+            "navigation": {"forward": "/challenge/sms"},
+            "challenge_context": "{}",
+        }
+        client.challenge_api = AsyncMock(return_value=verify_sms_step)
+        client.challenge_code_handler = AsyncMock(return_value=False)
+
+        with self.assertRaises(ChallengeRequired) as ctx:
+            await client.challenge_flow(
+                start,
+                phone_number="+15551234567",
+                username="example",
+                wait_seconds=0,
+                attempts=1,
+            )
+
+        self.assertIn("SMS code required", str(ctx.exception))
+
+    async def test_signup_passes_phone_number_to_challenge_flow(self):
+        client = Client()
+        client.wait_seconds = 0
+        challenge = {"api_path": "/challenge/start", "challenge_context": "{}"}
+        client.get_signup_config = AsyncMock(return_value={})
+        client.check_email = AsyncMock(return_value={"valid": True, "available": True})
+        client.send_verify_email = AsyncMock(return_value={"email_sent": True})
+        client.challenge_code_handler = AsyncMock(return_value="654321")
+        client.check_confirmation_code = AsyncMock(return_value={"signup_code": "signup-code"})
+        client.check_phone_number = AsyncMock(return_value={"status": "ok"})
+        client.send_signup_sms_code = AsyncMock(return_value={"status": "ok"})
+        client.accounts_create = AsyncMock(
+            side_effect=[
+                {"message": "challenge_required", "challenge": challenge},
+                {"created_user": {"pk": "1", "username": "example"}},
+            ]
+        )
+        client.challenge_flow = AsyncMock(return_value=True)
+        client.parse_authorization = Mock(return_value={})
+        client.last_response = Mock(headers={"ig-set-authorization": ""})
+
+        with unittest.mock.patch("aiograpi.mixins.signup.extract_user_short", return_value="created-user"):
+            result = await client.signup(
+                "example",
+                "password",
+                "example@example.com",
+                "+15551234567",
+            )
+
+        self.assertEqual(result, "created-user")
+        client.challenge_flow.assert_awaited_once_with(
+            challenge,
+            phone_number="+15551234567",
+            username="example",
+        )
