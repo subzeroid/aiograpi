@@ -36,10 +36,12 @@ async def challenge_code_handler(username, choice):
     return False
 
 cl = Client()
+cl.phone_number = "+15551234567"  # required for submit_phone challenges
 cl.challenge_code_handler = challenge_code_handler
 await cl.login(IG_USERNAME, IG_PASSWORD)
 ```
 
+Login `submit_phone` challenges use `client.phone_number`, then call `challenge_code_handler(username, ChallengeChoice.SMS)` for the received code.
 Signup SMS challenges use the `phone_number` passed to `signup(...)` and call `challenge_code_handler(username, ChallengeChoice.SMS)` for the received code.
 
 For example, you can get the code through the IMAP of Gmail:

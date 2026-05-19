@@ -53,6 +53,7 @@ from aiograpi.extractors import (
     extract_resource_v1,
     extract_story_v1,
 )
+from aiograpi.mixins.challenge import ChallengeChoice
 from aiograpi.mixins.user import UserMixin
 from aiograpi.story import StoryBuilder
 from aiograpi.types import (
@@ -954,6 +955,70 @@ class ChallengeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             await client.challenge_resolve_simple("/challenge/test/")
 
         self.assertIn("Unexpected final challenge step", str(cm.exception))
+
+    async def test_challenge_resolve_simple_submit_phone_posts_number_then_sms_code(
+        self,
+    ):
+        client = Client()
+        client.username = "example"
+        client.phone_number = "+15551234567"
+        client.last_json = {
+            "step_name": "submit_phone",
+            "step_data": {"phone_number": "+1 *** *** 4567"},
+            "challenge_context": "{}",
+            "status": "ok",
+        }
+
+        async def fake_send_private_request(endpoint, data):
+            if "phone_number" in data:
+                client.last_json = {
+                    "step_name": "verify_phone",
+                    "step_data": {"phone_number": "+1 *** *** 4567"},
+                    "challenge_context": "{}",
+                    "status": "ok",
+                }
+            elif "security_code" in data:
+                client.last_json = {"action": "close", "status": "ok"}
+
+        client._send_private_request = AsyncMock(side_effect=fake_send_private_request)
+        client.challenge_code_or_raised = AsyncMock(return_value="123456")
+
+        result = await client.challenge_resolve_simple("/challenge/test/")
+
+        self.assertTrue(result)
+        self.assertEqual(
+            client._send_private_request.call_args_list[0].args,
+            ("/challenge/test/", {"phone_number": "+15551234567"}),
+        )
+        client.challenge_code_or_raised.assert_called_once_with(
+            ChallengeChoice.SMS,
+            wait_seconds=5,
+            attempts=24,
+            challenge_url="/challenge/test/",
+            sessionid=client.sessionid,
+        )
+        self.assertEqual(
+            client._send_private_request.call_args_list[1].args,
+            ("/challenge/test/", {"security_code": "123456"}),
+        )
+
+    async def test_challenge_resolve_simple_submit_phone_requires_configured_phone_number(
+        self,
+    ):
+        client = Client()
+        client.username = "example"
+        client.phone_number = None
+        client.last_json = {
+            "step_name": "submit_phone",
+            "step_data": {"phone_number": "+1 *** *** 4567"},
+            "challenge_context": "{}",
+            "status": "ok",
+        }
+
+        with self.assertRaises(ChallengeRequired) as cm:
+            await client.challenge_resolve_simple("/challenge/test/")
+
+        self.assertIn("Phone number required", str(cm.exception))
 
     @unittest.skip(_CONTACT_FORM_SKIP_REASON)
     def test_challenge_resolve_contact_form_raises_clear_error_for_unexpected_verify_step(
