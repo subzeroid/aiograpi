@@ -3533,6 +3533,29 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             }
         return payload
 
+    def build_story(self, story_pk="10", media_type=1):
+        return Story(
+            pk=story_pk,
+            id=f"{story_pk}_1",
+            code=f"story{story_pk}",
+            taken_at=datetime.now(UTC()),
+            media_type=media_type,
+            product_type="story",
+            thumbnail_url="https://example.com/story.jpg",
+            user=UserShort(
+                pk="1",
+                username="example",
+                full_name="Example",
+                profile_pic_url="https://example.com/profile.jpg",
+            ),
+            sponsor_tags=[],
+            mentions=[],
+            links=[],
+            hashtags=[],
+            locations=[],
+            stickers=[],
+        )
+
     async def test_photo_upload_raises_clear_error_when_configure_has_no_media(self):
         client = self.build_client()
         client.photo_rupload = AsyncMock(return_value=("1", 720, 720))
@@ -3597,18 +3620,21 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(media, Media)
         client.photo_rupload.assert_called_once_with(Path("slide.png"), to_album=True)
 
-    async def test_photo_story_upload_raises_clear_error_when_configure_has_no_media(
+    async def test_photo_story_upload_falls_back_to_recent_story_when_configure_has_no_media(
         self,
     ):
         client = self.build_client()
+        existing_story = self.build_story("10")
+        uploaded_story = self.build_story("11")
         client.photo_rupload = AsyncMock(return_value=("1", 720, 1280))
         client.photo_configure_to_story = AsyncMock(return_value={"status": "ok"})
+        client.user_stories = AsyncMock(side_effect=[[existing_story], [uploaded_story, existing_story]])
 
         with mock.patch("aiograpi.mixins.photo.asyncio.sleep", new_callable=AsyncMock):
-            with self.assertRaises(PhotoConfigureStoryError) as ctx:
-                await client.photo_upload_to_story(Path("story.jpg"))
+            with mock.patch("aiograpi.mixins.media.asyncio.sleep", new_callable=AsyncMock):
+                story = await client.photo_upload_to_story(Path("story.jpg"))
 
-        self.assertIn("without media payload", str(ctx.exception))
+        self.assertEqual(story.id, uploaded_story.id)
 
     async def test_clip_upload_falls_back_to_last_json_media_payload(self):
         client = self.build_client()
@@ -3630,18 +3656,21 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(media, Media)
         self.assertEqual(str(media.video_url), "https://example.com/video.mp4")
 
-    async def test_video_story_upload_raises_clear_error_when_configure_has_no_media(
+    async def test_video_story_upload_falls_back_to_recent_story_when_configure_has_no_media(
         self,
     ):
         client = self.build_client()
+        existing_story = self.build_story("10", media_type=2)
+        uploaded_story = self.build_story("11", media_type=2)
         client.video_rupload = AsyncMock(return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg")))
         client.video_configure_to_story = AsyncMock(return_value={"status": "ok"})
+        client.user_stories = AsyncMock(side_effect=[[existing_story], [uploaded_story, existing_story]])
 
         with mock.patch("aiograpi.mixins.video.asyncio.sleep", new_callable=AsyncMock):
-            with self.assertRaises(VideoConfigureStoryError) as ctx:
-                await client.video_upload_to_story(Path("story.mp4"))
+            with mock.patch("aiograpi.mixins.media.asyncio.sleep", new_callable=AsyncMock):
+                story = await client.video_upload_to_story(Path("story.mp4"))
 
-        self.assertIn("without media payload", str(ctx.exception))
+        self.assertEqual(story.id, uploaded_story.id)
 
     async def test_video_direct_upload_raises_clear_error_when_configure_has_no_message(
         self,
