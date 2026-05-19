@@ -50,6 +50,7 @@ from aiograpi.exceptions import (
 from aiograpi.extractors import (
     extract_direct_message,
     extract_direct_thread,
+    extract_media_v1,
     extract_resource_v1,
     extract_story_v1,
 )
@@ -3681,16 +3682,32 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             stickers=[],
         )
 
-    async def test_photo_upload_raises_clear_error_when_configure_has_no_media(self):
+    async def test_photo_upload_falls_back_to_recent_media_when_configure_has_no_media(self):
+        client = self.build_client()
+        existing_media = extract_media_v1(self.build_media_payload(media_type=1))
+        uploaded_media = extract_media_v1(dict(self.build_media_payload(media_type=1), pk="2", id="2_1", code="def"))
+        client.photo_rupload = AsyncMock(return_value=("1", 720, 720))
+        client.photo_configure = AsyncMock(return_value={"status": "ok"})
+        client.user_medias_v1 = AsyncMock(side_effect=[[existing_media], [uploaded_media, existing_media]])
+
+        with mock.patch("aiograpi.mixins.photo.asyncio.sleep", new_callable=AsyncMock):
+            with mock.patch("aiograpi.mixins.media.asyncio.sleep", new_callable=AsyncMock):
+                media = await client.photo_upload(Path("example.jpg"), "caption")
+
+        self.assertEqual(media.id, uploaded_media.id)
+
+    async def test_photo_upload_raises_clear_error_when_configure_has_no_media_and_recent_media_missing(self):
         client = self.build_client()
         client.photo_rupload = AsyncMock(return_value=("1", 720, 720))
         client.photo_configure = AsyncMock(return_value={"status": "ok"})
+        client.user_medias_v1 = AsyncMock(return_value=[])
 
         with mock.patch("aiograpi.mixins.photo.asyncio.sleep", new_callable=AsyncMock):
-            with self.assertRaises(PhotoConfigureError) as ctx:
-                await client.photo_upload(Path("example.jpg"), "caption")
+            with mock.patch("aiograpi.mixins.media.asyncio.sleep", new_callable=AsyncMock):
+                with self.assertRaises(PhotoConfigureError) as ctx:
+                    await client.photo_upload(Path("example.jpg"), "caption")
 
-        self.assertIn("without media payload", str(ctx.exception))
+        self.assertIn("without media payload and uploaded media was not visible", str(ctx.exception))
 
     async def test_video_upload_raises_clear_error_when_configure_has_no_media(self):
         client = self.build_client()

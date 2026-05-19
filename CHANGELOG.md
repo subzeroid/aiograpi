@@ -12,6 +12,8 @@ starting with 1.0.0.
 
 - Mirrored the current `media_comment()` write payload from `instagrapi`,
   including feed action context fields used by recent app requests.
+- Added a feed photo upload read-back fallback for configure responses that
+  return `{"status": "ok"}` without an embedded `media` object.
 - Fixed pooled live account URL construction so an existing `count` query
   parameter is overridden instead of duplicated.
 
