@@ -33,7 +33,7 @@ For any other languages (e.g. C++, C#, F#, D, [Golang](https://github.com/subzer
 ## Features
 
 1. Performs [Public API](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/) (web, anonymous) or [Private API](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/) (mobile app, authorized) requests depending on the situation (to avoid Instagram limits)
-2. [Login](https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/) by username and password, including 2FA and by sessionid
+2. [Login](https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/) by username and password, including 2FA, low-level [Bloks 2FA](usage-guide/totp.md#bloks-two-factor-flow) helpers, and by sessionid
 3. [Challenge Resolver](https://subzeroid.github.io/aiograpi/latest/usage-guide/challenge_resolver/) have Email and SMS handlers
 4. Support [upload](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/) a Photo, Video, IGTV, Reels, Albums, Stories and Trial Reels
 5. Support work with [User](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/), [Media](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/), [Comment](https://subzeroid.github.io/aiograpi/latest/usage-guide/comment/), [Insights](https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/), [Collections](https://subzeroid.github.io/aiograpi/latest/usage-guide/collection/), [Location](https://subzeroid.github.io/aiograpi/latest/usage-guide/location/) (Place), [Hashtag](https://subzeroid.github.io/aiograpi/latest/usage-guide/hashtag/) and [Direct Message](https://subzeroid.github.io/aiograpi/latest/usage-guide/direct/) objects
@@ -109,7 +109,7 @@ To learn more about the various ways `aiograpi` can be used, read the [Usage Gui
   * [`Resource`](usage-guide/media.md) - Part of Media (for albums)
   * [`MediaOembed`](usage-guide/media.md) - Short version of Media
   * [`Account`](usage-guide/account.md) - Full private info for your account (e.g. email, phone_number)
-  * [`TOTP`](usage-guide/totp.md) - 2FA TOTP helpers (generate seed, enable/disable TOTP, generate code as Google Authenticator)
+  * [`TOTP`](usage-guide/totp.md) - 2FA TOTP helpers, code generation, and low-level Bloks verification helpers
   * [`User`](usage-guide/user.md) - Full public user data
   * [`UserShort`](usage-guide/user.md) - Short public user data (used in Usertag, Comment, Media, Direct Message)
   * [`Usertag`](usage-guide/user.md) - Tag user in Media (coordinates + UserShort)
