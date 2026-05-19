@@ -8,6 +8,20 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Mirrored the current `media_comment()` write payload from `instagrapi`,
+  including feed action context fields used by recent app requests.
+- Fixed pooled live account URL construction so an existing `count` query
+  parameter is overridden instead of duplicated.
+
+### Changed
+
+- Added a manual live workflow target for comment writes and updated the live
+  comment test to upload/read back/cleanup its own media fixture.
+- Documented that comment creation is still an Instagram trust-checked write
+  action even with current request metadata.
+
 ## [1.0.3] - 2026-05-19
 
 ### Fixed

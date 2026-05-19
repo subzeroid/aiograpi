@@ -4,6 +4,7 @@ import types
 import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
+from urllib.parse import parse_qs, urlsplit
 
 
 def _load_live_smoke_module():
@@ -64,6 +65,31 @@ class _FakeLiveClient:
 
 
 class LiveSmokeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_fetch_accounts_overrides_existing_default_count(self):
+        smoke = _load_live_smoke_module()
+        captured = {}
+
+        class FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def read(self):
+                return b"[]"
+
+        def fake_urlopen(req, context=None):
+            captured["url"] = req.full_url
+            return FakeResponse()
+
+        with patch.object(smoke.urllib.request, "urlopen", side_effect=fake_urlopen):
+            await smoke._fetch_accounts("https://example.test/accounts?count=1&token=abc")
+
+        query = parse_qs(urlsplit(captured["url"]).query)
+        self.assertEqual(query["count"], ["10"])
+        self.assertEqual(query["token"], ["abc"])
+
     async def test_anonymous_public_lookup_throttle_does_not_fail_smoke(self):
         smoke = _load_live_smoke_module()
         fake_logged_client = _FakeLiveClient()

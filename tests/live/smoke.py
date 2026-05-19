@@ -17,14 +17,18 @@ import ssl
 import sys
 import urllib.request
 import uuid
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from aiograpi import Client
 
 
 async def _fetch_accounts(url, count=10):
-    sep = "&" if "?" in url else "?"
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query["count"] = str(count)
+    url = urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
     req = urllib.request.Request(
-        url + sep + f"count={count}",
+        url,
         headers={"User-Agent": "Mozilla/5.0 aiograpi-smoke"},
     )
     with urllib.request.urlopen(req, context=ssl._create_unverified_context()) as r:

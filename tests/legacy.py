@@ -159,7 +159,7 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
             self.skipTest("TEST_ACCOUNTS_URL not configured")
         parts = urlsplit(TEST_ACCOUNTS_URL)
         query = dict(parse_qsl(parts.query, keep_blank_values=True))
-        query.setdefault("count", "5")
+        query["count"] = "5"
         return urlunsplit(
             (
                 parts.scheme,
@@ -242,6 +242,30 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
         else:
             await self.cl.login(ACCOUNT_USERNAME, ACCOUNT_PASSWORD, relogin=True)
         self.cl.dump_settings(filename)
+
+    def copy_media_fixture(self, filename):
+        fd, temp_path = tempfile.mkstemp(suffix=Path(filename).suffix)
+        os.close(fd)
+        path = Path(temp_path)
+        path.write_bytes(Path(filename).read_bytes())
+        return path
+
+    async def assertUploadedMediaAccessible(self, media, media_type=None, caption_text=None, attempts=5, delay=3):
+        last_error = None
+        for attempt in range(attempts):
+            if attempt:
+                await asyncio.sleep(delay)
+            try:
+                info = await self.cl.media_info_v1(media.id)
+            except Exception as exc:
+                last_error = exc
+                continue
+            if media_type is not None:
+                self.assertEqual(info.media_type, media_type)
+            if caption_text is not None:
+                self.assertEqual(info.caption_text, caption_text)
+            return info
+        self.fail(f"Media {media.id} was not readable after {attempts} attempts: {last_error}")
 
 
 class ClientPublicTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
@@ -2117,11 +2141,47 @@ class ClientCommentTestCase(ClientPrivateTestCase):
 
 
 class ClientCommentExtendTestCase(ClientPrivateTestCase):
+    async def cleanup_comment(self, media_id, comment_pk):
+        try:
+            await self.cl.comment_bulk_delete(media_id, [comment_pk])
+        except Exception as exc:
+            print(f"Comment live cleanup comment_bulk_delete failed: {exc.__class__.__name__} {exc}")
+
+    async def cleanup_media(self, media_id):
+        try:
+            await self.cl.media_delete(media_id)
+        except Exception as exc:
+            print(f"Comment live cleanup media_delete failed: {exc.__class__.__name__} {exc}")
+
+    async def assertCommentAccessible(self, media_id, comment_pk, text, attempts=5, delay=3):
+        last_error = None
+        for attempt in range(attempts):
+            if attempt:
+                await asyncio.sleep(delay)
+            try:
+                comments = await self.cl.media_comments_v1(media_id, amount=20)
+            except Exception as exc:
+                last_error = exc
+                continue
+            for item in comments:
+                if str(item.pk) == str(comment_pk) and item.text == text:
+                    return item
+        self.fail(f"Comment {comment_pk} was not readable after {attempts} attempts: {last_error}")
+
     async def test_media_comment(self):
         text = "Test text [%s]" % datetime.now().strftime("%s")
         now = datetime.now(tz=UTC())
-        comment = self.cl.media_comment_v1(2276404890775267248, text)
+        caption_text = "Comment live fixture [%s]" % datetime.now().strftime("%s")
+        path = self.copy_media_fixture("examples/kanada.jpg")
+        self.addCleanup(cleanup, path)
+        media = await self.cl.photo_upload(path, caption_text)
+        self.addAsyncCleanup(self.cleanup_media, media.id)
+        await self.assertUploadedMediaAccessible(media, media_type=1, caption_text=caption_text)
+        media_id = media.id
+        comment = await self.cl.media_comment(media_id, text)
+        self.addAsyncCleanup(self.cleanup_comment, media_id, comment.pk)
         self.assertIsInstance(comment, Comment)
+        await self.assertCommentAccessible(media_id, comment.pk, text)
         comment = comment.dict()
         for key, val in {
             "text": text,

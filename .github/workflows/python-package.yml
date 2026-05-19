@@ -7,6 +7,17 @@ on:
   push:
     branches: [ "main" ]
   pull_request: {}
+  workflow_dispatch:
+    inputs:
+      test_target:
+        description: "Live target to run"
+        required: false
+        default: "smoke"
+        type: choice
+        options:
+          - smoke
+          - comment
+          - all
 
 env:
   PYTHON_VERSION: "3.13.5"
@@ -129,7 +140,7 @@ jobs:
     # Live IG tests via pooled accounts. Only on canonical-repo pushes
     # — PRs from forks don't have access to the TEST_ACCOUNTS_URL secret.
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.repository == 'subzeroid/aiograpi'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.repository == 'subzeroid/aiograpi'
     strategy:
       matrix:
         python-version: [ "3.10" ]
@@ -146,6 +157,7 @@ jobs:
         with:
           test: "true"
       - name: Run end-to-end smoke
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.test_target == 'smoke' || github.event.inputs.test_target == 'all'
         # Required: login(TOTP) + private_v1 + private_v2_gql +
         # user_short_gql + hashtag_info_v1 + user_medias_v1 +
         # user_medias_gql + user_followers + highlight_info.
@@ -163,6 +175,14 @@ jobs:
         # by the unit-test job; user_followers and highlight_info are
         # covered by the smoke above.
         run: PYTHONPATH=. python tests/live/smoke.py
+      - name: Run comment write test
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.test_target == 'comment' || github.event.inputs.test_target == 'all')
+        run: |
+          if [ -z "${TEST_ACCOUNTS_URL}" ]; then
+            echo "SKIP: TEST_ACCOUNTS_URL secret is not configured"
+            exit 0
+          fi
+          PYTHONPATH=. pytest -sv tests/legacy.py::ClientCommentExtendTestCase::test_media_comment
 
   build-docs:
     runs-on: ubuntu-latest
