@@ -8,6 +8,27 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-05-19
+
+### Added
+
+- Added async Direct bootstrap helpers for pending request previews, interop
+  upgrade state, GenAI bot search, channels, and E2EE eligibility.
+- Added async media note create/delete helpers.
+- Added async music app surfaces for trending audio, search, keyword search,
+  bookmarks, clips audio browser, and original-audio title validation.
+- Added async Bloks action helpers and Reel Facebook crosspost/link-share
+  wrapper support.
+- Added `clip_upload_with_music()` for Reel upload with explicit music metadata.
+- Added signup challenge support for submit-phone and SMS-captcha challenge
+  forms.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.7.2.
+- Updated Direct, media, track, challenge resolver, and Pydroid docs plus
+  regression/live smoke coverage for the new async surfaces.
+
 ## [1.0.1] - 2026-05-19
 
 ### Added
@@ -1350,6 +1371,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[1.0.2]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.2
 [1.0.1]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.1
 [1.0.0]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.0
 [0.7.2]: https://github.com/subzeroid/aiograpi/releases/tag/0.7.2
