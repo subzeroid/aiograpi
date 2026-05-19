@@ -4,6 +4,7 @@ import logging
 import os
 import os.path
 import random
+import subprocess
 import tempfile
 import types
 import unittest
@@ -2402,7 +2403,94 @@ class ClientExtractTestCase(ClientPrivateTestCase):
             self.assertEqual(getattr(media.user, key), val)
 
 
-class ClienUploadTestCase(ClientPrivateTestCase):
+class _ClipMusicMetadataAssertionsMixin:
+    def make_clip_mp4(self):
+        try:
+            import imageio_ffmpeg
+        except ImportError:
+            self.skipTest("imageio_ffmpeg is required to generate a Reel fixture")
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp:
+            path = Path(tmp.name)
+        self.addCleanup(lambda: path.unlink(missing_ok=True))
+
+        try:
+            subprocess.run(
+                [
+                    imageio_ffmpeg.get_ffmpeg_exe(),
+                    "-y",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "color=c=black:s=720x1280:r=30:d=4",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "sine=frequency=440:duration=4",
+                    "-shortest",
+                    "-c:v",
+                    "libx264",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-c:a",
+                    "aac",
+                    "-b:a",
+                    "64k",
+                    str(path),
+                ],
+                check=True,
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+            )
+        except (OSError, subprocess.CalledProcessError) as exc:
+            self.skipTest(f"Could not generate Reel fixture: {exc}")
+        return path
+
+    @staticmethod
+    def music_asset_info(music_info):
+        if not isinstance(music_info, dict):
+            return {}
+        asset_info = music_info.get("music_asset_info")
+        if isinstance(asset_info, dict):
+            return asset_info
+        return {}
+
+    async def wait_for_clip_music_metadata(self, media, attempts=8):
+        last_clips_metadata = {}
+        for attempt in range(attempts):
+            if attempt:
+                await asyncio.sleep(5)
+            result = await self.cl.private_request(f"media/{media.pk}/info/")
+            items = result.get("items") or []
+            self.assertTrue(items, "media info did not return items")
+            clips_metadata = items[0].get("clips_metadata") or {}
+            last_clips_metadata = clips_metadata
+            if clips_metadata.get("music_info"):
+                return clips_metadata
+        self.fail(f"Reel music metadata was not visible after {attempts} media_info attempts: {last_clips_metadata}")
+
+    async def assert_clip_uses_music_track(self, media, track):
+        clips_metadata = await self.wait_for_clip_music_metadata(media)
+        self.assertEqual(clips_metadata.get("audio_type"), "licensed_music")
+        music_info = clips_metadata.get("music_info") or {}
+        self.assertTrue(music_info, "clips_metadata.music_info is empty")
+        asset_info = self.music_asset_info(music_info)
+        self.assertTrue(asset_info, "clips_metadata.music_info.music_asset_info is empty")
+
+        expected_asset_id = getattr(track, "audio_asset_id", None) or getattr(track, "id", None)
+        expected_cluster_id = getattr(track, "audio_cluster_id", None)
+        if expected_asset_id:
+            self.assertEqual(str(asset_info.get("audio_asset_id")), str(expected_asset_id))
+        if expected_cluster_id:
+            self.assertEqual(str(asset_info.get("audio_cluster_id")), str(expected_cluster_id))
+
+
+class ClienUploadTestCase(_ClipMusicMetadataAssertionsMixin, ClientPrivateTestCase):
+    async def asyncSetUp(self):
+        if not TEST_ACCOUNTS_URL:
+            self.skipTest("TEST_ACCOUNTS_URL is required for upload live tests")
+        self.cl = await self.fresh_account()
+
     async def get_location(self):
         location = (await self.cl.location_search(lat=59.939095, lng=30.315868))[0]
         self.assertIsInstance(location, Location)
@@ -2537,19 +2625,67 @@ class ClienUploadTestCase(ClientPrivateTestCase):
         # media_type: 2 (video, not IGTV)
         # product_type: reels
 
-        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/CEjXskWJ1on/")
-        path = await self.cl.clip_download(media_pk)
+        path = self.make_clip_mp4()
         self.assertIsInstance(path, Path)
         try:
             title = "Kill My Vibe (feat. Tom G)"
             caption = "Test caption for reel"
             track = (await self.cl.search_music(title))[0]
-            media = await self.cl.clip_upload_as_reel_with_music(path, caption, track)
+            try:
+                media = await self.cl.clip_upload_as_reel_with_music(path, caption, track)
+            except RuntimeError as exc:
+                if "requires MoviePy 2.2.1" in str(exc):
+                    self.skipTest(str(exc))
+                raise
             self.assertIsInstance(media, Media)
             self.assertEqual(media.caption_text, caption)
+            await self.assertUploadedMediaAccessible(media, media_type=2, caption_text=caption)
+            await self.assert_clip_uses_music_track(media, track)
         finally:
             cleanup(path)
             self.assertTrue(await self.cl.media_delete(media.id))
+
+
+class ClientClipMusicMetadataUploadLiveTestCase(_ClipMusicMetadataAssertionsMixin, ClientPrivateTestCase):
+    thumbnail_path = Path("examples/kanada.jpg")
+
+    async def asyncSetUp(self):
+        if not TEST_ACCOUNTS_URL:
+            self.skipTest("TEST_ACCOUNTS_URL is required for Reel music metadata upload live tests")
+        self.cl = await self.fresh_account()
+
+    async def first_music_track(self):
+        tracks = await self.cl.search_music("Runaway")
+        if not tracks:
+            self.skipTest("search_music did not return a usable track")
+        return tracks[0]
+
+    async def cleanup_uploaded_media(self, media):
+        if not media:
+            return
+        try:
+            self.assertTrue(await self.cl.media_delete(media.id))
+        except Exception as exc:
+            print(f"Reel music metadata upload cleanup media_delete failed: {exc.__class__.__name__} {exc}")
+
+    async def test_clip_upload_with_music_live(self):
+        path = self.make_clip_mp4()
+        track = await self.first_music_track()
+        media = None
+        try:
+            media = await self.cl.clip_upload_with_music(
+                path,
+                "Reel music metadata live test",
+                track,
+                thumbnail=self.thumbnail_path,
+                overlap_duration=4000,
+            )
+            self.assertIsInstance(media, Media)
+            self.assertEqual(media.media_type, 2)
+            self.assertEqual(media.product_type, "clips")
+            await self.assert_clip_uses_music_track(media, track)
+        finally:
+            await self.cleanup_uploaded_media(media)
 
 
 class ClientCollectionTestCase(ClientPrivateTestCase):
