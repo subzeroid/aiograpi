@@ -1385,10 +1385,12 @@
     <span class="k">return</span> <span class="kc">False</span>
 
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">phone_number</span> <span class="o">=</span> <span class="s2">&quot;+15551234567&quot;</span>  <span class="c1"># required for submit_phone challenges</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">challenge_code_handler</span> <span class="o">=</span> <span class="n">challenge_code_handler</span>
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">IG_USERNAME</span><span class="p">,</span> <span class="n">IG_PASSWORD</span><span class="p">)</span>
 </code></pre></div>
-<p>Signup SMS challenges use the <code>phone_number</code> passed to <code>signup(...)</code> and call <code>challenge_code_handler(username, ChallengeChoice.SMS)</code> for the received code.</p>
+<p>Login <code>submit_phone</code> challenges use <code>client.phone_number</code>, then call <code>challenge_code_handler(username, ChallengeChoice.SMS)</code> for the received code.
+Signup SMS challenges use the <code>phone_number</code> passed to <code>signup(...)</code> and call <code>challenge_code_handler(username, ChallengeChoice.SMS)</code> for the received code.</p>
 <p>For example, you can get the code through the IMAP of Gmail:</p>
 <div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_code_from_email</span><span class="p">(</span><span class="n">username</span><span class="p">):</span>
     <span class="n">mail</span> <span class="o">=</span> <span class="n">imaplib</span><span class="o">.</span><span class="n">IMAP4_SSL</span><span class="p">(</span><span class="s2">&quot;imap.gmail.com&quot;</span><span class="p">)</span>
