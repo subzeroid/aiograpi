@@ -195,6 +195,82 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertRegex(params["igd_request_log_tracking_id"], r"^[0-9a-f-]{36}$")
         assert params["media_type"] == "media_shares"
 
+    async def test_direct_pending_requests_preview_uses_current_preview_endpoint(self):
+        client = _build_client()
+        response = {
+            "pending_requests_total": 1,
+            "unread_pending_requests": 1,
+            "status": "ok",
+        }
+        client.private_request = AsyncMock(return_value=response)
+
+        result = await client.direct_pending_requests_preview()
+
+        assert result == response
+        client.private_request.assert_awaited_once_with(
+            "direct_v2/async_get_pending_requests_preview/",
+            params={"pending_inbox_filters": "[]"},
+        )
+
+    async def test_direct_has_interop_upgraded_returns_boolean_state(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value={"has_interop_upgraded": False, "status": "ok"})
+
+        result = await client.direct_has_interop_upgraded()
+
+        assert result is False
+        client.private_request.assert_awaited_once_with("direct_v2/has_interop_upgraded/")
+
+    async def test_direct_search_gen_ai_bots_returns_user_results(self):
+        client = _build_client()
+        client.private_request = AsyncMock(
+            return_value={
+                "user_search_results": [
+                    {
+                        "pk": 64528677628,
+                        "username": "meta_ai",
+                        "full_name": "Meta AI",
+                        "profile_pic_url": "https://example.com/meta.jpg",
+                    }
+                ],
+                "status": "ok",
+            }
+        )
+
+        result = await client.direct_search_gen_ai_bots(amount=5)
+
+        assert len(result) == 1
+        assert result[0].username == "meta_ai"
+        client.private_request.assert_awaited_once_with(
+            "direct_v2/search_gen_ai_bots/",
+            params={"num_ai_bots": "5"},
+        )
+
+    async def test_direct_channels_uses_authenticated_user_by_default(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value={"all_channels_list": [{"thread_id": "123"}], "status": "ok"})
+
+        result = await client.direct_channels()
+
+        assert result == [{"thread_id": "123"}]
+        client.private_request.assert_awaited_once_with(
+            "direct_v2/get_all_channels/",
+            params={"user_id": "1", "thread_subtypes": "[29]"},
+        )
+
+    async def test_direct_set_e2ee_eligibility_posts_unsigned_value(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.direct_set_e2ee_eligibility(4)
+
+        assert result is True
+        client.private_request.assert_awaited_once_with(
+            "direct_v2/set_e2ee_eligibility/",
+            data={"_uuid": "uuid-1", "e2ee_eligibility": "4"},
+            with_signature=False,
+        )
+
     async def test_direct_request_approve_delegates_to_pending_approve(self):
         client = _build_client()
         client.direct_pending_approve = AsyncMock(return_value=True)

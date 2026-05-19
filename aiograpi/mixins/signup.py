@@ -3,12 +3,14 @@ import base64
 import random
 import secrets
 import time
+from typing import Optional
 from urllib.parse import urlsplit
 from uuid import uuid4
 
 from aiograpi.exceptions import (
     AgeEligibilityError,
     CaptchaChallengeRequired,
+    ChallengeRequired,
     ClientError,
     EmailInvalidError,
     EmailNotAvailableError,
@@ -125,7 +127,7 @@ class SignUpMixin(ClientMixin):
                 raise InvalidNonce(data["errors"]["nonce"][0])
             if data.get("message") != "challenge_required":
                 break  # SUCCESS EXIT
-            if await self.challenge_flow(data["challenge"]):
+            if await self.challenge_flow(data["challenge"], phone_number=phone_number, username=username):
                 kwargs.update({"suggestedUsername": "", "sn_result": "MLA"})
             retries += 1
         self.authorization_data = self.parse_authorization(self.last_response.headers.get("ig-set-authorization"))
@@ -262,18 +264,43 @@ class SignUpMixin(ClientMixin):
             )
         return await self.private_request(endpoint, data)
 
-    async def challenge_flow(self, data):
+    async def challenge_flow(
+        self,
+        data,
+        phone_number: str = "",
+        username: str = "",
+        wait_seconds: Optional[int] = None,
+        attempts: int = 10,
+    ) -> bool:
         data = await self.challenge_api(data)
-        while True:
+        wait_seconds = self.wait_seconds if wait_seconds is None else wait_seconds
+        username = username or getattr(self, "username", "")
+
+        for _ in range(10):
+            if data.get("status") == "ok":
+                return True
             if data.get("message") == "challenge_required":
                 data = await self.challenge_captcha(data["challenge"])
                 continue
-            elif data.get("challengeType") == "SubmitPhoneNumberForm":
-                data = await self.challenge_submit_phone_number(data)
+            if data.get("challengeType") == "SubmitPhoneNumberForm":
+                if not phone_number:
+                    raise ClientError("phone_number is required for signup SMS challenge")
+                data = await self.challenge_submit_phone_number(data, phone_number)
                 continue
-            elif data.get("challengeType") == "VerifySMSCodeFormForSMSCaptcha":
-                data = await self.challenge_verify_sms_captcha(data)
+            if data.get("challengeType") == "VerifySMSCodeFormForSMSCaptcha":
+                security_code = ""
+                for attempt in range(1, attempts + 1):
+                    security_code = await self.challenge_code_handler(username, ChallengeChoice.SMS)
+                    if security_code:
+                        break
+                    if wait_seconds:
+                        await asyncio.sleep(wait_seconds * attempt)
+                if not security_code:
+                    raise ChallengeRequired("SMS code required for signup challenge")
+                data = await self.challenge_verify_sms_captcha(data, security_code)
                 continue
+            raise ClientError(f"Unsupported signup challenge step: {data}")
+        raise ClientError(f"Signup challenge flow did not complete: {data}")
 
     async def challenge_api(self, data):
         resp = await self.private.get(

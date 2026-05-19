@@ -402,3 +402,74 @@ class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert configure_extra["share_to_fb_destination_type"] == "USER"
         assert configure_extra["share_to_facebook_reels"] is True
         assert configure_extra["xpost_surface"] == "IG_REELS_COMPOSER"
+
+    async def test_clip_music_extra_data_builds_reels_music_payload_from_dict(self):
+        client = _build_client()
+        track = {
+            "id": "track-id",
+            "audio_cluster_id": "cluster-id",
+            "highlight_start_times_in_ms": [40500],
+            "title": "Runaway",
+            "display_artist": "AURORA",
+            "music_canonical_id": "canonical-id",
+        }
+
+        result = client.clip_music_extra_data(track, overlap_duration=34000)
+
+        assert result["clips_audio_metadata"] == {
+            "original": {"volume_level": 1.0},
+            "song": {
+                "volume_level": 1.0,
+                "is_saved": "0",
+                "artist_name": "AURORA",
+                "audio_asset_id": "track-id",
+                "audio_cluster_id": "cluster-id",
+                "track_name": "Runaway",
+                "is_picked_precapture": "1",
+                "music_canonical_id": "canonical-id",
+            },
+        }
+        assert result["music_params"] == {
+            "audio_asset_id": "track-id",
+            "audio_cluster_id": "cluster-id",
+            "audio_asset_start_time_in_ms": 40500,
+            "derived_content_start_time_in_ms": 0,
+            "overlap_duration_in_ms": 34000,
+            "product": "story_camera_clips_v2",
+            "song_name": "Runaway",
+            "artist_name": "AURORA",
+            "alacorn_session_id": "null",
+            "music_canonical_id": "canonical-id",
+        }
+
+    async def test_clip_upload_with_music_adds_reels_music_metadata_without_mutating_extra_data(self):
+        client = _build_client()
+        extra_data = {"disable_comments": 1}
+        track = {
+            "id": "track-id",
+            "audio_cluster_id": "cluster-id",
+            "highlight_start_times_in_ms": [1500],
+            "title": "Track title",
+            "display_artist": "Artist",
+        }
+        client.clip_upload = AsyncMock(return_value="uploaded")
+
+        result = await client.clip_upload_with_music(
+            Path("clip.mp4"),
+            "caption",
+            track,
+            extra_data=extra_data,
+            overlap_duration=2500,
+        )
+
+        assert result == "uploaded"
+        assert extra_data == {"disable_comments": 1}
+        client.clip_upload.assert_awaited_once()
+        assert client.clip_upload.call_args.args[:2] == (Path("clip.mp4"), "caption")
+        upload_extra = client.clip_upload.call_args.kwargs["extra_data"]
+        assert upload_extra["disable_comments"] == 1
+        assert upload_extra["music_params"]["audio_asset_id"] == "track-id"
+        assert upload_extra["music_params"]["audio_cluster_id"] == "cluster-id"
+        assert upload_extra["music_params"]["audio_asset_start_time_in_ms"] == 1500
+        assert upload_extra["music_params"]["overlap_duration_in_ms"] == 2500
+        assert "clips_audio_metadata" in upload_extra

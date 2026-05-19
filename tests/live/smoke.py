@@ -227,6 +227,17 @@ async def main():
                 "private_graphql_update_inbox_tray_last_seen",
                 lambda: cl.private_graphql_update_inbox_tray_last_seen(),
             ),
+            (
+                "direct_pending_requests_preview",
+                lambda: cl.direct_pending_requests_preview(),
+            ),
+            ("direct_has_interop_upgraded", lambda: cl.direct_has_interop_upgraded()),
+            ("direct_search_gen_ai_bots", lambda: cl.direct_search_gen_ai_bots(amount=2)),
+            ("direct_channels", lambda: cl.direct_channels()),
+            ("music_verify_original_audio_title", lambda: cl.music_verify_original_audio_title("Original Audio")),
+            ("music_trending", lambda: cl.music_trending()),
+            ("music_search_v2", lambda: cl.music_search_v2("love")),
+            ("music_clips_audio_browser", lambda: cl.music_clips_audio_browser()),
         ]:
             opt_total += 1
             try:
