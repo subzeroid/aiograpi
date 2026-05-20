@@ -43,7 +43,7 @@ Features:
 * Getting public data of hashtag and location data, as well as a list of posts for them
 * Getting public data of all comments on a post and a list of users who liked it
 * Management of proxy servers, mobile devices and challenge resolver
-* Login by username and password, sessionid, 2FA, and Bloks 2FA fallback/helpers
+* Login by username and password, sessionid, 2FA, 8-digit backup codes, and Bloks 2FA fallback/helpers
 * Managing messages, reactions and threads for Direct and attach files
 * Download and upload a Photo, Video, IGTV, Reels, Albums, Stories and Trial Reels
 * Work with Users, Posts, Comments, Insights, Collections, Location and Hashtag
@@ -65,7 +65,7 @@ Support chat in Telegram: https://t.me/aiograpi_support
 ## Features
 
 1. Performs [Web API](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/) or [Mobile API](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/) requests depending on the situation (to avoid Instagram limits)
-2. [Login](https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/) by username and password, including 2FA, [Bloks 2FA](https://subzeroid.github.io/aiograpi/latest/usage-guide/totp/#bloks-two-factor-flow) fallback/helpers, and by sessionid (and uses Authorization header instead Cookies)
+2. [Login](https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/) by username and password, including 2FA, 8-digit backup codes, [Bloks 2FA](https://subzeroid.github.io/aiograpi/latest/usage-guide/totp/#bloks-two-factor-flow) fallback/helpers, and by sessionid (and uses Authorization header instead Cookies)
 3. [Challenge Resolver](https://subzeroid.github.io/aiograpi/latest/usage-guide/challenge_resolver/) have Email and SMS handlers
 4. Support [upload](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/) a Photo, Video, IGTV, Reels, Albums and Stories
 5. Support work with [User](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/), [Media](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/), [Comment](https://subzeroid.github.io/aiograpi/latest/usage-guide/comment/), [Insights](https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/), [Collections](https://subzeroid.github.io/aiograpi/latest/usage-guide/collection/), [Location](https://subzeroid.github.io/aiograpi/latest/usage-guide/location/) (Place), [Hashtag](https://subzeroid.github.io/aiograpi/latest/usage-guide/hashtag/) and [Direct Message](https://subzeroid.github.io/aiograpi/latest/usage-guide/direct/) objects

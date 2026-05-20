@@ -33,7 +33,7 @@ For any other languages (e.g. C++, C#, F#, D, [Golang](https://github.com/subzer
 ## Features
 
 1. Performs [Public API](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/) (web, anonymous) or [Private API](https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/) (mobile app, authorized) requests depending on the situation (to avoid Instagram limits)
-2. [Login](https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/) by username and password, including 2FA, [Bloks 2FA](usage-guide/totp.md#bloks-two-factor-flow) fallback/helpers, and by sessionid
+2. [Login](https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/) by username and password, including 2FA, 8-digit backup codes, [Bloks 2FA](usage-guide/totp.md#bloks-two-factor-flow) fallback/helpers, and by sessionid
 3. [Challenge Resolver](https://subzeroid.github.io/aiograpi/latest/usage-guide/challenge_resolver/) have Email and SMS handlers
 4. Support [upload](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/) a Photo, Video, IGTV, Reels, Albums, Stories and Trial Reels
 5. Support work with [User](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/), [Media](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/), [Comment](https://subzeroid.github.io/aiograpi/latest/usage-guide/comment/), [Insights](https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/), [Collections](https://subzeroid.github.io/aiograpi/latest/usage-guide/collection/), [Location](https://subzeroid.github.io/aiograpi/latest/usage-guide/location/) (Place), [Hashtag](https://subzeroid.github.io/aiograpi/latest/usage-guide/hashtag/) and [Direct Message](https://subzeroid.github.io/aiograpi/latest/usage-guide/direct/) objects
