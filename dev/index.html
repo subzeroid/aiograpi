@@ -1516,7 +1516,7 @@ pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="
 <h2 id="features">Features</h2>
 <ol>
 <li>Performs <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/">Public API</a> (web, anonymous) or <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/fundamentals/">Private API</a> (mobile app, authorized) requests depending on the situation (to avoid Instagram limits)</li>
-<li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/">Login</a> by username and password, including 2FA, low-level <a href="usage-guide/totp/#bloks-two-factor-flow">Bloks 2FA</a> helpers, and by sessionid</li>
+<li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/interactions/">Login</a> by username and password, including 2FA, <a href="usage-guide/totp/#bloks-two-factor-flow">Bloks 2FA</a> fallback/helpers, and by sessionid</li>
 <li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/challenge_resolver/">Challenge Resolver</a> have Email and SMS handlers</li>
 <li>Support <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/media/">upload</a> a Photo, Video, IGTV, Reels, Albums, Stories and Trial Reels</li>
 <li>Support work with <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/user/">User</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/media/">Media</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/comment/">Comment</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/">Insights</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/collection/">Collections</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/location/">Location</a> (Place), <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/hashtag/">Hashtag</a> and <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/direct/">Direct Message</a> objects</li>
@@ -1581,7 +1581,7 @@ pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="
 <li><a href="usage-guide/media/"><code>Resource</code></a> - Part of Media (for albums)</li>
 <li><a href="usage-guide/media/"><code>MediaOembed</code></a> - Short version of Media</li>
 <li><a href="usage-guide/account/"><code>Account</code></a> - Full private info for your account (e.g. email, phone_number)</li>
-<li><a href="usage-guide/totp/"><code>TOTP</code></a> - 2FA TOTP helpers, code generation, and low-level Bloks verification helpers</li>
+<li><a href="usage-guide/totp/"><code>TOTP</code></a> - 2FA TOTP helpers, code generation, and Bloks verification fallback/helpers</li>
 <li><a href="usage-guide/user/"><code>User</code></a> - Full public user data</li>
 <li><a href="usage-guide/user/"><code>UserShort</code></a> - Short public user data (used in Usertag, Comment, Media, Direct Message)</li>
 <li><a href="usage-guide/user/"><code>Usertag</code></a> - Tag user in Media (coordinates + UserShort)</li>
