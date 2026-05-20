@@ -8,6 +8,18 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-05-20
+
+### Added
+
+- Added async `confirm_email(email, code)` for confirming profile email changes
+  when Instagram sends a numeric email confirmation code after
+  `send_confirm_email(...)`.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.7.8.
+
 ## [1.0.7] - 2026-05-20
 
 ### Added
@@ -1451,6 +1463,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[1.0.8]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.8
 [1.0.7]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.7
 [1.0.6]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.6
 [1.0.5]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.5
