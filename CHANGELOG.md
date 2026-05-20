@@ -8,6 +8,15 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-05-20
+
+### Added
+
+- Added async low-level Bloks two-factor helpers for newer login verification
+  flows.
+- Added async submit-phone login challenge support for accounts that receive
+  `challenge_required` with a phone collection step.
+
 ### Fixed
 
 - Mirrored the current `media_comment()` write payload from `instagrapi`,
@@ -21,8 +30,10 @@ starting with 1.0.0.
 
 - Added a manual live workflow target for comment writes and updated the live
   comment test to upload/read back/cleanup its own media fixture.
+- Verified uploaded Reel music metadata in live upload tests.
 - Documented that comment creation is still an Instagram trust-checked write
   action even with current request metadata.
+- Synced the recorded upstream baseline to `instagrapi` 2.7.4.
 
 ## [1.0.3] - 2026-05-19
 
@@ -1400,6 +1411,8 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[1.0.4]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.4
+[1.0.3]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.3
 [1.0.2]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.2
 [1.0.1]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.1
 [1.0.0]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.0

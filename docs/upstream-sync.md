@@ -7,13 +7,15 @@ ported through.
 The current recorded API baseline is:
 
 ```text
-instagrapi 2.7.3
+instagrapi 2.7.4
 ```
 
-`aiograpi 1.0.3` includes the video dependency split, MoviePy 2 helper migration, Reel Facebook cross-post payload
+`aiograpi 1.0.4` includes the video dependency split, MoviePy 2 helper migration, Reel Facebook cross-post payload
 follow-up, client TLS verification setting, public A1 API removal, current flow request metadata alignment, and social
 action payload updates from `instagrapi` through 2.7.1, the async Direct/music/signup sync through 2.7.2, and the story
-upload read-back fallback from 2.7.3.
+upload read-back fallback from 2.7.3. It also includes the submit-phone challenge step, refreshed comment action
+metadata, upload read-back/live-test hardening, Reel music live read-back verification, and low-level Bloks two-factor
+helpers from 2.7.4.
 
 ## Release policy
 
@@ -24,7 +26,7 @@ upload read-back fallback from 2.7.3.
 For the 2026-05 sync, the public releases are `aiograpi 0.9.0` and newer.
 `aiograpi 0.9.0` synced through `instagrapi 2.5.18`, and subsequent
 `aiograpi 0.9.x` patch releases continued that baseline through `instagrapi 2.6.8`, plus targeted maintenance
-ports. `aiograpi 1.0.3` records the current SemVer baseline synced through `instagrapi 2.7.3`.
+ports. `aiograpi 1.0.4` records the current SemVer baseline synced through `instagrapi 2.7.4`.
 
 ## Porting rules
 
