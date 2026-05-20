@@ -44,6 +44,8 @@ await cl.login(IG_USERNAME, IG_PASSWORD)
 Login `submit_phone` challenges use `client.phone_number`, then call `challenge_code_handler(username, ChallengeChoice.SMS)` for the received code.
 Signup SMS challenges use the `phone_number` passed to `signup(...)` and call `challenge_code_handler(username, ChallengeChoice.SMS)` for the received code.
 
+`signup(...)` uses Instagram's legacy account-create flow. On modern Instagram app versions this flow is often rejected with `SignupSpamError` / `feedback_required` because the official app uses additional signup checks that aiograpi does not currently generate. Treat this as a platform rejection, not as a malformed SMS/email code.
+
 For example, you can get the code through the IMAP of Gmail:
 
 ``` python
