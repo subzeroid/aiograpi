@@ -21,6 +21,7 @@ from aiograpi import Client
 from aiograpi.exceptions import (
     AlbumConfigureError,
     BadCredentials,
+    BadPassword,
     ChallengeError,
     ChallengeRedirection,
     ChallengeRequired,
@@ -1229,6 +1230,116 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("Bloks-based two-factor verification flow", str(cm.exception))
         self.assertEqual(client.private_request.call_count, 2)
+
+    async def test_login_two_factor_invalid_parameters_falls_back_to_bloks_when_context_available(self):
+        client = Client()
+        client.username = "example"
+        client.password = "password"
+        client.authorization_data = {}
+        client.uuid = "uuid-1"
+        client.phone_id = "phone-1"
+        client.android_device_id = "android-1"
+        client._token = "csrftoken"
+        client.last_json = {
+            "two_factor_info": {
+                "two_factor_identifier": "two-factor-id",
+                "two_step_verification_context": "context-1",
+                "totp_two_factor_on": True,
+                "sms_two_factor_on": False,
+            }
+        }
+        client.pre_login_flow = AsyncMock(return_value=True)
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+        client.login_flow = AsyncMock()
+        client.private_request = AsyncMock(
+            side_effect=[
+                TwoFactorRequired("Two-factor authentication required"),
+                UnknownError("Invalid Parameters", response=Mock(status_code=400)),
+            ]
+        )
+        client.bloks_two_step_verification_entrypoint = AsyncMock(return_value={"status": "ok"})
+        client.bloks_two_step_verification_method_picker = AsyncMock(return_value={"status": "ok"})
+        client.bloks_two_step_verification_select_method = AsyncMock(return_value={"status": "ok"})
+        client.bloks_two_step_verification_verify_code = AsyncMock(return_value={"layout": {}})
+        client.bloks_apply_login_response = Mock(return_value=True)
+
+        result = await client.login(verification_code="123456")
+
+        self.assertTrue(result)
+        self.assertEqual(client.private_request.call_count, 2)
+        client.bloks_two_step_verification_entrypoint.assert_awaited_once_with("context-1")
+        client.bloks_two_step_verification_method_picker.assert_awaited_once_with("context-1")
+        client.bloks_two_step_verification_select_method.assert_awaited_once_with(
+            "context-1",
+            selected_method="totp",
+        )
+        client.bloks_two_step_verification_verify_code.assert_awaited_once_with(
+            "context-1",
+            "123456",
+            challenge="totp",
+        )
+        client.bloks_apply_login_response.assert_called_once_with({"layout": {}})
+        client.login_flow.assert_awaited_once_with()
+
+    async def test_login_two_factor_invalid_parameters_without_context_keeps_clear_error(self):
+        client = Client()
+        client.username = "example"
+        client.password = "password"
+        client.authorization_data = {}
+        client.uuid = "uuid-1"
+        client.phone_id = "phone-1"
+        client.android_device_id = "android-1"
+        client._token = "csrftoken"
+        client.last_json = {"two_factor_info": {"two_factor_identifier": "two-factor-id"}}
+        client.pre_login_flow = AsyncMock(return_value=True)
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+        client.private_request = AsyncMock(
+            side_effect=[
+                TwoFactorRequired("Two-factor authentication required"),
+                UnknownError("Invalid Parameters", response=Mock(status_code=400)),
+            ]
+        )
+        client.bloks_two_step_verification_verify_code = AsyncMock()
+
+        with self.assertRaises(TwoFactorRequired) as cm:
+            await client.login(verification_code="123456")
+
+        self.assertIn("two_step_verification_context", str(cm.exception))
+        client.bloks_two_step_verification_verify_code.assert_not_called()
+
+    async def test_login_bad_password_with_bloks_context_and_code_falls_back_to_bloks(self):
+        client = Client()
+        client.username = "example"
+        client.password = "password"
+        client.authorization_data = {}
+        client.last_json = {
+            "two_step_verification_context": "context-1",
+            "sms_two_factor_on": True,
+            "totp_two_factor_on": False,
+        }
+        client.pre_login_flow = AsyncMock(return_value=True)
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+        client.login_flow = AsyncMock()
+        client.private_request = AsyncMock(side_effect=BadPassword("Bad Password", response=Mock(status_code=400)))
+        client.bloks_two_step_verification_entrypoint = AsyncMock(return_value={"status": "ok"})
+        client.bloks_two_step_verification_method_picker = AsyncMock(return_value={"status": "ok"})
+        client.bloks_two_step_verification_select_method = AsyncMock(return_value={"status": "ok"})
+        client.bloks_two_step_verification_verify_code = AsyncMock(return_value={"layout": {}})
+        client.bloks_apply_login_response = Mock(return_value=True)
+
+        result = await client.login(verification_code="654321")
+
+        self.assertTrue(result)
+        client.bloks_two_step_verification_select_method.assert_awaited_once_with(
+            "context-1",
+            selected_method="sms",
+        )
+        client.bloks_two_step_verification_verify_code.assert_awaited_once_with(
+            "context-1",
+            "654321",
+            challenge="sms",
+        )
+        client.login_flow.assert_awaited_once_with()
 
     async def test_login_by_sessionid_falls_back_to_user_short_gql(self):
         client = Client()
