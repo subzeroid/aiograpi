@@ -2,11 +2,67 @@ import unittest
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
-from aiograpi.exceptions import ChallengeRequired, ClientError
+from aiograpi.exceptions import ChallengeRequired, ClientError, FeedbackRequired, SignupSpamError
 from aiograpi.mixins.challenge import ChallengeChoice
 
 
 class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_accounts_create_primary_signup_omits_secondary_account_flag(self):
+        client = Client()
+        client.phone_id = "phone-id"
+        client.uuid = "uuid"
+        client.android_device_id = "android-id"
+        client.adid = "adid"
+        client.waterfall_id = "waterfall-id"
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+        client.private_request = AsyncMock(return_value={"created_user": {"pk": "1"}})
+
+        result = await client.accounts_create(
+            username="example",
+            password="password",
+            email="addr@example.com",
+            email_code="signup-code",
+            full_name="Example User",
+            year=2000,
+            month=5,
+            day=12,
+        )
+
+        self.assertEqual(result, {"created_user": {"pk": "1"}})
+        data = client.private_request.call_args.args[1]
+        self.assertNotIn("is_secondary_account_creation", data)
+        self.assertEqual(data["username"], "example")
+        self.assertEqual(data["force_sign_up_code"], "signup-code")
+        client.private_request.assert_awaited_once()
+
+    async def test_accounts_create_spam_feedback_raises_signup_specific_error(self):
+        client = Client()
+        client.phone_id = "phone-id"
+        client.uuid = "uuid"
+        client.android_device_id = "android-id"
+        client.adid = "adid"
+        client.waterfall_id = "waterfall-id"
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+        client.private_request = AsyncMock(
+            side_effect=FeedbackRequired(
+                message="feedback_required: Try Again Later",
+                feedback_message="We limit how often you can do certain things on Instagram.",
+                spam=True,
+            )
+        )
+
+        with self.assertRaises(SignupSpamError) as ctx:
+            await client.accounts_create(
+                username="example",
+                password="password",
+                email="addr@example.com",
+                email_code="signup-code",
+            )
+
+        self.assertIn("legacy signup flow", str(ctx.exception))
+        self.assertTrue(ctx.exception.spam)
+        self.assertEqual(ctx.exception.feedback_message, "We limit how often you can do certain things on Instagram.")
+
     async def test_challenge_api_rejects_external_api_path(self):
         client = Client()
         client.uuid = "uuid"

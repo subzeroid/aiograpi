@@ -15,7 +15,9 @@ from aiograpi.exceptions import (
     EmailInvalidError,
     EmailNotAvailableError,
     EmailVerificationSendError,
+    FeedbackRequired,
     InvalidNonce,
+    SignupSpamError,
 )
 from aiograpi.extractors import extract_user_short
 from aiograpi.mixins.base import ClientMixin
@@ -209,7 +211,6 @@ class SignUpMixin(ClientMixin):
         self.username = username
         self.password = password
         data = {
-            "is_secondary_account_creation": "true",
             "jazoest": str(random.randint(22300, 22399)),
             "tos_version": "row",
             "suggestedUsername": "",
@@ -252,17 +253,27 @@ class SignUpMixin(ClientMixin):
             nonce_bytes = secrets.token_bytes(24)
             nonce = f"{phone_number}|{timestamp}|".encode() + nonce_bytes
             sn_nonce = base64.encodebytes(nonce).decode().strip()
-            data = dict(
-                data,
-                **{
-                    "phone_number": phone_number,
-                    "is_secondary_account_creation": ("true" if data.get("logged_in_user_id") else "false"),
-                    "verification_code": phone_code,
-                    "force_sign_up_code": "",
-                    "has_sms_consent": "true",
-                },
-            )
-        return await self.private_request(endpoint, data)
+            phone_data = {
+                "phone_number": phone_number,
+                "verification_code": phone_code,
+                "force_sign_up_code": "",
+                "has_sms_consent": "true",
+            }
+            if data.get("logged_in_user_id"):
+                phone_data["is_secondary_account_creation"] = "true"
+            data = dict(data, **phone_data)
+        try:
+            return await self.private_request(endpoint, data)
+        except FeedbackRequired as exc:
+            if getattr(exc, "spam", False):
+                details = vars(exc).copy()
+                details.pop("message", None)
+                raise SignupSpamError(
+                    "Instagram rejected the legacy signup flow as spam. "
+                    "Modern app signup uses additional device trust checks that aiograpi does not currently generate.",
+                    **details,
+                ) from exc
+            raise
 
     async def challenge_flow(
         self,
