@@ -17,6 +17,7 @@ on:
         options:
           - smoke
           - comment
+          - signup
           - all
 
 env:
@@ -146,6 +147,13 @@ jobs:
         python-version: [ "3.10" ]
     env:
       TEST_ACCOUNTS_URL: ${{ secrets.TEST_ACCOUNTS_URL }}
+      IG_SIGNUP_EMAIL: ${{ secrets.IG_SIGNUP_EMAIL }}
+      IG_SIGNUP_EMAIL_COMMAND: ${{ secrets.IG_SIGNUP_EMAIL_COMMAND }}
+      IG_SIGNUP_EMAIL_CODE: ${{ secrets.IG_SIGNUP_EMAIL_CODE }}
+      IG_SIGNUP_EMAIL_CODE_COMMAND: ${{ secrets.IG_SIGNUP_EMAIL_CODE_COMMAND }}
+      IG_SIGNUP_PHONE_NUMBER: ${{ secrets.IG_SIGNUP_PHONE_NUMBER }}
+      IG_SIGNUP_SMS_CODE: ${{ secrets.IG_SIGNUP_SMS_CODE }}
+      IG_SIGNUP_SMS_CODE_COMMAND: ${{ secrets.IG_SIGNUP_SMS_CODE_COMMAND }}
     steps:
       - name: Check out code
         uses: actions/checkout@v6
@@ -183,6 +191,9 @@ jobs:
             exit 0
           fi
           PYTHONPATH=. pytest -sv tests/legacy.py::ClientCommentExtendTestCase::test_media_comment
+      - name: Run signup live tests
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.test_target == 'signup' || github.event.inputs.test_target == 'all')
+        run: PYTHONPATH=. pytest -sv tests/live/test_signup_live.py::SignUpTestCase
 
   build-docs:
     runs-on: ubuntu-latest
