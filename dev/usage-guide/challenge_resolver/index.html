@@ -1391,6 +1391,7 @@
 </code></pre></div>
 <p>Login <code>submit_phone</code> challenges use <code>client.phone_number</code>, then call <code>challenge_code_handler(username, ChallengeChoice.SMS)</code> for the received code.
 Signup SMS challenges use the <code>phone_number</code> passed to <code>signup(...)</code> and call <code>challenge_code_handler(username, ChallengeChoice.SMS)</code> for the received code.</p>
+<p><code>signup(...)</code> uses Instagram's legacy account-create flow. On modern Instagram app versions this flow is often rejected with <code>SignupSpamError</code> / <code>feedback_required</code> because the official app uses additional signup checks that aiograpi does not currently generate. Treat this as a platform rejection, not as a malformed SMS/email code.</p>
 <p>For example, you can get the code through the IMAP of Gmail:</p>
 <div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_code_from_email</span><span class="p">(</span><span class="n">username</span><span class="p">):</span>
     <span class="n">mail</span> <span class="o">=</span> <span class="n">imaplib</span><span class="o">.</span><span class="n">IMAP4_SSL</span><span class="p">(</span><span class="s2">&quot;imap.gmail.com&quot;</span><span class="p">)</span>
