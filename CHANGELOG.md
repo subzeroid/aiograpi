@@ -8,6 +8,20 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-05-20
+
+### Added
+
+- Added async Bloks backup-code support for
+  `Client.login(..., verification_code=...)`, including 8-digit codes copied as
+  `1234 5678`.
+- Added `bloks_two_step_verification_enter_backup_code(...)` for manual
+  backup-code verification flows.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.7.7.
+
 ## [1.0.6] - 2026-05-20
 
 ### Added
@@ -1437,6 +1451,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[1.0.7]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.7
 [1.0.6]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.6
 [1.0.5]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.5
 [1.0.4]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.4
