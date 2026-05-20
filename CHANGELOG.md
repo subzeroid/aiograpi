@@ -8,11 +8,17 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-05-20
+
 ### Added
 
 - Added automatic async Bloks two-factor login fallback for
   `Client.login(..., verification_code=...)` when Instagram provides
   `two_step_verification_context`.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.7.5.
 
 ## [1.0.4] - 2026-05-20
 
@@ -1417,6 +1423,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[1.0.5]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.5
 [1.0.4]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.4
 [1.0.3]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.3
 [1.0.2]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.2
