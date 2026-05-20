@@ -8,6 +8,20 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-05-20
+
+### Added
+
+- Added automatic async CAA/Bloks login fallback for
+  `Client.login(..., verification_code=...)` when legacy login does not expose
+  `two_step_verification_context` directly.
+- Added low-level async helpers for inspecting CAA/Bloks login responses and
+  extracting the returned two-factor context.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.7.6.
+
 ## [1.0.5] - 2026-05-20
 
 ### Added
@@ -1423,6 +1437,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[1.0.6]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.6
 [1.0.5]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.5
 [1.0.4]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.4
 [1.0.3]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.3
