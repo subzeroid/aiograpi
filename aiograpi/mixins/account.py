@@ -333,6 +333,26 @@ class AccountMixin(ClientMixin):
             self.with_extra_data({"send_source": "personal_information", "email": email}),
         )
 
+    async def confirm_email(self, email: str, code: str) -> dict:
+        """
+        Confirm new email address by code
+
+        Parameters
+        ----------
+        email: str
+            Email address
+        code: str
+            Confirmation code
+
+        Returns
+        -------
+        dict
+        """
+        return await self.private_request(
+            "accounts/verify_email_code/",
+            self.with_extra_data({"email": email, "code": code}),
+        )
+
     async def send_confirm_phone_number(self, phone_number: str) -> dict:
         """
         Send confirmation code to new phone number

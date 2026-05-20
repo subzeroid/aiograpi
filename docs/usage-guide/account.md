@@ -8,6 +8,7 @@ Viewing and managing your profile
 | account_edit(email: str, phone_number: str, username: str, full_name: str, biography: str, external_url: str) | Account | Change profile data
 | account_change_picture(path: Path)           | UserShort | Change Profile picture
 | send_confirm_email(email: str)               | dict      | Send confirmation code to new email address
+| confirm_email(email: str, code: str)         | dict      | Confirm a new email address with the received code
 | send_confirm_phone_number(phone_number: str) | dict      | Send confirmation code to new phone number
 
 Example:
@@ -51,6 +52,9 @@ UserShort(pk=1903424587, username='example', ...)
     'error_type': 'email_unchanged',
     'status': 'ok'
 }
+
+>>> await cl.confirm_email("addr@example.com", "123456")
+{'status': 'ok'}
 
 >>> await cl.send_confirm_phone_number("+5599999999")
 {
