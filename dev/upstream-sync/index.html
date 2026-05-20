@@ -1387,14 +1387,14 @@
 independent, but every sync release records the <code>instagrapi</code> tag it has been
 ported through.</p>
 <p>The current recorded API baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 2.7.4
+<div class="highlight"><pre><span></span><code>instagrapi 2.7.5
 </code></pre></div>
-<p><code>aiograpi 1.0.4</code> includes the video dependency split, MoviePy 2 helper migration, Reel Facebook cross-post payload
+<p><code>aiograpi 1.0.5</code> includes the video dependency split, MoviePy 2 helper migration, Reel Facebook cross-post payload
 follow-up, client TLS verification setting, public A1 API removal, current flow request metadata alignment, and social
 action payload updates from <code>instagrapi</code> through 2.7.1, the async Direct/music/signup sync through 2.7.2, and the story
 upload read-back fallback from 2.7.3. It also includes the submit-phone challenge step, refreshed comment action
 metadata, upload read-back/live-test hardening, Reel music live read-back verification, and low-level Bloks two-factor
-helpers from 2.7.4.</p>
+helpers from 2.7.4, plus the automatic Bloks two-factor login fallback from 2.7.5.</p>
 <h2 id="release-policy">Release policy</h2>
 <ul>
 <li>Use one <code>aiograpi</code> feature release for a large upstream sync.</li>
@@ -1404,7 +1404,7 @@ helpers from 2.7.4.</p>
 <p>For the 2026-05 sync, the public releases are <code>aiograpi 0.9.0</code> and newer.
 <code>aiograpi 0.9.0</code> synced through <code>instagrapi 2.5.18</code>, and subsequent
 <code>aiograpi 0.9.x</code> patch releases continued that baseline through <code>instagrapi 2.6.8</code>, plus targeted maintenance
-ports. <code>aiograpi 1.0.4</code> records the current SemVer baseline synced through <code>instagrapi 2.7.4</code>.</p>
+ports. <code>aiograpi 1.0.5</code> records the current SemVer baseline synced through <code>instagrapi 2.7.5</code>.</p>
 <h2 id="porting-rules">Porting rules</h2>
 <ul>
 <li>Preserve the async public API.</li>
