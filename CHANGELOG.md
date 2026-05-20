@@ -8,6 +8,12 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added automatic async Bloks two-factor login fallback for
+  `Client.login(..., verification_code=...)` when Instagram provides
+  `two_step_verification_context`.
+
 ## [1.0.4] - 2026-05-20
 
 ### Added
