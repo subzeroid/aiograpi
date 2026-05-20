@@ -1,12 +1,25 @@
+import importlib.util
 import os
 import subprocess
 import unittest
+from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
 from aiograpi.exceptions import ChallengeRequired, ClientError, FeedbackRequired, SignupSpamError
 from aiograpi.mixins.challenge import ChallengeChoice
-from tests.live.test_signup_live import SignUpTestCase
+
+
+def _load_live_signup_module():
+    signup_path = Path(__file__).resolve().parents[1] / "live" / "test_signup_live.py"
+    spec = importlib.util.spec_from_file_location("aiograpi_live_signup", signup_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+LIVE_SIGNUP_MODULE = _load_live_signup_module()
+SignUpTestCase = LIVE_SIGNUP_MODULE.SignUpTestCase
 
 
 class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -336,7 +349,7 @@ class SignupLiveHelperRegressionTestCase(unittest.TestCase):
         completed = subprocess.CompletedProcess(args="email-command", returncode=0, stdout="fresh@example.test\n")
 
         with unittest.mock.patch.dict(os.environ, {"IG_SIGNUP_EMAIL_COMMAND": "email-command"}, clear=True):
-            with unittest.mock.patch("tests.live.test_signup_live.subprocess.run", return_value=completed) as run:
+            with unittest.mock.patch.object(LIVE_SIGNUP_MODULE.subprocess, "run", return_value=completed) as run:
                 email = case.signup_email("freshuser")
 
         self.assertEqual(email, "fresh@example.test")
@@ -347,7 +360,7 @@ class SignupLiveHelperRegressionTestCase(unittest.TestCase):
         completed = subprocess.CompletedProcess(args="code-command", returncode=0, stdout="123456\n")
 
         with unittest.mock.patch.dict(os.environ, {"IG_SIGNUP_EMAIL_CODE_COMMAND": "code-command"}, clear=True):
-            with unittest.mock.patch("tests.live.test_signup_live.subprocess.run", return_value=completed) as run:
+            with unittest.mock.patch.object(LIVE_SIGNUP_MODULE.subprocess, "run", return_value=completed) as run:
                 code = case.signup_code_handler(
                     "IG_SIGNUP_EMAIL_CODE",
                     "IG_SIGNUP_EMAIL_CODE_COMMAND",
