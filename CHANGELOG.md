@@ -8,6 +8,18 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-05-21
+
+### Added
+
+- Added async `send_password_reset(identifier, recaptcha_challenge_field="")` to request an Instagram password reset link or code by username, email, or phone.
+
+### Changed
+
+- Kept `reset_password(username)` as a backward-compatible alias for `send_password_reset(...)`.
+- Routed password reset requests through the configured public request session so proxy, TLS verification, retry, transport, and logging settings are reused.
+- Synced the recorded upstream baseline to `instagrapi` 2.7.9.
+
 ## [1.0.8] - 2026-05-20
 
 ### Added
@@ -1463,6 +1475,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[1.0.9]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.9
 [1.0.8]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.8
 [1.0.7]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.7
 [1.0.6]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.6
