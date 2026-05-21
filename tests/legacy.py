@@ -2363,6 +2363,21 @@ class ClientCommentExtendTestCase(ClientPrivateTestCase):
         for field in ["pk", "username", "full_name", "profile_pic_url"]:
             self.assertIn(field, user_fields)
 
+    async def test_comment_pin_and_unpin(self):
+        text = "Pin live fixture [%s]" % datetime.now().strftime("%s")
+        caption_text = "Comment pin media fixture [%s]" % datetime.now().strftime("%s")
+        path = self.copy_media_fixture("examples/kanada.jpg")
+        self.addCleanup(cleanup, path)
+        media = await self.cl.photo_upload(path, caption_text)
+        self.addAsyncCleanup(self.cleanup_media, media.id)
+        await self.assertUploadedMediaAccessible(media, media_type=1, caption_text=caption_text)
+        comment = await self.cl.media_comment(media.id, text)
+        self.addAsyncCleanup(self.cleanup_comment, media.id, comment.pk)
+        await self.assertCommentAccessible(media.id, comment.pk, text)
+
+        self.assertTrue(await self.cl.comment_pin(media.id, comment.pk))
+        self.assertTrue(await self.cl.comment_unpin(media.id, comment.pk))
+
     async def test_comment_like_and_unlike(self):
         media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/B3mr1-OlWMG/")
         comment = (await self.cl.media_comments_v1(media_pk))[0]

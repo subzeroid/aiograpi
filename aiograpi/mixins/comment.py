@@ -723,7 +723,7 @@ class CommentMixin(ClientMixin):
         data = self.with_action_data({"_uid": self.user_id, "_uuid": self.uuid})
         name = "unpin" if revert else "pin"
 
-        result = await self.private_request(f"media/{media_id}/{name}_comment/{comment_pk}", data)
+        result = await self.private_request(f"media/{media_id}/{name}_comment/{comment_pk}/", data)
         return result["status"] == "ok"
 
     async def comment_unpin(self, media_id: str, comment_pk: int):
