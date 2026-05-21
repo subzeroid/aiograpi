@@ -2016,7 +2016,7 @@
 <ul>
 <li><code>path</code> - Path to source file</li>
 <li><code>caption</code>  - Text for you post</li>
-<li><code>usertags</code> - List[Usertag] of mention users (see <code>Usertag</code> in <a href="https://github.com/subzeroid/aiograpi/blob/main/aiograpi/types.py">types.py</a>)</li>
+<li><code>usertags</code> - List[Usertag] of mention users (see <code>Usertag</code> in <a href="https://github.com/subzeroid/aiograpi/blob/main/aiograpi/types.py">types.py</a>); album uploads also accept <code>List[List[Usertag]]</code> for per-slide tags</li>
 <li><code>location</code> - Location (e.g. <code>Location(name='Test', lat=42.0, lng=42.0)</code>)</li>
 </ul>
 <table>
@@ -2044,12 +2044,12 @@
 <td>Upload video (Support MP4 files)</td>
 </tr>
 <tr>
-<td>album_upload(paths: List[Path], caption: str, usertags: List[Usertag], location: Location, extra_data: Dict = {})</td>
+<td>album_upload(paths: List[Path], caption: str, usertags: List[Usertag] or List[List[Usertag]], location: Location, extra_data: Dict = {})</td>
 <td>Media</td>
 <td>Upload Album (Support JPG/MP4 files)</td>
 </tr>
 <tr>
-<td>album_upload_with_music(paths: List[Path], caption: str, track: Track, extra_data: Dict = {})</td>
+<td>album_upload_with_music(paths: List[Path], caption: str, track: Track, usertags: List[Usertag] or List[List[Usertag]], extra_data: Dict = {})</td>
 <td>Media</td>
 <td>Upload feed album/carousel with music metadata</td>
 </tr>
@@ -2238,6 +2238,16 @@ only pass it to <code>clip_share_to_fb_extra_data(...)</code> when replaying or 
     <span class="n">location</span><span class="o">=</span><span class="n">Location</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Russia, Saint-Petersburg&#39;</span><span class="p">,</span> <span class="n">lat</span><span class="o">=</span><span class="mf">59.96</span><span class="p">,</span> <span class="n">lng</span><span class="o">=</span><span class="mf">30.29</span><span class="p">)</span>
 <span class="p">)</span>
 
+<span class="o">&gt;&gt;&gt;</span> <span class="n">other</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username</span><span class="p">(</span><span class="s1">&#39;other&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">album</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">album_upload</span><span class="p">(</span>
+    <span class="p">[</span><span class="s2">&quot;/app/image.jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;/app/image2.jpg&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;Album with per-slide tags&quot;</span><span class="p">,</span>
+    <span class="n">usertags</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">[</span><span class="n">Usertag</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">example</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)],</span>
+        <span class="p">[</span><span class="n">Usertag</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">other</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)],</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
 <span class="o">&gt;&gt;&gt;</span> <span class="n">media</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
 <span class="p">{</span><span class="s1">&#39;pk&#39;</span><span class="p">:</span> <span class="mi">2573355619819242434</span><span class="p">,</span>
  <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;2573355619819242434_1903424587&#39;</span><span class="p">,</span>
@@ -2275,6 +2285,8 @@ only pass it to <code>clip_share_to_fb_extra_data(...)</code> when replaying or 
  <span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
  <span class="s1">&#39;resources&#39;</span><span class="p">:</span> <span class="p">[]}</span>
 </code></pre></div>
+<p>For <code>album_upload</code>, nested <code>usertags</code> are matched by index with <code>paths</code>: <code>usertags[0]</code> applies to <code>paths[0]</code>, <code>usertags[1]</code> applies to <code>paths[1]</code>, and so on. A flat <code>List[Usertag]</code> is still accepted for backward compatibility and tags only the first carousel item.</p>
+<p>When reading an album, the same index rule applies to resources: tags for the first carousel item are in <code>media.resources[0].usertags</code>, tags for the second item are in <code>media.resources[1].usertags</code>, etc.</p>
 <p>Reels:</p>
 <p>Timeline helpers:</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">first_page</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">get_timeline_feed</span><span class="p">(</span><span class="s2">&quot;cold_start_fetch&quot;</span><span class="p">)</span>
