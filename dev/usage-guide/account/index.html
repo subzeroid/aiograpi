@@ -1300,6 +1300,16 @@
 <td>Change Profile picture</td>
 </tr>
 <tr>
+<td>send_password_reset(identifier: str, recaptcha_challenge_field: str = "")</td>
+<td>dict</td>
+<td>Send an Instagram password reset link or code to the account email or phone</td>
+</tr>
+<tr>
+<td>reset_password(username: str)</td>
+<td>dict</td>
+<td>Backward-compatible alias for <code>send_password_reset()</code></td>
+</tr>
+<tr>
 <td>send_confirm_email(email: str)</td>
 <td>dict</td>
 <td>Send confirmation code to new email address</td>
@@ -1347,6 +1357,9 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">account_change_picture</span><span class="p">(</span><span class="n">profile_pic_path</span><span class="p">)</span>
 <span class="n">UserShort</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1903424587</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s1">&#39;example&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 
+<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">send_password_reset</span><span class="p">(</span><span class="s2">&quot;example&quot;</span><span class="p">)</span>
+<span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">}</span>
+
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">send_confirm_email</span><span class="p">(</span><span class="s2">&quot;addr@example.com&quot;</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="s1">&#39;is_email_legit&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
@@ -1369,6 +1382,10 @@
     <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span>
 <span class="p">}</span>
 </code></pre></div>
+<p>Notes:</p>
+<ul>
+<li><code>send_password_reset()</code> starts Instagram's recovery flow by requesting a reset link or code. It does not set a new password by itself; continue with the link/code flow that Instagram sends to the account email or phone.</li>
+</ul>
 <p>Low level methods:</p>
 <table>
 <thead>
