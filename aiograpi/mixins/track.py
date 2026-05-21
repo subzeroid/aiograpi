@@ -49,9 +49,7 @@ class TrackMixin(ClientMixin):
         path = Path(folder) / filename
         response = await httpx_ext.request("GET", url, timeout=self.request_timeout)
         response.raise_for_status()
-        with open(path, "wb") as f:
-            f.write(response.read())
-        return path.resolve()
+        return self._download_response_to_path(response, path)
 
     async def _track_request(self, data: Dict[str, Any], path: str = "clips/music/") -> Dict:
         try:

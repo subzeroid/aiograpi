@@ -28,6 +28,7 @@ from aiograpi.exceptions import (
     ChallengeUnknownStep,
     ClientConnectionError,
     ClientGraphqlError,
+    ClientIncompleteReadError,
     ClientThrottledError,
     ClientUnauthorizedError,
     ClipConfigureError,
@@ -1889,6 +1890,21 @@ class ClientTestCase(unittest.IsolatedAsyncioTestCase):
 
 
 class DownloadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    class _DownloadResponse:
+        def __init__(self, content: bytes, content_length: int | str | None = None):
+            self.content = content
+            self.headers = {}
+            if content_length is not None:
+                self.headers["Content-Length"] = str(content_length)
+            self.status_code = 200
+            self.url = "https://example.com/media.bin"
+
+        def read(self):
+            return self.content
+
+        def raise_for_status(self):
+            return None
+
     async def test_photo_download_by_url_skips_existing_file_when_overwrite_disabled(
         self,
     ):
@@ -1952,6 +1968,44 @@ class DownloadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             "/tmp",
             overwrite=False,
         )
+
+    async def test_photo_download_by_url_rejects_incomplete_content_length(self):
+        client = Client()
+        response = self._DownloadResponse(b"short", content_length=10)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "photo.jpg"
+
+            client.public.get = AsyncMock(return_value=response)
+            with self.assertRaises(ClientIncompleteReadError) as ctx:
+                await client.photo_download_by_url("https://example.com/photo.jpg", folder=tmpdir)
+
+            self.assertFalse(path.exists())
+            self.assertIn('Broken file "{}"'.format(path), str(ctx.exception))
+            self.assertIn("Content-length=10, but file length=5", str(ctx.exception))
+
+    async def test_photo_download_by_url_origin_rejects_incomplete_content_length(self):
+        client = Client()
+        response = self._DownloadResponse(b"short", content_length=10)
+
+        client.public.get = AsyncMock(return_value=response)
+        with self.assertRaises(ClientIncompleteReadError) as ctx:
+            await client.photo_download_by_url_origin("https://example.com/photo.jpg")
+
+        self.assertIn('Broken file from url "https://example.com/photo.jpg"', str(ctx.exception))
+        self.assertIn("Content-length=10, but file length=5", str(ctx.exception))
+
+    async def test_story_download_by_url_rejects_incomplete_content_length(self):
+        client = Client()
+        response = self._DownloadResponse(b"short", content_length=10)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "story.mp4"
+
+            client.public.get = AsyncMock(return_value=response)
+            with self.assertRaises(ClientIncompleteReadError) as ctx:
+                await client.story_download_by_url("https://example.com/story.mp4", folder=tmpdir)
+
+            self.assertFalse(path.exists())
+            self.assertIn('Broken file "{}"'.format(path), str(ctx.exception))
 
 
 class ClientDeviceTestCase(ClientPrivateTestCase):

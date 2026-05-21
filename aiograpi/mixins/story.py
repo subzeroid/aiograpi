@@ -466,9 +466,7 @@ class StoryMixin(ClientMixin):
         path = Path(folder) / filename
         response = await self.public.get(url)
         response.raise_for_status()
-        with open(path, "wb") as f:
-            f.write(response.read())
-        return path.resolve()
+        return self._download_response_to_path(response, path)
 
     async def story_viewers_chunk(
         self, story_pk: str, max_amount: int = 0, max_id: str = ""
