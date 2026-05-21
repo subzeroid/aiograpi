@@ -266,7 +266,7 @@ Upload medias to your feed. Common arguments:
 
 * `path` - Path to source file
 * `caption`  - Text for you post
-* `usertags` - List[Usertag] of mention users (see `Usertag` in [types.py](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/types.py))
+* `usertags` - List[Usertag] of mention users (see `Usertag` in [types.py](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/types.py)); album uploads also accept `List[List[Usertag]]` for per-slide tags
 * `location` - Location (e.g. `Location(name='Test', lat=42.0, lng=42.0)`)
 
 | Method                                                                                                                                 | Return  | Description
@@ -274,8 +274,8 @@ Upload medias to your feed. Common arguments:
 | photo_upload(path: Path, caption: str, upload_id: str, usertags: List[Usertag], location: Location, extra_data: Dict = {})             | Media   | Upload photo (Support JPG files)
 | photo_upload_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {}) | Media | Upload feed photo with music metadata
 | video_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {})            | Media   | Upload video (Support MP4 files)
-| album_upload(paths: List[Path], caption: str, usertags: List[Usertag], location: Location, extra_data: Dict = {})                      | Media   | Upload Album (Support JPG/MP4 files)
-| album_upload_with_music(paths: List[Path], caption: str, track: Track, extra_data: Dict = {}) | Media | Upload feed album/carousel with music metadata
+| album_upload(paths: List[Path], caption: str, usertags: List[Usertag] or List[List[Usertag]], location: Location, extra_data: Dict = {}) | Media   | Upload Album (Support JPG/MP4 files)
+| album_upload_with_music(paths: List[Path], caption: str, track: Track, usertags: List[Usertag] or List[List[Usertag]], extra_data: Dict = {}) | Media | Upload feed album/carousel with music metadata
 | igtv_upload(path: Path, title: str, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}) | Media   | Upload IGTV (Support MP4 files)
 | clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, trial: bool = False, share_to_facebook: bool = False) | Media | Upload Reels Clip (Support MP4 files), optionally as a Trial Reel or cross-posted to Facebook
 | clip_music_extra_data(track: Track or dict, extra_data: Dict = {}) | dict | Build Reels music configure fields for manual `clip_upload(..., extra_data=...)`
@@ -417,6 +417,16 @@ Now let's mention users (Usertag) and location:
     location=Location(name='Russia, Saint-Petersburg', lat=59.96, lng=30.29)
 )
 
+>>> other = await cl.user_info_by_username('other')
+>>> album = await cl.album_upload(
+    ["/app/image.jpg", "/app/image2.jpg"],
+    "Album with per-slide tags",
+    usertags=[
+        [Usertag(user=example, x=0.5, y=0.5)],
+        [Usertag(user=other, x=0.25, y=0.75)],
+    ],
+)
+
 >>> media.dict()
 {'pk': 2573355619819242434,
  'id': '2573355619819242434_1903424587',
@@ -454,6 +464,10 @@ Now let's mention users (Usertag) and location:
  'title': '',
  'resources': []}
 ```
+
+For `album_upload`, nested `usertags` are matched by index with `paths`: `usertags[0]` applies to `paths[0]`, `usertags[1]` applies to `paths[1]`, and so on. A flat `List[Usertag]` is still accepted for backward compatibility and tags only the first carousel item.
+
+When reading an album, the same index rule applies to resources: tags for the first carousel item are in `media.resources[0].usertags`, tags for the second item are in `media.resources[1].usertags`, etc.
 
 Reels:
 
