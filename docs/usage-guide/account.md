@@ -7,6 +7,8 @@ Viewing and managing your profile
 | account_info()                               | Account   | Get private info for your account (e.g. email, phone_number)
 | account_edit(email: str, phone_number: str, username: str, full_name: str, biography: str, external_url: str) | Account | Change profile data
 | account_change_picture(path: Path)           | UserShort | Change Profile picture
+| send_password_reset(identifier: str, recaptcha_challenge_field: str = "") | dict | Send an Instagram password reset link or code to the account email or phone
+| reset_password(username: str)                | dict      | Backward-compatible alias for `send_password_reset()`
 | send_confirm_email(email: str)               | dict      | Send confirmation code to new email address
 | confirm_email(email: str, code: str)         | dict      | Confirm a new email address with the received code
 | send_confirm_phone_number(phone_number: str) | dict      | Send confirmation code to new phone number
@@ -44,6 +46,9 @@ PosixPath('/tmp/example_1560364774164147051.jpg')
 >>> await cl.account_change_picture(profile_pic_path)
 UserShort(pk=1903424587, username='example', ...)
 
+>>> await cl.send_password_reset("example")
+{'status': 'ok'}
+
 >>> await cl.send_confirm_email("addr@example.com")
 {
     'is_email_legit': False,
@@ -66,6 +71,10 @@ UserShort(pk=1903424587, username='example', ...)
     'status': 'ok'
 }
 ```
+
+Notes:
+
+* `send_password_reset()` starts Instagram's recovery flow by requesting a reset link or code. It does not set a new password by itself; continue with the link/code flow that Instagram sends to the account email or phone.
 
 Low level methods:
 
