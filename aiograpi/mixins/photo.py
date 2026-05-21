@@ -105,9 +105,7 @@ class DownloadPhotoMixin(ClientMixin):
             return path.resolve()
         response = await self.public.get(url)
         response.raise_for_status()
-        with open(path, "wb") as f:
-            f.write(response.read())
-        return path.resolve()
+        return self._download_response_to_path(response, path)
 
     async def photo_download_by_url_origin(self, url: str) -> bytes:
         """
@@ -125,7 +123,7 @@ class DownloadPhotoMixin(ClientMixin):
         url = str(url)
         response = await self.public.get(url)
         response.raise_for_status()
-        return response
+        return self._download_response_bytes(response, url)
 
 
 class UploadPhotoMixin(ClientMixin):
