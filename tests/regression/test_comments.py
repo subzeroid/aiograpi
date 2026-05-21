@@ -91,6 +91,30 @@ class CommentRepliesRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert all(isinstance(reply, Comment) for reply in replies)
         assert replies[0].replied_to_comment_id == "100"
 
+    async def test_comment_pin_posts_to_slash_terminated_endpoint(self):
+        client = self._build_logged_in_client()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.comment_pin("123_456", 789)
+
+        self.assertTrue(result)
+        endpoint, data = client.private_request.await_args.args
+        self.assertEqual(endpoint, "media/123_456/pin_comment/789/")
+        self.assertEqual(data["_uid"], client.user_id)
+        self.assertEqual(data["_uuid"], client.uuid)
+
+    async def test_comment_unpin_posts_to_slash_terminated_endpoint(self):
+        client = self._build_logged_in_client()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.comment_unpin("123_456", 789)
+
+        self.assertTrue(result)
+        endpoint, data = client.private_request.await_args.args
+        self.assertEqual(endpoint, "media/123_456/unpin_comment/789/")
+        self.assertEqual(data["_uid"], client.user_id)
+        self.assertEqual(data["_uuid"], client.uuid)
+
     async def test_media_comment_replies_chunk_returns_child_cursor(self):
         client = Client()
         client.private_request = AsyncMock(
