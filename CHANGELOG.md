@@ -8,6 +8,8 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-05-21
+
 ### Added
 
 - Added per-slide album usertags: `album_upload(..., usertags=[[...]])` now tags each carousel item by index.
@@ -15,6 +17,8 @@ starting with 1.0.0.
 ### Changed
 
 - Preserved album resource usertags from carousel media responses so per-slide tags are available on `media.resources[index].usertags`.
+- Fixed async `comment_pin()` / `comment_unpin()` endpoint paths to keep comment pinning on the current mobile endpoint.
+- Synced the recorded upstream baseline to `instagrapi` 2.7.10.
 
 ## [1.0.9] - 2026-05-21
 
