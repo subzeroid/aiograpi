@@ -1,4 +1,8 @@
+import importlib.util
+import os
+import subprocess
 import unittest
+from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
@@ -6,7 +10,67 @@ from aiograpi.exceptions import ChallengeRequired, ClientError, FeedbackRequired
 from aiograpi.mixins.challenge import ChallengeChoice
 
 
+def _load_live_signup_module():
+    signup_path = Path(__file__).resolve().parents[1] / "live" / "test_signup_live.py"
+    spec = importlib.util.spec_from_file_location("aiograpi_live_signup", signup_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+LIVE_SIGNUP_MODULE = _load_live_signup_module()
+SignUpTestCase = LIVE_SIGNUP_MODULE.SignUpTestCase
+
+
 class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_signup_requires_email_or_phone_number(self):
+        client = Client()
+
+        with self.assertRaises(ClientError) as ctx:
+            await client.signup("example", "password", email="", phone_number="")
+
+        self.assertIn("email or phone_number", str(ctx.exception))
+
+    async def test_signup_with_phone_number_uses_sms_flow(self):
+        client = Client()
+        client.wait_seconds = 0
+        client.get_signup_config = AsyncMock(return_value={})
+        client.check_email = AsyncMock()
+        client.check_phone_number = AsyncMock(return_value={"status": "ok"})
+        client.send_signup_sms_code = AsyncMock(return_value={"status": "ok"})
+        client.challenge_code_handler = AsyncMock(return_value="123456")
+        client.accounts_create = AsyncMock(return_value={"created_user": {"pk": "1", "username": "example"}})
+        client.parse_authorization = Mock(return_value={})
+        client.last_response = Mock(headers={"ig-set-authorization": ""})
+
+        with unittest.mock.patch("aiograpi.mixins.signup.extract_user_short", return_value="created-user"):
+            result = await client.signup(
+                username="example",
+                password="password",
+                email="",
+                phone_number="+15551234567",
+                full_name="Example User",
+                year=2000,
+                month=5,
+                day=12,
+            )
+
+        self.assertEqual(result, "created-user")
+        client.check_email.assert_not_awaited()
+        client.check_phone_number.assert_awaited_once_with("+15551234567")
+        client.send_signup_sms_code.assert_awaited_once_with("+15551234567")
+        client.challenge_code_handler.assert_awaited_once_with("example", ChallengeChoice.SMS)
+        client.accounts_create.assert_awaited_once_with(
+            username="example",
+            password="password",
+            full_name="Example User",
+            year=2000,
+            month=5,
+            day=12,
+            phone_number="+15551234567",
+            phone_code="123456",
+        )
+
     async def test_accounts_create_primary_signup_omits_secondary_account_flag(self):
         client = Client()
         client.phone_id = "phone-id"
@@ -34,6 +98,49 @@ class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(data["username"], "example")
         self.assertEqual(data["force_sign_up_code"], "signup-code")
         client.private_request.assert_awaited_once()
+
+    async def test_accounts_create_phone_signup_uses_validated_endpoint(self):
+        client = Client()
+        client.phone_id = "phone-id"
+        client.uuid = "uuid"
+        client.android_device_id = "android-id"
+        client.adid = "adid"
+        client.waterfall_id = "waterfall-id"
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+        client.private_request = AsyncMock(return_value={"created_user": {"pk": "1"}})
+
+        result = await client.accounts_create(
+            username="example",
+            password="password",
+            phone_number="+15551234567",
+            phone_code="123456",
+            full_name="Example User",
+            year=2000,
+            month=5,
+            day=12,
+        )
+
+        self.assertEqual(result, {"created_user": {"pk": "1"}})
+        endpoint, data = client.private_request.call_args.args
+        self.assertEqual(endpoint, "accounts/create_validated/")
+        self.assertNotIn("is_secondary_account_creation", data)
+        self.assertNotIn("email", data)
+        self.assertEqual(data["username"], "example")
+        self.assertEqual(data["phone_number"], "+15551234567")
+        self.assertEqual(data["verification_code"], "123456")
+        self.assertEqual(data["force_sign_up_code"], "")
+        self.assertEqual(data["has_sms_consent"], "true")
+        client.private_request.assert_awaited_once()
+
+    async def test_accounts_create_requires_email_or_phone_number(self):
+        client = Client()
+        client.private_request = AsyncMock()
+
+        with self.assertRaises(ClientError) as ctx:
+            await client.accounts_create(username="example", password="password")
+
+        self.assertIn("email or phone_number", str(ctx.exception))
+        client.private_request.assert_not_awaited()
 
     async def test_accounts_create_spam_feedback_raises_signup_specific_error(self):
         client = Client()
@@ -227,8 +334,64 @@ class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             )
 
         self.assertEqual(result, "created-user")
+        client.check_phone_number.assert_not_awaited()
+        client.send_signup_sms_code.assert_not_awaited()
         client.challenge_flow.assert_awaited_once_with(
             challenge,
             phone_number="+15551234567",
             username="example",
         )
+
+
+class SignupLiveHelperRegressionTestCase(unittest.TestCase):
+    def test_signup_email_command_receives_username_context(self):
+        case = SignUpTestCase("test_email_signup_live")
+        completed = subprocess.CompletedProcess(args="email-command", returncode=0, stdout="fresh@example.test\n")
+
+        with unittest.mock.patch.dict(os.environ, {"IG_SIGNUP_EMAIL_COMMAND": "email-command"}, clear=True):
+            with unittest.mock.patch.object(LIVE_SIGNUP_MODULE.subprocess, "run", return_value=completed) as run:
+                email = case.signup_email("freshuser")
+
+        self.assertEqual(email, "fresh@example.test")
+        self.assertEqual(run.call_args.kwargs["env"]["IG_SIGNUP_USERNAME"], "freshuser")
+
+    def test_signup_code_command_receives_signup_context(self):
+        case = SignUpTestCase("test_email_signup_live")
+        completed = subprocess.CompletedProcess(args="code-command", returncode=0, stdout="123456\n")
+
+        with unittest.mock.patch.dict(os.environ, {"IG_SIGNUP_EMAIL_CODE_COMMAND": "code-command"}, clear=True):
+            with unittest.mock.patch.object(LIVE_SIGNUP_MODULE.subprocess, "run", return_value=completed) as run:
+                code = case.signup_code_handler(
+                    "IG_SIGNUP_EMAIL_CODE",
+                    "IG_SIGNUP_EMAIL_CODE_COMMAND",
+                    {
+                        "IG_SIGNUP_USERNAME": "freshuser",
+                        "IG_SIGNUP_EMAIL": "fresh@example.test",
+                    },
+                )
+
+        self.assertEqual(code, "123456")
+        self.assertEqual(run.call_args.kwargs["env"]["IG_SIGNUP_USERNAME"], "freshuser")
+        self.assertEqual(run.call_args.kwargs["env"]["IG_SIGNUP_EMAIL"], "fresh@example.test")
+
+    def test_signup_email_skips_without_static_email_or_command(self):
+        case = SignUpTestCase("test_email_signup_live")
+
+        with unittest.mock.patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(unittest.SkipTest):
+                case.signup_email("freshuser")
+
+    def test_signup_phone_number_prefers_signup_specific_env(self):
+        case = SignUpTestCase("test_phone_signup_live")
+
+        with unittest.mock.patch.dict(
+            os.environ,
+            {
+                "IG_PHONE_NUMBER": "+15550000000",
+                "IG_SIGNUP_PHONE_NUMBER": "+15551234567",
+            },
+            clear=True,
+        ):
+            phone_number = case.signup_phone_number()
+
+        self.assertEqual(phone_number, "+15551234567")

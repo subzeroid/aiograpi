@@ -64,7 +64,7 @@ class SignUpMixin(ClientMixin):
         day: int = None,
     ) -> UserShort:
         if not (email or phone_number):
-            raise Exception("Use email or phone_number")
+            raise ClientError("Use email or phone_number for signup")
         await self.get_signup_config()
         kwargs = {
             "username": username,
@@ -102,7 +102,7 @@ class SignUpMixin(ClientMixin):
             kwargs["email"] = email
             kwargs["email_code"] = confirmation_result.get("signup_code")
 
-        if phone_number:
+        if phone_number and not email:
             kwargs["phone_number"] = phone_number
             check = await self.check_phone_number(phone_number)
             if check.get("status") != "ok":
@@ -207,6 +207,9 @@ class SignUpMixin(ClientMixin):
         day: int = None,
         **kwargs,
     ) -> dict:
+        if not (email or phone_number):
+            raise ClientError("Use email or phone_number for signup")
+
         timestamp = str(int(time.time()))
         self.username = username
         self.password = password
