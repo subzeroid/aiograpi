@@ -33,6 +33,7 @@ from aiograpi.mixins.public import (
     PublicRequestMixin,
     TopSearchesPublicMixin,
 )
+from aiograpi.mixins.realtime import RealtimeMixin
 from aiograpi.mixins.share import ShareMixin
 from aiograpi.mixins.signup import SignUpMixin
 from aiograpi.mixins.story import StoryMixin
@@ -77,6 +78,7 @@ class Client(
     CollectionMixin,
     AccountMixin,
     DirectMixin,
+    RealtimeMixin,
     LocationMixin,
     HashtagMixin,
     CommentMixin,

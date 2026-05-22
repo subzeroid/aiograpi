@@ -21,6 +21,7 @@ nav:
     - Collection: usage-guide/collection.md
     - Comment: usage-guide/comment.md
     - Direct: usage-guide/direct.md
+    - Realtime MQTT: usage-guide/realtime.md
     - Explore: usage-guide/explore.md
     - Fundraiser: usage-guide/fundraiser.md
     - Hashtag: usage-guide/hashtag.md
