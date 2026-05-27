@@ -8,6 +8,25 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.0.11] - 2026-05-28
+
+### Added
+
+- Added async professional account conversion helpers: `account_convert_to_professional()`, `account_convert_to_business()`, and `account_convert_to_creator()`.
+- Added private GraphQL followers helpers: `user_followers_private_gql_chunk()` and `user_followers_private_gql()`, plus followers ordering support for private followers fetches.
+- Added scheduled feed publishing support for `photo_upload()`, `video_upload()`, `album_upload()`, `photo_upload_with_music()`, and `album_upload_with_music()` on accounts where Instagram enables scheduled content.
+- Added Story music upload helpers: `story_music_extra_data()`, `video_upload_to_story_with_music()`, and `photo_upload_to_story_with_music()`. These helpers render the selected track into the uploaded Story media and attach music metadata; they do not expose Instagram's native interactive lyrics/music sticker UI.
+
+### Fixed
+
+- Normalized username lookup inputs by trimming whitespace, removing a leading `@`, and lowercasing before user lookup requests.
+- Changed `video_download()` to fetch video metadata through the private `media_info_v1()` path directly before downloading.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.7.17.
+- Updated docs and regression coverage for the synced upstream APIs.
+
 ## [1.0.10] - 2026-05-21
 
 ### Added
