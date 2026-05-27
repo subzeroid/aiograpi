@@ -268,14 +268,15 @@ Upload medias to your feed. Common arguments:
 * `caption`  - Text for you post
 * `usertags` - List[Usertag] of mention users (see `Usertag` in [types.py](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/types.py)); album uploads also accept `List[List[Usertag]]` for per-slide tags
 * `location` - Location (e.g. `Location(name='Test', lat=42.0, lng=42.0)`)
+* `schedule_at` - Unix timestamp in seconds or `datetime` for scheduled publishing on eligible professional accounts
 
 | Method                                                                                                                                 | Return  | Description
 | -------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------
-| photo_upload(path: Path, caption: str, upload_id: str, usertags: List[Usertag], location: Location, extra_data: Dict = {})             | Media   | Upload photo (Support JPG files)
-| photo_upload_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {}) | Media | Upload feed photo with music metadata
-| video_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {})            | Media   | Upload video (Support MP4 files)
-| album_upload(paths: List[Path], caption: str, usertags: List[Usertag] or List[List[Usertag]], location: Location, extra_data: Dict = {}) | Media   | Upload Album (Support JPG/MP4 files)
-| album_upload_with_music(paths: List[Path], caption: str, track: Track, usertags: List[Usertag] or List[List[Usertag]], extra_data: Dict = {}) | Media | Upload feed album/carousel with music metadata
+| photo_upload(path: Path, caption: str, upload_id: str, usertags: List[Usertag], location: Location, extra_data: Dict = {}, schedule_at: int \| datetime = None)             | Media   | Upload photo (Support JPG files)
+| photo_upload_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {}, schedule_at: int \| datetime = None) | Media | Upload feed photo with music metadata
+| video_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, schedule_at: int \| datetime = None)            | Media   | Upload video (Support MP4 files)
+| album_upload(paths: List[Path], caption: str, usertags: List[Usertag] or List[List[Usertag]], location: Location, extra_data: Dict = {}, schedule_at: int \| datetime = None) | Media   | Upload Album (Support JPG/MP4 files)
+| album_upload_with_music(paths: List[Path], caption: str, track: Track, usertags: List[Usertag] or List[List[Usertag]], extra_data: Dict = {}, schedule_at: int \| datetime = None) | Media | Upload feed album/carousel with music metadata
 | igtv_upload(path: Path, title: str, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}) | Media   | Upload IGTV (Support MP4 files)
 | clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, trial: bool = False, share_to_facebook: bool = False) | Media | Upload Reels Clip (Support MP4 files), optionally as a Trial Reel or cross-posted to Facebook
 | clip_music_extra_data(track: Track or dict, extra_data: Dict = {}) | dict | Build Reels music configure fields for manual `clip_upload(..., extra_data=...)`
@@ -287,6 +288,10 @@ Upload medias to your feed. Common arguments:
 | clip_share_to_fb_extra_data(config: Dict = None, destination_id: str = None, destination_type: str = None) | Dict | Build modern Reel Facebook cross-post configure fields for manual `extra_data`
 
 For video uploads in Android environments, pass `thumbnail=...` to avoid automatic thumbnail generation, or install the optional video dependencies, MoviePy `2.2.1`, and executable ffmpeg. See [Pydroid and ffmpeg](pydroid.md) and [Termux](termux.md).
+
+Scheduled publishing is available only where the Instagram app enables scheduled content, typically professional
+creator/business accounts. `schedule_at` works for feed photo, feed video, and album/carousel uploads. Reels, IGTV,
+Story, Direct, and cutout sticker upload helpers do not use this scheduled publishing flow.
 
 Trial Reels use the same upload method:
 

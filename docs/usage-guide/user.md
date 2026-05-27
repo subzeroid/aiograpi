@@ -6,7 +6,7 @@ View a list of a user's medias, following and followers
 
 | Method                                        | Return                | Description                                                  |
 |-----------------------------------------------|-----------------------|--------------------------------------------------------------|
-| user_followers(user_id: str, amount: int = 0) | Dict\[int, UserShort] | Get dict of followers users (amount=0 - fetch all followers) |
+| user_followers(user_id: str, amount: int = 0, order: str = None) | List[UserShort] | Get follower users (amount=0 - fetch all followers); `order` uses the private mobile followers endpoint |
 | user_following(user_id: str, amount: int = 0) | Dict\[int, UserShort] | Get dict of following users (amount=0 - fetch all)           |
 | search_followers(user_id: str, query: str)    | List[UserShort]       | Search by followers                                          |
 | search_following(user_id: str, query: str)    | List[UserShort]       | Search by following                                          |
@@ -42,8 +42,10 @@ Low level methods:
 |-------------------------------------------------------------------------------------|-----------------------------|----------------------------------------------------------------------------|
 | user_followers_gql_chunk(user_id: str, max_amount: int = 0, end_cursor: str = None) | Tuple[List[UserShort], str] | Get user's followers information by Public Graphql API and end_cursor      |
 | user_followers_gql(user_id: str, amount: int = 0)                                   | List[UserShort]             | Get user's followers information by Public Graphql API                     |
-| user_followers_v1_chunk(user_id: str, max_amount: int = 0, max_id: str = "")        | Tuple[List[UserShort], str] | Get user's followers information by Private Mobile API and max_id (cursor) |
-| user_followers_v1(user_id: str, amount: int = 0)                                    | List[UserShort]             | Get user's followers information by Private Mobile API                     |
+| user_followers_v1_chunk(user_id: str, max_amount: int = 0, max_id: str = "", order: str = None) | Tuple[List[UserShort], str] | Get user's followers information by Private Mobile API and max_id (cursor) |
+| user_followers_v1(user_id: str, amount: int = 0, order: str = None)                 | List[UserShort]             | Get user's followers information by Private Mobile API                     |
+| user_followers_private_gql_chunk(user_id: str, max_amount: int = 0, max_id: str = None, rank_token: str = None, order: str = None) | Tuple[List[UserShort], str] | Get user's followers information by Private GraphQL API and max_id         |
+| user_followers_private_gql(user_id: str, amount: int = 0, rank_token: str = None, order: str = None) | List[UserShort] | Get user's followers information by Private GraphQL API                    |
 | user_following_v1(user_id: str, amount: int = 0)                                    | List[UserShort]             | Get user's following users information by Private Mobile API               |
 | user_following_gql(user_id: str, amount: int = 0)                                   | List[UserShort]             | Get user's following information by Public Graphql API                     |
 | user_follow_requests_chunk(max_amount: int = 0, max_id: str = "")                   | Tuple[List[UserShort], str] | Get pending incoming follow requests by Private Mobile API and max_id      |
@@ -53,8 +55,8 @@ Low level methods:
 Example:
 
 ``` python
->>> (await cl.user_followers(cl.user_id)).keys()
-dict_keys([5563084402, 43848984510, 1498977320, ...])
+>>> [user.pk for user in await cl.user_followers(cl.user_id)]
+[5563084402, 43848984510, 1498977320, ...]
 
 >>> await cl.user_following(cl.user_id)
 {
@@ -107,6 +109,6 @@ cl = Client()
 await cl.login(USERNAME, PASSWORD)
 
 followers = await cl.user_followers(cl.user_id)
-for user_id in followers.keys():
-    await cl.user_unfollow(user_id)
+for follower in followers:
+    await cl.user_unfollow(follower.pk)
 ```

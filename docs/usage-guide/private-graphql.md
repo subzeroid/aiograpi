@@ -30,6 +30,7 @@ query) and as **named convenience wrappers** (`user_info_v2_gql`,
 | Media info via discover/media_metadata fallback | `Client.media_info_v2(media_id)` |
 | Lightweight offensive-comment check (raw payload) | `Client.media_check_offensive_comment_v2(media_id, comment)` |
 | Followers list (mobile-app surface) | `Client.private_graphql_followers_list(user_id, rank_token, order=None)` |
+| Followers list typed helper (mobile-app surface) | `Client.user_followers_private_gql(user_id, amount=0, rank_token=None, order=None)` |
 | Following list (mobile-app surface) | `Client.private_graphql_following_list(user_id, rank_token, order=None)` |
 | Profile reels stream | `Client.private_graphql_clips_profile(target_user_id)` |
 | Direct inbox tray digest | `Client.private_graphql_inbox_tray_for_user(user_id)` |
@@ -83,6 +84,13 @@ data = await cl.private_graphql_followers_list(
 )
 # Returns the raw GraphQL envelope: {"data": {...}, "status": "ok", ...}.
 # Schema is large and varies — pick what you need from data["data"].
+
+users = await cl.user_followers_private_gql(
+    user_id="25025320",
+    amount=50,
+    rank_token=rank_token,
+    order="date_followed_latest",
+)
 
 # Search typeahead
 hits = await cl.fbsearch_keyword_typeahead("python")
