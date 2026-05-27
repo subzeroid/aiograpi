@@ -7,6 +7,9 @@ Viewing and managing your profile
 | account_info()                               | Account   | Get private info for your account (e.g. email, phone_number)
 | account_edit(email: str, phone_number: str, username: str, full_name: str, biography: str, external_url: str) | Account | Change profile data
 | account_change_picture(path: Path)           | UserShort | Change Profile picture
+| account_convert_to_business(category_id: str \| int = "2347428775505624", should_show_category: bool = True, should_show_public_contacts: bool = False) | Account | Convert the current account to a business professional account
+| account_convert_to_creator(category_id: str \| int = "2347428775505624", should_show_category: bool = True, should_show_public_contacts: bool = False) | Account | Convert the current account to a creator professional account
+| account_convert_to_professional(to_account_type: int = 3, category_id: str \| int = "2347428775505624", should_show_category: bool = True, should_show_public_contacts: bool = False) | Account | Generic professional account conversion helper; `2` is business and `3` is creator
 | send_password_reset(identifier: str, recaptcha_challenge_field: str = "") | dict | Send an Instagram password reset link or code to the account email or phone
 | reset_password(username: str)                | dict      | Backward-compatible alias for `send_password_reset()`
 | send_confirm_email(email: str)               | dict      | Send confirmation code to new email address
@@ -46,6 +49,9 @@ PosixPath('/tmp/example_1560364774164147051.jpg')
 >>> await cl.account_change_picture(profile_pic_path)
 UserShort(pk=1903424587, username='example', ...)
 
+>>> await cl.account_convert_to_creator(category_id="2347428775505624")
+Account(pk=1903424587, username='example', ..., account_type=3)
+
 >>> await cl.send_password_reset("example")
 {'status': 'ok'}
 
@@ -71,6 +77,9 @@ UserShort(pk=1903424587, username='example', ...)
     'status': 'ok'
 }
 ```
+
+Professional conversion uses Instagram's mobile conversion flow and may still be blocked by account-specific eligibility,
+category, contact, or Account Center requirements.
 
 Notes:
 

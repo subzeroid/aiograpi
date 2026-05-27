@@ -55,12 +55,19 @@ Common arguments:
 | ------------------------------------ | -------- | -------------
 | photo_upload_to_story(path: Path, caption: str, upload_id: str, mentions: List[Usertag], locations: List[StoryLocation], links: List[StoryLink], hashtags: List[StoryHashtag], stickers: List[StorySticker], extra_data: Dict[str, str] = {})  | Story  | Upload photo (Support JPG files)
 | video_upload_to_story(path: Path, caption: str, thumbnail: Path, mentions: List[Usertag], locations: List[StoryLocation], links: List[StoryLink], hashtags: List[StoryHashtag], stickers: List[StorySticker], extra_data: Dict[str, str] = {}) | Story  | Upload video (Support MP4 files)
+| photo_upload_to_story_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, duration: float = 15.0, extra_data: Dict = {}) | Story | Upload photo to story as a short video with the selected music track muxed into it
+| video_upload_to_story_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, extra_data: Dict = {}) | Story | Upload video to story with the selected music track muxed into it
+| story_music_extra_data(track: Track or dict, extra_data: Dict = {}) | dict | Build Story music configure fields for manual story upload `extra_data`
 
 In `extra_data`, you can pass additional story settings, for example:
 
 | Method            | Type   | Description
 | ----------------- | ------ | ------------------
 | audience          | String | [Publish story for close friends](https://github.com/subzeroid/instagrapi/issues/1210) `{"audience": "besties"}`
+
+Story music helpers require the optional video dependencies, MoviePy `2.2.1`, and executable ffmpeg because they render
+a local MP4 before upload. They add Story music metadata and bake the selected track into the uploaded media; they do not
+expose Instagram's native interactive lyrics/music sticker UI.
 
 
 Examples:

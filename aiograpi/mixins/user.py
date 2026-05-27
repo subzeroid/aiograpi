@@ -1,11 +1,12 @@
 import json
 import logging
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from orjson import JSONDecodeError
 
 from aiograpi.exceptions import (
     ClientError,
+    ClientGraphqlError,
     ClientJSONDecodeError,
     ClientLoginRequired,
     ClientNotFoundError,
@@ -38,6 +39,7 @@ from aiograpi.utils.serialization import dumps, json_value
 
 MAX_USER_COUNT = 200
 INFO_FROM_MODULES = ("self_profile", "feed_timeline", "reel_feed_timeline")
+FOLLOWERS_ORDERS = ("date_followed_latest", "date_followed_earliest")
 USER_WEB_PROFILE_DOC_ID = "26762473490008061"
 
 logger = logging.getLogger(__name__)
@@ -45,9 +47,11 @@ logger = logging.getLogger(__name__)
 try:
     from typing import Literal
 
-    INFO_FROM_MODULE = Literal[INFO_FROM_MODULES]
+    INFO_FROM_MODULE = Literal["self_profile", "feed_timeline", "reel_feed_timeline"]
+    FOLLOWERS_ORDER = Literal["date_followed_latest", "date_followed_earliest"]
 except Exception:
     INFO_FROM_MODULE = str
+    FOLLOWERS_ORDER = str
 
 
 class UserMixin(ClientMixin):
@@ -57,6 +61,10 @@ class UserMixin(ClientMixin):
 
     _users_following = {}  # user_pk -> dict(user_pk -> "short user object")
     _users_followers = {}  # user_pk -> dict(user_pk -> "short user object")
+
+    @staticmethod
+    def _normalize_username(username: str) -> str:
+        return str(username).strip().lstrip("@").strip().lower()
 
     async def user_id_from_username(self, username: str) -> str:
         """
@@ -76,7 +84,7 @@ class UserMixin(ClientMixin):
         -------
         'example' -> 1903424587
         """
-        username = str(username).lower()
+        username = self._normalize_username(username)
         user = await self.user_info_by_username(username)
         return str(user.pk)
 
@@ -207,7 +215,7 @@ class UserMixin(ClientMixin):
         User
             An object of User type
         """
-        username = str(username).lower()
+        username = self._normalize_username(username)
         temporary_public_headers = {
             "Host": "www.instagram.com",
             "X-Requested-With": "XMLHttpRequest",
@@ -305,7 +313,7 @@ class UserMixin(ClientMixin):
         User
             An object of User type.
         """
-        username = str(username).lower()
+        username = self._normalize_username(username)
         self._inject_sessionid_for_v2_gql()
         data = await self.public_doc_id_graphql_request("26347858941511777", {"hasQuery": True, "query": username})
         # Defend against `{"xdt_api__v1__fbsearch__non_profiled_serp": null}` —
@@ -351,7 +359,7 @@ class UserMixin(ClientMixin):
         User
             An object of User type
         """
-        username = str(username).lower()
+        username = self._normalize_username(username)
         try:
             result = await self.private_request(f"users/{username}/usernameinfo/")
         except ClientNotFoundError as e:
@@ -380,7 +388,7 @@ class UserMixin(ClientMixin):
         User
             An object of User type
         """
-        username = str(username).lower()
+        username = self._normalize_username(username)
         try:
             try:
                 user = await self.user_info_by_username_gql(username)
@@ -944,7 +952,11 @@ class UserMixin(ClientMixin):
         return users
 
     async def user_followers_v1_chunk(
-        self, user_id: str, max_amount: int = 0, max_id: str = ""
+        self,
+        user_id: str,
+        max_amount: int = 0,
+        max_id: str = "",
+        order: FOLLOWERS_ORDER = None,
     ) -> Tuple[List[UserShort], str]:
         """
         Get user's followers information by Private Mobile API and max_id (cursor)
@@ -957,6 +969,8 @@ class UserMixin(ClientMixin):
             Maximum number of users to return, default is 0 - Inf
         max_id: str, optional
             Max ID, default value is empty String
+        order: str, optional
+            Followers sort order: date_followed_latest or date_followed_earliest
 
         Returns
         -------
@@ -973,6 +987,8 @@ class UserMixin(ClientMixin):
                 "query": "",
                 "enable_groups": "true",
             }
+            if order:
+                params["order"] = order
             if max_id:
                 params["max_id"] = max_id
             result = await self.private_request(
@@ -990,7 +1006,12 @@ class UserMixin(ClientMixin):
                 break
         return users, max_id
 
-    async def user_followers_v1(self, user_id: str, amount: int = 0) -> List[UserShort]:
+    async def user_followers_v1(
+        self,
+        user_id: str,
+        amount: int = 0,
+        order: FOLLOWERS_ORDER = None,
+    ) -> List[UserShort]:
         """
         Get user's followers information by Private Mobile API
 
@@ -1000,18 +1021,138 @@ class UserMixin(ClientMixin):
             User id of an instagram account
         amount: int, optional
             Maximum number of media to return, default is 0 - Inf
+        order: str, optional
+            Followers sort order: date_followed_latest or date_followed_earliest
 
         Returns
         -------
         List[UserShort]
             List of objects of User type
         """
-        users, _ = await self.user_followers_v1_chunk(str(user_id), amount)
+        users, _ = await self.user_followers_v1_chunk(str(user_id), amount, order=order)
         if amount:
             users = users[:amount]
         return users
 
-    async def user_followers(self, user_id: str, amount: int = 0) -> Dict[str, UserShort]:
+    @staticmethod
+    def _private_graphql_root(data: Dict, root_field_name: str) -> Dict:
+        payload = data.get("data") or data
+        if not isinstance(payload, dict):
+            return {}
+        root = payload.get(root_field_name)
+        if isinstance(root, dict):
+            return root
+        for key, value in payload.items():
+            if root_field_name in str(key) and isinstance(value, dict):
+                return value
+        return {}
+
+    async def user_followers_private_gql_chunk(
+        self,
+        user_id: str,
+        max_amount: int = 0,
+        max_id: Optional[Union[str, int]] = None,
+        rank_token: Optional[str] = None,
+        order: FOLLOWERS_ORDER = None,
+        priority: str = "u=3, i",
+    ) -> Tuple[List[UserShort], Optional[str]]:
+        """
+        Get user's followers information by Private GraphQL API and max_id.
+
+        Parameters
+        ----------
+        user_id: str
+            User id of an instagram account
+        max_amount: int, optional
+            Maximum number of users to return from the fetched chunk, default is 0 - full chunk
+        max_id: str, optional
+            The cursor from which it is worth continuing to receive the list of followers
+        rank_token: str, optional
+            Rank token for the follow list request. Defaults to client rank_token
+        order: str, optional
+            Followers sort order: date_followed_latest or date_followed_earliest
+        priority: str, optional
+            GraphQL request priority header captured from the Android app
+
+        Returns
+        -------
+        Tuple[List[UserShort], str]
+            List of users and next max_id cursor
+        """
+        user_id = str(user_id)
+        result = await self.private_graphql_followers_list(
+            user_id,
+            rank_token or self.rank_token,
+            max_id=max_id,
+            order=order,
+            priority=priority,
+        )
+        followers = self._private_graphql_root(result, "xdt_api__v1__friendships__followers")
+        if not followers:
+            raise ClientGraphqlError("Missing private GraphQL followers payload")
+        users: List[UserShort] = []
+        for user in followers.get("users") or []:
+            users.append(extract_user_short(user))
+            if max_amount and len(users) >= max_amount:
+                break
+        return users, followers.get("next_max_id")
+
+    async def user_followers_private_gql(
+        self,
+        user_id: str,
+        amount: int = 0,
+        rank_token: Optional[str] = None,
+        order: FOLLOWERS_ORDER = None,
+        priority: str = "u=3, i",
+    ) -> List[UserShort]:
+        """
+        Get user's followers information by Private GraphQL API.
+
+        Parameters
+        ----------
+        user_id: str
+            User id of an instagram account
+        amount: int, optional
+            Maximum number of users to return, default is 0 - Inf
+        rank_token: str, optional
+            Rank token for the follow list request. Defaults to client rank_token
+        order: str, optional
+            Followers sort order: date_followed_latest or date_followed_earliest
+        priority: str, optional
+            GraphQL request priority header captured from the Android app
+
+        Returns
+        -------
+        List[UserShort]
+            List of objects of UserShort type
+        """
+        users: List[UserShort] = []
+        max_id: Optional[Union[str, int]] = None
+        while True:
+            chunk_amount = max(amount - len(users), 0) if amount else 0
+            chunk, max_id = await self.user_followers_private_gql_chunk(
+                user_id,
+                max_amount=chunk_amount,
+                max_id=max_id,
+                rank_token=rank_token,
+                order=order,
+                priority=priority,
+            )
+            users.extend(chunk)
+            if amount and len(users) >= amount:
+                break
+            if not max_id or not chunk:
+                break
+        if amount:
+            users = users[:amount]
+        return users
+
+    async def user_followers(
+        self,
+        user_id: str,
+        amount: int = 0,
+        order: FOLLOWERS_ORDER = None,
+    ) -> List[UserShort]:
         """
         Get user's followers
 
@@ -1021,6 +1162,9 @@ class UserMixin(ClientMixin):
             User id of an instagram account
         amount: int, optional
             Maximum number of media to return, default is 0 - Inf
+        order: str, optional
+            Followers sort order: date_followed_latest or date_followed_earliest.
+            Sorted requests use the private mobile endpoint.
 
         Returns
         -------
@@ -1028,6 +1172,11 @@ class UserMixin(ClientMixin):
             Dict of user_id and User object
         """
         user_id = str(user_id)
+        if order:
+            users = await self.user_followers_v1(user_id, amount, order=order)
+            if amount and len(users) > amount:
+                users = users[:amount]
+            return users
         users = []
         try:
             users = await self.user_followers_gql(user_id, amount)
@@ -1675,7 +1824,7 @@ class UserMixin(ClientMixin):
         Dict
             An object of user stream (user info)
         """
-        username = str(username).lower()
+        username = self._normalize_username(username)
         data = {
             "is_prefetch": False,
             "entry_point": "profile",
@@ -1817,6 +1966,7 @@ class UserMixin(ClientMixin):
         UserNotFound
             ``data`` is missing from the response or the request 404'd.
         """
+        username = self._normalize_username(username)
         try:
             result = await self.private_request(
                 "users/web_profile_info/",
@@ -1867,11 +2017,11 @@ class UserMixin(ClientMixin):
         user_id: str,
         rank_token: str,
         client_doc_id: str = "28479704797510738576165798526",
-        max_id: int = None,
-        priority: str = None,
+        max_id: Optional[Union[str, int]] = None,
+        priority: Optional[str] = None,
         order: Union[str, None] = None,
-        exclude_field_is_favorite: bool = None,
-        exclude_unused_fields: bool = None,
+        exclude_field_is_favorite: Optional[bool] = None,
+        exclude_unused_fields: Optional[bool] = None,
     ) -> dict:
         """
         Private-side ``FollowersList`` GraphQL query.
@@ -1944,11 +2094,11 @@ class UserMixin(ClientMixin):
         user_id: str,
         rank_token: str,
         client_doc_id: str = "161046392817718486717479294775",
-        max_id: int = None,
-        priority: str = None,
+        max_id: Optional[Union[str, int]] = None,
+        priority: Optional[str] = None,
         order: Union[str, None] = None,
-        exclude_field_is_favorite: bool = None,
-        exclude_unused_fields: bool = None,
+        exclude_field_is_favorite: Optional[bool] = None,
+        exclude_unused_fields: Optional[bool] = None,
     ) -> dict:
         """
         Private-side ``FollowingList`` GraphQL query.

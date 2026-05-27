@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
 
@@ -43,6 +43,72 @@ class AccountRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result, {"status": "ok"})
         client.send_password_reset.assert_awaited_once_with("username")
+
+    async def test_account_convert_to_professional_posts_conversion_payload(self):
+        client = Client()
+        account = object()
+        client.with_default_data = Mock(side_effect=lambda data: {"default": "yes", **data})
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+        client.account_info = AsyncMock(return_value=account)
+
+        result = await client.account_convert_to_professional(
+            to_account_type=3,
+            category_id=2347428775505624,
+            should_show_category=True,
+            should_show_public_contacts=False,
+            entry_point="setting",
+            extra_data={"custom": "value"},
+        )
+
+        self.assertIs(result, account)
+        client.private_request.assert_awaited_once_with(
+            "business/account/convert_account/",
+            data={
+                "default": "yes",
+                "entry_point": "setting",
+                "creator_destination_migration": "false",
+                "to_account_type": "3",
+                "category_id": "2347428775505624",
+                "should_show_category": "1",
+                "should_show_public_contacts": "0",
+                "custom": "value",
+            },
+        )
+        client.account_info.assert_awaited_once_with()
+
+    async def test_account_convert_to_business_uses_business_account_type(self):
+        client = Client()
+        client.account_convert_to_professional = AsyncMock(return_value="account")
+
+        result = await client.account_convert_to_business(category_id="123", should_show_public_contacts=True)
+
+        self.assertEqual(result, "account")
+        client.account_convert_to_professional.assert_awaited_once_with(
+            to_account_type=2,
+            category_id="123",
+            should_show_category=True,
+            should_show_public_contacts=True,
+        )
+
+    async def test_account_convert_to_creator_uses_creator_account_type(self):
+        client = Client()
+        client.account_convert_to_professional = AsyncMock(return_value="account")
+
+        result = await client.account_convert_to_creator(category_id="456", should_show_category=False)
+
+        self.assertEqual(result, "account")
+        client.account_convert_to_professional.assert_awaited_once_with(
+            to_account_type=3,
+            category_id="456",
+            should_show_category=False,
+            should_show_public_contacts=False,
+        )
+
+    async def test_account_convert_to_professional_rejects_personal_account_type(self):
+        client = Client()
+
+        with self.assertRaises(ValueError):
+            await client.account_convert_to_professional(to_account_type=1)
 
     async def test_confirm_email_posts_verify_email_code_payload(self):
         client = Client()
