@@ -1288,9 +1288,9 @@
 </thead>
 <tbody>
 <tr>
-<td>user_followers(user_id: str, amount: int = 0)</td>
-<td>Dict[int, UserShort]</td>
-<td>Get dict of followers users (amount=0 - fetch all followers)</td>
+<td>user_followers(user_id: str, amount: int = 0, order: str = None)</td>
+<td>List[UserShort]</td>
+<td>Get follower users (amount=0 - fetch all followers); <code>order</code> uses the private mobile followers endpoint</td>
 </tr>
 <tr>
 <td>user_following(user_id: str, amount: int = 0)</td>
@@ -1455,14 +1455,24 @@
 <td>Get user's followers information by Public Graphql API</td>
 </tr>
 <tr>
-<td>user_followers_v1_chunk(user_id: str, max_amount: int = 0, max_id: str = "")</td>
+<td>user_followers_v1_chunk(user_id: str, max_amount: int = 0, max_id: str = "", order: str = None)</td>
 <td>Tuple[List[UserShort], str]</td>
 <td>Get user's followers information by Private Mobile API and max_id (cursor)</td>
 </tr>
 <tr>
-<td>user_followers_v1(user_id: str, amount: int = 0)</td>
+<td>user_followers_v1(user_id: str, amount: int = 0, order: str = None)</td>
 <td>List[UserShort]</td>
 <td>Get user's followers information by Private Mobile API</td>
+</tr>
+<tr>
+<td>user_followers_private_gql_chunk(user_id: str, max_amount: int = 0, max_id: str = None, rank_token: str = None, order: str = None)</td>
+<td>Tuple[List[UserShort], str]</td>
+<td>Get user's followers information by Private GraphQL API and max_id</td>
+</tr>
+<tr>
+<td>user_followers_private_gql(user_id: str, amount: int = 0, rank_token: str = None, order: str = None)</td>
+<td>List[UserShort]</td>
+<td>Get user's followers information by Private GraphQL API</td>
 </tr>
 <tr>
 <td>user_following_v1(user_id: str, amount: int = 0)</td>
@@ -1492,8 +1502,8 @@
 </tbody>
 </table>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="p">(</span><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_followers</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">user_id</span><span class="p">))</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-<span class="n">dict_keys</span><span class="p">([</span><span class="mi">5563084402</span><span class="p">,</span> <span class="mi">43848984510</span><span class="p">,</span> <span class="mi">1498977320</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="p">[</span><span class="n">user</span><span class="o">.</span><span class="n">pk</span> <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_followers</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">user_id</span><span class="p">)]</span>
+<span class="p">[</span><span class="mi">5563084402</span><span class="p">,</span> <span class="mi">43848984510</span><span class="p">,</span> <span class="mi">1498977320</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_following</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
 <span class="p">{</span>
@@ -1542,8 +1552,8 @@
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
 
 <span class="n">followers</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_followers</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="n">followers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-    <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_unfollow</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">follower</span> <span class="ow">in</span> <span class="n">followers</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_unfollow</span><span class="p">(</span><span class="n">follower</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
 </code></pre></div>
 
 

@@ -1300,6 +1300,21 @@
 <td>Change Profile picture</td>
 </tr>
 <tr>
+<td>account_convert_to_business(category_id: str | int = "2347428775505624", should_show_category: bool = True, should_show_public_contacts: bool = False)</td>
+<td>Account</td>
+<td>Convert the current account to a business professional account</td>
+</tr>
+<tr>
+<td>account_convert_to_creator(category_id: str | int = "2347428775505624", should_show_category: bool = True, should_show_public_contacts: bool = False)</td>
+<td>Account</td>
+<td>Convert the current account to a creator professional account</td>
+</tr>
+<tr>
+<td>account_convert_to_professional(to_account_type: int = 3, category_id: str | int = "2347428775505624", should_show_category: bool = True, should_show_public_contacts: bool = False)</td>
+<td>Account</td>
+<td>Generic professional account conversion helper; <code>2</code> is business and <code>3</code> is creator</td>
+</tr>
+<tr>
 <td>send_password_reset(identifier: str, recaptcha_challenge_field: str = "")</td>
 <td>dict</td>
 <td>Send an Instagram password reset link or code to the account email or phone</td>
@@ -1357,6 +1372,9 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">account_change_picture</span><span class="p">(</span><span class="n">profile_pic_path</span><span class="p">)</span>
 <span class="n">UserShort</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1903424587</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s1">&#39;example&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 
+<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">account_convert_to_creator</span><span class="p">(</span><span class="n">category_id</span><span class="o">=</span><span class="s2">&quot;2347428775505624&quot;</span><span class="p">)</span>
+<span class="n">Account</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="mi">1903424587</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s1">&#39;example&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">account_type</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">send_password_reset</span><span class="p">(</span><span class="s2">&quot;example&quot;</span><span class="p">)</span>
 <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">}</span>
 
@@ -1382,6 +1400,8 @@
     <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span>
 <span class="p">}</span>
 </code></pre></div>
+<p>Professional conversion uses Instagram's mobile conversion flow and may still be blocked by account-specific eligibility,
+category, contact, or Account Center requirements.</p>
 <p>Notes:</p>
 <ul>
 <li><code>send_password_reset()</code> starts Instagram's recovery flow by requesting a reset link or code. It does not set a new password by itself; continue with the link/code flow that Instagram sends to the account email or phone.</li>

@@ -1483,6 +1483,21 @@ If you have a different resolution, then you need to prepare a file or use the S
 <td>Story</td>
 <td>Upload video (Support MP4 files)</td>
 </tr>
+<tr>
+<td>photo_upload_to_story_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, duration: float = 15.0, extra_data: Dict = {})</td>
+<td>Story</td>
+<td>Upload photo to story as a short video with the selected music track muxed into it</td>
+</tr>
+<tr>
+<td>video_upload_to_story_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, extra_data: Dict = {})</td>
+<td>Story</td>
+<td>Upload video to story with the selected music track muxed into it</td>
+</tr>
+<tr>
+<td>story_music_extra_data(track: Track or dict, extra_data: Dict = {})</td>
+<td>dict</td>
+<td>Build Story music configure fields for manual story upload <code>extra_data</code></td>
+</tr>
 </tbody>
 </table>
 <p>In <code>extra_data</code>, you can pass additional story settings, for example:</p>
@@ -1502,6 +1517,9 @@ If you have a different resolution, then you need to prepare a file or use the S
 </tr>
 </tbody>
 </table>
+<p>Story music helpers require the optional video dependencies, MoviePy <code>2.2.1</code>, and executable ffmpeg because they render
+a local MP4 before upload. They add Story music metadata and bake the selected track into the uploaded media; they do not
+expose Instagram's native interactive lyrics/music sticker UI.</p>
 <p>Examples:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">StoryMention</span><span class="p">,</span> <span class="n">StoryMedia</span><span class="p">,</span> <span class="n">StoryLink</span><span class="p">,</span> <span class="n">StoryHashtag</span>
