@@ -133,3 +133,28 @@ class AccountRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 "code": "123456",
             },
         )
+
+    async def test_confirm_phone_number_posts_verify_sms_code_payload(self):
+        client = Client()
+        client.phone_id = "phone-id"
+        client.authorization_data = {"ds_user_id": "123"}
+        client.uuid = "uuid"
+        client.android_device_id = "android-id"
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.confirm_phone_number("+15555550100", "123456", has_sms_consent=True)
+
+        self.assertEqual(result, {"status": "ok"})
+        client.private_request.assert_awaited_once_with(
+            "accounts/verify_sms_code/",
+            {
+                "_uuid": "uuid",
+                "device_id": "android-id",
+                "phone_id": "phone-id",
+                "_uid": "123",
+                "guid": "uuid",
+                "phone_number": "+15555550100",
+                "verification_code": "123456",
+                "has_sms_consent": "true",
+            },
+        )

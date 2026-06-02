@@ -58,6 +58,7 @@ Common arguments:
 | photo_upload_to_story_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, duration: float = 15.0, extra_data: Dict = {}) | Story | Upload photo to story as a short video with the selected music track muxed into it
 | video_upload_to_story_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, extra_data: Dict = {}) | Story | Upload video to story with the selected music track muxed into it
 | story_music_extra_data(track: Track or dict, extra_data: Dict = {}) | dict | Build Story music configure fields for manual story upload `extra_data`
+| media_share_to_story(media_id: str, background: Path = None, caption: str = "") | Story | Share an existing feed media as a story sticker |
 
 In `extra_data`, you can pass additional story settings, for example:
 
@@ -91,6 +92,15 @@ await cl.video_upload_to_story(
     links=[StoryLink(webUri='https://github.com/subzeroid/aiograpi')],
     hashtags=[StoryHashtag(hashtag=hashtag, x=0.23, y=0.32, width=0.5, height=0.22)],
     medias=[StoryMedia(media_pk=media_pk, x=0.5, y=0.5, width=0.6, height=0.8)],
+)
+```
+
+Share a feed media to story:
+
+```python
+await cl.media_share_to_story(
+    "3613500067578544892_25025320",
+    caption="Shared from feed",
 )
 ```
 

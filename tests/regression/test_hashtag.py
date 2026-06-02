@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import AsyncMock
 
 from aiograpi import Client
+from aiograpi.types import Hashtag
 
 
 class HashtagRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -44,3 +45,44 @@ class HashtagRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(ValueError, "Hashtag name cannot be empty"):
             await client.hashtag_medias_recent("#")
+
+    async def test_hashtag_following_fetches_current_account_hashtags(self):
+        client = Client()
+        client.authorization_data = {"ds_user_id": "123"}
+        response = {
+            "data": {
+                "1$xdt_api__v1__friendships__following(_request_data:$request_data,user_id:$user_id)": {
+                    "hashtag_count": 2,
+                    "preview_hashtags": [
+                        {
+                            "id": "17843845123043063",
+                            "name": "fotodestages",
+                            "media_count": 716293,
+                            "profile_pic_url": "https://example.com/fotodestages.jpg",
+                        },
+                        {
+                            "id": "17875609661266431",
+                            "name": "coachingbydregold",
+                            "media_count": 1,
+                            "profile_pic_url": "https://example.com/coachingbydregold.jpg",
+                        },
+                    ],
+                }
+            }
+        }
+        client.private_graphql_following_list = AsyncMock(return_value=response)
+
+        hashtags = await client.hashtag_following(amount=1)
+
+        self.assertEqual(len(hashtags), 1)
+        self.assertIsInstance(hashtags[0], Hashtag)
+        self.assertEqual(hashtags[0].id, "17843845123043063")
+        self.assertEqual(hashtags[0].name, "fotodestages")
+        self.assertEqual(hashtags[0].media_count, 716293)
+        client.private_graphql_following_list.assert_awaited_once_with(
+            "123",
+            client.rank_token,
+            priority="u=3, i",
+            skip_preview_hashtags=False,
+            skip_hashtag_count=False,
+        )

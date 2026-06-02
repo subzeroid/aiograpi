@@ -1,7 +1,9 @@
 import unittest
+from pathlib import Path
 from unittest.mock import AsyncMock
 
 from aiograpi import Client
+from aiograpi.types import StoryMedia
 
 
 class MediaActionPayloadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -88,3 +90,33 @@ class MediaActionPayloadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             },
             with_signature=False,
         )
+
+    async def test_media_share_to_story_uses_existing_media_as_story_sticker(self):
+        client = self._build_logged_in_client()
+        background = Path("background.jpg")
+        story = object()
+        client.photo_upload_to_story = AsyncMock(return_value=story)
+
+        result = await client.media_share_to_story(
+            "123_456",
+            background=background,
+            caption="caption",
+            x=0.4,
+            y=0.45,
+            width=0.7,
+            height=0.55,
+        )
+
+        self.assertIs(result, story)
+        client.photo_upload_to_story.assert_awaited_once()
+        args, kwargs = client.photo_upload_to_story.call_args
+        self.assertEqual(args[:2], (background, "caption"))
+        self.assertEqual(len(kwargs["medias"]), 1)
+        media_sticker = kwargs["medias"][0]
+        self.assertIsInstance(media_sticker, StoryMedia)
+        self.assertEqual(media_sticker.media_pk, 123)
+        self.assertEqual(media_sticker.user_id, 456)
+        self.assertEqual(media_sticker.x, 0.4)
+        self.assertEqual(media_sticker.y, 0.45)
+        self.assertEqual(media_sticker.width, 0.7)
+        self.assertEqual(media_sticker.height, 0.55)

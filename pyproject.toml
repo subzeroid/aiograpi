@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiograpi"
-version = "1.0.11"
+version = "1.1.0"
 authors = [
     { name = "Mark Subzeroid", email = "143403577+subzeroid@users.noreply.github.com" },
 ]
@@ -57,6 +57,7 @@ keywords = [
 dependencies = [
     "httpx==0.28.1",
     "orjson==3.11.8",
+    "PySocks==1.7.1",
     "pydantic==2.12.5; sys_platform == 'android'",
     "pydantic>=2.12.5,<2.14; sys_platform != 'android'",
     "pycryptodomex==3.23.0",

@@ -33,6 +33,7 @@ from aiograpi.mixins.public import (
     PublicRequestMixin,
     TopSearchesPublicMixin,
 )
+from aiograpi.mixins.realtime import RealtimeMixin
 from aiograpi.mixins.share import ShareMixin
 from aiograpi.mixins.signup import SignUpMixin
 from aiograpi.mixins.story import StoryMixin
@@ -45,7 +46,7 @@ from aiograpi.mixins.video import DownloadVideoMixin, UploadVideoMixin
 # Used as fallback logger if another is not provided.
 DEFAULT_LOGGER = logging.getLogger("aiograpi")
 
-__upstream_instagrapi_version__ = "2.7.17"
+__upstream_instagrapi_version__ = "2.8.2"
 
 
 class Client(
@@ -91,6 +92,7 @@ class Client(
     BloksMixin,
     TOTPMixin,
     FundraiserMixin,
+    RealtimeMixin,
 ):
     proxy = None
 

@@ -7,21 +7,19 @@ ported through.
 The current recorded API baseline is:
 
 ```text
-instagrapi 2.7.17
+instagrapi 2.8.2
 ```
 
-`aiograpi 1.0.5` includes the video dependency split, MoviePy 2 helper migration, Reel Facebook cross-post payload
-follow-up, client TLS verification setting, public A1 API removal, current flow request metadata alignment, and social
-action payload updates from `instagrapi` through 2.7.1, the async Direct/music/signup sync through 2.7.2, and the story
-upload read-back fallback from 2.7.3. It also includes the submit-phone challenge step, refreshed comment action
-metadata, upload read-back/live-test hardening, Reel music live read-back verification, and low-level Bloks two-factor
-helpers from 2.7.4, plus the automatic Bloks two-factor login fallback from 2.7.5.
+`aiograpi 1.0.x` established the SemVer async baseline through `instagrapi 2.7.17`, including Bloks login fallback
+updates, backup-code 2FA, email and phone helper work, password reset helpers, album per-slide usertags, comment
+pin/unpin endpoint fixes, username normalization, private GraphQL followers helpers, Story music upload helpers,
+scheduled feed uploads, professional account conversion helpers, and the private media-info lookup fix for video
+downloads.
 
-Subsequent 1.0.x releases continue that baseline through `instagrapi 2.7.17`, including Bloks login fallback updates,
-backup-code 2FA, email confirmation helpers, password reset helpers, album per-slide usertags, the comment
-pin/unpin endpoint path fix, username normalization for lookup helpers, private GraphQL followers helpers, Story music
-upload helpers, scheduled feed uploads, professional account conversion helpers, and the private media-info lookup fix
-for video downloads.
+`aiograpi 1.1.0` continues the mirror through `instagrapi 2.8.2`. It adds experimental async Realtime MQTT/MQTToT,
+Direct message sync and lightweight Direct MQTT actions, async FBNS push MQTT with token registration and persisted
+device-auth state, phone confirmation-code support, followed hashtag helpers, feed-media share-to-story, opaque Bloks
+challenge context handling, and clearer Reel/clip upload failure details.
 
 ## Release policy
 
@@ -32,7 +30,8 @@ for video downloads.
 For the 2026-05 sync, the public releases are `aiograpi 0.9.0` and newer.
 `aiograpi 0.9.0` synced through `instagrapi 2.5.18`, and subsequent
 `aiograpi 0.9.x` patch releases continued that baseline through `instagrapi 2.6.8`, plus targeted maintenance
-ports. `aiograpi 1.0.x` records the current SemVer baseline synced through `instagrapi 2.7.17`.
+ports. `aiograpi 1.0.x` recorded the SemVer baseline through `instagrapi 2.7.17`; `aiograpi 1.1.0` records the
+MQTT/FBNS baseline through `instagrapi 2.8.2`.
 
 ## Porting rules
 

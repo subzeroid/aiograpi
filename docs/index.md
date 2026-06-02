@@ -40,9 +40,38 @@ For any other languages (e.g. C++, C#, F#, D, [Golang](https://github.com/subzer
 6. [Like](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/), [Follow](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/), [Edit account](https://subzeroid.github.io/aiograpi/latest/usage-guide/account/) (Bio) and much more else
 7. [Insights](https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/) by account, posts and stories
 8. [Build stories](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) with custom background, font animation, link sticker and mention users
-9. Account registration helpers and opt-in captcha handler hooks
+9. [Realtime MQTT](usage-guide/realtime.md) for Direct message sync, lightweight Direct MQTT actions, and FBNS push notifications
+10. Account registration helpers and opt-in captcha handler hooks
 
 ## Example
+
+### Realtime MQTT and Direct
+
+`aiograpi 1.1.0` adds experimental async Realtime MQTT/MQTToT helpers. They can receive Direct message sync payloads,
+publish lightweight Direct actions over MQTT, and subscribe to FBNS push notifications.
+
+```python
+from aiograpi import Client
+
+cl = Client()
+await cl.login(USERNAME, PASSWORD)
+
+
+def handle_message(payload):
+    print(payload)
+
+
+cl.realtime_on("message", handle_message)
+rt = await cl.realtime_connect()
+await rt.direct_subscribe()
+
+await rt.direct_send_text(thread_id, "Hello from MQTT")
+
+while True:
+    await cl.realtime_read_once()
+```
+
+See the [Realtime MQTT guide](usage-guide/realtime.md) for Direct sync, MQTT Direct actions, and FBNS push examples.
 
 ### Basic Usage
 
@@ -119,6 +148,7 @@ To learn more about the various ways `aiograpi` can be used, read the [Usage Gui
   * [`Comment`](usage-guide/comment.md) - Comments to Media
   * [`Highlight`](usage-guide/highlight.md) - Highlights
   * [`Notes`](usage-guide/notes.md) - Notes
+  * [`Realtime MQTT`](usage-guide/realtime.md) - Direct sync, lightweight Direct MQTT actions, and FBNS push callbacks
   * [`Pydroid and ffmpeg`](usage-guide/pydroid.md) - Android/Pydroid video upload setup
   * [`Termux`](usage-guide/termux.md) - Termux install notes and optional video helpers
   * [`Public Transport`](usage-guide/public-transport.md) - Optional curl transport for public web requests

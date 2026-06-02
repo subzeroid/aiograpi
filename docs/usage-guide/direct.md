@@ -52,6 +52,7 @@ Notes:
 * `direct_message()` scans the latest `amount` messages in a thread and raises `DirectMessageNotFound` if the id is not present in that window.
 * Shared XMA items such as `xma_clip`, `xma_media_share`, `xma_story_share`, and `xma_profile` keep their original payload in `message.raw_xma`. When Instagram includes `target_url`, the normalized link is also available through `message.xma_share`.
 * Disappearing direct photos and videos with `item_type == "raven_media"` are exposed through `message.visual_media`.
+* For live Direct message sync callbacks and lightweight MQTT Direct actions, see the [Realtime MQTT guide](realtime.md).
 
 Example of basic actions:
 

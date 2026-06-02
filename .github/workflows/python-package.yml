@@ -17,6 +17,7 @@ on:
         options:
           - smoke
           - comment
+          - realtime
           - signup
           - all
 
@@ -147,6 +148,7 @@ jobs:
         python-version: [ "3.10" ]
     env:
       TEST_ACCOUNTS_URL: ${{ secrets.TEST_ACCOUNTS_URL }}
+      IG_REALTIME_PROXY: ${{ secrets.IG_REALTIME_PROXY }}
       IG_SIGNUP_EMAIL: ${{ secrets.IG_SIGNUP_EMAIL }}
       IG_SIGNUP_EMAIL_COMMAND: ${{ secrets.IG_SIGNUP_EMAIL_COMMAND }}
       IG_SIGNUP_EMAIL_CODE: ${{ secrets.IG_SIGNUP_EMAIL_CODE }}
@@ -191,6 +193,9 @@ jobs:
             exit 0
           fi
           PYTHONPATH=. pytest -sv tests/legacy.py::ClientCommentExtendTestCase::test_media_comment
+      - name: Run realtime MQTT live tests
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.test_target == 'realtime' || github.event.inputs.test_target == 'all')
+        run: PYTHONPATH=. pytest -sv tests/live/test_realtime.py::ClientRealtimeLiveTestCase tests/live/test_fbns.py::ClientFbnsLiveTestCase
       - name: Run signup live tests
         if: github.event_name == 'workflow_dispatch' && (github.event.inputs.test_target == 'signup' || github.event.inputs.test_target == 'all')
         run: PYTHONPATH=. pytest -sv tests/live/test_signup_live.py::SignUpTestCase

@@ -5,7 +5,7 @@ from unittest import mock
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
-from aiograpi.exceptions import ClientError
+from aiograpi.exceptions import ClientError, ClipNotUpload
 
 
 def _build_client():
@@ -97,6 +97,24 @@ class ClipPinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
 
 class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_clip_upload_error_includes_stage_status_and_body(self):
+        client = _build_client()
+        response = Mock(status_code=500, text='{"message":"upload failed","status":"fail"}')
+        response.json.return_value = {"message": "upload failed", "status": "fail"}
+
+        with self.assertRaises(ClipNotUpload) as ctx:
+            client._raise_clip_upload_error(response, "upload_settings")
+
+        error = ctx.exception
+        self.assertIs(error.response, response)
+        self.assertEqual(error.stage, "upload_settings")
+        self.assertEqual(error.status_code, 500)
+        self.assertEqual(error.error_response, {"message": "upload failed", "status": "fail"})
+        self.assertEqual(error.response_text, '{"message":"upload failed","status":"fail"}')
+        self.assertIn("Clip upload failed during upload_settings", str(error))
+        self.assertEqual(client.last_response, response)
+        self.assertEqual(client.last_json, {"message": "upload failed", "status": "fail"})
+
     async def test_clip_share_to_fb_config_requests_reel_facebook_config(self):
         client = _build_client()
         expected = {"status": "ok", "eligible": True}

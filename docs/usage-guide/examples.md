@@ -22,6 +22,7 @@ Common scripts:
 | [`upload_media.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/upload_media.py) | Upload a feed photo, feed video, Reel, or Trial Reel. |
 | [`upload_story.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/upload_story.py) | Upload a photo or video story, optionally with a link sticker. |
 | [`direct_message.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/direct_message.py) | Send a Direct text message to user IDs or thread IDs. |
+| [`realtime_direct.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/realtime_direct.py) | Receive Direct message sync payloads over Realtime MQTT. |
 
 Examples:
 
@@ -32,6 +33,7 @@ python examples/download_user_media.py instagram --amount 5 --folder ./downloads
 python examples/upload_media.py reel ./reel.mp4 --thumbnail ./thumb.jpg --caption "Reel"
 python examples/upload_story.py photo ./story.jpg --caption "Story"
 python examples/direct_message.py --user-ids 123456789 --text "Hello"
+python examples/realtime_direct.py --limit 1
 ```
 
 Video uploads in Android environments should pass `--thumbnail` or install the optional video dependencies, MoviePy `2.2.1`, and executable `ffmpeg`. See [Pydroid and ffmpeg](pydroid.md) and [Termux](termux.md).
