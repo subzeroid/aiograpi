@@ -15,6 +15,7 @@ Viewing and managing your profile
 | send_confirm_email(email: str)               | dict      | Send confirmation code to new email address
 | confirm_email(email: str, code: str)         | dict      | Confirm a new email address with the received code
 | send_confirm_phone_number(phone_number: str) | dict      | Send confirmation code to new phone number
+| confirm_phone_number(phone_number: str, code: str, has_sms_consent: bool = False) | dict | Confirm a new phone number with the received SMS code
 
 Example:
 
@@ -76,6 +77,9 @@ Account(pk=1903424587, username='example', ..., account_type=3)
     'robocall_after_max_sms': True},
     'status': 'ok'
 }
+
+>>> await cl.confirm_phone_number("+5599999999", "123456", has_sms_consent=True)
+{'status': 'ok'}
 ```
 
 Professional conversion uses Instagram's mobile conversion flow and may still be blocked by account-specific eligibility,

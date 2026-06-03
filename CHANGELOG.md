@@ -8,6 +8,30 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-02
+
+### Added
+
+- Added experimental async Realtime MQTT / MQTToT support through `Client.realtime_*` helpers and
+  `aiograpi.realtime.RealtimeClient`.
+- Added async Direct message sync over MQTT, including `direct_subscribe()` and event callbacks for `message`,
+  `direct`, `typing`, `seen`, and `presence`.
+- Added lightweight async Direct MQTT actions: `direct_send_text()`, `direct_send_reaction()`,
+  `direct_mark_seen()`, and `direct_indicate_activity()`.
+- Added async FBNS push MQTT support through `Client.fbns_*` helpers and `aiograpi.realtime.FbnsClient`,
+  including device-auth persistence in `settings["fbns_auth"]`, token registration, and `push` callbacks.
+- Added async `confirm_phone_number(...)`, `hashtag_following(...)`, and `media_share_to_story(...)`.
+- Added async Bloks challenge navigation helper that preserves opaque `challenge_context` values.
+
+### Fixed
+
+- Improved Reel/clip upload failures so early upload stages include stage, HTTP status, response JSON, and response text.
+
+### Changed
+
+- Added `PySocks` as a runtime dependency for realtime MQTT proxy transport.
+- Synced the recorded upstream baseline to `instagrapi` 2.8.2.
+
 ## [1.0.11] - 2026-05-28
 
 ### Added

@@ -2022,6 +2022,8 @@ class UserMixin(ClientMixin):
         order: Union[str, None] = None,
         exclude_field_is_favorite: Optional[bool] = None,
         exclude_unused_fields: Optional[bool] = None,
+        skip_preview_hashtags: bool = True,
+        skip_hashtag_count: bool = True,
     ) -> dict:
         """
         Private-side ``FollowersList`` GraphQL query.
@@ -2099,6 +2101,8 @@ class UserMixin(ClientMixin):
         order: Union[str, None] = None,
         exclude_field_is_favorite: Optional[bool] = None,
         exclude_unused_fields: Optional[bool] = None,
+        skip_preview_hashtags: bool = True,
+        skip_hashtag_count: bool = True,
     ) -> dict:
         """
         Private-side ``FollowingList`` GraphQL query.
@@ -2114,7 +2118,7 @@ class UserMixin(ClientMixin):
         variables = {
             "user_id": str(user_id),
             "skip_use_clickable_see_more": True,
-            "skip_preview_hashtags": True,
+            "skip_preview_hashtags": skip_preview_hashtags,
             "skip_should_limit_list_of_followers": True,
             "skip_pending_admins": True,
             "skip_more_groups_available": True,
@@ -2129,7 +2133,7 @@ class UserMixin(ClientMixin):
             "include_unseen_count": True,
             "skip_has_more": True,
             "enable_groups": True,
-            "skip_hashtag_count": True,
+            "skip_hashtag_count": skip_hashtag_count,
         }
         if exclude_field_is_favorite is not None:
             variables["exclude_field_is_favorite"] = exclude_field_is_favorite

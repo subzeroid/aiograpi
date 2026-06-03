@@ -9,6 +9,7 @@ Pass hashtag names without the leading `#`, for example `pizza`. If a leading `#
 | hashtag_info(name: str)                            | Hashtag             | Return Hashtag info (id, name, picture)
 | hashtag_medias_top(name: str, amount: int = 9)     | List[Media]         | Return Top posts by Hashtag
 | hashtag_medias_recent(name: str, amount: int = 27) | List[Media]         | Return Most recent posts by Hashtag
+| hashtag_following(amount: int = 0)                 | List[Hashtag]       | Return hashtags followed by the authenticated account
 
 
 Example:
@@ -110,6 +111,10 @@ Example:
    'video_url': None,
    'thumbnail_url': HttpUrl('https://instagram.fhel3-1.fna.fbcdn.net/v/t51.2885-15/e35/185727252_524026898594344_9165723485744355754_n.jpg?tp=1&_nc_ht=instagram.fhel3-1.fna.fbcdn.net&_nc_cat=104&_nc_ohc=45NguRpEtZQAX83VSGE&edm=AP_V10EBAAAA&ccb=7-4&oh=c8c087ecfba444d9d85f7bd059f42a2a&oe=60C5C3C2&_nc_sid=4f375e', scheme='https', host='instagram.fhel3-1.fna.fbcdn.net', tld='net', host_type='domain', path='/v/t51.2885-15/e35/185727252_524026898594344_9165723485744355754_n.jpg', query='tp=1&_nc_ht=instagram.fhel3-1.fna.fbcdn.net&_nc_cat=104&_nc_ohc=45NguRpEtZQAX83VSGE&edm=AP_V10EBAAAA&ccb=7-4&oh=c8c087ecfba444d9d85f7bd059f42a2a&oe=60C5C3C2&_nc_sid=4f375e'),
    'media_type': 1}]}
+
+>>> hashtags = await cl.hashtag_following(amount=10)
+>>> [tag.name for tag in hashtags]
+['python', 'instagramapi']
 ```
 
 Low level methods:

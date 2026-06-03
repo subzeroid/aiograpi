@@ -41,6 +41,7 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | media_unlike(media_id: str)                                     | bool               | Unlike media
 | media_note_create(media_id: str, text: str = "", audience: int = 7, note_style: int = 13, extra_data: Optional[Dict] = None) | dict | Create a note attached to a media item
 | media_note_delete(note_id: str, extra_data: Optional[Dict] = None) | bool | Delete a note attached to a media item
+| media_share_to_story(media_id: str, background: Path = None, caption: str = "", extra_data: Optional[Dict] = None) | Story | Share an existing feed media as a story sticker
 | media_seen(media_ids: List[str], skipped_media_ids: List[str])  | bool               | Mark a media as seen
 | media_likers(media_id: str)                                     | List\[UserShort]   | Return list of users who liked this post (due to Instagram limitations, this may not return a complete list)
 | media_archive(media_id: str)                                    | bool               | Archive a media
@@ -52,6 +53,9 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | clip_unpin(media_pk: str)                                       | bool               | Unpin a Reel from the Reels tab/profile Reels grid
 
 Media notes are separate from Direct inbox Notes. Use `media_note_create()` and `media_note_delete()` for the note surface attached to a post or Reel; use the [Notes guide](notes.md) for Direct inbox Notes.
+
+`media_share_to_story()` uploads a story background and attaches the feed media as a story sticker. Pass a 9:16
+background image, or omit `background` to generate a temporary black 720x1280 image.
 
 Low level methods:
 

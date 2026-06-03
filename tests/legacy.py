@@ -15,6 +15,7 @@ from unittest import mock
 from unittest.mock import AsyncMock, Mock
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+import httpx
 from pydantic import ValidationError
 
 from aiograpi import Client
@@ -158,12 +159,12 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
     cl = None
     _username_cache = {}
 
-    def test_accounts_url(self):
+    def test_accounts_url(self, count=5):
         if not TEST_ACCOUNTS_URL:
             self.skipTest("TEST_ACCOUNTS_URL not configured")
         parts = urlsplit(TEST_ACCOUNTS_URL)
         query = dict(parse_qsl(parts.query, keep_blank_values=True))
-        query["count"] = "5"
+        query["count"] = str(count)
         return urlunsplit(
             (
                 parts.scheme,
@@ -173,6 +174,37 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
                 parts.fragment,
             )
         )
+
+    async def fetch_test_accounts(self, count=5):
+        try:
+            async with httpx.AsyncClient(trust_env=False, verify=False, timeout=30) as client:
+                response = await client.get(
+                    self.test_accounts_url(count=count),
+                    headers={"User-Agent": "Mozilla/5.0 aiograpi-tests"},
+                )
+        except httpx.HTTPError as exc:
+            raise RuntimeError(f"Could not fetch TEST_ACCOUNTS_URL: {exc.__class__.__name__}") from None
+        if not 200 <= response.status_code < 300:
+            raise RuntimeError(f"TEST_ACCOUNTS_URL returned HTTP {response.status_code}")
+        return response.json()
+
+    async def client_from_test_account(self, acc):
+        settings = dict(acc["client_settings"])
+        totp_seed = settings.pop("totp_seed", None)
+        cl = Client(settings=settings, proxy=os.getenv("IG_PROXY") or acc["proxy"])
+        login_kwargs = {
+            "username": acc["username"],
+            "password": acc["password"],
+            "relogin": True,
+        }
+        if totp_seed:
+            totp_code = cl.totp_generate_code(totp_seed)
+            cl.totp_seed = totp_seed
+            cl.totp_code = totp_code
+            login_kwargs["verification_code"] = totp_code
+        await cl.login(**login_kwargs)
+        cl._user_id = acc.get("user_id")
+        return cl
 
     async def user_info_by_username(self, username):
         return await self.cl.user_info_by_username_v1(username)
@@ -185,40 +217,16 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
         return str(info.pk)
 
     async def fresh_account(self):
-        import ssl
-        import urllib.request
-
-        ctx = ssl._create_unverified_context()
-        req = urllib.request.Request(
-            self.test_accounts_url(),
-            headers={"User-Agent": "Mozilla/5.0 aiograpi-tests"},
-        )
-        with urllib.request.urlopen(req, context=ctx) as resp:
-            data = json.loads(resp.read())
+        data = await self.fetch_test_accounts()
         last_exc = None
         for attempt, acc in enumerate(data[:5], start=1):
             print(f"Fresh account attempt {attempt}: %(username)r" % acc)
-            settings = dict(acc["client_settings"])
-            totp_seed = settings.pop("totp_seed", None)
-            cl = Client(settings=settings, proxy=acc["proxy"])
-            login_kwargs = {
-                "username": acc["username"],
-                "password": acc["password"],
-                "relogin": True,
-            }
-            if totp_seed:
-                totp_code = cl.totp_generate_code(totp_seed)
-                cl.totp_seed = totp_seed
-                cl.totp_code = totp_code
-                login_kwargs["verification_code"] = totp_code
             try:
-                await cl.login(**login_kwargs)
+                return await self.client_from_test_account(acc)
             except Exception as exc:
                 last_exc = exc
                 print(f"Fresh account attempt {attempt} failed for {acc['username']}: {exc.__class__.__name__} {exc}")
                 continue
-            cl._user_id = acc.get("user_id")
-            return cl
         raise last_exc or RuntimeError("No usable fresh account returned")
 
     async def asyncSetUp(self):

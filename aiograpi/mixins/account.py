@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from aiograpi.extractors import extract_account, extract_user_short
 from aiograpi.mixins.base import ClientMixin
@@ -315,7 +315,7 @@ class AccountMixin(ClientMixin):
         """
         return await self.private_request("accounts/account_security_info/", self.with_default_data({}))
 
-    async def account_edit(self, **data: Dict) -> Account:
+    async def account_edit(self, **data: Any) -> Account:
         """
         Edit your profile (authorized account)
 
@@ -474,4 +474,30 @@ class AccountMixin(ClientMixin):
                     "phone_number": phone_number,
                 }
             ),
+        )
+
+    async def confirm_phone_number(self, phone_number: str, code: str, has_sms_consent: bool = False) -> dict:
+        """
+        Confirm new phone number by SMS code
+
+        Parameters
+        ----------
+        phone_number: str
+            Phone number
+        code: str
+            Confirmation code
+        has_sms_consent: bool, default False
+            Whether to include Instagram's SMS consent flag
+
+        Returns
+        -------
+        dict
+            Jsonified response from Instagram
+        """
+        data = {"phone_number": phone_number, "verification_code": code}
+        if has_sms_consent:
+            data["has_sms_consent"] = "true"
+        return await self.private_request(
+            "accounts/verify_sms_code/",
+            self.with_extra_data(data),
         )

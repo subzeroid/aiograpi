@@ -36,6 +36,7 @@ export IG_PUBLIC_TRANSPORT_IMPERSONATE="chrome136"
 | [`upload_media.py`](upload_media.py) | Upload a feed photo, feed video, Reel, or Trial Reel. |
 | [`upload_story.py`](upload_story.py) | Upload a photo or video story, optionally with a link sticker. |
 | [`direct_message.py`](direct_message.py) | Send a Direct text message to user IDs or thread IDs. |
+| [`realtime_direct.py`](realtime_direct.py) | Receive Direct message sync payloads over Realtime MQTT. |
 
 ## Public lookup
 
@@ -78,3 +79,12 @@ python examples/direct_message.py --thread-ids 340282366841710301949128122292511
 ```
 
 Use exactly one target type: `--user-ids` or `--thread-ids`.
+
+## Realtime Direct MQTT
+
+```bash
+python examples/realtime_direct.py --limit 1
+IG_REALTIME_DIRECT_LIMIT=0 python examples/realtime_direct.py
+```
+
+The script logs in, subscribes to Direct message sync over Realtime MQTT, and prints received payloads as JSON.

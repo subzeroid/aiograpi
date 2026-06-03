@@ -96,6 +96,10 @@ The `Package` workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, n
 builds. On canonical repository pushes it also runs `tests/live/smoke.py` against the pooled live-account endpoint
 configured in `TEST_ACCOUNTS_URL`.
 
+Realtime MQTT/FBNS live tests also use `TEST_ACCOUNTS_URL` for pooled accounts. Set `IG_REALTIME_PROXY` when the account
+HTTP proxy can log in but cannot open a CONNECT tunnel to Instagram's MQTT hosts; the realtime tests use that proxy only
+for the MQTT socket and keep the account proxy for normal private API calls.
+
 The `Publish to PyPI` workflow runs only for version tags such as `0.9.0`. It verifies the tag matches
 `pyproject.toml`, builds the wheel and sdist, publishes through PyPI trusted publishing, creates the GitHub release, and
 publishes versioned docs with `mike`.

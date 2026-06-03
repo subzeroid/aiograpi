@@ -38,6 +38,7 @@ nav:
     - User: usage-guide/user.md
     - Account: usage-guide/account.md
     - Private GraphQL & doc_id: usage-guide/private-graphql.md
+    - Realtime MQTT: usage-guide/realtime.md
     - Best Practices: usage-guide/best-practices.md
     - Troubleshooting: usage-guide/troubleshooting.md
   - Development Guide: development-guide.md

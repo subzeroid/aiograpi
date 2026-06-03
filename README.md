@@ -32,7 +32,7 @@ Android users should see [Pydroid and ffmpeg](docs/usage-guide/pydroid.md) and [
 [![License](https://img.shields.io/pypi/l/aiograpi)](LICENSE)
 [![Package](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml/badge.svg)](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml)
 [![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://subzeroid.github.io/aiograpi/latest/)
-[![SemVer](https://img.shields.io/badge/semver-1.0.0-blue)](https://semver.org/spec/v2.0.0.html)
+[![SemVer](https://img.shields.io/badge/semver-1.1.0-blue)](https://semver.org/spec/v2.0.0.html)
 
 
 Features:
@@ -45,6 +45,7 @@ Features:
 * Management of proxy servers, mobile devices and challenge resolver
 * Login by username and password, sessionid, 2FA, 8-digit backup codes, and Bloks 2FA fallback/helpers
 * Managing messages, reactions and threads for Direct and attach files
+* Experimental Realtime MQTT/MQTToT for Direct message sync, lightweight Direct actions, and FBNS push callbacks
 * Download and upload a Photo, Video, IGTV, Reels, Albums, Stories and Trial Reels
 * Work with Users, Posts, Comments, Insights, Collections, Location and Hashtag
 * Insights by account, posts and stories
@@ -72,7 +73,8 @@ Support chat in Telegram: https://t.me/aiograpi_support
 6. [Like](https://subzeroid.github.io/aiograpi/latest/usage-guide/media/), [Follow](https://subzeroid.github.io/aiograpi/latest/usage-guide/user/), [Edit account](https://subzeroid.github.io/aiograpi/latest/usage-guide/account/) (Bio) and much more else
 7. [Insights](https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/) by account, posts and stories
 8. [Build stories](https://subzeroid.github.io/aiograpi/latest/usage-guide/story/) with custom background, font animation, link sticker and mention users
-9. Account [registration](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/mixins/signup.py) and captcha passing will appear
+9. [Realtime MQTT](https://subzeroid.github.io/aiograpi/latest/usage-guide/realtime/) for Direct message sync, lightweight Direct MQTT actions, and FBNS push notifications
+10. Account [registration](https://github.com/subzeroid/aiograpi/blob/main/aiograpi/mixins/signup.py) and captcha passing will appear
 
 ### Versioning policy
 
@@ -95,6 +97,10 @@ What you can rely on instead:
 
 ### What's new in 1.0.0 and recent releases
 
+- **1.1.0 MQTT/FBNS sync** — synced with `instagrapi 2.8.2`, adding experimental async Realtime MQTT/MQTToT,
+  Direct message sync, lightweight Direct MQTT actions, FBNS push token registration/callbacks, phone confirmation,
+  followed hashtag helpers, feed-media share-to-story, opaque Bloks challenge context handling, and clearer Reel upload
+  failure details.
 - **1.0.0 SemVer baseline** — synced with `instagrapi 2.7.0`, removed the dead public `?__a=1`
   API surface, kept `media_info_gql()` GraphQL-only, and moved high-level hashtag/location helpers
   to authenticated private/mobile flows.
@@ -151,6 +157,34 @@ cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
 See the [public transport guide](docs/usage-guide/public-transport.md) for live comparison results and caveats.
 
 TLS certificate verification is enabled by default. For a trusted debugging MITM proxy, prefer `Client(tls_verify="/path/to/proxy-ca.pem")`; use `Client(tls_verify=False)` only for temporary local debugging because it allows session interception.
+
+### Realtime MQTT and Direct
+
+`aiograpi 1.1.0` adds experimental async Realtime MQTT/MQTToT helpers. They can receive Direct message sync payloads,
+publish lightweight Direct actions over MQTT, and subscribe to FBNS push notifications.
+
+```python
+from aiograpi import Client
+
+cl = Client()
+await cl.login(USERNAME, PASSWORD)
+
+
+def handle_message(payload):
+    print(payload)
+
+
+cl.realtime_on("message", handle_message)
+rt = await cl.realtime_connect()
+await rt.direct_subscribe()
+
+await rt.direct_send_text(thread_id, "Hello from MQTT")
+
+while True:
+    await cl.realtime_read_once()
+```
+
+See the [Realtime MQTT guide](docs/usage-guide/realtime.md) for Direct sync, MQTT Direct actions, and FBNS push examples.
 
 ### Basic Usage
 
