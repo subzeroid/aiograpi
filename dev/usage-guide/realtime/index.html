@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/termux/">
+        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/realtime/">
       
       
-        <link rel="prev" href="../story/">
+        <link rel="prev" href="../private-graphql/">
       
       
-        <link rel="next" href="../totp/">
+        <link rel="next" href="../best-practices/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Termux - aiograpi Documentation</title>
+        <title>Realtime MQTT - aiograpi Documentation</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#termux" class="md-skip">
+        <a href="#realtime-mqtt" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Termux
+              Realtime MQTT
             
           </span>
         </div>
@@ -944,37 +944,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Termux
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../termux/" class="md-nav__link">
         
   
   
@@ -990,59 +963,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#install" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Install
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#video-uploads" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Video Uploads
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optional-video-helpers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Optional Video Helpers
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1192,10 +1112,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../realtime/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1211,6 +1140,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -1353,47 +1283,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#install" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Install
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#video-uploads" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Video Uploads
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optional-video-helpers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Optional Video Helpers
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1412,38 +1301,242 @@
   
 
 
-<h1 id="termux">Termux</h1>
-<p>Termux can run many <code>aiograpi</code> flows, but Android does not use the same binary wheel ecosystem as desktop Linux. Keep the default install small and add media tooling only when the script really needs it.</p>
-<h2 id="install">Install</h2>
-<div class="highlight"><pre><span></span><code>pkg<span class="w"> </span>update
-pkg<span class="w"> </span>install<span class="w"> </span>python<span class="w"> </span>python-pillow
-python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>pip<span class="w"> </span>setuptools<span class="w"> </span>wheel
-python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--extra-index-url<span class="w"> </span>https://termux-user-repository.github.io/pypi/<span class="w"> </span>aiograpi
-</code></pre></div>
-<p><code>python-pillow</code> is recommended because photo uploads use Pillow through <code>aiograpi.image_util</code>. Installing it with <code>pkg</code> avoids a slow or fragile Pillow source build in pip.</p>
-<p>The Termux User Repository PyPI index provides Android wheels for native packages that PyPI may only publish as desktop Linux wheels. On Android, <code>aiograpi</code> uses <code>pydantic==2.12.5</code>, which depends on <code>pydantic-core==2.41.5</code>; that version has Android wheels for Python 3.13 in the Termux index. Newer <code>pydantic-core</code> releases may otherwise try to build with Rust and fail on-device.</p>
-<h2 id="video-uploads">Video Uploads</h2>
-<p>For standard MP4 uploads, pass your own thumbnail and <code>aiograpi</code> can read width, height, and duration with its built-in MP4 parser:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<h1 id="realtime-mqtt">Realtime MQTT</h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Realtime MQTT support is experimental. Instagram can change this private transport without notice.</p>
+</div>
+<p>The realtime client opens Instagram's MQTToT connection for live events after login.
+It is useful when you need callbacks for realtime payloads instead of polling HTTP endpoints.
+It can also publish lightweight Direct actions over MQTT. Use the regular Direct methods for media sends
+and complete thread management.</p>
+<p>FBNS push notifications use a separate <code>mqtt-mini.facebook.com</code> device-auth connection. Use FBNS when you need
+Instagram push payloads, for example Direct message notification callbacks.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Return</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>await realtime_connect(transport=None)</code></td>
+<td><code>RealtimeClient</code></td>
+<td>Create and connect the stateful realtime client</td>
+</tr>
+<tr>
+<td><code>await realtime_disconnect()</code></td>
+<td><code>None</code></td>
+<td>Disconnect the active realtime client</td>
+</tr>
+<tr>
+<td><code>realtime_on(event, handler)</code></td>
+<td><code>None</code></td>
+<td>Register an event handler on the active realtime client</td>
+</tr>
+<tr>
+<td><code>await realtime_ping()</code></td>
+<td><code>bool</code></td>
+<td>Send a keepalive ping and wait for <code>PINGRESP</code></td>
+</tr>
+<tr>
+<td><code>await realtime_read_once()</code></td>
+<td><code>Any</code></td>
+<td>Read one packet from the active realtime client</td>
+</tr>
+<tr>
+<td><code>await fbns_connect(transport=None, auth=None, register=True)</code></td>
+<td><code>FbnsClient</code></td>
+<td>Create, connect, and register the stateful FBNS client</td>
+</tr>
+<tr>
+<td><code>await fbns_disconnect()</code></td>
+<td><code>None</code></td>
+<td>Disconnect the active FBNS client</td>
+</tr>
+<tr>
+<td><code>fbns_on(event, handler)</code></td>
+<td><code>None</code></td>
+<td>Register an event handler on the active FBNS client</td>
+</tr>
+<tr>
+<td><code>await fbns_ping()</code></td>
+<td><code>bool</code></td>
+<td>Send an FBNS keepalive ping and wait for <code>PINGRESP</code></td>
+</tr>
+<tr>
+<td><code>await fbns_read_once()</code></td>
+<td><code>Any</code></td>
+<td>Read one packet from the active FBNS client</td>
+</tr>
+</tbody>
+</table>
+<p><code>RealtimeClient</code> also exposes lower-level async helpers:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>on(event, handler)</code></td>
+<td>Register a handler for <code>receive</code>, <code>message</code>, or <code>realtime_sub</code></td>
+</tr>
+<tr>
+<td><code>await graph_ql_subscribe(subscriptions)</code></td>
+<td>Publish raw GraphQL realtime subscriptions</td>
+</tr>
+<tr>
+<td><code>await skywalker_subscribe(subscriptions)</code></td>
+<td>Publish raw Skywalker subscriptions</td>
+</tr>
+<tr>
+<td><code>await iris_subscribe(seq_id, snapshot_at_ms)</code></td>
+<td>Publish Direct inbox sync state for message-sync events</td>
+</tr>
+<tr>
+<td><code>await direct_subscribe(amount=1)</code></td>
+<td>Fetch Direct inbox sync state and subscribe to message-sync events</td>
+</tr>
+<tr>
+<td><code>await direct_send_text(thread_id, text, client_context=None)</code></td>
+<td>Publish a Direct text message over MQTT</td>
+</tr>
+<tr>
+<td><code>await direct_send_reaction(thread_id, item_id, emoji="", ...)</code></td>
+<td>Publish a Direct reaction over MQTT</td>
+</tr>
+<tr>
+<td><code>await direct_mark_seen(thread_id, item_id)</code></td>
+<td>Publish Direct seen state over MQTT</td>
+</tr>
+<tr>
+<td><code>await direct_indicate_activity(thread_id, is_active=True, client_context=None)</code></td>
+<td>Publish Direct typing/activity state over MQTT</td>
+</tr>
+<tr>
+<td><code>await send_foreground_state(...)</code></td>
+<td>Publish foreground state and optional topic changes</td>
+</tr>
+<tr>
+<td><code>await publish_json(topic, data)</code></td>
+<td>Publish a JSON payload to a raw MQTToT topic</td>
+</tr>
+<tr>
+<td><code>await ping()</code></td>
+<td>Send a keepalive ping and wait for <code>PINGRESP</code></td>
+</tr>
+<tr>
+<td><code>await read_once()</code></td>
+<td>Read and dispatch one packet</td>
+</tr>
+</tbody>
+</table>
+<p>Basic receive loop:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 
-<span class="n">media</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">clip_upload</span><span class="p">(</span>
-    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel.mp4&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;Uploaded from Termux&quot;</span><span class="p">,</span>
-    <span class="n">thumbnail</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reel-thumb.jpg&quot;</span><span class="p">),</span>
-<span class="p">)</span>
+<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">handle_receive</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">event</span><span class="p">[</span><span class="s2">&quot;topic&quot;</span><span class="p">],</span> <span class="n">event</span><span class="p">[</span><span class="s2">&quot;payload&quot;</span><span class="p">])</span>
+
+
+<span class="n">cl</span><span class="o">.</span><span class="n">realtime_on</span><span class="p">(</span><span class="s2">&quot;receive&quot;</span><span class="p">,</span> <span class="n">handle_receive</span><span class="p">)</span>
+<span class="n">rt</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">realtime_connect</span><span class="p">()</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">realtime_read_once</span><span class="p">()</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">realtime_disconnect</span><span class="p">()</span>
 </code></pre></div>
-<p>This path does not need MoviePy, NumPy, or ffmpeg.</p>
-<h2 id="optional-video-helpers">Optional Video Helpers</h2>
-<p>Install the optional video dependencies only if you need automatic thumbnail generation, <code>StoryBuilder</code>, <code>prepare_video()</code>, or audio/video composition helpers:</p>
-<div class="highlight"><pre><span></span><code>pkg<span class="w"> </span>install<span class="w"> </span>ffmpeg
-python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;aiograpi[video]&quot;</span>
-python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span><span class="s2">&quot;moviepy==2.2.1&quot;</span>
+<p>Receive Direct message sync payloads:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
+
+<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">handle_direct_message</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+
+<span class="n">cl</span><span class="o">.</span><span class="n">realtime_on</span><span class="p">(</span><span class="s2">&quot;message&quot;</span><span class="p">,</span> <span class="n">handle_direct_message</span><span class="p">)</span>
+
+<span class="n">rt</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">realtime_connect</span><span class="p">()</span>
+<span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">direct_subscribe</span><span class="p">()</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Optional keepalive check for smoke tests or long-running workers.</span>
+    <span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">ping</span><span class="p">()</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">realtime_read_once</span><span class="p">()</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">realtime_disconnect</span><span class="p">()</span>
 </code></pre></div>
-<p>MoviePy <code>2.2.1</code> currently declares <code>Pillow&lt;12</code>, but aiograpi keeps <code>Pillow&gt;=12.2.0</code> for security fixes; the <code>--no-deps</code> install keeps the safe Pillow version. MoviePy <code>1.x</code> is no longer supported by aiograpi's optional video helpers.</p>
-<p>If MoviePy cannot find ffmpeg, point ImageIO at the Termux binary before running the script:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">IMAGEIO_FFMPEG_EXE</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">command</span><span class="w"> </span>-v<span class="w"> </span>ffmpeg<span class="k">)</span><span class="s2">&quot;</span>
+<p>Send lightweight Direct actions over MQTT:</p>
+<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">direct_send_text</span><span class="p">(</span><span class="n">thread_id</span><span class="p">,</span> <span class="s2">&quot;Hello from MQTT&quot;</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">direct_send_reaction</span><span class="p">(</span><span class="n">thread_id</span><span class="p">,</span> <span class="n">item_id</span><span class="p">,</span> <span class="n">emoji</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">direct_indicate_activity</span><span class="p">(</span><span class="n">thread_id</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">direct_mark_seen</span><span class="p">(</span><span class="n">thread_id</span><span class="p">,</span> <span class="n">item_id</span><span class="p">)</span>
 </code></pre></div>
-<p>If <code>pip install "aiograpi[video]"</code> tries to build NumPy and fails, avoid the optional video helpers on-device: prepare the MP4 and thumbnail elsewhere, then use upload methods with <code>thumbnail=...</code>.</p>
+<p>For photos, videos, voice, thread creation, request approval, and other full Direct operations, use the normal
+<code>direct_*</code> HTTP methods. The MQTT payload shape is private and can change server-side, so inspect received
+dictionaries before depending on nested keys.</p>
+<p>Receive FBNS push notifications:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
+
+<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">handle_push</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+
+<span class="n">cl</span><span class="o">.</span><span class="n">fbns_on</span><span class="p">(</span><span class="s2">&quot;push&quot;</span><span class="p">,</span> <span class="n">handle_push</span><span class="p">)</span>
+<span class="n">fbns</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbns_connect</span><span class="p">()</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">fbns</span><span class="o">.</span><span class="n">ping</span><span class="p">()</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbns_read_once</span><span class="p">()</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbns_disconnect</span><span class="p">()</span>
+</code></pre></div>
+<p><code>fbns_connect()</code> registers the FBNS token with Instagram's private push register endpoint. The device-auth state
+returned by the broker is stored in <code>settings["fbns_auth"]</code>, so <code>dump_settings()</code> can persist it with the normal
+session data.</p>
+<p>Subscribe to raw realtime topics:</p>
+<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">graph_ql_subscribe</span><span class="p">([</span><span class="s2">&quot;&lt;graphql-subscription&gt;&quot;</span><span class="p">])</span>
+<span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">skywalker_subscribe</span><span class="p">([</span><span class="s2">&quot;&lt;skywalker-subscription&gt;&quot;</span><span class="p">])</span>
+</code></pre></div>
+<p>Raw GraphQL and Skywalker subscription strings are advanced and unstable. Message sync is subscribed by the default
+connection topics, so the Direct message example above does not need an extra raw subscription.</p>
+<p>Events:</p>
+<ul>
+<li><code>receive</code> is emitted for every decoded publish packet as <code>{"topic": topic, "payload": payload}</code>.</li>
+<li><code>message</code> is emitted for message-sync payloads.</li>
+<li><code>direct</code> is emitted for parsed Direct realtime payloads from message-sync or realtime-sub streams.</li>
+<li><code>typing</code>, <code>seen</code>, and <code>presence</code> are emitted for Direct realtime payloads that can be classified.</li>
+<li><code>send_response</code> is emitted for MQTT Direct command responses.</li>
+<li><code>iris_sub_response</code> is emitted for Iris subscription responses.</li>
+<li><code>realtime_sub</code> is emitted for realtime subscription payloads.</li>
+<li><code>push</code> is emitted for parsed FBNS <code>fbpushnotif</code> payloads.</li>
+<li>FBNS also emits the notification <code>collapse_key</code> as an event name when present, for example <code>direct_v2_message</code>.</li>
+<li>FBNS emits <code>reg_response</code>, <code>registered</code>, <code>logging</code>, and <code>pp</code> for registration and lower-level broker payloads.</li>
+</ul>
 
 
 

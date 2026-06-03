@@ -1125,6 +1125,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../realtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Realtime MQTT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../best-practices/" class="md-nav__link">
         
   
@@ -1339,6 +1367,11 @@
 <td>dict</td>
 <td>Send confirmation code to new phone number</td>
 </tr>
+<tr>
+<td>confirm_phone_number(phone_number: str, code: str, has_sms_consent: bool = False)</td>
+<td>dict</td>
+<td>Confirm a new phone number with the received SMS code</td>
+</tr>
 </tbody>
 </table>
 <p>Example:</p>
@@ -1399,6 +1432,9 @@
     <span class="s1">&#39;robocall_after_max_sms&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
     <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span>
 <span class="p">}</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">confirm_phone_number</span><span class="p">(</span><span class="s2">&quot;+5599999999&quot;</span><span class="p">,</span> <span class="s2">&quot;123456&quot;</span><span class="p">,</span> <span class="n">has_sms_consent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">}</span>
 </code></pre></div>
 <p>Professional conversion uses Instagram's mobile conversion flow and may still be blocked by account-specific eligibility,
 category, contact, or Account Center requirements.</p>

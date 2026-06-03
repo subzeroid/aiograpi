@@ -1125,6 +1125,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../realtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Realtime MQTT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../best-practices/" class="md-nav__link">
         
   
@@ -1300,6 +1328,11 @@
 <td>List[Media]</td>
 <td>Return Most recent posts by Hashtag</td>
 </tr>
+<tr>
+<td>hashtag_following(amount: int = 0)</td>
+<td>List[Hashtag]</td>
+<td>Return hashtags followed by the authenticated account</td>
+</tr>
 </tbody>
 </table>
 <p>Example:</p>
@@ -1399,6 +1432,10 @@
    <span class="s1">&#39;video_url&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
    <span class="s1">&#39;thumbnail_url&#39;</span><span class="p">:</span> <span class="n">HttpUrl</span><span class="p">(</span><span class="s1">&#39;https://instagram.fhel3-1.fna.fbcdn.net/v/t51.2885-15/e35/185727252_524026898594344_9165723485744355754_n.jpg?tp=1&amp;_nc_ht=instagram.fhel3-1.fna.fbcdn.net&amp;_nc_cat=104&amp;_nc_ohc=45NguRpEtZQAX83VSGE&amp;edm=AP_V10EBAAAA&amp;ccb=7-4&amp;oh=c8c087ecfba444d9d85f7bd059f42a2a&amp;oe=60C5C3C2&amp;_nc_sid=4f375e&#39;</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="s1">&#39;https&#39;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s1">&#39;instagram.fhel3-1.fna.fbcdn.net&#39;</span><span class="p">,</span> <span class="n">tld</span><span class="o">=</span><span class="s1">&#39;net&#39;</span><span class="p">,</span> <span class="n">host_type</span><span class="o">=</span><span class="s1">&#39;domain&#39;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;/v/t51.2885-15/e35/185727252_524026898594344_9165723485744355754_n.jpg&#39;</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="s1">&#39;tp=1&amp;_nc_ht=instagram.fhel3-1.fna.fbcdn.net&amp;_nc_cat=104&amp;_nc_ohc=45NguRpEtZQAX83VSGE&amp;edm=AP_V10EBAAAA&amp;ccb=7-4&amp;oh=c8c087ecfba444d9d85f7bd059f42a2a&amp;oe=60C5C3C2&amp;_nc_sid=4f375e&#39;</span><span class="p">),</span>
    <span class="s1">&#39;media_type&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}]}</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">hashtags</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">hashtag_following</span><span class="p">(</span><span class="n">amount</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="p">[</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">hashtags</span><span class="p">]</span>
+<span class="p">[</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="s1">&#39;instagramapi&#39;</span><span class="p">]</span>
 </code></pre></div>
 <p>Low level methods:</p>
 <table>

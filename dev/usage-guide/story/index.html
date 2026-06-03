@@ -1184,6 +1184,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../realtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Realtime MQTT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../best-practices/" class="md-nav__link">
         
   
@@ -1498,6 +1526,11 @@ If you have a different resolution, then you need to prepare a file or use the S
 <td>dict</td>
 <td>Build Story music configure fields for manual story upload <code>extra_data</code></td>
 </tr>
+<tr>
+<td>media_share_to_story(media_id: str, background: Path = None, caption: str = "")</td>
+<td>Story</td>
+<td>Share an existing feed media as a story sticker</td>
+</tr>
 </tbody>
 </table>
 <p>In <code>extra_data</code>, you can pass additional story settings, for example:</p>
@@ -1539,6 +1572,12 @@ expose Instagram's native interactive lyrics/music sticker UI.</p>
     <span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="n">StoryLink</span><span class="p">(</span><span class="n">webUri</span><span class="o">=</span><span class="s1">&#39;https://github.com/subzeroid/aiograpi&#39;</span><span class="p">)],</span>
     <span class="n">hashtags</span><span class="o">=</span><span class="p">[</span><span class="n">StoryHashtag</span><span class="p">(</span><span class="n">hashtag</span><span class="o">=</span><span class="n">hashtag</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.23</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.32</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.22</span><span class="p">)],</span>
     <span class="n">medias</span><span class="o">=</span><span class="p">[</span><span class="n">StoryMedia</span><span class="p">(</span><span class="n">media_pk</span><span class="o">=</span><span class="n">media_pk</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)],</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Share a feed media to story:</p>
+<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_share_to_story</span><span class="p">(</span>
+    <span class="s2">&quot;3613500067578544892_25025320&quot;</span><span class="p">,</span>
+    <span class="n">caption</span><span class="o">=</span><span class="s2">&quot;Shared from feed&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 <h2 id="build-story-to-upload">Build Story to Upload</h2>

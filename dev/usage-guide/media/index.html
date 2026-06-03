@@ -1268,6 +1268,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../realtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Realtime MQTT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../best-practices/" class="md-nav__link">
         
   
@@ -1649,6 +1677,11 @@
 <td>Delete a note attached to a media item</td>
 </tr>
 <tr>
+<td>media_share_to_story(media_id: str, background: Path = None, caption: str = "", extra_data: Optional[Dict] = None)</td>
+<td>Story</td>
+<td>Share an existing feed media as a story sticker</td>
+</tr>
+<tr>
 <td>media_seen(media_ids: List[str], skipped_media_ids: List[str])</td>
 <td>bool</td>
 <td>Mark a media as seen</td>
@@ -1696,6 +1729,8 @@
 </tbody>
 </table>
 <p>Media notes are separate from Direct inbox Notes. Use <code>media_note_create()</code> and <code>media_note_delete()</code> for the note surface attached to a post or Reel; use the <a href="../notes/">Notes guide</a> for Direct inbox Notes.</p>
+<p><code>media_share_to_story()</code> uploads a story background and attaches the feed media as a story sticker. Pass a 9:16
+background image, or omit <code>background</code> to generate a temporary black 720x1280 image.</p>
 <p>Low level methods:</p>
 <table>
 <thead>

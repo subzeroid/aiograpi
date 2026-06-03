@@ -1125,6 +1125,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../realtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Realtime MQTT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../best-practices/" class="md-nav__link">
         
   
@@ -1313,6 +1341,10 @@
 <td><a href="https://github.com/subzeroid/aiograpi/blob/main/examples/direct_message.py"><code>direct_message.py</code></a></td>
 <td>Send a Direct text message to user IDs or thread IDs.</td>
 </tr>
+<tr>
+<td><a href="https://github.com/subzeroid/aiograpi/blob/main/examples/realtime_direct.py"><code>realtime_direct.py</code></a></td>
+<td>Receive Direct message sync payloads over Realtime MQTT.</td>
+</tr>
 </tbody>
 </table>
 <p>Examples:</p>
@@ -1322,6 +1354,7 @@ python<span class="w"> </span>examples/download_user_media.py<span class="w"> </
 python<span class="w"> </span>examples/upload_media.py<span class="w"> </span>reel<span class="w"> </span>./reel.mp4<span class="w"> </span>--thumbnail<span class="w"> </span>./thumb.jpg<span class="w"> </span>--caption<span class="w"> </span><span class="s2">&quot;Reel&quot;</span>
 python<span class="w"> </span>examples/upload_story.py<span class="w"> </span>photo<span class="w"> </span>./story.jpg<span class="w"> </span>--caption<span class="w"> </span><span class="s2">&quot;Story&quot;</span>
 python<span class="w"> </span>examples/direct_message.py<span class="w"> </span>--user-ids<span class="w"> </span><span class="m">123456789</span><span class="w"> </span>--text<span class="w"> </span><span class="s2">&quot;Hello&quot;</span>
+python<span class="w"> </span>examples/realtime_direct.py<span class="w"> </span>--limit<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
 <p>Video uploads in Android environments should pass <code>--thumbnail</code> or install the optional video dependencies, MoviePy <code>2.2.1</code>, and executable <code>ffmpeg</code>. See <a href="../pydroid/">Pydroid and ffmpeg</a> and <a href="../termux/">Termux</a>.</p>
 

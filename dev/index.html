@@ -322,6 +322,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#realtime-mqtt-and-direct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Realtime MQTT and Direct
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#basic-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1247,6 +1258,34 @@
   
   
     <li class="md-nav__item">
+      <a href="usage-guide/realtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Realtime MQTT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="usage-guide/best-practices/" class="md-nav__link">
         
   
@@ -1418,6 +1457,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#realtime-mqtt-and-direct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Realtime MQTT and Direct
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#basic-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1523,9 +1573,33 @@ pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="
 <li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/media/">Like</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/user/">Follow</a>, <a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/account/">Edit account</a> (Bio) and much more else</li>
 <li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/insight/">Insights</a> by account, posts and stories</li>
 <li><a href="https://subzeroid.github.io/aiograpi/latest/usage-guide/story/">Build stories</a> with custom background, font animation, link sticker and mention users</li>
+<li><a href="usage-guide/realtime/">Realtime MQTT</a> for Direct message sync, lightweight Direct MQTT actions, and FBNS push notifications</li>
 <li>Account registration helpers and opt-in captcha handler hooks</li>
 </ol>
 <h2 id="example">Example</h2>
+<h3 id="realtime-mqtt-and-direct">Realtime MQTT and Direct</h3>
+<p><code>aiograpi 1.1.0</code> adds experimental async Realtime MQTT/MQTToT helpers. They can receive Direct message sync payloads,
+publish lightweight Direct actions over MQTT, and subscribe to FBNS push notifications.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
+
+<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">handle_message</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+
+
+<span class="n">cl</span><span class="o">.</span><span class="n">realtime_on</span><span class="p">(</span><span class="s2">&quot;message&quot;</span><span class="p">,</span> <span class="n">handle_message</span><span class="p">)</span>
+<span class="n">rt</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">realtime_connect</span><span class="p">()</span>
+<span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">direct_subscribe</span><span class="p">()</span>
+
+<span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">direct_send_text</span><span class="p">(</span><span class="n">thread_id</span><span class="p">,</span> <span class="s2">&quot;Hello from MQTT&quot;</span><span class="p">)</span>
+
+<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">realtime_read_once</span><span class="p">()</span>
+</code></pre></div>
+<p>See the <a href="usage-guide/realtime/">Realtime MQTT guide</a> for Direct sync, MQTT Direct actions, and FBNS push examples.</p>
 <h3 id="basic-usage">Basic Usage</h3>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 
@@ -1591,6 +1665,7 @@ pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="
 <li><a href="usage-guide/comment/"><code>Comment</code></a> - Comments to Media</li>
 <li><a href="usage-guide/highlight/"><code>Highlight</code></a> - Highlights</li>
 <li><a href="usage-guide/notes/"><code>Notes</code></a> - Notes</li>
+<li><a href="usage-guide/realtime/"><code>Realtime MQTT</code></a> - Direct sync, lightweight Direct MQTT actions, and FBNS push callbacks</li>
 <li><a href="usage-guide/pydroid/"><code>Pydroid and ffmpeg</code></a> - Android/Pydroid video upload setup</li>
 <li><a href="usage-guide/termux/"><code>Termux</code></a> - Termux install notes and optional video helpers</li>
 <li><a href="usage-guide/public-transport/"><code>Public Transport</code></a> - Optional curl transport for public web requests</li>

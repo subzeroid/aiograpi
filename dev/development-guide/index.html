@@ -1113,6 +1113,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../usage-guide/realtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Realtime MQTT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../usage-guide/best-practices/" class="md-nav__link">
         
   
@@ -1549,6 +1577,9 @@ maintainers cut a version tag only after the checks are green.</p>
 <p>The <code>Package</code> workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs
 builds. On canonical repository pushes it also runs <code>tests/live/smoke.py</code> against the pooled live-account endpoint
 configured in <code>TEST_ACCOUNTS_URL</code>.</p>
+<p>Realtime MQTT/FBNS live tests also use <code>TEST_ACCOUNTS_URL</code> for pooled accounts. Set <code>IG_REALTIME_PROXY</code> when the account
+HTTP proxy can log in but cannot open a CONNECT tunnel to Instagram's MQTT hosts; the realtime tests use that proxy only
+for the MQTT socket and keep the account proxy for normal private API calls.</p>
 <p>The <code>Publish to PyPI</code> workflow runs only for version tags such as <code>0.9.0</code>. It verifies the tag matches
 <code>pyproject.toml</code>, builds the wheel and sdist, publishes through PyPI trusted publishing, creates the GitHub release, and
 publishes versioned docs with <code>mike</code>.</p>
