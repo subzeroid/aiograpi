@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import unquote, urlsplit
 
 try:
-    import socks
+    import socks  # type: ignore[import-untyped]
 except ImportError:  # pragma: no cover - exercised only when proxy transport is used without PySocks
     socks = None
 
@@ -245,7 +245,7 @@ class SocketMQTToTTransport:
         self.timeout = timeout
         self.tls_context = tls_context or ssl.create_default_context()
         self.proxy = proxy
-        self.sock = None
+        self.sock: Optional[socket.socket] = None
 
     def connect(self) -> None:
         raw = (
@@ -256,7 +256,7 @@ class SocketMQTToTTransport:
         self.sock = self.tls_context.wrap_socket(raw, server_hostname=self.host)
         self.sock.settimeout(self.timeout)
 
-    def _create_proxy_connection(self):
+    def _create_proxy_connection(self) -> socket.socket:
         if socks is None:
             raise RuntimeError(
                 "Realtime proxy support requires PySocks. Install aiograpi with its default dependencies."

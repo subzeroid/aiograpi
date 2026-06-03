@@ -347,7 +347,7 @@ class HashtagMixin(ClientMixin):
             List of objects of Hashtag
         """
         assert self.user_id, "Login required"
-        result = await self.private_graphql_following_list(
+        result = await self.private_graphql_following_list(  # type: ignore[attr-defined]
             str(self.user_id),
             self.rank_token,
             priority="u=3, i",

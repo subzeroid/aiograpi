@@ -36,10 +36,12 @@ class RealtimeMixin:
             raise RuntimeError("Realtime client is not connected")
         return await self.realtime.ping()
 
-    def fbns_client(self, transport=None, auth: FbnsDeviceAuth = None) -> FbnsClient:
+    def fbns_client(self, transport=None, auth: FbnsDeviceAuth | None = None) -> FbnsClient:
         return FbnsClient(self, transport=transport, auth=auth)
 
-    async def fbns_connect(self, transport=None, auth: FbnsDeviceAuth = None, register: bool = True) -> FbnsClient:
+    async def fbns_connect(
+        self, transport=None, auth: FbnsDeviceAuth | None = None, register: bool = True
+    ) -> FbnsClient:
         if not self.fbns:
             self.fbns = self.fbns_client(transport=transport, auth=auth)
         else:

@@ -208,7 +208,8 @@ class FbnsClient:
                 if not token:
                     raise RuntimeError("FBNS registration response did not include token")
                 return str(token)
-            self.dispatch_packet(packet.topic, packet.payload)
+            if packet.topic is not None:
+                self.dispatch_packet(packet.topic, packet.payload)
             await self._ack(packet)
         raise TimeoutError("FBNS registration response was not received")
 

@@ -365,7 +365,7 @@ class MediaMixin(ClientMixin):
     async def media_share_to_story(
         self,
         media_id: str,
-        background: Path = None,
+        background: Path | None = None,
         caption: str = "",
         x: float = 0.5,
         y: float = 0.4997396,
@@ -420,12 +420,12 @@ class MediaMixin(ClientMixin):
             background = Path(background)
 
         try:
-            return await self.photo_upload_to_story(
+            return await self.photo_upload_to_story(  # type: ignore[attr-defined]
                 background,
                 caption,
                 medias=[
                     StoryMedia(
-                        media_pk=media_pk,
+                        media_pk=int(media_pk),
                         user_id=media_owner_id,
                         x=x,
                         y=y,
