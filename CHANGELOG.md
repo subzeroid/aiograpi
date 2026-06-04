@@ -1530,6 +1530,9 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[1.1.0]: https://github.com/subzeroid/aiograpi/releases/tag/1.1.0
+[1.0.11]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.11
+[1.0.10]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.10
 [1.0.9]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.9
 [1.0.8]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.8
 [1.0.7]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.7
