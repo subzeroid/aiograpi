@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiograpi"
-version = "1.1.0"
+version = "1.2.0"
 authors = [
     { name = "Mark Subzeroid", email = "143403577+subzeroid@users.noreply.github.com" },
 ]
@@ -107,7 +107,7 @@ test = [
     "pytest-xdist==3.8.0",
     "pytest==9.0.3",
     "python-dotenv>=0.10",
-    "ruff==0.15.12",
+    "ruff==0.15.16",
 ]
 
 [tool.setuptools]

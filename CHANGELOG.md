@@ -8,6 +8,25 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-06
+
+### Added
+
+- Added `direct_media_share(..., thread_ids=[...])` for sharing feed media into existing Direct threads or groups.
+- Added `DirectMessageRequestsDisabled` for recipients whose privacy settings reject new Direct message requests.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.8.13.
+- Prefer private mobile lookups first for authenticated high-level user, media, tagged media, stories, followers, and following calls.
+- `login_by_sessionid()` now tries the private profile stream before public/web GraphQL when recovering the username after a private profile lookup failure.
+- Bumped the test ruff pin to `0.15.16`.
+
+### Fixed
+
+- Parse first-line JSON profile stream responses for `user_stream_by_id_v1()` and support top-level `{"user": ...}` stream payloads.
+- Raise a clearer `ChallengeRequired` for Instagram Bloks redirect checkpoints that require manual confirmation in the official app or web flow.
+
 ## [1.1.0] - 2026-06-02
 
 ### Added
@@ -1530,6 +1549,7 @@ for incremental changes since 0.0.3.
 
 Initial release.
 
+[1.2.0]: https://github.com/subzeroid/aiograpi/releases/tag/1.2.0
 [1.1.0]: https://github.com/subzeroid/aiograpi/releases/tag/1.1.0
 [1.0.11]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.11
 [1.0.10]: https://github.com/subzeroid/aiograpi/releases/tag/1.0.10

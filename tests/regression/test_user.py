@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
-from aiograpi.exceptions import ClientError, ClientGraphqlError
+from aiograpi.exceptions import ClientError, ClientGraphqlError, ClientJSONDecodeError, UserNotFound
 from aiograpi.mixins.user import UserMixin
 
 
@@ -32,6 +32,52 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(username, "fallback_user")
         client.username_from_user_id_gql.assert_awaited_once_with("123")
         client.user_info_v1.assert_awaited_once_with("123")
+
+    async def test_username_from_user_id_uses_private_first_when_authorized(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client.user_info_v1 = AsyncMock(return_value=Mock(username="private_user"))
+        client.username_from_user_id_gql = AsyncMock(
+            side_effect=AssertionError("authorized lookup should use private first")
+        )
+
+        username = await client.username_from_user_id("123")
+
+        self.assertEqual(username, "private_user")
+        client.user_info_v1.assert_awaited_once_with("123")
+        client.username_from_user_id_gql.assert_not_awaited()
+
+    async def test_user_info_uses_private_first_when_authorized(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client._users_cache = {}
+        client._usernames_cache = {}
+        private_user = Mock(pk="123", username="private_user")
+        client.user_info_v1 = AsyncMock(return_value=private_user)
+        client._user_info_public = AsyncMock(side_effect=AssertionError("authorized lookup should use private first"))
+
+        user = await client.user_info("123")
+
+        self.assertEqual(user.username, "private_user")
+        client.user_info_v1.assert_awaited_once_with("123")
+        client._user_info_public.assert_not_awaited()
+
+    async def test_user_info_by_username_uses_private_first_when_authorized(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client._users_cache = {}
+        client._usernames_cache = {}
+        private_user = Mock(pk="123", username="example")
+        client.user_info_by_username_v1 = AsyncMock(return_value=private_user)
+        client._user_info_by_username_public = AsyncMock(
+            side_effect=AssertionError("authorized username lookup should use private first")
+        )
+
+        user = await client.user_info_by_username(" @Example ")
+
+        self.assertEqual(user.username, "example")
+        client.user_info_by_username_v1.assert_awaited_once_with("example")
+        client._user_info_by_username_public.assert_not_awaited()
 
     async def test_user_short_gql_uses_web_profile_doc_id_without_legacy_query_hash(self):
         client = Client()
@@ -232,6 +278,38 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ClientGraphqlError):
             await client.user_followers_private_gql_chunk("123")
 
+    async def test_user_followers_uses_private_first_when_authorized(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client._users_followers = {}
+        follower = Mock(pk="42")
+        client.user_followers_v1 = AsyncMock(return_value=[follower])
+        client.user_followers_gql = AsyncMock(
+            side_effect=AssertionError("authorized followers lookup should use private first")
+        )
+
+        result = await client.user_followers("123", amount=1)
+
+        self.assertEqual(list(result.keys()), ["42"])
+        client.user_followers_v1.assert_awaited_once_with("123", 1)
+        client.user_followers_gql.assert_not_awaited()
+
+    async def test_user_following_uses_private_first_when_authorized(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client._users_following = {}
+        following = Mock(pk="43")
+        client.user_following_v1 = AsyncMock(return_value=[following])
+        client.user_following_gql = AsyncMock(
+            side_effect=AssertionError("authorized following lookup should use private first")
+        )
+
+        result = await client.user_following("123", amount=1)
+
+        self.assertEqual(list(result.keys()), ["43"])
+        client.user_following_v1.assert_awaited_once_with("123", 1)
+        client.user_following_gql.assert_not_awaited()
+
     async def test_user_follow_requests_chunk_fetches_pending_users(self):
         client = self._build_private_client()
         client.private_request = AsyncMock(
@@ -334,3 +412,43 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(data["device_id"], "android-device")
         self.assertEqual(data["radio_type"], "wifi-none")
         self.assertEqual(data["container_module"], "profile")
+
+    async def test_user_stream_by_id_v1_parses_first_json_line_from_stream_response(self):
+        client = Client()
+        client.last_json = {}
+
+        async def private_request(*args, **kwargs):
+            client.last_response = Mock(
+                text='{"user":{"pk":123,"username":"example"},"status":"ok"}\n{"stream_tail":true}\n',
+                status_code=200,
+            )
+            raise ClientJSONDecodeError("stream response")
+
+        client.private_request = private_request
+
+        result = await client.user_stream_by_id_v1("123")
+
+        self.assertEqual(result["user"]["username"], "example")
+        self.assertEqual(result["status"], "ok")
+
+    async def test_user_stream_by_id_v1_raises_user_not_found_for_unparseable_stream(self):
+        client = Client()
+        client.last_json = {}
+
+        async def private_request(*args, **kwargs):
+            client.last_response = Mock(text="not-json\n", status_code=200)
+            raise ClientJSONDecodeError("stream response")
+
+        client.private_request = private_request
+
+        with self.assertRaises(UserNotFound):
+            await client.user_stream_by_id_v1("123")
+
+    async def test_user_stream_by_id_flat_accepts_top_level_user_payload(self):
+        client = Client()
+        client.user_stream_by_id_v1 = AsyncMock(return_value={"user": {"pk": "9", "username": "alice"}})
+
+        user = await client.user_stream_by_id_flat("9")
+
+        self.assertEqual(user["pk"], "9")
+        self.assertEqual(user["username"], "alice")

@@ -1,5 +1,6 @@
 import json
 import logging
+from copy import deepcopy
 from typing import Dict, List, Optional, Tuple, Union
 
 from orjson import JSONDecodeError
@@ -59,12 +60,34 @@ class UserMixin(ClientMixin):
     Helpers to manage user
     """
 
+    _users_cache = {}  # user_pk -> User
+    _userhorts_cache = {}  # user_pk -> UserShort
+    _usernames_cache = {}  # username -> user_pk
     _users_following = {}  # user_pk -> dict(user_pk -> "short user object")
     _users_followers = {}  # user_pk -> dict(user_pk -> "short user object")
 
     @staticmethod
     def _normalize_username(username: str) -> str:
         return str(username).strip().lstrip("@").strip().lower()
+
+    def _has_private_auth(self) -> bool:
+        return bool(getattr(self, "authorization", "") or getattr(self, "sessionid", ""))
+
+    async def _user_info_by_username_public(self, username: str) -> User:
+        try:
+            return await self.user_info_by_username_gql(username)
+        except ClientLoginRequired as e:
+            if not self.inject_sessionid_to_public():
+                raise e
+            return await self.user_info_by_username_gql(username)
+
+    async def _user_info_public(self, user_id: str) -> User:
+        try:
+            return await self.user_info_gql(user_id)
+        except ClientLoginRequired as e:
+            if not self.inject_sessionid_to_public():
+                raise e
+            return await self.user_info_gql(user_id)
 
     async def user_id_from_username(self, username: str) -> str:
         """
@@ -195,11 +218,15 @@ class UserMixin(ClientMixin):
         1903424587 -> 'example'
         """
         user_id = str(user_id)
+        if self._has_private_auth():
+            try:
+                return (await self.user_info_v1(user_id)).username
+            except ClientError:
+                return await self.username_from_user_id_gql(user_id)
         try:
-            username = await self.username_from_user_id_gql(user_id)
+            return await self.username_from_user_id_gql(user_id)
         except ClientError:
-            username = (await self.user_info_v1(user_id)).username
-        return username
+            return (await self.user_info_v1(user_id)).username
 
     async def user_info_by_username_gql(self, username: str) -> User:
         """
@@ -389,20 +416,24 @@ class UserMixin(ClientMixin):
             An object of User type
         """
         username = self._normalize_username(username)
-        try:
-            try:
-                user = await self.user_info_by_username_gql(username)
-            except ClientLoginRequired as e:
-                if not self.inject_sessionid_to_public():
-                    raise e
-                user = await self.user_info_by_username_gql(username)  # retry
-        except PrivateError as e:
-            raise e
-        except Exception as e:
-            if not isinstance(e, ClientError):
-                self.logger.exception(e)  # Register unknown error
-            user = await self.user_info_by_username_v1(username)
-        return await self.user_info(user.pk)
+        if username not in self._usernames_cache:
+            if self._has_private_auth():
+                try:
+                    user = await self.user_info_by_username_v1(username)
+                except Exception as e:
+                    if not isinstance(e, ClientError):
+                        self.logger.exception(e)
+                    user = await self._user_info_by_username_public(username)
+            else:
+                try:
+                    user = await self._user_info_by_username_public(username)
+                except Exception as e:
+                    if not isinstance(e, ClientError):
+                        self.logger.exception(e)
+                    user = await self.user_info_by_username_v1(username)
+            self._users_cache[str(user.pk)] = user
+            self._usernames_cache[user.username] = str(user.pk)
+        return await self.user_info(self._usernames_cache[username])
 
     async def user_info_gql(self, user_id: str) -> User:
         """
@@ -519,20 +550,24 @@ class UserMixin(ClientMixin):
             An object of User type
         """
         user_id = str(user_id)
-        try:
-            try:
-                user = await self.user_info_gql(user_id)
-            except ClientLoginRequired as e:
-                if not self.inject_sessionid_to_public():
-                    raise e
-                user = await self.user_info_gql(user_id)  # retry
-        except PrivateError as e:
-            raise e
-        except Exception as e:
-            if not isinstance(e, ClientError):
-                self.logger.exception(e)
-            user = await self.user_info_v1(user_id)
-        return user
+        if user_id not in self._users_cache:
+            if self._has_private_auth():
+                try:
+                    user = await self.user_info_v1(user_id)
+                except Exception as e:
+                    if not isinstance(e, ClientError):
+                        self.logger.exception(e)
+                    user = await self._user_info_public(user_id)
+            else:
+                try:
+                    user = await self._user_info_public(user_id)
+                except Exception as e:
+                    if not isinstance(e, ClientError):
+                        self.logger.exception(e)
+                    user = await self.user_info_v1(user_id)
+            self._users_cache[user_id] = user
+            self._usernames_cache[user.username] = str(user.pk)
+        return deepcopy(self._users_cache[user_id])
 
     async def new_feed_exist(self) -> bool:
         """
@@ -861,7 +896,7 @@ class UserMixin(ClientMixin):
             users = users[:amount]
         return users
 
-    async def user_following(self, user_id: str, amount: int = 0) -> Dict[str, UserShort]:
+    async def user_following(self, user_id: str, amount: int = 0, use_cache: bool = True) -> Dict[str, UserShort]:
         """
         Get user's followers information
 
@@ -871,6 +906,8 @@ class UserMixin(ClientMixin):
             User id of an instagram account
         amount: int, optional
             Maximum number of media to return, default is 0
+        use_cache: bool, optional
+            Whether or not to use information from cache, default value is True
 
         Returns
         -------
@@ -878,9 +915,26 @@ class UserMixin(ClientMixin):
             Dict of user_id and User object
         """
         user_id = str(user_id)
-        following = await self.user_following_v1(user_id, amount)
+        users = self._users_following.get(user_id, {})
+        if not use_cache or not users or (amount and len(users) < amount):
+            if self._has_private_auth():
+                try:
+                    users = await self.user_following_v1(user_id, amount)
+                except Exception as e:
+                    if not isinstance(e, ClientError):
+                        self.logger.exception(e)
+                    users = await self.user_following_gql(user_id, amount)
+            else:
+                try:
+                    users = await self.user_following_gql(user_id, amount)
+                except Exception as e:
+                    if not isinstance(e, ClientError):
+                        self.logger.exception(e)
+                    users = await self.user_following_v1(user_id, amount)
+            self._users_following[user_id] = {user.pk: user for user in users}
+        following = self._users_following[user_id]
         if amount and len(following) > amount:
-            following = following[:amount]
+            following = dict(list(following.items())[:amount])
         return following
 
     async def user_followers_gql_chunk(
@@ -1152,7 +1206,8 @@ class UserMixin(ClientMixin):
         user_id: str,
         amount: int = 0,
         order: FOLLOWERS_ORDER = None,
-    ) -> List[UserShort]:
+        use_cache: bool = True,
+    ) -> Dict[str, UserShort]:
         """
         Get user's followers
 
@@ -1165,6 +1220,8 @@ class UserMixin(ClientMixin):
         order: str, optional
             Followers sort order: date_followed_latest or date_followed_earliest.
             Sorted requests use the private mobile endpoint.
+        use_cache: bool, optional
+            Whether or not to use information from cache, default value is True
 
         Returns
         -------
@@ -1174,21 +1231,28 @@ class UserMixin(ClientMixin):
         user_id = str(user_id)
         if order:
             users = await self.user_followers_v1(user_id, amount, order=order)
-            if amount and len(users) > amount:
-                users = users[:amount]
-            return users
-        users = []
-        try:
-            users = await self.user_followers_gql(user_id, amount)
-        except PrivateError as e:
-            raise e
-        except Exception as e:
-            if not isinstance(e, ClientError):
-                self.logger.exception(e)
-            users = await self.user_followers_v1(user_id, amount)
-        if amount and len(users) > amount:
-            users = users[:amount]
-        return users
+            return {user.pk: user for user in users}
+        users = self._users_followers.get(user_id, {})
+        if not use_cache or not users or (amount and len(users) < amount):
+            if self._has_private_auth():
+                try:
+                    users = await self.user_followers_v1(user_id, amount)
+                except Exception as e:
+                    if not isinstance(e, ClientError):
+                        self.logger.exception(e)
+                    users = await self.user_followers_gql(user_id, amount)
+            else:
+                try:
+                    users = await self.user_followers_gql(user_id, amount)
+                except Exception as e:
+                    if not isinstance(e, ClientError):
+                        self.logger.exception(e)
+                    users = await self.user_followers_v1(user_id, amount)
+            self._users_followers[user_id] = {user.pk: user for user in users}
+        followers = self._users_followers[user_id]
+        if amount and len(followers) > amount:
+            followers = dict(list(followers.items())[:amount])
+        return followers
 
     async def user_follow_requests_chunk(self, max_amount: int = 0, max_id: str = "") -> Tuple[List[UserShort], str]:
         """
@@ -1865,6 +1929,18 @@ class UserMixin(ClientMixin):
         }
         try:
             result = await self.private_request(f"users/{user_id}/info_stream/", data=data)
+        except ClientJSONDecodeError:
+            response_text = getattr(getattr(self, "last_response", None), "text", "") or ""
+            for line in response_text.splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    return json.loads(line)
+                except ValueError:
+                    break
+            logger.exception("Unable to parse streamed user response for user_id %r", user_id)
+            raise UserNotFound("User not found")
         except (ClientNotFoundError, ClientError) as e:
             logger.exception(
                 "Client error user_stream_by_id_v1, exception: %r, user_id %r",
@@ -1883,19 +1959,21 @@ class UserMixin(ClientMixin):
         empty (defensive behaviour matching observed IG quirks).
         """
         data = {}
+        if isinstance(resp.get("user"), dict):
+            data.update(resp["user"])
         for urow in resp.get("stream_rows", []):
-            data |= urow.get("user", {})
+            data.update(urow.get("user", {}))
         if data:
             data["pk"] = data.get("pk", data.get("pk_id"))
             return data
         logger.error("user_stream_collector: empty stream_rows, falling back: %r", resp)
         if username:
-            await self.user_stream_by_username_v1(username)
+            resp = await self.user_stream_by_username_v1(username)
         elif id:
-            await self.user_stream_by_id_v1(id)
+            resp = await self.user_stream_by_id_v1(id)
         else:
             raise UserNotFound(code_error=1257)
-        return self.last_json
+        return resp or self.last_json
 
     async def user_stream_by_id_flat(self, user_id: str) -> dict:
         """

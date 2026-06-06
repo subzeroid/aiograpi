@@ -19,6 +19,7 @@ from aiograpi import config
 from aiograpi.exceptions import (
     BadCredentials,
     BadPassword,
+    ClientError,
     ClientThrottledError,
     PleaseWaitFewMinutes,
     PrivateError,
@@ -27,6 +28,7 @@ from aiograpi.exceptions import (
     UnknownError,
 )
 from aiograpi.mixins.base import ClientMixin
+from aiograpi.types import UserShort
 from aiograpi.utils.auth import gen_token, generate_jazoest
 from aiograpi.utils.serialization import dumps
 
@@ -656,6 +658,17 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         self.private.headers.update(headers)
         return True
 
+    async def _user_short_from_private_stream(self, user_id: str) -> UserShort:
+        user_id = str(user_id)
+        profile = await self.user_stream_by_id_flat(user_id)
+        if not isinstance(profile, dict):
+            raise PrivateError("Missing private stream profile payload")
+        username = profile.get("username")
+        if not username:
+            raise PrivateError("Missing username in private stream profile")
+        pk = profile.get("pk") or profile.get("pk_id") or user_id
+        return UserShort(pk=str(pk), username=username)
+
     async def login_by_sessionid(self, sessionid: str) -> bool:
         """
         Login using session id
@@ -684,9 +697,12 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         try:
             user = await self.user_info_v1(int(user_id))
         except (PrivateError, ValidationError):
-            self.inject_sessionid_to_public()
-            # ClientUnauthorizedError
-            user = await self.user_short_gql(int(user_id))
+            try:
+                user = await self._user_short_from_private_stream(user_id)
+            except (ClientError, ValidationError, KeyError, TypeError, AttributeError):
+                self.inject_sessionid_to_public()
+                # ClientUnauthorizedError
+                user = await self.user_short_gql(int(user_id))
         self.username = user.username
         self.authorization_data["ds_user_id"] = str(user.pk)
         self.private.set_cookies({"ds_user_id": str(user.pk)})

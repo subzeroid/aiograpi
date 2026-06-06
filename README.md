@@ -32,7 +32,7 @@ Android users should see [Pydroid and ffmpeg](docs/usage-guide/pydroid.md) and [
 [![License](https://img.shields.io/pypi/l/aiograpi)](LICENSE)
 [![Package](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml/badge.svg)](https://github.com/subzeroid/aiograpi/actions/workflows/python-package.yml)
 [![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://subzeroid.github.io/aiograpi/latest/)
-[![SemVer](https://img.shields.io/badge/semver-1.1.0-blue)](https://semver.org/spec/v2.0.0.html)
+[![SemVer](https://img.shields.io/badge/semver-1.2.0-blue)](https://semver.org/spec/v2.0.0.html)
 
 
 Features:
@@ -97,6 +97,7 @@ What you can rely on instead:
 
 ### What's new in 1.0.0 and recent releases
 
+- **1.2.0 upstream sync** — synced with `instagrapi 2.8.13`, adding Direct media share to existing threads, clearer Direct message request privacy errors, private-first high-level user/media/story lookups, sessionid username recovery via private stream, and clearer Bloks redirect challenge handling.
 - **1.1.0 MQTT/FBNS sync** — synced with `instagrapi 2.8.2`, adding experimental async Realtime MQTT/MQTToT,
   Direct message sync, lightweight Direct MQTT actions, FBNS push token registration/callbacks, phone confirmation,
   followed hashtag helpers, feed-media share-to-story, opaque Bloks challenge context handling, and clearer Reel upload

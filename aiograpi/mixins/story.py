@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 from aiograpi import config
 from aiograpi.exceptions import (
+    ClientError,
     ClientGraphqlError,
     ClientNotFoundError,
     PreLoginRequired,
@@ -187,6 +188,14 @@ class StoryMixin(ClientMixin):
             stories = stories[:amount]
         return stories
 
+    async def _user_stories_public(self, user_id: str, amount: int = None) -> List[Story]:
+        try:
+            return await self.user_stories_gql(user_id, amount)
+        except ClientNotFoundError as e:
+            raise UserNotFound(e, user_id=user_id, **self.last_json)
+        except IndexError:
+            return []
+
     async def user_stories_v1(self, user_id: str, amount: int = None) -> List[Story]:
         """
         Get a user's stories (Private API)
@@ -228,14 +237,17 @@ class StoryMixin(ClientMixin):
         List[Story]
             A list of objects of STory
         """
+        if self._has_private_auth():
+            try:
+                return await self.user_stories_v1(user_id, amount)
+            except Exception as e:
+                if not isinstance(e, ClientError):
+                    self.logger.exception(e)
+                return await self._user_stories_public(user_id, amount)
         try:
-            return await self.user_stories_gql(user_id, amount)
-        except ClientNotFoundError as e:
-            raise UserNotFound(e, user_id=user_id, **self.last_json)
-        except IndexError:
-            return []
-        except PrivateError as e:
-            raise e
+            return await self._user_stories_public(user_id, amount)
+        except UserNotFound:
+            raise
         except Exception as e:
             if not self.user_id:
                 if isinstance(e, ClientGraphqlError):

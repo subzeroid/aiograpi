@@ -311,6 +311,34 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         data = client.private_request.call_args.kwargs["data"]
         assert json.loads(data["recipient_users"]) == [[42]]
 
+    async def test_direct_media_share_posts_thread_ids(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value=_direct_payload())
+        client.generate_mutation_token = lambda: "mutation-token"
+        client.media_id = AsyncMock(return_value="123_1")
+
+        await client.direct_media_share("123", thread_ids=[340282366841710300949128149448121770626])
+
+        client.private_request.assert_awaited_once_with(
+            "direct_v2/threads/broadcast/media_share/",
+            params={"media_type": "photo"},
+            data=mock.ANY,
+            with_signature=False,
+        )
+        data = client.private_request.call_args.kwargs["data"]
+        assert "recipient_users" not in data
+        assert json.loads(data["thread_ids"]) == [340282366841710300949128149448121770626]
+        assert data["client_context"] == "mutation-token"
+        assert data["media_id"] == "123_1"
+
+    async def test_direct_media_share_rejects_user_ids_and_thread_ids_together(self):
+        client = _build_client()
+        client.generate_mutation_token = lambda: "mutation-token"
+        client.media_id = AsyncMock(return_value="123_1")
+
+        with self.assertRaises(AssertionError):
+            await client.direct_media_share("123", user_ids=[42], thread_ids=[123])
+
     async def test_direct_send_reaction_posts_reaction_payload(self):
         client = _build_client()
         client.private_request = AsyncMock(return_value={"status": "ok"})

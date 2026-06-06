@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
 from aiograpi.types import StoryMedia
@@ -120,3 +120,77 @@ class MediaActionPayloadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(media_sticker.y, 0.45)
         self.assertEqual(media_sticker.width, 0.7)
         self.assertEqual(media_sticker.height, 0.55)
+
+    async def test_media_info_uses_private_first_when_authorized(self):
+        client = self._build_logged_in_client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client._medias_cache = {}
+        private_media = Mock(pk="123")
+        client.media_info_v1 = AsyncMock(return_value=private_media)
+        client.media_info_gql = AsyncMock(
+            side_effect=AssertionError("authorized media lookup should use private first")
+        )
+
+        media = await client.media_info("123", use_cache=False)
+
+        self.assertEqual(media.pk, "123")
+        client.media_info_v1.assert_awaited_once_with("123")
+        client.media_info_gql.assert_not_awaited()
+
+    async def test_user_medias_uses_private_first_when_authorized(self):
+        client = self._build_logged_in_client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client.user_medias_v1 = AsyncMock(return_value=["private"])
+        client.user_medias_gql = AsyncMock(
+            side_effect=AssertionError("authorized user media lookup should use private first")
+        )
+
+        medias = await client.user_medias("123", amount=1)
+
+        self.assertEqual(medias, ["private"])
+        client.user_medias_v1.assert_awaited_once_with(123, 1)
+        client.user_medias_gql.assert_not_awaited()
+
+    async def test_user_medias_paginated_uses_private_first_when_authorized(self):
+        client = self._build_logged_in_client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client.user_medias_paginated_v1 = AsyncMock(return_value=(["private"], "next"))
+        client.user_medias_paginated_gql = AsyncMock(
+            side_effect=AssertionError("authorized paginated user media lookup should use private first")
+        )
+
+        medias, cursor = await client.user_medias_paginated("123", amount=1, end_cursor="")
+
+        self.assertEqual(medias, ["private"])
+        self.assertEqual(cursor, "next")
+        client.user_medias_paginated_v1.assert_awaited_once_with("123", 1, end_cursor="")
+        client.user_medias_paginated_gql.assert_not_awaited()
+
+    async def test_usertag_medias_uses_private_first_when_authorized(self):
+        client = self._build_logged_in_client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client.usertag_medias_v1 = AsyncMock(return_value=["private"])
+        client.usertag_medias_gql = AsyncMock(
+            side_effect=AssertionError("authorized usertag media lookup should use private first")
+        )
+
+        medias = await client.usertag_medias("123", amount=1)
+
+        self.assertEqual(medias, ["private"])
+        client.usertag_medias_v1.assert_awaited_once_with(123, 1)
+        client.usertag_medias_gql.assert_not_awaited()
+
+    async def test_usertag_medias_paginated_uses_private_first_when_authorized(self):
+        client = self._build_logged_in_client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client.usertag_medias_paginated_v1 = AsyncMock(return_value=(["private"], "next"))
+        client.usertag_medias_paginated_gql = AsyncMock(
+            side_effect=AssertionError("authorized paginated usertag media lookup should use private first")
+        )
+
+        medias, cursor = await client.usertag_medias_paginated("123", amount=1, end_cursor="")
+
+        self.assertEqual(medias, ["private"])
+        self.assertEqual(cursor, "next")
+        client.usertag_medias_paginated_v1.assert_awaited_once_with(123, 1, end_cursor="")
+        client.usertag_medias_paginated_gql.assert_not_awaited()

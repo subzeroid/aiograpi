@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from aiograpi import Client
+from aiograpi.exceptions import ChallengeRequired
 from aiograpi.utils.serialization import dumps
 
 
@@ -12,6 +13,27 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.uuid = "uuid-1"
         client.bloks_versioning_id = "bloks-version"
         return client
+
+    async def test_challenge_resolve_simple_bloks_redirect_step_raises_clear_manual_error(self):
+        client = self.build_client()
+        client.username = "example"
+        client.last_json = {
+            "message": "challenge_required",
+            "status": "ok",
+            "step_name": "STEP_NAME",
+            "flow_render_type": 3,
+            "bloks_action": "com.bloks.www.ig.challenge.redirect.async",
+            "challenge_context": "opaque-context",
+            "challenge_type_enum_str": "SUSPICIOUS_LOGIN",
+        }
+
+        with self.assertRaises(ChallengeRequired) as cm:
+            await client.challenge_resolve_simple("challenge/test/")
+
+        self.assertIn("Bloks redirect checkpoint", str(cm.exception))
+        self.assertIn("official Instagram app", str(cm.exception))
+        self.assertEqual(cm.exception.step_name, "STEP_NAME")
+        self.assertEqual(cm.exception.bloks_action, "com.bloks.www.ig.challenge.redirect.async")
 
     async def test_bloks_async_action_posts_unsigned_bloks_payload(self):
         client = self.build_client()
