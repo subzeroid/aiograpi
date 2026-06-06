@@ -1,11 +1,12 @@
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from urllib.parse import urlparse
 
 from aiograpi import config
 from aiograpi.exceptions import (
+    ClientError,
     ClientGraphqlError,
     ClientNotFoundError,
     PreLoginRequired,
@@ -122,7 +123,7 @@ class StoryMixin(ClientMixin):
         self._stories_cache.pop(self.media_pk(media_id), None)
         return await self.media_delete(media_id)
 
-    async def users_stories_gql(self, user_ids: List[str], amount: int = 0) -> List[UserShort]:
+    async def users_stories_gql(self, user_ids: List[str], amount: Optional[int] = 0) -> List[UserShort]:
         """
         Get a user's stories (Public API)
 
@@ -165,7 +166,7 @@ class StoryMixin(ClientMixin):
             users.append(user)
         return users
 
-    async def user_stories_gql(self, user_id: str, amount: int = None) -> List[Story]:
+    async def user_stories_gql(self, user_id: str, amount: Optional[int] = None) -> List[Story]:
         """
         Get a user's stories (Public API)
 
@@ -187,7 +188,15 @@ class StoryMixin(ClientMixin):
             stories = stories[:amount]
         return stories
 
-    async def user_stories_v1(self, user_id: str, amount: int = None) -> List[Story]:
+    async def _user_stories_public(self, user_id: str, amount: Optional[int] = None) -> List[Story]:
+        try:
+            return await self.user_stories_gql(user_id, amount)
+        except ClientNotFoundError as e:
+            raise UserNotFound(e, user_id=user_id, **self.last_json)
+        except IndexError:
+            return []
+
+    async def user_stories_v1(self, user_id: str, amount: Optional[int] = None) -> List[Story]:
         """
         Get a user's stories (Private API)
 
@@ -213,7 +222,7 @@ class StoryMixin(ClientMixin):
             stories = stories[: int(amount)]
         return stories
 
-    async def user_stories(self, user_id: str, amount: int = None) -> List[Story]:
+    async def user_stories(self, user_id: str, amount: Optional[int] = None) -> List[Story]:
         """
         Get a user's stories
 
@@ -228,14 +237,17 @@ class StoryMixin(ClientMixin):
         List[Story]
             A list of objects of STory
         """
+        if self._has_private_auth():
+            try:
+                return await self.user_stories_v1(user_id, amount)
+            except Exception as e:
+                if not isinstance(e, ClientError):
+                    self.logger.exception(e)
+                return await self._user_stories_public(user_id, amount)
         try:
-            return await self.user_stories_gql(user_id, amount)
-        except ClientNotFoundError as e:
-            raise UserNotFound(e, user_id=user_id, **self.last_json)
-        except IndexError:
-            return []
-        except PrivateError as e:
-            raise e
+            return await self._user_stories_public(user_id, amount)
+        except UserNotFound:
+            raise
         except Exception as e:
             if not self.user_id:
                 if isinstance(e, ClientGraphqlError):

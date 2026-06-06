@@ -6,8 +6,8 @@ View a list of a user's medias, following and followers
 
 | Method                                        | Return                | Description                                                  |
 |-----------------------------------------------|-----------------------|--------------------------------------------------------------|
-| user_followers(user_id: str, amount: int = 0, order: str = None) | List[UserShort] | Get follower users (amount=0 - fetch all followers); `order` uses the private mobile followers endpoint |
-| user_following(user_id: str, amount: int = 0) | Dict\[int, UserShort] | Get dict of following users (amount=0 - fetch all)           |
+| user_followers(user_id: str, amount: int = 0, order: str = None) | Dict\[str, UserShort] | Get dict of follower users (amount=0 - fetch all followers); `order` uses the private mobile followers endpoint |
+| user_following(user_id: str, amount: int = 0) | Dict\[str, UserShort] | Get dict of following users (amount=0 - fetch all)           |
 | search_followers(user_id: str, query: str)    | List[UserShort]       | Search by followers                                          |
 | search_following(user_id: str, query: str)    | List[UserShort]       | Search by following                                          |
 | user_info(user_id: str)                       | User                  | Get user info                                                |
@@ -55,7 +55,7 @@ Low level methods:
 Example:
 
 ``` python
->>> [user.pk for user in await cl.user_followers(cl.user_id)]
+>>> [user.pk for user in (await cl.user_followers(cl.user_id)).values()]
 [5563084402, 43848984510, 1498977320, ...]
 
 >>> await cl.user_following(cl.user_id)
@@ -109,6 +109,6 @@ cl = Client()
 await cl.login(USERNAME, PASSWORD)
 
 followers = await cl.user_followers(cl.user_id)
-for follower in followers:
+for follower in followers.values():
     await cl.user_unfollow(follower.pk)
 ```

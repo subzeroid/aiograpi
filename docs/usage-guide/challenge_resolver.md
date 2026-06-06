@@ -48,6 +48,8 @@ Phone-only signup is supported with `await cl.signup(username, password, email="
 
 `signup(...)` uses Instagram's legacy account-create flow. On modern Instagram app versions this flow is often rejected with `SignupSpamError` / `feedback_required` because the official app uses additional signup checks that aiograpi does not currently generate. Treat this as a platform rejection, not as a malformed SMS/email code.
 
+Bloks redirect checkpoints such as `bloks_action="com.bloks.www.ig.challenge.redirect.async"` or placeholder `step_name="STEP_NAME"` require manual confirmation in the official Instagram app or web flow on a trusted device; aiograpi raises `ChallengeRequired` with the sanitized challenge context instead of treating this as a legacy step.
+
 For example, you can get the code through the IMAP of Gmail:
 
 ``` python

@@ -1,11 +1,65 @@
 import unittest
 from unittest.mock import AsyncMock, Mock
 
+from pydantic import ValidationError
+
 from aiograpi import Client
-from aiograpi.exceptions import BadPassword, TwoFactorRequired
+from aiograpi.exceptions import BadPassword, PrivateError, TwoFactorRequired
+from aiograpi.types import UserShort
 
 
 class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_login_by_sessionid_falls_back_to_private_stream_before_public(self):
+        client = Client()
+        sessionid = "1234567890123456789012345678901%3Atoken"
+        client.user_info_v1 = AsyncMock(side_effect=PrivateError("boom"))
+        client.user_stream_by_id_flat = AsyncMock(return_value={"pk": "1234567890123456789", "username": "example"})
+        client.user_short_gql = AsyncMock(
+            side_effect=AssertionError("sessionid login should use private fallback first")
+        )
+
+        result = await client.login_by_sessionid(sessionid)
+
+        self.assertTrue(result)
+        client.user_info_v1.assert_awaited_once_with(1234567890123456789012345678901)
+        client.user_stream_by_id_flat.assert_awaited_once_with("1234567890123456789012345678901")
+        client.user_short_gql.assert_not_awaited()
+        self.assertEqual(client.username, "example")
+        self.assertEqual(client.authorization_data["sessionid"], sessionid)
+        self.assertEqual(client.cookie_dict["ds_user_id"], "1234567890123456789")
+
+    async def test_login_by_sessionid_falls_back_to_public_after_private_stream_failure(self):
+        client = Client()
+        sessionid = "1234567890123456789012345678901%3Atoken"
+        client.user_info_v1 = AsyncMock(side_effect=PrivateError("boom"))
+        client.user_stream_by_id_flat = AsyncMock(side_effect=PrivateError("stream failed"))
+        client.user_short_gql = AsyncMock(return_value=UserShort(pk="1234567890123456789", username="example"))
+
+        result = await client.login_by_sessionid(sessionid)
+
+        self.assertTrue(result)
+        client.user_info_v1.assert_awaited_once_with(1234567890123456789012345678901)
+        client.user_stream_by_id_flat.assert_awaited_once_with("1234567890123456789012345678901")
+        client.user_short_gql.assert_awaited_once_with(1234567890123456789012345678901)
+        self.assertEqual(client.username, "example")
+
+    async def test_login_by_sessionid_falls_back_to_private_stream_on_validation_error(self):
+        client = Client()
+        sessionid = "1234567890123456789012345678901%3Atoken"
+        client.user_info_v1 = AsyncMock(side_effect=ValidationError.from_exception_data("User", []))
+        client.user_stream_by_id_flat = AsyncMock(return_value={"pk_id": "1234567890123456789", "username": "example"})
+        client.user_short_gql = AsyncMock(
+            side_effect=AssertionError("sessionid login should use private fallback first")
+        )
+
+        result = await client.login_by_sessionid(sessionid)
+
+        self.assertTrue(result)
+        client.user_info_v1.assert_awaited_once_with(1234567890123456789012345678901)
+        client.user_stream_by_id_flat.assert_awaited_once_with("1234567890123456789012345678901")
+        client.user_short_gql.assert_not_awaited()
+        self.assertEqual(client.username, "example")
+
     async def test_login_bad_password_without_context_tries_caa_bloks_context_when_code_provided(self):
         client = Client()
         client.username = "example"

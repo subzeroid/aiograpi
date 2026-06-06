@@ -27,6 +27,7 @@ from aiograpi.exceptions import (
     CommentUnavailable,
     ConnectProxyError,
     ConsentRequired,
+    DirectMessageRequestsDisabled,
     FeedbackRequired,
     GeoBlockRequired,
     HashtagPageWarning,
@@ -49,6 +50,21 @@ from aiograpi.mixins.base import ClientMixin
 from aiograpi.utils.auth import generate_signature
 from aiograpi.utils.serialization import dumps
 from aiograpi.utils.timing import random_delay
+
+_DIRECT_MESSAGE_REQUESTS_DISABLED_MARKERS = (
+    "can't message this account unless they follow you",
+    "can't receive your message because they don't allow new message requests",
+    "doesn't allow new message requests",
+    "don't allow new message requests",
+    "does not allow new message requests",
+)
+
+
+def _is_direct_message_requests_disabled(endpoint: str, message: str) -> bool:
+    if not endpoint or not message or "direct_v2/" not in endpoint:
+        return False
+    normalized = str(message).casefold().replace("’", "'")
+    return any(marker in normalized for marker in _DIRECT_MESSAGE_REQUESTS_DISABLED_MARKERS)
 
 
 async def manual_input_code(self, username: str, choice=None):
@@ -551,6 +567,8 @@ class PrivateRequestMixin(ClientMixin):
                     if not last_json.get("message"):
                         last_json["message"] = "Two-factor authentication required"
                     raise TwoFactorRequired(**last_json)
+                elif _is_direct_message_requests_disabled(endpoint, message):
+                    raise DirectMessageRequestsDisabled(e, response=response, **last_json)
                 elif "Please wait a few minutes before you try again" in message:
                     raise PleaseWaitFewMinutes(e, response=response, **last_json)
                 elif "VideoTooLongException" in message:
@@ -620,6 +638,9 @@ class PrivateRequestMixin(ClientMixin):
         finally:
             self.last_response_ts = time.time()
         if last_json.get("status") == "fail":
+            message = last_json.get("message", "")
+            if _is_direct_message_requests_disabled(endpoint, message):
+                raise DirectMessageRequestsDisabled(response=response, **last_json)
             raise ClientStatusFail(response=response, **last_json)
         elif "error_title" in last_json:
             """Example: {

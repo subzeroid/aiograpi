@@ -47,7 +47,7 @@ For any other languages (e.g. C++, C#, F#, D, [Golang](https://github.com/subzer
 
 ### Realtime MQTT and Direct
 
-`aiograpi 1.1.0` adds experimental async Realtime MQTT/MQTToT helpers. They can receive Direct message sync payloads,
+`aiograpi 1.2.0` includes the MQTT/FBNS helpers from 1.1.0 and syncs high-level Direct/user/media/story behavior through `instagrapi 2.8.13`. Realtime helpers can receive Direct message sync payloads,
 publish lightweight Direct actions over MQTT, and subscribe to FBNS push notifications.
 
 ```python
