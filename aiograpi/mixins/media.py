@@ -5,7 +5,7 @@ import tempfile
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 from aiograpi import httpx_ext
@@ -1098,7 +1098,7 @@ class MediaMixin(ClientMixin):
         return medias
 
     async def user_medias_paginated_v1(
-        self, user_id: str, amount: int = 33, end_cursor: str = ""
+        self, user_id: Union[str, int], amount: int = 33, end_cursor: str = ""
     ) -> Tuple[List[Media], str]:
         """
         Get a page of user's media by Private Mobile API
@@ -1210,7 +1210,7 @@ class MediaMixin(ClientMixin):
         return await self.user_medias_paginated(user_id, amount=0, end_cursor=end_cursor)
 
     async def user_medias_paginated(
-        self, user_id: str, amount: int = 0, end_cursor: str = ""
+        self, user_id: Union[str, int], amount: int = 0, end_cursor: str = ""
     ) -> Tuple[List[Media], str]:
         """
         Get a page of user's media.

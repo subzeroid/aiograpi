@@ -1,7 +1,7 @@
 import json
 import logging
 from copy import deepcopy
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from orjson import JSONDecodeError
 
@@ -60,18 +60,15 @@ class UserMixin(ClientMixin):
     Helpers to manage user
     """
 
-    _users_cache = {}  # user_pk -> User
-    _userhorts_cache = {}  # user_pk -> UserShort
-    _usernames_cache = {}  # username -> user_pk
-    _users_following = {}  # user_pk -> dict(user_pk -> "short user object")
-    _users_followers = {}  # user_pk -> dict(user_pk -> "short user object")
+    _users_cache: Dict[str, User] = {}  # user_pk -> User
+    _userhorts_cache: Dict[str, UserShort] = {}  # user_pk -> UserShort
+    _usernames_cache: Dict[str, str] = {}  # username -> user_pk
+    _users_following: Dict[Any, Any] = {}  # user_pk -> dict(user_pk -> "short user object")
+    _users_followers: Dict[Any, Any] = {}  # user_pk -> dict(user_pk -> "short user object")
 
     @staticmethod
     def _normalize_username(username: str) -> str:
         return str(username).strip().lstrip("@").strip().lower()
-
-    def _has_private_auth(self) -> bool:
-        return bool(getattr(self, "authorization", "") or getattr(self, "sessionid", ""))
 
     async def _user_info_by_username_public(self, username: str) -> User:
         try:
@@ -915,7 +912,7 @@ class UserMixin(ClientMixin):
             Dict of user_id and User object
         """
         user_id = str(user_id)
-        users = self._users_following.get(user_id, {})
+        users: Any = self._users_following.get(user_id, {})
         if not use_cache or not users or (amount and len(users) < amount):
             if self._has_private_auth():
                 try:
@@ -1010,7 +1007,7 @@ class UserMixin(ClientMixin):
         user_id: str,
         max_amount: int = 0,
         max_id: str = "",
-        order: FOLLOWERS_ORDER = None,
+        order: Optional[FOLLOWERS_ORDER] = None,
     ) -> Tuple[List[UserShort], str]:
         """
         Get user's followers information by Private Mobile API and max_id (cursor)
@@ -1064,7 +1061,7 @@ class UserMixin(ClientMixin):
         self,
         user_id: str,
         amount: int = 0,
-        order: FOLLOWERS_ORDER = None,
+        order: Optional[FOLLOWERS_ORDER] = None,
     ) -> List[UserShort]:
         """
         Get user's followers information by Private Mobile API

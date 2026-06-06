@@ -1620,7 +1620,7 @@ class DirectMixin(ClientMixin):
         media_id: str,
         user_ids: List[int] = [],
         thread_ids: List[int] = [],
-        send_attribute: SEND_ATTRIBUTES_MEDIA = "feed_timeline",
+        send_attribute: SEND_ATTRIBUTE_MEDIA = "feed_timeline",
         media_type: str = "photo",
     ) -> DirectMessage:
         """
