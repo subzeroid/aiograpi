@@ -257,28 +257,36 @@ class UploadClipMixin(ClientMixin):
         if fb_config.get("enabled") is False or fb_config.get("is_account_linked") is False:
             raise ClientError("Facebook Reel sharing is not enabled or no Facebook account is linked")
 
-        destination_id = (
+        destination_id_value = (
             destination_id
             or fb_config.get("share_to_fb_destination_id")
             or fb_config.get("reels_destination_id")
             or fb_config.get("destination_id")
         )
-        destination_type = (
+        destination_id = str(destination_id_value) if destination_id_value is not None else None
+        destination_type_value = (
             destination_type
             or fb_config.get("share_to_fb_destination_type")
             or fb_config.get("destination_type")
             or fb_config.get("posting_type")
         )
-        destination_audience_type = (
+        destination_type = str(destination_type_value) if destination_type_value is not None else None
+        destination_audience_type_value = (
             destination_audience_type
             or fb_config.get("share_to_fb_destination_audience_type")
             or fb_config.get("reels_destination_audience_type")
             or fb_config.get("audience_type")
         )
+        destination_audience_type = (
+            str(destination_audience_type_value) if destination_audience_type_value is not None else None
+        )
         if validation_check_bypass is None:
-            validation_check_bypass = fb_config.get(
+            validation_check_bypass_value = fb_config.get(
                 "reels_cross_app_share_fb_validation_check_bypass",
                 fb_config.get("cross_app_share_fb_validation_check_bypass"),
+            )
+            validation_check_bypass = (
+                bool(validation_check_bypass_value) if validation_check_bypass_value is not None else None
             )
 
         has_destination = bool(destination_id and destination_type)
@@ -304,7 +312,7 @@ class UploadClipMixin(ClientMixin):
                 "Do not pass reels_cross_app_share_type here."
             )
 
-        destination = {
+        destination: Dict[str, object] = {
             "destination_id": str(destination_id),
             "destination_type": destination_type,
         }
