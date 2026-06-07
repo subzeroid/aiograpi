@@ -1,5 +1,8 @@
 import importlib.util
+import io
 import os
+import subprocess
+import sys
 import types
 import unittest
 from pathlib import Path
@@ -37,31 +40,52 @@ class _FakeLiveClient:
         return types.SimpleNamespace(username=username, pk="25025320")
 
     async def user_info_by_username_v2_gql(self, username):
-        return types.SimpleNamespace(username=username, pk="25025320")
+        raise AssertionError("public web GraphQL helper must not be a required check")
 
     async def user_short_gql(self, user_id):
+        raise AssertionError("public web GraphQL helper must not be a required check")
+
+    async def user_info_by_username(self, username):
+        return types.SimpleNamespace(username=username, pk="25025320")
+
+    async def user_info(self, user_id):
         return types.SimpleNamespace(username="instagram", pk=str(user_id))
+
+    async def username_from_user_id(self, user_id):
+        return "instagram"
 
     async def hashtag_info_v1(self, name):
         return types.SimpleNamespace(name=name)
+
+    async def clip_info_for_creation(self):
+        return {"clips": True}
+
+    async def direct_search(self, query):
+        return [types.SimpleNamespace(username=query)]
 
     async def user_medias_v1(self, user_id, amount=0):
         return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
 
     async def user_medias_gql(self, user_id, amount=0):
+        raise AssertionError("public web GraphQL helper must not be a required check")
+
+    async def user_medias(self, user_id, amount=0):
         return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
 
-    async def user_followers(self, user_id, amount=0):
+    async def user_medias_paginated(self, user_id, amount=0):
+        return [types.SimpleNamespace(pk=str(i)) for i in range(amount)], None
+
+    async def user_followers(self, user_id, amount=0, use_cache=True):
+        return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
+
+    async def user_following(self, user_id, amount=0, use_cache=True):
+        return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
+
+    async def user_stories(self, user_id, amount=0):
         return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
 
     async def highlight_info(self, highlight_id):
         return types.SimpleNamespace(pk=str(highlight_id))
-
-    def __getattr__(self, name):
-        async def _method(*args, **kwargs):
-            return types.SimpleNamespace(name=name)
-
-        return _method
 
 
 class LiveSmokeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -90,14 +114,76 @@ class LiveSmokeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(query["count"], ["10"])
         self.assertEqual(query["token"], ["abc"])
 
+    def test_direct_script_execution_imports_checkout_package(self):
+        repo_root = Path(__file__).resolve().parents[2]
+        smoke_path = repo_root / "tests" / "live" / "smoke.py"
+        script = f"""
+import os
+import runpy
+import sys
+
+repo_root = {str(repo_root)!r}
+smoke_path = {str(smoke_path)!r}
+sys.path = [str({str(smoke_path.parent)!r})] + [
+    path for path in sys.path if path not in ("", repo_root)
+]
+os.environ.pop("TEST_ACCOUNTS_URL", None)
+module_globals = runpy.run_path(smoke_path, run_name="aiograpi_live_smoke_test")
+print(module_globals["Client"].__module__)
+print(sys.modules["aiograpi"].__file__)
+"""
+        env = os.environ.copy()
+        env.pop("PYTHONPATH", None)
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=repo_root,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+
+        self.assertIn(str(repo_root / "aiograpi"), result.stdout)
+
     async def test_anonymous_public_lookup_throttle_does_not_fail_smoke(self):
         smoke = _load_live_smoke_module()
         fake_logged_client = _FakeLiveClient()
 
         with patch.dict(os.environ, {"TEST_ACCOUNTS_URL": "https://example.test/accounts"}):
-            with patch.object(smoke, "Client", return_value=_FakeLiveClient()):
+            with patch.object(smoke, "Client", side_effect=lambda *args, **kwargs: _FakeLiveClient()):
                 with patch.object(smoke, "_fetch_accounts", AsyncMock(return_value=[{"username": "example"}])):
                     with patch.object(smoke, "_login_first_usable", AsyncMock(return_value=fake_logged_client)):
                         status = await smoke.main()
 
         self.assertEqual(status, 0)
+
+    async def test_required_smoke_uses_private_first_high_level_paths(self):
+        smoke = _load_live_smoke_module()
+        fake_logged_client = _FakeLiveClient()
+
+        with patch.dict(os.environ, {"TEST_ACCOUNTS_URL": "https://example.test/accounts"}):
+            with patch.object(smoke, "Client", side_effect=lambda *args, **kwargs: _FakeLiveClient()):
+                with patch.object(smoke, "_fetch_accounts", AsyncMock(return_value=[{"username": "example"}])):
+                    with patch.object(smoke, "_login_first_usable", AsyncMock(return_value=fake_logged_client)):
+                        with patch("sys.stdout", new=io.StringIO()) as output:
+                            status = await smoke.main()
+
+        self.assertEqual(status, 0, output.getvalue())
+        smoke_output = output.getvalue()
+        for required_name in [
+            "user_info_by_username",
+            "user_info",
+            "username_from_user_id",
+            "user_medias",
+            "user_medias_paginated",
+            "user_following",
+            "user_stories",
+        ]:
+            self.assertIn(f"REQ {required_name}:", smoke_output)
+        for public_name in [
+            "private_v2_gql",
+            "user_short_gql",
+            "user_medias_gql",
+        ]:
+            self.assertNotIn(f"REQ {public_name}:", smoke_output)
+        self.assertNotIn("AttributeError", smoke_output)

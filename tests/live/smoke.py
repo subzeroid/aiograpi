@@ -17,9 +17,27 @@ import ssl
 import sys
 import urllib.request
 import uuid
+from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 from aiograpi import Client
+
+
+def _summarize(out):
+    if hasattr(out, "username"):
+        return f"{out.username}/{out.pk}"
+    if hasattr(out, "name"):
+        return out.name
+    if isinstance(out, tuple) and out:
+        first = out[0]
+        if isinstance(first, (list, dict, set, tuple)):
+            cursor = out[1] if len(out) > 1 else None
+            return f"len={len(first)} cursor={bool(cursor)}"
+    if isinstance(out, (list, dict, set, tuple)):
+        return f"len={len(out)}"
+    return str(out)[:50]
 
 
 async def _fetch_accounts(url, count=10):
@@ -113,29 +131,23 @@ async def main():
 
         for name, fn in [
             ("private_v1", lambda: cl.user_info_by_username_v1("instagram")),
-            ("private_v2_gql", lambda: cl.user_info_by_username_v2_gql("instagram")),
-            ("user_short_gql", lambda: cl.user_short_gql("25025320")),
+            ("user_info_by_username", lambda: cl.user_info_by_username("instagram")),
+            ("user_info", lambda: cl.user_info("25025320")),
+            ("username_from_user_id", lambda: cl.username_from_user_id("25025320")),
             ("hashtag_info_v1", lambda: cl.hashtag_info_v1("python")),
             ("timeline_feed", lambda: cl.get_timeline_feed("cold_start_fetch")),
             ("clip_info_for_creation", lambda: cl.clip_info_for_creation()),
             ("direct_search", lambda: cl.direct_search("instagram")),
-            ("user_medias_v1", lambda: cl.user_medias_v1("25025320", amount=3)),
-            ("user_medias_gql", lambda: cl.user_medias_gql("25025320", amount=3)),
-            ("user_followers", lambda: cl.user_followers("25025320", amount=10)),
+            ("user_medias", lambda: cl.user_medias("25025320", amount=3)),
+            ("user_medias_paginated", lambda: cl.user_medias_paginated("25025320", amount=2)),
+            ("user_followers", lambda: cl.user_followers("25025320", amount=10, use_cache=False)),
+            ("user_following", lambda: cl.user_following("25025320", amount=10, use_cache=False)),
+            ("user_stories", lambda: cl.user_stories("25025320", amount=10)),
             ("highlight_info", lambda: cl.highlight_info(17983407089364361)),
         ]:
             try:
                 out = await fn()
-                summary = (
-                    f"{out.username}/{out.pk}"
-                    if hasattr(out, "username")
-                    else (
-                        out.name
-                        if hasattr(out, "name")
-                        else (f"len={len(out)}" if isinstance(out, list) else str(out)[:50])
-                    )
-                )
-                print(f"REQ {name}: {summary}")
+                print(f"REQ {name}: {_summarize(out)}")
             except Exception as e:
                 failures.append((name, e))
                 print(f"REQ {name} FAIL: {type(e).__name__}: {str(e)[:140]}")
@@ -145,112 +157,153 @@ async def main():
         rank_token = str(uuid.uuid4())
         instagram_pk = "25025320"
         opt_pass = 0
-        opt_total = 0
-        for name, fn in [
+        opt_skipped = 0
+        opt_checks = [
             (
                 "fbsearch_keyword_typeahead",
-                lambda: cl.fbsearch_keyword_typeahead("python"),
+                "fbsearch_keyword_typeahead",
+                ("python",),
+                {},
             ),
             (
                 "fbsearch_typeahead_stream",
-                lambda: cl.fbsearch_typeahead_stream("python"),
+                "fbsearch_typeahead_stream",
+                ("python",),
+                {},
             ),
             (
                 "fbsearch_item_top",
-                lambda: cl.fbsearch_item("top_serp", "top_serp", "python"),
+                "fbsearch_item",
+                ("top_serp", "top_serp", "python"),
+                {},
             ),
-            ("fbsearch_accounts_v2", lambda: cl.fbsearch_accounts_v2("python")),
-            ("fbsearch_reels_v2", lambda: cl.fbsearch_reels_v2("python")),
-            ("fbsearch_topsearch_v2", lambda: cl.fbsearch_topsearch_v2("python")),
-            ("fbsearch_typehead", lambda: cl.fbsearch_typehead("pyt")),
-            ("user_stream_by_id_v1", lambda: cl.user_stream_by_id_v1(instagram_pk)),
-            ("user_stream_by_id_flat", lambda: cl.user_stream_by_id_flat(instagram_pk)),
+            ("fbsearch_accounts_v2", "fbsearch_accounts_v2", ("python",), {}),
+            ("fbsearch_reels_v2", "fbsearch_reels_v2", ("python",), {}),
+            ("fbsearch_topsearch_v2", "fbsearch_topsearch_v2", ("python",), {}),
+            ("fbsearch_typehead", "fbsearch_typehead", ("pyt",), {}),
+            ("user_stream_by_id_v1", "user_stream_by_id_v1", (instagram_pk,), {}),
+            ("user_stream_by_id_flat", "user_stream_by_id_flat", (instagram_pk,), {}),
             (
                 "user_stream_by_username_flat",
-                lambda: cl.user_stream_by_username_flat("instagram"),
+                "user_stream_by_username_flat",
+                ("instagram",),
+                {},
             ),
             (
                 "user_web_profile_info_v1",
-                lambda: cl.user_web_profile_info_v1("instagram"),
+                "user_web_profile_info_v1",
+                ("instagram",),
+                {},
             ),
             (
                 "discover_recommended_accounts_for_category_v1",
-                lambda: cl.discover_recommended_accounts_for_category_v1(instagram_pk),
+                "discover_recommended_accounts_for_category_v1",
+                (instagram_pk,),
+                {},
             ),
             (
                 "user_related_profiles_gql",
-                lambda: cl.user_related_profiles_gql(instagram_pk),
+                "user_related_profiles_gql",
+                (instagram_pk,),
+                {},
             ),
             (
                 "public_head_share_link",
-                lambda: cl.public_head("https://www.instagram.com/share/p/BALv9Ep4YH"),
+                "public_head",
+                ("https://www.instagram.com/share/p/BALv9Ep4YH",),
+                {},
             ),
             (
                 "track_stream_info_by_id",
-                lambda: cl.track_stream_info_by_id("18462251209012169"),
+                "track_stream_info_by_id",
+                ("18462251209012169",),
+                {},
             ),
             (
                 "media_info_v2",
-                lambda: cl.media_info_v2("2278584739065882267"),
+                "media_info_v2",
+                ("2278584739065882267",),
+                {},
             ),
-            ("feed_user_stream_item", lambda: cl.feed_user_stream_item(instagram_pk)),
+            ("feed_user_stream_item", "feed_user_stream_item", (instagram_pk,), {}),
             (
                 "private_graphql_followers_list",
-                lambda: cl.private_graphql_followers_list(
-                    instagram_pk,
-                    rank_token=rank_token,
-                    order="date_followed_latest",
-                ),
+                "private_graphql_followers_list",
+                (instagram_pk,),
+                {"rank_token": rank_token, "order": "date_followed_latest"},
             ),
             (
                 "private_graphql_following_list",
-                lambda: cl.private_graphql_following_list(
-                    instagram_pk,
-                    rank_token=rank_token,
-                    order="date_followed_earliest",
-                ),
+                "private_graphql_following_list",
+                (instagram_pk,),
+                {"rank_token": rank_token, "order": "date_followed_earliest"},
             ),
             (
                 "private_graphql_clips_profile",
-                lambda: cl.private_graphql_clips_profile(instagram_pk),
+                "private_graphql_clips_profile",
+                (instagram_pk,),
+                {},
             ),
             (
                 "private_graphql_inbox_tray_for_user",
-                lambda: cl.private_graphql_inbox_tray_for_user(cl.user_id),
+                "private_graphql_inbox_tray_for_user",
+                (cl.user_id,),
+                {},
             ),
             (
                 "private_graphql_realtime_region_hint",
-                lambda: cl.private_graphql_realtime_region_hint(),
+                "private_graphql_realtime_region_hint",
+                (),
+                {},
             ),
             (
                 "private_graphql_top_audio_trends",
-                lambda: cl.private_graphql_top_audio_trends_eligible_categories(),
+                "private_graphql_top_audio_trends_eligible_categories",
+                (),
+                {},
             ),
-            ("private_graphql_memories_pog", lambda: cl.private_graphql_memories_pog()),
+            ("private_graphql_memories_pog", "private_graphql_memories_pog", (), {}),
             (
                 "private_graphql_update_inbox_tray_last_seen",
-                lambda: cl.private_graphql_update_inbox_tray_last_seen(),
+                "private_graphql_update_inbox_tray_last_seen",
+                (),
+                {},
             ),
             (
-                "direct_pending_requests_preview",
-                lambda: cl.direct_pending_requests_preview(),
+                "logged_user_info_v2_gql",
+                "user_info_by_username_v2_gql",
+                ("instagram",),
+                {},
             ),
-            ("direct_has_interop_upgraded", lambda: cl.direct_has_interop_upgraded()),
-            ("direct_search_gen_ai_bots", lambda: cl.direct_search_gen_ai_bots(amount=2)),
-            ("direct_channels", lambda: cl.direct_channels()),
-            ("music_verify_original_audio_title", lambda: cl.music_verify_original_audio_title("Original Audio")),
-            ("music_trending", lambda: cl.music_trending()),
-            ("music_search_v2", lambda: cl.music_search_v2("love")),
-            ("music_clips_audio_browser", lambda: cl.music_clips_audio_browser()),
-        ]:
-            opt_total += 1
+            ("logged_user_short_gql", "user_short_gql", (instagram_pk,), {}),
+            ("logged_user_medias_gql", "user_medias_gql", (instagram_pk,), {"amount": 3}),
+            ("direct_pending_requests_preview", "direct_pending_requests_preview", (), {}),
+            ("direct_has_interop_upgraded", "direct_has_interop_upgraded", (), {}),
+            ("direct_search_gen_ai_bots", "direct_search_gen_ai_bots", (), {"amount": 2}),
+            ("direct_channels", "direct_channels", (), {}),
+            (
+                "music_verify_original_audio_title",
+                "music_verify_original_audio_title",
+                ("Original Audio",),
+                {},
+            ),
+            ("music_trending", "music_trending", (), {}),
+            ("music_search_v2", "music_search_v2", ("love",), {}),
+            ("music_clips_audio_browser", "music_clips_audio_browser", (), {}),
+        ]
+        for name, attr, args, kwargs in opt_checks:
+            fn = getattr(cl, attr, None)
+            if fn is None:
+                opt_skipped += 1
+                print(f"opt {name}: skipped (not implemented)")
+                continue
             try:
-                await fn()
+                await fn(*args, **kwargs)
                 print(f"opt {name}: PASS")
                 opt_pass += 1
             except Exception as e:
                 print(f"opt {name}: {type(e).__name__}: {str(e)[:140]}")
-        print(f"OPTIONAL: {opt_pass}/{opt_total} chapi methods OK")
+        print(f"OPTIONAL: {opt_pass}/{len(opt_checks)} chapi methods OK ({opt_skipped} skipped)")
 
     if failures:
         print(f"\nFAILED: {len(failures)} required check(s)")
