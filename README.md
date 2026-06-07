@@ -97,7 +97,7 @@ What you can rely on instead:
 
 ### What's new in 1.0.0 and recent releases
 
-- **1.2.0 upstream sync** — synced with `instagrapi 2.8.13`, adding Direct media share to existing threads, clearer Direct message request privacy errors, private-first high-level user/media/story lookups, sessionid username recovery via private stream, and clearer Bloks redirect challenge handling.
+- **1.2.x upstream sync** — synced through `instagrapi 2.8.14`, adding Direct media share to existing threads, clearer Direct message request privacy errors, private-first high-level user/media/story lookups, sessionid username recovery via private stream, clearer Bloks redirect challenge handling, and `clip_share_to_fb_destination(...)` for confirmed Reel Facebook destinations.
 - **1.1.0 MQTT/FBNS sync** — synced with `instagrapi 2.8.2`, adding experimental async Realtime MQTT/MQTToT,
   Direct message sync, lightweight Direct MQTT actions, FBNS push token registration/callbacks, phone confirmation,
   followed hashtag helpers, feed-media share-to-story, opaque Bloks challenge context handling, and clearer Reel upload

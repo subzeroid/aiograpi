@@ -8,6 +8,14 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added `clip_share_to_fb_destination(...)` to normalize confirmed Reel Facebook destination fields without treating Account Center linking ids such as `account_id` as publish destinations.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.8.14.
+
 ## [1.2.0] - 2026-06-06
 
 ### Added

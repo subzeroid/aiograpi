@@ -28,6 +28,7 @@ from aiograpi.exceptions import (
     ChallengeRequired,
     ChallengeUnknownStep,
     ClientConnectionError,
+    ClientError,
     ClientGraphqlError,
     ClientIncompleteReadError,
     ClientThrottledError,
@@ -2855,6 +2856,19 @@ class ClienUploadTestCase(_ClipMusicMetadataAssertionsMixin, ClientPrivateTestCa
         finally:
             cleanup(path)
             self.assertTrue(await self.cl.media_delete(media.id))
+
+    async def test_clip_share_to_fb_destination_live(self):
+        config = await self.cl.clip_share_to_fb_config()
+        self.assertEqual(config.get("status"), "ok")
+        try:
+            destination = await self.cl.clip_share_to_fb_destination(config=config)
+        except ClientError as exc:
+            self.skipTest(f"No confirmed Facebook Reel destination available: {exc}")
+
+        self.assertTrue(destination["destination_id"])
+        self.assertIn(destination["destination_type"], {"USER", "PAGE"})
+        if destination.get("destination_audience_type"):
+            self.assertIsInstance(destination["destination_audience_type"], str)
 
     async def test_reel_upload_with_music(self):
         # media_type: 2 (video, not IGTV)

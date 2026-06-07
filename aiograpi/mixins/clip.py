@@ -217,47 +217,41 @@ class UploadClipMixin(ClientMixin):
             params={"device_status": json.dumps(device_status)},
         )
 
-    async def clip_share_to_fb_extra_data(
+    async def clip_share_to_fb_destination(
         self,
         config: Optional[Dict[str, object]] = None,
         destination_id: Optional[str] = None,
         destination_type: Optional[str] = None,
         destination_audience_type: Optional[str] = None,
-        xpost_surface: str = "IG_REELS_COMPOSER",
         validation_check_bypass: Optional[bool] = None,
-        attempt_id: Optional[str] = None,
     ) -> Dict[str, object]:
         """
-        Build configure fields for sharing a Reel to Facebook.
+        Resolve the Facebook Reel sharing destination from confirmed fields.
 
-        Instagram Android 428 stores Reel Facebook cross-posting in
-        ``XPlatformParams`` fields. The old ``share_to_facebook`` flag alone is
-        not enough for accounts that require an explicit Facebook destination.
+        This helper reads only destination-shaped fields that are known to map
+        to Reel configure payload fields. It intentionally does not treat
+        generic Account Center/linking identifiers such as ``account_id`` as
+        ``share_to_fb_destination_id``.
 
         Parameters
         ----------
         config: Dict[str, object], optional
-            Facebook cross-posting config. The lightweight
-            ``clip_share_to_fb_config()`` response contains availability flags;
-            app/draft configs can also contain destination fields.
+            Facebook cross-posting config. When omitted, this calls
+            :meth:`clip_share_to_fb_config`.
         destination_id: str, optional
-            Facebook destination id. Overrides config values.
+            Explicit Facebook destination id. Overrides config values.
         destination_type: str, optional
-            Facebook destination type/posting type, ``USER`` or ``PAGE``.
+            Explicit Facebook destination type, ``USER`` or ``PAGE``.
             Overrides config values.
         destination_audience_type: str, optional
-            Facebook Reels audience type, e.g. ``PUBLIC``.
-        xpost_surface: str, optional
-            Cross-posting surface reported by the Instagram app.
+            Explicit Facebook Reels audience type, e.g. ``PUBLIC``.
         validation_check_bypass: bool, optional
-            Whether to bypass app-side FB validation. Overrides config values.
-        attempt_id: str, optional
-            Cross-post configure attempt id. Generated when omitted.
+            Explicit validation bypass flag. Overrides config values.
 
         Returns
         -------
-        Dict
-            Extra configure data for ``clip_upload(..., extra_data=...)``.
+        Dict[str, object]
+            Normalized destination fields.
         """
         fb_config = (config if config is not None else await self.clip_share_to_fb_config()) or {}
         if fb_config.get("enabled") is False or fb_config.get("is_account_linked") is False:
@@ -268,7 +262,6 @@ class UploadClipMixin(ClientMixin):
             or fb_config.get("share_to_fb_destination_id")
             or fb_config.get("reels_destination_id")
             or fb_config.get("destination_id")
-            or fb_config.get("account_id")
         )
         destination_id = str(destination_id_value) if destination_id_value is not None else None
         destination_type_value = (
@@ -318,22 +311,82 @@ class UploadClipMixin(ClientMixin):
                 "Facebook Reel sharing destination type must be USER or PAGE. "
                 "Do not pass reels_cross_app_share_type here."
             )
+
+        destination: Dict[str, object] = {
+            "destination_id": str(destination_id),
+            "destination_type": destination_type,
+        }
+        if destination_audience_type:
+            destination["destination_audience_type"] = str(destination_audience_type)
+        if validation_check_bypass is not None:
+            destination["validation_check_bypass"] = bool(validation_check_bypass)
+        return destination
+
+    async def clip_share_to_fb_extra_data(
+        self,
+        config: Optional[Dict[str, object]] = None,
+        destination_id: Optional[str] = None,
+        destination_type: Optional[str] = None,
+        destination_audience_type: Optional[str] = None,
+        xpost_surface: str = "IG_REELS_COMPOSER",
+        validation_check_bypass: Optional[bool] = None,
+        attempt_id: Optional[str] = None,
+    ) -> Dict[str, object]:
+        """
+        Build configure fields for sharing a Reel to Facebook.
+
+        Instagram Android 428 stores Reel Facebook cross-posting in
+        ``XPlatformParams`` fields. The old ``share_to_facebook`` flag alone is
+        not enough for accounts that require an explicit Facebook destination.
+
+        Parameters
+        ----------
+        config: Dict[str, object], optional
+            Facebook cross-posting config. The lightweight
+            ``clip_share_to_fb_config()`` response contains availability flags;
+            app/draft configs can also contain destination fields.
+        destination_id: str, optional
+            Facebook destination id. Overrides config values.
+        destination_type: str, optional
+            Facebook destination type/posting type, ``USER`` or ``PAGE``.
+            Overrides config values.
+        destination_audience_type: str, optional
+            Facebook Reels audience type, e.g. ``PUBLIC``.
+        xpost_surface: str, optional
+            Cross-posting surface reported by the Instagram app.
+        validation_check_bypass: bool, optional
+            Whether to bypass app-side FB validation. Overrides config values.
+        attempt_id: str, optional
+            Cross-post configure attempt id. Generated when omitted.
+
+        Returns
+        -------
+        Dict
+            Extra configure data for ``clip_upload(..., extra_data=...)``.
+        """
+        destination = await self.clip_share_to_fb_destination(
+            config=config,
+            destination_id=destination_id,
+            destination_type=destination_type,
+            destination_audience_type=destination_audience_type,
+            validation_check_bypass=validation_check_bypass,
+        )
         attempt_id = attempt_id or str(uuid4())
 
         data = {
             "share_to_facebook": "1",
             "is_reel_shared_to_fb": True,
             "share_to_facebook_reels": True,
-            "share_to_fb_destination_id": destination_id,
-            "share_to_fb_destination_type": destination_type,
+            "share_to_fb_destination_id": destination["destination_id"],
+            "share_to_fb_destination_type": destination["destination_type"],
             "xpost_surface": xpost_surface,
             "no_token_crosspost": "1",  # nosec B105
             "attempt_id": attempt_id,
         }
-        if destination_audience_type:
-            data["share_to_fb_destination_audience_type"] = destination_audience_type
-        if validation_check_bypass is not None:
-            data["cross_app_share_fb_validation_check_bypass"] = bool(validation_check_bypass)
+        if destination.get("destination_audience_type"):
+            data["share_to_fb_destination_audience_type"] = destination["destination_audience_type"]
+        if destination.get("validation_check_bypass") is not None:
+            data["cross_app_share_fb_validation_check_bypass"] = bool(destination["validation_check_bypass"])
         return data
 
     async def clip_upload(
