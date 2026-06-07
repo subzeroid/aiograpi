@@ -1413,7 +1413,7 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded API baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 2.8.13
+<div class="highlight"><pre><span></span><code>instagrapi 2.8.14
 </code></pre></div>
 <p><code>aiograpi 1.0.x</code> established the SemVer async baseline through <code>instagrapi 2.7.17</code>, including Bloks login fallback
 updates, backup-code 2FA, email and phone helper work, password reset helpers, album per-slide usertags, comment
@@ -1424,7 +1424,7 @@ downloads.</p>
 Direct message sync and lightweight Direct MQTT actions, async FBNS push MQTT with token registration and persisted
 device-auth state, phone confirmation-code support, followed hashtag helpers, feed-media share-to-story, opaque Bloks
 challenge context handling, and clearer Reel/clip upload failure details.</p>
-<p><code>aiograpi 1.2.0</code> continues the mirror through <code>instagrapi 2.8.13</code>. It adds Direct media share to existing threads, Direct message request privacy exceptions, private-first high-level user/media/story lookups for authenticated clients, sessionid username recovery via private profile stream, and clear manual handling for Bloks redirect checkpoints.</p>
+<p><code>aiograpi 1.2.x</code> continues the mirror through <code>instagrapi 2.8.14</code>. It adds Direct media share to existing threads, Direct message request privacy exceptions, private-first high-level user/media/story lookups for authenticated clients, sessionid username recovery via private profile stream, clear manual handling for Bloks redirect checkpoints, and confirmed Reel Facebook destination normalization.</p>
 <h2 id="release-policy">Release policy</h2>
 <ul>
 <li>Use one <code>aiograpi</code> feature release for a large upstream sync.</li>
@@ -1432,7 +1432,7 @@ challenge context handling, and clearer Reel/clip upload failure details.</p>
 <li>Mention the upstream range in GitHub, PyPI, and Telegram release notes.</li>
 </ul>
 <p>For the 2026-05 sync, the public releases are <code>aiograpi 0.9.0</code> and newer.
-<code>aiograpi 0.9.0</code> synced through <code>instagrapi 2.5.18</code>, and subsequent <code>aiograpi 0.9.x</code> patch releases continued that baseline through <code>instagrapi 2.6.8</code>, plus targeted maintenance ports. <code>aiograpi 1.0.x</code> recorded the SemVer baseline through <code>instagrapi 2.7.17</code>; <code>aiograpi 1.1.0</code> records the MQTT/FBNS baseline through <code>instagrapi 2.8.2</code>; <code>aiograpi 1.2.0</code> records the follow-up high-level/private-first baseline through <code>instagrapi 2.8.13</code>.</p>
+<code>aiograpi 0.9.0</code> synced through <code>instagrapi 2.5.18</code>, and subsequent <code>aiograpi 0.9.x</code> patch releases continued that baseline through <code>instagrapi 2.6.8</code>, plus targeted maintenance ports. <code>aiograpi 1.0.x</code> recorded the SemVer baseline through <code>instagrapi 2.7.17</code>; <code>aiograpi 1.1.0</code> records the MQTT/FBNS baseline through <code>instagrapi 2.8.2</code>; <code>aiograpi 1.2.x</code> records the follow-up high-level/private-first and Reel Facebook destination baseline through <code>instagrapi 2.8.14</code>.</p>
 <h2 id="porting-rules">Porting rules</h2>
 <ul>
 <li>Preserve the async public API.</li>
