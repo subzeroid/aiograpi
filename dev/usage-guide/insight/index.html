@@ -1346,6 +1346,12 @@
 <span class="n">media_pk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_url</span><span class="p">(</span><span class="s1">&#39;https://www.instagram.com/p/CP5h-I1FuPr/&#39;</span><span class="p">)</span>
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">insights_media</span><span class="p">(</span><span class="n">media_pk</span><span class="p">)</span>
 </code></pre></div>
+<p>Notes:</p>
+<ul>
+<li>These methods require an authenticated business/professional account. Personal accounts can raise <code>UserError</code>.</li>
+<li><code>insights_media()</code> raises <code>MediaError</code> when Instagram does not return insight data for the requested media.</li>
+<li>If Instagram returns media metadata without <code>inline_insights_node</code>, <code>insights_media()</code> raises <code>MediaError</code> instead of returning partial counts with null insight metrics.</li>
+</ul>
 
 
 
