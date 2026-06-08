@@ -27,3 +27,9 @@ await cl.insights_account()
 media_pk = await cl.media_pk_from_url('https://www.instagram.com/p/CP5h-I1FuPr/')
 await cl.insights_media(media_pk)
 ```
+
+Notes:
+
+* These methods require an authenticated business/professional account. Personal accounts can raise `UserError`.
+* `insights_media()` raises `MediaError` when Instagram does not return insight data for the requested media.
+* If Instagram returns media metadata without `inline_insights_node`, `insights_media()` raises `MediaError` instead of returning partial counts with null insight metrics.
