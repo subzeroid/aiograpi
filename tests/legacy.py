@@ -2870,6 +2870,34 @@ class ClienUploadTestCase(_ClipMusicMetadataAssertionsMixin, ClientPrivateTestCa
         if destination.get("destination_audience_type"):
             self.assertIsInstance(destination["destination_audience_type"], str)
 
+    async def test_clip_share_to_fb_unified_config_live(self):
+        config = await self.cl.clip_share_to_fb_unified_config()
+
+        self.assertEqual(config.get("status"), "ok")
+        self.assertIsInstance(config.get("data"), dict)
+
+    async def test_clip_upload_share_to_facebook_live(self):
+        try:
+            destination = await self.cl.clip_share_to_fb_destination()
+        except ClientError as exc:
+            self.skipTest(f"No confirmed Facebook Reel destination available: {exc}")
+
+        self.assertTrue(destination["destination_id"])
+        self.assertIn(destination["destination_type"], {"USER", "PAGE"})
+        media_pk = await self.cl.media_pk_from_url("https://www.instagram.com/p/CEjXskWJ1on/")
+        path = await self.cl.clip_download(media_pk)
+        media = None
+        self.assertIsInstance(path, Path)
+        try:
+            caption_text = "Facebook Reel crosspost live test"
+            media = await self.cl.clip_upload(path, caption_text, share_to_facebook=True)
+            self.assertIsInstance(media, Media)
+            await self.assertUploadedMediaAccessible(media, media_type=2, caption_text=caption_text)
+        finally:
+            cleanup(path)
+            if media:
+                self.assertTrue(await self.cl.media_delete(media.id))
+
     async def test_reel_upload_with_music(self):
         # media_type: 2 (video, not IGTV)
         # product_type: reels
