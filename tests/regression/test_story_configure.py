@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock
 
 from aiograpi import Client
-from aiograpi.types import Location, StoryLocation
+from aiograpi.types import Hashtag, Location, StoryHashtag, StoryLink, StoryLocation, StoryMention, UserShort
 
 
 def _build_client():
@@ -46,6 +46,32 @@ def _assert_story_location_model(data):
 
 
 class StoryConfigureRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_photo_story_sticker_ids_include_all_stickers(self):
+        client = _build_client()
+        client.private_request = AsyncMock(side_effect=[{"status": "ok"}, {"status": "ok"}])
+
+        await client.photo_configure_to_story(
+            upload_id="1",
+            width=720,
+            height=1280,
+            caption="",
+            links=[StoryLink(webUri="https://example.com")],
+            hashtags=[
+                StoryHashtag(
+                    hashtag=Hashtag(id="1", name="example"),
+                    x=0.2,
+                    y=0.3,
+                    width=0.5,
+                    height=0.2,
+                )
+            ],
+        )
+
+        validate_args, _ = client.private_request.call_args_list[0]
+        assert validate_args[1]["url"] == "https://example.com/"
+        configure_args, _ = client.private_request.call_args_list[1]
+        assert configure_args[1]["story_sticker_ids"] == "hashtag_sticker,link_sticker_default"
+
     async def test_photo_story_location_uses_external_location_id_tap_model(self):
         client = _build_client()
         location = _build_location()
@@ -71,6 +97,32 @@ class StoryConfigureRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         endpoint, data = client.private_request.call_args.args
         assert endpoint == "media/configure_to_story/"
         _assert_story_location_model(data)
+
+    async def test_photo_story_interactive_metadata_builds_tap_models(self):
+        client = _build_client()
+        location = _build_location()
+        user = UserShort(pk="2", username="artist", full_name="Artist", profile_pic_url=None)
+        hashtag = Hashtag(id="1", name="event")
+        client.location_complete = AsyncMock(return_value=location)
+        client.private_request = AsyncMock(side_effect=[{"status": "ok"}, {"status": "ok"}])
+
+        await client.photo_configure_to_story(
+            upload_id="1",
+            width=720,
+            height=1280,
+            caption="",
+            mentions=[StoryMention(user=user, x=0.2, y=0.3, width=0.4, height=0.1)],
+            links=[StoryLink(webUri="https://example.com")],
+            hashtags=[StoryHashtag(hashtag=hashtag, x=0.3, y=0.4, width=0.4, height=0.1)],
+            locations=[StoryLocation(location=location, x=0.4, y=0.5, width=0.4, height=0.1)],
+        )
+
+        configure_args, _ = client.private_request.call_args_list[1]
+        data = configure_args[1]
+        tap_models = json.loads(data["tap_models"])
+        assert [model["type"] for model in tap_models] == ["mention", "hashtag", "location", "story_link"]
+        assert data["story_sticker_ids"] == "hashtag_sticker,location_sticker,link_sticker_default"
+        assert "reel_mentions" in data
 
     async def test_video_story_location_uses_external_location_id_tap_model(self):
         client = _build_client()

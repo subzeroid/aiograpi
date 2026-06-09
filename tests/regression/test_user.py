@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
 from aiograpi.exceptions import ClientError, ClientGraphqlError, ClientJSONDecodeError, UserNotFound
+from aiograpi.extractors import extract_user_v1
 from aiograpi.mixins.user import UserMixin
 
 
@@ -188,6 +189,28 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(user.username, "example")
         client.private_request.assert_awaited_once_with("users/example/usernameinfo/")
+
+    async def test_extract_user_v1_maps_business_contact_fields(self):
+        user = extract_user_v1(
+            {
+                "pk": "123",
+                "username": "business",
+                "full_name": "Business",
+                "is_private": False,
+                "profile_pic_url": "https://example.com/pic.jpg",
+                "is_verified": False,
+                "media_count": 0,
+                "follower_count": 0,
+                "following_count": 0,
+                "is_business": True,
+                "business_email": "public@example.com",
+                "business_phone_number": "+15551234567",
+                "external_url": "",
+            }
+        )
+
+        self.assertEqual(user.public_email, "public@example.com")
+        self.assertEqual(user.contact_phone_number, "+15551234567")
 
     async def test_user_info_by_username_v2_gql_normalizes_search_query(self):
         client = Client()
