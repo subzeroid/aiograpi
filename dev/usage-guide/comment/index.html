@@ -1341,6 +1341,11 @@ when Instagram returns feedback/challenge responses.</p>
 <td>Get chunk of replies and the next child cursor</td>
 </tr>
 <tr>
+<td>media_check_offensive_comment_v2(media_id: str, comment: str)</td>
+<td>dict</td>
+<td>Lightweight offensive-comment preflight response</td>
+</tr>
+<tr>
 <td>comment_like(comment_pk: int)</td>
 <td>bool</td>
 <td>Like a comment</td>
@@ -1429,6 +1434,13 @@ when Instagram returns feedback/challenge responses.</p>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">next_min_id</span>
 <span class="n">QVFEbHpIWmpFc3BNUkgzUFVuOGZOQlhDQ1hHeWlVWHlJSnBhb2FHbFB3YlJtNThnOUlrd01JUWdKRmRwZTRpWWU0bnZmX3VMNHlwcDBkWTJpZjQ2NE9SeQ</span><span class="o">==</span>
 
+<span class="o">&gt;&gt;&gt;</span> <span class="n">preflight</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_check_offensive_comment_v2</span><span class="p">(</span><span class="n">media_id</span><span class="p">,</span> <span class="s2">&quot;Some draft text&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">preflight</span><span class="p">[</span><span class="s2">&quot;is_offensive&quot;</span><span class="p">]</span>
+<span class="kc">False</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">preflight</span><span class="p">[</span><span class="s2">&quot;is_offensive&quot;</span><span class="p">]:</span>
+<span class="o">...</span>     <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_comment</span><span class="p">(</span><span class="n">media_id</span><span class="p">,</span> <span class="s2">&quot;Some draft text&quot;</span><span class="p">)</span>
+
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">comment_like</span><span class="p">(</span><span class="mi">17926777897585108</span><span class="p">)</span>
 <span class="kc">True</span>
 
@@ -1438,6 +1450,10 @@ when Instagram returns feedback/challenge responses.</p>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">comment_bulk_delete</span><span class="p">(</span><span class="n">media_id</span><span class="p">,</span> <span class="p">[</span><span class="mi">17926777897585108</span><span class="p">])</span>
 <span class="kc">True</span>
 </code></pre></div>
+<p>Notes:</p>
+<ul>
+<li><code>media_check_offensive_comment_v2()</code> can be used as an explicit lightweight preflight before <code>media_comment()</code>. <code>media_comment()</code> does not run extra preflight requests automatically, so callers can choose the request volume and handle the raw response.</li>
+</ul>
 
 
 
