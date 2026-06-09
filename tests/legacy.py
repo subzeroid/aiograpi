@@ -87,6 +87,7 @@ from aiograpi.types import (
 )
 from aiograpi.utils import gen_password, generate_jazoest
 from aiograpi.zones import UTC
+from tests.live.auth_helpers import login_with_timeout
 
 logger = logging.getLogger("aiograpi.tests")
 ACCOUNT_USERNAME = os.getenv("IG_USERNAME", "username")
@@ -203,7 +204,7 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
             cl.totp_seed = totp_seed
             cl.totp_code = totp_code
             login_kwargs["verification_code"] = totp_code
-        await cl.login(**login_kwargs)
+        await login_with_timeout(cl, **login_kwargs)
         cl._user_id = acc.get("user_id")
         return cl
 
@@ -2344,6 +2345,15 @@ class ClientCommentExtendTestCase(ClientPrivateTestCase):
                     return item
         self.fail(f"Comment {comment_pk} was not readable after {attempts} attempts: {last_error}")
 
+    async def assertCommentPreflightAllows(self, media_id, text):
+        result = await self.cl.media_check_offensive_comment_v2(media_id, text)
+        self.assertIsInstance(result, dict)
+        self.assertIn("is_offensive", result)
+        self.assertFalse(result["is_offensive"])
+        if "status" in result:
+            self.assertEqual(result["status"], "ok")
+        return result
+
     async def test_media_comment(self):
         text = "Test text [%s]" % datetime.now().strftime("%s")
         now = datetime.now(tz=UTC())
@@ -2354,6 +2364,7 @@ class ClientCommentExtendTestCase(ClientPrivateTestCase):
         self.addAsyncCleanup(self.cleanup_media, media.id)
         await self.assertUploadedMediaAccessible(media, media_type=1, caption_text=caption_text)
         media_id = media.id
+        await self.assertCommentPreflightAllows(media_id, text)
         comment = await self.cl.media_comment(media_id, text)
         self.addAsyncCleanup(self.cleanup_comment, media_id, comment.pk)
         self.assertIsInstance(comment, Comment)
