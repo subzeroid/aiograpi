@@ -44,16 +44,17 @@ class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.last_response = Mock(headers={"ig-set-authorization": ""})
 
         with unittest.mock.patch("aiograpi.mixins.signup.extract_user_short", return_value="created-user"):
-            result = await client.signup(
-                username="example",
-                password="password",
-                email="",
-                phone_number="+15551234567",
-                full_name="Example User",
-                year=2000,
-                month=5,
-                day=12,
-            )
+            with self.assertWarnsRegex(RuntimeWarning, "legacy account-create flow"):
+                result = await client.signup(
+                    username="example",
+                    password="password",
+                    email="",
+                    phone_number="+15551234567",
+                    full_name="Example User",
+                    year=2000,
+                    month=5,
+                    day=12,
+                )
 
         self.assertEqual(result, "created-user")
         client.check_email.assert_not_awaited()
@@ -70,6 +71,28 @@ class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             phone_number="+15551234567",
             phone_code="123456",
         )
+
+    async def test_signup_warns_about_legacy_flow(self):
+        client = Client()
+        client.wait_seconds = 0
+        client.get_signup_config = AsyncMock(return_value={})
+        client.check_phone_number = AsyncMock(return_value={"status": "ok"})
+        client.send_signup_sms_code = AsyncMock(return_value={"status": "ok"})
+        client.challenge_code_handler = AsyncMock(return_value="123456")
+        client.accounts_create = AsyncMock(return_value={"created_user": {"pk": "1", "username": "example"}})
+        client.parse_authorization = Mock(return_value={})
+        client.last_response = Mock(headers={"ig-set-authorization": ""})
+
+        with unittest.mock.patch("aiograpi.mixins.signup.extract_user_short", return_value="created-user"):
+            with self.assertWarnsRegex(RuntimeWarning, "legacy account-create flow"):
+                result = await client.signup(
+                    username="example",
+                    password="password",
+                    email="",
+                    phone_number="+15551234567",
+                )
+
+        self.assertEqual(result, "created-user")
 
     async def test_accounts_create_primary_signup_omits_secondary_account_flag(self):
         client = Client()
@@ -326,12 +349,13 @@ class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.last_response = Mock(headers={"ig-set-authorization": ""})
 
         with unittest.mock.patch("aiograpi.mixins.signup.extract_user_short", return_value="created-user"):
-            result = await client.signup(
-                "example",
-                "password",
-                "example@example.com",
-                "+15551234567",
-            )
+            with self.assertWarnsRegex(RuntimeWarning, "legacy account-create flow"):
+                result = await client.signup(
+                    "example",
+                    "password",
+                    "example@example.com",
+                    "+15551234567",
+                )
 
         self.assertEqual(result, "created-user")
         client.check_phone_number.assert_not_awaited()
