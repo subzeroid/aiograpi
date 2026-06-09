@@ -138,6 +138,7 @@ class HashtagMixin(ClientMixin):
             "recent": "top_recent_posts",
         }
         data = {
+            "tab": tab_key,
             "media_recency_filter": media_recency_filter.get(tab_key, tab_key),
             # "page": 1,
             "_uuid": self.uuid,

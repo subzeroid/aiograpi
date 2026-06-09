@@ -46,6 +46,16 @@ class HashtagRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "Hashtag name cannot be empty"):
             await client.hashtag_medias_recent("#")
 
+    async def test_hashtag_medias_v1_chunk_sends_tab_key(self):
+        client = Client()
+        client.private_request = AsyncMock(return_value={"sections": [], "more_available": False, "next_max_id": None})
+
+        await client.hashtag_medias_v1_chunk("pizza", tab_key="recent")
+
+        request_data = client.private_request.call_args.kwargs["data"]
+        self.assertEqual(request_data["tab"], "recent")
+        self.assertEqual(request_data["media_recency_filter"], "top_recent_posts")
+
     async def test_hashtag_following_fetches_current_account_hashtags(self):
         client = Client()
         client.authorization_data = {"ds_user_id": "123"}
