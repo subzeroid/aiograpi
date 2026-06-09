@@ -97,6 +97,7 @@ What you can rely on instead:
 
 ### What's new in 1.0.0 and recent releases
 
+- **Next upstream sync** — synced through `instagrapi 2.9.0`, adding experimental modern CAA email signup via `signup_caa_email(...)`, the mobile `graphql_www` Bloks app wrapper, and per-request private headers/domain routing for Bloks calls.
 - **1.2.x upstream sync** — synced through `instagrapi 2.8.19`, adding Direct media share to existing threads, clearer Direct message request privacy errors, private-first high-level user/media/story lookups, sessionid username recovery via private stream, clearer Bloks redirect challenge handling, `clip_share_to_fb_destination(...)` for confirmed Reel Facebook destinations, hashtag private section fixes, private business contact field mapping, story metadata extraction, and private incomplete-read retry handling.
 - **1.1.0 MQTT/FBNS sync** — synced with `instagrapi 2.8.2`, adding experimental async Realtime MQTT/MQTToT,
   Direct message sync, lightweight Direct MQTT actions, FBNS push token registration/callbacks, phone confirmation,

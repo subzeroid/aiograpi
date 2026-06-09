@@ -11,11 +11,14 @@ starting with 1.0.0.
 ### Added
 
 - Added `clip_share_to_fb_destination(...)` to normalize confirmed Reel Facebook destination fields without treating Account Center linking ids such as `account_id` as publish destinations.
+- Added experimental modern CAA email signup via `signup_caa_email(...)`, including the mobile `graphql_www` Bloks app wrapper used by registration.
 
 ### Changed
 
 - Private mobile requests now retry one incomplete-read transport failure once after a short delay.
+- Challenge, signup email, and signup SMS helpers no longer print verification codes or password-reset values to stdout.
 - Synced the recorded upstream baseline to `instagrapi` 2.8.19.
+- Synced the recorded upstream baseline to `instagrapi` 2.9.0.
 
 ## [1.2.0] - 2026-06-06
 

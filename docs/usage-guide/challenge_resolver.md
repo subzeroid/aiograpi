@@ -48,6 +48,8 @@ Phone-only signup is supported with `await cl.signup(username, password, email="
 
 `signup(...)` emits a `RuntimeWarning` because it uses Instagram's legacy account-create flow and should be treated as experimental. On modern Instagram app versions this flow is often rejected with `SignupSpamError` / `feedback_required` because the official app uses additional signup checks that aiograpi does not currently generate. Treat this as a platform rejection, not as a malformed SMS/email code.
 
+`signup_caa_email(...)` is the experimental modern CAA/Bloks email signup helper. It sends the current Android registration flow and uses `challenge_code_handler(username, ChallengeChoice.EMAIL)` to fetch the email confirmation code.
+
 Bloks redirect checkpoints such as `bloks_action="com.bloks.www.ig.challenge.redirect.async"` or placeholder `step_name="STEP_NAME"` require manual confirmation in the official Instagram app or web flow on a trusted device; aiograpi raises `ChallengeRequired` with the sanitized challenge context instead of treating this as a legacy step.
 
 For example, you can get the code through the IMAP of Gmail:

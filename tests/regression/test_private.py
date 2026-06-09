@@ -87,3 +87,65 @@ class PrivateRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(cm.exception.message, payload["message"])
         self.assertEqual(cm.exception.status, "fail")
+
+    async def test_send_private_request_passes_non_persistent_headers_per_request(self):
+        client = self._build_client()
+        response = self._response({"status": "ok"})
+        client.private.post = AsyncMock(return_value=response)
+
+        result = await client._send_private_request(
+            "bloks/async_action/com.example.action/",
+            data={"params": "{}"},
+            with_signature=False,
+            headers={"X-FB-Friendly-Name": "IgApi: bloks/async_action/com.example.action/"},
+            domain="b.i.instagram.com",
+        )
+
+        self.assertEqual(result, {"status": "ok"})
+        self.assertEqual(
+            client.private.post.call_args.args[0],
+            "https://b.i.instagram.com/api/v1/bloks/async_action/com.example.action/",
+        )
+        sent_headers = client.private.post.call_args.kwargs["headers"]
+        self.assertEqual(sent_headers["Host"], "b.i.instagram.com")
+        self.assertEqual(sent_headers["X-FB-Friendly-Name"], "IgApi: bloks/async_action/com.example.action/")
+        self.assertNotIn("X-FB-Friendly-Name", client.private.headers)
+        self.assertNotEqual(client.private.headers.get("Host"), "b.i.instagram.com")
+
+
+class PrivateGraphQLRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    def _build_client(self):
+        client = Client()
+        client.last_response_ts = 0
+        client.request_timeout = 0
+        client.read_timeout = 0
+        client.request_log = Mock()
+        return client
+
+    async def test_private_graphql_www_request_posts_to_app_graphql_www_endpoint(self):
+        client = self._build_client()
+        variables = {"params": {"app_id": "com.example.app"}}
+        response = Mock()
+        response.url = "https://b.i.instagram.com/graphql_www"
+        response.json.return_value = {"data": {"ok": True}}
+        response.raise_for_status.return_value = None
+        client.private.post = AsyncMock(return_value=response)
+
+        result = await client.private_graphql_www_request(
+            "IGBloksAppRootQuery-com.example.app",
+            variables,
+            client_doc_id="doc-id",
+        )
+
+        self.assertEqual(result, {"data": {"ok": True}})
+        self.assertEqual(client.private.post.call_args.args, ("https://b.i.instagram.com/graphql_www",))
+        data = client.private.post.call_args.kwargs["data"]
+        self.assertEqual(data["purpose"], "fetch")
+        self.assertEqual(data["fb_api_req_friendly_name"], "IGBloksAppRootQuery-com.example.app")
+        self.assertEqual(data["client_doc_id"], "doc-id")
+        self.assertEqual(json.loads(data["variables"]), variables)
+        headers = client.private.post.call_args.kwargs["headers"]
+        self.assertEqual(headers["X-FB-Friendly-Name"], "IGBloksAppRootQuery-com.example.app")
+        self.assertEqual(headers["X-Client-Doc-Id"], "doc-id")
+        self.assertEqual(headers["Host"], "b.i.instagram.com")
+        client.request_log.assert_called_once_with(response)

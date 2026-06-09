@@ -23,7 +23,14 @@ class BloksMixin(ClientMixin):
             "bloks_versioning_id": versioning_id,
         }
 
-    async def bloks_async_action(self, action: str, params: Dict, bloks_versioning_id: str = "") -> Dict:
+    async def bloks_async_action(
+        self,
+        action: str,
+        params: Dict,
+        bloks_versioning_id: str = "",
+        domain: Optional[str] = None,
+        login: bool = False,
+    ) -> Dict:
         """
         Perform a raw Bloks async action.
 
@@ -35,6 +42,10 @@ class BloksMixin(ClientMixin):
             Bloks ``params`` payload.
         bloks_versioning_id: str, optional
             Bloks versioning id. Uses ``Client.bloks_versioning_id`` when omitted.
+        domain: str, optional
+            API domain override. Uses the default private API domain when omitted.
+        login: bool, optional
+            Allow pre-login requests for registration/login flows.
 
         Returns
         -------
@@ -42,7 +53,16 @@ class BloksMixin(ClientMixin):
             Raw Instagram response.
         """
         data = self._bloks_payload(params, bloks_versioning_id=bloks_versioning_id)
-        return await self.private_request(f"bloks/async_action/{action}/", data=data, with_signature=False)
+        kwargs = {
+            "data": data,
+            "with_signature": False,
+            "headers": {"X-FB-Friendly-Name": f"IgApi: bloks/async_action/{action}/"},
+        }
+        if domain:
+            kwargs["domain"] = domain
+        if login:
+            kwargs["login"] = True
+        return await self.private_request(f"bloks/async_action/{action}/", **kwargs)
 
     async def bloks_app(self, app: str, params: Dict, bloks_versioning_id: str = "") -> Dict:
         """
@@ -64,6 +84,44 @@ class BloksMixin(ClientMixin):
         """
         data = self._bloks_payload(params, bloks_versioning_id=bloks_versioning_id)
         return await self.private_request(f"bloks/apps/{app}/", data=data, with_signature=False)
+
+    async def bloks_graphql_app(
+        self,
+        app: str,
+        params: Dict,
+        client_doc_id: str,
+        bloks_versioning_id: str = "",
+        domain: str = "b.i.instagram.com",
+        infra_device_id: str = "",
+    ) -> Dict:
+        """
+        Perform a Bloks app request through the mobile ``graphql_www`` endpoint.
+
+        Current CAA registration screens use this wrapper instead of
+        ``bloks/apps`` for most steps. Instagram expects ``params`` to be
+        nested as a JSON string inside another JSON string.
+        """
+        versioning_id = bloks_versioning_id or self.bloks_versioning_id
+        assert versioning_id, "Client.bloks_versioning_id is empty (hash is expected)"
+        variables = {
+            "params": {
+                "params": dumps({"params": dumps(params)}),
+                "bloks_versioning_id": versioning_id,
+                "infra_params": {"device_id": infra_device_id or self.uuid},
+                "app_id": app,
+            },
+            "bk_context": {
+                "is_flipper_enabled": False,
+                "theme_params": [],
+                "debug_tooling_metadata_token": None,  # nosec B105
+            },
+        }
+        return await self.private_graphql_www_request(  # type: ignore[attr-defined]
+            f"IGBloksAppRootQuery-{app}",
+            variables,
+            client_doc_id=client_doc_id,
+            domain=domain,
+        )
 
     async def bloks_challenge_take_challenge(
         self,
