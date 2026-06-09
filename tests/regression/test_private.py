@@ -50,6 +50,26 @@ class PrivateRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cm.exception.message, payload["message"])
         self.assertEqual(cm.exception.status, "fail")
 
+    async def test_private_request_retries_remote_protocol_error_once(self):
+        client = self._build_client()
+        client._user_id = "123"
+        response = self._response({"status": "ok"})
+        client.private.post = AsyncMock(
+            side_effect=[
+                httpx_ext.RemoteProtocolError(
+                    "peer closed connection without sending complete message body (received 207264 bytes, expected 375848)"
+                ),
+                response,
+            ]
+        )
+
+        with unittest.mock.patch("aiograpi.mixins.private.asyncio.sleep", new_callable=AsyncMock) as sleep:
+            result = await client.private_request("test/", data={"_uuid": client.uuid}, with_signature=False)
+
+        self.assertEqual(result, {"status": "ok"})
+        self.assertEqual(client.private.post.await_count, 2)
+        self.assertEqual(sleep.await_args_list.count(unittest.mock.call(2)), 1)
+
     async def test_send_private_request_promotes_direct_message_requests_disabled_status_fail(self):
         client = self._build_client()
         payload = {

@@ -16,6 +16,7 @@ from aiograpi.exceptions import (
     ClientConnectionError,
     ClientErrorWithTitle,
     ClientForbiddenError,
+    ClientIncompleteReadError,
     ClientJSONDecodeError,
     ClientNotFoundError,
     ClientRequestTimeout,
@@ -498,6 +499,8 @@ class PrivateRequestMixin(ClientMixin):
                 endpoint,
             )
             raise AuthRequiredProxyError(e, response=self.last_response)
+        except httpx_ext.RemoteProtocolError as e:
+            raise ClientIncompleteReadError("{} {}".format(e.__class__.__name__, str(e))) from e
         except (httpx_ext.HTTPStatusError, httpx_ext.HTTPError) as e:
             response = self.last_response
             try:
@@ -715,6 +718,10 @@ class PrivateRequestMixin(ClientMixin):
         except ClientRequestTimeout:
             self.logger.info("Wait 60 seconds and try one more time (ClientRequestTimeout)")
             await asyncio.sleep(60)
+            return await self._send_private_request(endpoint, **kwargs)
+        except ClientIncompleteReadError:
+            self.logger.info("Wait 2 seconds and try one more time (ClientIncompleteReadError)")
+            await asyncio.sleep(2)
             return await self._send_private_request(endpoint, **kwargs)
         # except BadPassword as e:
         #     raise e
