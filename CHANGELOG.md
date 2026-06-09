@@ -14,7 +14,8 @@ starting with 1.0.0.
 
 ### Changed
 
-- Synced the recorded upstream baseline to `instagrapi` 2.8.14.
+- Private mobile requests now retry one incomplete-read transport failure once after a short delay.
+- Synced the recorded upstream baseline to `instagrapi` 2.8.19.
 
 ## [1.2.0] - 2026-06-06
 
