@@ -13,6 +13,7 @@ when Instagram returns feedback/challenge responses.
 | media_comments_chunk(media_id: str, max_amount: int, min_id: str = None) | Tuple[List[Comment], str] | Get chunk of comments on a media and end_cursor
 | media_comment_replies(media_id: str, comment_id: str, amount: int = 0) | List\[Comment] | Get replies for a parent media comment
 | media_comment_replies_chunk(media_id: str, comment_id: str, max_amount: int, min_id: str = None) | Tuple[List[Comment], str] | Get chunk of replies and the next child cursor
+| media_check_offensive_comment_v2(media_id: str, comment: str) | dict | Lightweight offensive-comment preflight response
 | comment_like(comment_pk: int)                                                           | bool               | Like a comment
 | comment_unlike(comment_pk: int)                                                         | bool               | Unlike a comment
 | comment_pin(media_id: str,comment_pk: int)                                              | bool               | Pin a comment
@@ -84,6 +85,13 @@ QVFBQmZCa1dxaFB5eFpBY2luVFMwLWdmN2ZCcUV6OF9hQWlIQk12ZWZqUlctZ2pOa1J5YjJ6bFY5Q1do
 >>> next_min_id
 QVFEbHpIWmpFc3BNUkgzUFVuOGZOQlhDQ1hHeWlVWHlJSnBhb2FHbFB3YlJtNThnOUlrd01JUWdKRmRwZTRpWWU0bnZmX3VMNHlwcDBkWTJpZjQ2NE9SeQ==
 
+>>> preflight = await cl.media_check_offensive_comment_v2(media_id, "Some draft text")
+>>> preflight["is_offensive"]
+False
+
+>>> if not preflight["is_offensive"]:
+...     await cl.media_comment(media_id, "Some draft text")
+
 >>> await cl.comment_like(17926777897585108)
 True
 
@@ -93,3 +101,7 @@ True
 >>> await cl.comment_bulk_delete(media_id, [17926777897585108])
 True
 ```
+
+Notes:
+
+* `media_check_offensive_comment_v2()` can be used as an explicit lightweight preflight before `media_comment()`. `media_comment()` does not run extra preflight requests automatically, so callers can choose the request volume and handle the raw response.

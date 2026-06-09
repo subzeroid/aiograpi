@@ -13,6 +13,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from aiograpi import Client
 from aiograpi.exceptions import MediaError
+from tests.live.auth_helpers import login_with_timeout
 
 
 def _insights_test_accounts_url(count=3):
@@ -54,7 +55,7 @@ async def _insights_client_from_test_account(acc):
         cl.totp_seed = totp_seed
         cl.totp_code = totp_code
         login_kwargs["verification_code"] = totp_code
-    await cl.login(**login_kwargs)
+    await login_with_timeout(cl, **login_kwargs)
     cl._user_id = acc.get("user_id")
     return cl
 

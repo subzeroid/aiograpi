@@ -88,6 +88,30 @@ class _FakeLiveClient:
         return types.SimpleNamespace(pk=str(highlight_id))
 
 
+class _LoginClient:
+    user_id = "1"
+
+    def __init__(self, delay=0):
+        self.delay = delay
+        self.proxy = None
+
+    def set_settings(self, settings):
+        self.settings = settings
+
+    def set_proxy(self, proxy):
+        self.proxy = proxy
+
+    def totp_generate_code(self, seed):
+        return "123456"
+
+    async def login(self, **kwargs):
+        if self.delay:
+            import asyncio
+
+            await asyncio.sleep(self.delay)
+        return True
+
+
 class LiveSmokeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_fetch_accounts_overrides_existing_default_count(self):
         smoke = _load_live_smoke_module()
@@ -156,6 +180,35 @@ print(sys.modules["aiograpi"].__file__)
                         status = await smoke.main()
 
         self.assertEqual(status, 0)
+
+    async def test_login_first_usable_tries_next_account_after_login_timeout(self):
+        smoke = _load_live_smoke_module()
+        slow_client = _LoginClient(delay=1)
+        fast_client = _LoginClient()
+        accounts = [
+            {
+                "username": "slow",
+                "password": "password",
+                "client_settings": {},
+                "proxy": "",
+                "user_id": "1",
+            },
+            {
+                "username": "fast",
+                "password": "password",
+                "client_settings": {},
+                "proxy": "",
+                "user_id": "2",
+            },
+        ]
+
+        with patch.dict(os.environ, {"AIOGRAPI_TEST_LOGIN_TIMEOUT": "0.01"}):
+            with patch.object(smoke, "Client", side_effect=[slow_client, fast_client]):
+                import asyncio
+
+                result = await asyncio.wait_for(smoke._login_first_usable(accounts), timeout=0.2)
+
+        self.assertIs(result, fast_client)
 
     async def test_required_smoke_uses_private_first_high_level_paths(self):
         smoke = _load_live_smoke_module()

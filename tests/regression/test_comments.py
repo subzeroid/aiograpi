@@ -53,6 +53,9 @@ class CommentRepliesRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(data["replied_to_comment_id"], 100)
         self.assertIn("user_breadcrumb", data)
         self.assertIn("idempotence_token", data)
+        self.assertEqual(data["comment_creation_key"], data["idempotence_token"])
+        self.assertEqual(data["include_e2ee_mentioned_user_list"], "true")
+        self.assertEqual(data["include_media_code"], "true")
 
     async def test_media_comments_chunk_fetches_private_comments_page(self):
         client = Client()

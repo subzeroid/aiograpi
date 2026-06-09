@@ -23,6 +23,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from aiograpi import Client
+from tests.live.auth_helpers import login_with_timeout
 
 
 def _summarize(out):
@@ -69,7 +70,7 @@ async def _login_first_usable(accs):
             }
             if totp_seed:
                 kwargs["verification_code"] = c.totp_generate_code(totp_seed)
-            await c.login(**kwargs)
+            await login_with_timeout(c, **kwargs)
             print(f"LOGIN_OK acc{i} {acc['username']} (user_id={c.user_id})")
             return c
         except Exception as e:
