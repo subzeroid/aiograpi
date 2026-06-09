@@ -46,7 +46,7 @@ Signup SMS challenges use the `phone_number` passed to `signup(...)` and call `c
 
 Phone-only signup is supported with `await cl.signup(username, password, email="", phone_number="+15551234567")`. If both `email` and `phone_number` are provided, aiograpi keeps the email signup flow and uses the phone number only for signup challenges.
 
-`signup(...)` uses Instagram's legacy account-create flow. On modern Instagram app versions this flow is often rejected with `SignupSpamError` / `feedback_required` because the official app uses additional signup checks that aiograpi does not currently generate. Treat this as a platform rejection, not as a malformed SMS/email code.
+`signup(...)` emits a `RuntimeWarning` because it uses Instagram's legacy account-create flow and should be treated as experimental. On modern Instagram app versions this flow is often rejected with `SignupSpamError` / `feedback_required` because the official app uses additional signup checks that aiograpi does not currently generate. Treat this as a platform rejection, not as a malformed SMS/email code.
 
 Bloks redirect checkpoints such as `bloks_action="com.bloks.www.ig.challenge.redirect.async"` or placeholder `step_name="STEP_NAME"` require manual confirmation in the official Instagram app or web flow on a trusted device; aiograpi raises `ChallengeRequired` with the sanitized challenge context instead of treating this as a legacy step.
 
