@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [Unreleased]
+
+### Added
+
+- Added async `user_suggested_profiles(user_id, expand_suggestion=False)` as a convenience wrapper over `chaining(...)` and `fetch_suggestion_details(...)`.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.9.1.
+
 ## [1.3.0] - 2026-06-10
 
 ### Added

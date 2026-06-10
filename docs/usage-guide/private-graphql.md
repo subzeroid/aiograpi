@@ -21,6 +21,7 @@ query) and as **named convenience wrappers** (`user_info_v2_gql`,
 | Flat (merged) profile dict by `user_id` | `Client.user_stream_by_id_flat(user_id)` |
 | Flat (merged) profile dict by `username` | `Client.user_stream_by_username_flat(username)` |
 | Web-scraper-style profile via private host | `Client.user_web_profile_info_v1(username)` |
+| "Suggested for you" convenience wrapper | `Client.user_suggested_profiles(user_id, expand_suggestion=False)` |
 | "Suggested" profiles by user_id (chaining) | `Client.chaining(user_id)` |
 | Suggested-profile expanded details | `Client.fetch_suggestion_details(user_id, chained_ids)` |
 | Similar businesses by user's category | `Client.discover_recommended_accounts_for_category_v1(user_id)` |

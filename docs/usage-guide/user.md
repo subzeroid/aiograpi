@@ -35,6 +35,7 @@ View a list of a user's medias, following and followers
 | disable_stories_notifications(user_id: str)   | bool                  | Disable stories notifications of user                        |
 | close_friend_add(user_id: str)                | bool                  | Add to Close Friends List                                    |
 | close_friend_remove(user_id: str)             | bool                  | Remove from Close Friends List                               |
+| user_suggested_profiles(user_id: str, expand_suggestion: bool = False) | dict | Suggested profiles ("Suggested for you") for a profile. Wraps `chaining` and, with `expand_suggestion=True`, returns the raw `fetch_suggestion_details` payload (`items` in current app responses) |
 
 Low level methods:
 
@@ -111,4 +112,23 @@ await cl.login(USERNAME, PASSWORD)
 followers = await cl.user_followers(cl.user_id)
 for follower in followers.values():
     await cl.user_unfollow(follower.pk)
+```
+
+Example: Suggested profiles ("Suggested for you") for a target user:
+
+``` python
+from aiograpi import Client
+from aiograpi.exceptions import InvalidTargetUser
+
+cl = Client()
+await cl.login(USERNAME, PASSWORD)
+
+user_id = await cl.user_id_from_username("example")
+try:
+    suggested = await cl.user_suggested_profiles(user_id)
+    # Expanded social-context fields (current app responses expose them under "items"):
+    detailed = await cl.user_suggested_profiles(user_id, expand_suggestion=True)
+except InvalidTargetUser:
+    # Instagram refuses chaining for locked-down / private targets
+    suggested = {"users": []}
 ```
