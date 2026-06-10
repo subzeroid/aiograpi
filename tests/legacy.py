@@ -3700,6 +3700,42 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         params = client.private_request.call_args.kwargs["params"]
         self.assertEqual(params["chained_ids"], "1,2,3")
 
+    async def test_user_suggested_profiles_returns_chaining_payload_by_default(self):
+        client = self.build_private_client()
+        chained = {"users": [{"pk": "9", "username": "a"}, {"pk": "10", "username": "b"}]}
+        client.chaining = AsyncMock(return_value=chained)
+        client.fetch_suggestion_details = AsyncMock()
+
+        result = await client.user_suggested_profiles("123")
+
+        self.assertEqual(result, chained)
+        client.chaining.assert_awaited_once_with("123")
+        client.fetch_suggestion_details.assert_not_awaited()
+
+    async def test_user_suggested_profiles_expands_suggestion_details(self):
+        client = self.build_private_client()
+        chained = {"users": [{"pk": "9"}, {"pk": "10"}]}
+        expanded = {"items": [{"user": {"pk": "9"}, "social_context": "Followed by you"}]}
+        client.chaining = AsyncMock(return_value=chained)
+        client.fetch_suggestion_details = AsyncMock(return_value=expanded)
+
+        result = await client.user_suggested_profiles("123", expand_suggestion=True)
+
+        self.assertEqual(result, expanded)
+        client.chaining.assert_awaited_once_with("123")
+        client.fetch_suggestion_details.assert_awaited_once_with("123", "9,10")
+
+    async def test_user_suggested_profiles_expand_without_users_returns_chaining(self):
+        client = self.build_private_client()
+        chained = {"users": []}
+        client.chaining = AsyncMock(return_value=chained)
+        client.fetch_suggestion_details = AsyncMock()
+
+        result = await client.user_suggested_profiles("123", expand_suggestion=True)
+
+        self.assertEqual(result, chained)
+        client.fetch_suggestion_details.assert_not_awaited()
+
     async def test_user_stream_by_id_v1_posts_info_stream(self):
         client = self.build_private_client()
         client.private_request = AsyncMock(return_value={"stream_rows": []})
