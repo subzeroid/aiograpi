@@ -81,7 +81,7 @@ class SignUpTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(user, UserShort)
         for key, val in {"username": username, "full_name": full_name}.items():
             self.assertEqual(getattr(user, key), val)
-        self.assertTrue(user.profile_pic_url.startswith("https://"))
+        self.assertTrue(str(user.profile_pic_url).startswith("https://"))
 
     async def test_email_signup_caa_live(self):
         if os.environ.get("IG_SIGNUP_CAA_LIVE") != "1":
@@ -115,7 +115,7 @@ class SignUpTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(user, UserShort)
         self.assertTrue(user.pk)
         self.assertTrue(user.username)
-        self.assertTrue(user.profile_pic_url.startswith("https://"))
+        self.assertTrue(str(user.profile_pic_url).startswith("https://"))
 
     async def test_phone_signup_live(self):
         phone_number = self.signup_phone_number()
@@ -150,4 +150,4 @@ class SignUpTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(user, UserShort)
         for key, val in {"username": username, "full_name": full_name}.items():
             self.assertEqual(getattr(user, key), val)
-        self.assertTrue(user.profile_pic_url.startswith("https://"))
+        self.assertTrue(str(user.profile_pic_url).startswith("https://"))
