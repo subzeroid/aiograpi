@@ -22,7 +22,7 @@ class SignUpTestCase(unittest.IsolatedAsyncioTestCase):
         )
         return result.stdout.strip()
 
-    def signup_email(self, username):
+    def _get_signup_email_address(self, username):
         email = os.environ.get("IG_SIGNUP_EMAIL")
         if email:
             return email
@@ -51,8 +51,8 @@ class SignUpTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_email_signup_live(self):
         cl = Client()
-        username = gen_password()
-        email = self.signup_email(username)
+        username = f"u{gen_password().lower()}"
+        email = self._get_signup_email_address(username)
         password = gen_password(12)
         phone_number = self.signup_phone_number()
         full_name = f"John {username}"
@@ -81,14 +81,48 @@ class SignUpTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(user, UserShort)
         for key, val in {"username": username, "full_name": full_name}.items():
             self.assertEqual(getattr(user, key), val)
-        self.assertTrue(user.profile_pic_url.startswith("https://"))
+        self.assertTrue(str(user.profile_pic_url).startswith("https://"))
+
+    async def test_email_signup_caa_live(self):
+        if os.environ.get("IG_SIGNUP_CAA_LIVE") != "1":
+            self.skipTest("IG_SIGNUP_CAA_LIVE=1 is required for experimental CAA signup live test")
+        cl = Client()
+        username = f"u{gen_password().lower()}"
+        email = self._get_signup_email_address(username)
+        password = gen_password(12)
+        full_name = f"John {username}"
+
+        async def challenge_code_handler(username, choice):
+            return self.signup_code_handler(
+                "IG_SIGNUP_EMAIL_CODE",
+                "IG_SIGNUP_EMAIL_CODE_COMMAND",
+                {
+                    "IG_SIGNUP_USERNAME": username,
+                    "IG_SIGNUP_EMAIL": email,
+                },
+            )
+
+        cl.challenge_code_handler = challenge_code_handler
+        user = await cl.signup_caa_email(
+            username,
+            password,
+            email,
+            full_name,
+            year=random.randint(1980, 1990),
+            month=random.randint(1, 12),
+            day=random.randint(1, 28),
+        )
+        self.assertIsInstance(user, UserShort)
+        self.assertTrue(user.pk)
+        self.assertTrue(user.username)
+        self.assertTrue(str(user.profile_pic_url).startswith("https://"))
 
     async def test_phone_signup_live(self):
         phone_number = self.signup_phone_number()
         if not phone_number:
             self.skipTest("IG_SIGNUP_PHONE_NUMBER or IG_PHONE_NUMBER is required for phone signup live test")
         cl = Client()
-        username = gen_password()
+        username = f"u{gen_password().lower()}"
         password = gen_password(12)
         full_name = f"John {username}"
 
@@ -116,4 +150,4 @@ class SignUpTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(user, UserShort)
         for key, val in {"username": username, "full_name": full_name}.items():
             self.assertEqual(getattr(user, key), val)
-        self.assertTrue(user.profile_pic_url.startswith("https://"))
+        self.assertTrue(str(user.profile_pic_url).startswith("https://"))

@@ -1,4 +1,5 @@
 import base64
+import json
 import unittest
 from unittest.mock import AsyncMock, patch
 
@@ -53,7 +54,71 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 "bloks_versioning_id": "bloks-version",
             },
             with_signature=False,
+            headers={"X-FB-Friendly-Name": "IgApi: bloks/async_action/com.example.action/"},
         )
+
+    async def test_bloks_async_action_accepts_domain_override(self):
+        client = self.build_client()
+        params = {"server_params": {"flow": "example_flow"}}
+        expected = {"status": "ok"}
+        client.private_request = AsyncMock(return_value=expected)
+
+        result = await client.bloks_async_action("com.example.action", params, domain="b.i.instagram.com")
+
+        self.assertEqual(result, expected)
+        client.private_request.assert_awaited_once_with(
+            "bloks/async_action/com.example.action/",
+            data={
+                "params": dumps(params),
+                "_uuid": "uuid-1",
+                "bk_client_context": dumps({"bloks_version": "bloks-version", "styles_id": "instagram"}),
+                "bloks_versioning_id": "bloks-version",
+            },
+            with_signature=False,
+            headers={"X-FB-Friendly-Name": "IgApi: bloks/async_action/com.example.action/"},
+            domain="b.i.instagram.com",
+        )
+
+    async def test_bloks_async_action_can_allow_prelogin_request(self):
+        client = self.build_client()
+        params = {"server_params": {"flow": "example_flow"}}
+        expected = {"status": "ok"}
+        client.private_request = AsyncMock(return_value=expected)
+
+        result = await client.bloks_async_action("com.example.action", params, login=True)
+
+        self.assertEqual(result, expected)
+        client.private_request.assert_awaited_once_with(
+            "bloks/async_action/com.example.action/",
+            data={
+                "params": dumps(params),
+                "_uuid": "uuid-1",
+                "bk_client_context": dumps({"bloks_version": "bloks-version", "styles_id": "instagram"}),
+                "bloks_versioning_id": "bloks-version",
+            },
+            with_signature=False,
+            headers={"X-FB-Friendly-Name": "IgApi: bloks/async_action/com.example.action/"},
+            login=True,
+        )
+
+    async def test_bloks_async_action_does_not_leak_friendly_name_onto_session(self):
+        client = self.build_client()
+        client._user_id = "123"
+        client.request_timeout = 0
+        response = unittest.mock.Mock(status_code=200)
+        response.headers = {}
+        response.json.return_value = {"status": "ok"}
+        response.raise_for_status.return_value = None
+        client.private.post = AsyncMock(return_value=response)
+
+        await client.bloks_async_action("com.example.action", {"server_params": {"flow": "example_flow"}})
+
+        sent_headers = client.private.post.call_args.kwargs["headers"]
+        self.assertEqual(
+            sent_headers["X-FB-Friendly-Name"],
+            "IgApi: bloks/async_action/com.example.action/",
+        )
+        self.assertNotIn("X-FB-Friendly-Name", client.private.headers)
 
     async def test_bloks_app_posts_unsigned_bloks_payload(self):
         client = self.build_client()
@@ -74,6 +139,45 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             },
             with_signature=False,
         )
+
+    async def test_bloks_graphql_app_posts_wrapped_bloks_payload(self):
+        client = self.build_client()
+        params = {
+            "client_input_params": {"device_id": "android-id"},
+            "server_params": {"flow": "example_flow"},
+        }
+        expected = {"data": {"ok": True}}
+        client.private_graphql_www_request = AsyncMock(return_value=expected)
+
+        result = await client.bloks_graphql_app(
+            "com.example.app",
+            params,
+            client_doc_id="doc-id",
+            infra_device_id="qe-device-id",
+        )
+
+        self.assertEqual(result, expected)
+        client.private_graphql_www_request.assert_awaited_once()
+        friendly_name, variables = client.private_graphql_www_request.call_args.args[:2]
+        self.assertEqual(friendly_name, "IGBloksAppRootQuery-com.example.app")
+        self.assertEqual(
+            client.private_graphql_www_request.call_args.kwargs,
+            {"client_doc_id": "doc-id", "domain": "b.i.instagram.com"},
+        )
+        self.assertEqual(
+            variables["bk_context"],
+            {
+                "is_flipper_enabled": False,
+                "theme_params": [],
+                "debug_tooling_metadata_token": None,
+            },
+        )
+        wrapped_params = variables["params"]
+        self.assertEqual(wrapped_params["app_id"], "com.example.app")
+        self.assertEqual(wrapped_params["bloks_versioning_id"], "bloks-version")
+        self.assertEqual(wrapped_params["infra_params"], {"device_id": "qe-device-id"})
+        outer_params = json.loads(wrapped_params["params"])
+        self.assertEqual(json.loads(outer_params["params"]), params)
 
     async def test_bloks_challenge_take_challenge_posts_unsigned_direct_payload(self):
         client = self.build_client()

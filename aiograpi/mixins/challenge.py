@@ -68,7 +68,6 @@ class ChallengeResolveMixin(ClientMixin):
         for attempt in range(attempts):
             code = await self.challenge_code_handler(self.username, choice, **kwargs)
             if code:
-                print(f'Code entered "{code}" for {self.username} ({attempt} attempts by {wait_seconds} seconds)')
                 return code
             if attempt == 0:
                 raise ChallengeRequired(
@@ -559,7 +558,6 @@ class ChallengeResolveMixin(ClientMixin):
                     "change_password_handler or complete the flow manually.",
                     **{key: value for key, value in self.last_json.items() if key != "message"},
                 )
-            print(f'Password entered "{pwd}" for {self.username} ({attempt} attempts by {wait_seconds} seconds)')
             return await self.bloks_change_password(pwd, self.last_json["challenge_context"])
         elif step_name == "ufac_www_bloks":
             raise ChallengeRequired(

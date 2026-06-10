@@ -47,8 +47,7 @@ For any other languages (e.g. C++, C#, F#, D, [Golang](https://github.com/subzer
 
 ### Realtime MQTT and Direct
 
-`aiograpi 1.2.x` includes the MQTT/FBNS helpers from 1.1.0 and syncs high-level Direct/user/media/story behavior plus Reel Facebook destination helpers through `instagrapi 2.8.14`. Realtime helpers can receive Direct message sync payloads,
-publish lightweight Direct actions over MQTT, and subscribe to FBNS push notifications.
+`aiograpi 1.3.0` continues through `instagrapi 2.9.0`, including experimental modern CAA email signup via `signup_caa_email(...)` and the `graphql_www` Bloks app wrapper. `aiograpi 1.2.x` includes the MQTT/FBNS helpers from 1.1.0 and syncs high-level Direct/user/media/story behavior plus Reel Facebook destination helpers through `instagrapi 2.8.19`. Realtime helpers can receive Direct message sync payloads, publish lightweight Direct actions over MQTT, and subscribe to FBNS push notifications.
 
 ```python
 from aiograpi import Client

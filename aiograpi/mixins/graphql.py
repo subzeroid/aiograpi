@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import time
+from typing import Optional
 
 import orjson
 
@@ -37,6 +38,7 @@ from aiograpi.utils.timing import random_delay
 
 GRAPHQL_API_URL = "https://www.instagram.com/api/graphql"
 PRIVATE_GRAPHQL_QUERY_URL = "https://i.instagram.com/graphql/query"
+PRIVATE_GRAPHQL_WWW_DOMAIN = "b.i.instagram.com"
 
 GQL_STUFF = {
     "av": "17841464591314721",
@@ -330,6 +332,123 @@ class GraphQLRequestMixin(ClientMixin):
         finally:
             self.last_response_ts = time.time()
 
+    def _raise_graphql_http_error(self, exc, response):
+        """Map a failed private GraphQL HTTP response to a typed exception."""
+        last_json = {}
+        try:
+            body_json = response.json()
+            if isinstance(body_json, dict):
+                self.last_json = body_json
+                last_json = body_json
+        except Exception:
+            last_json = {}
+
+        message = (last_json.get("message") or "").lower()
+        error_type = last_json.get("error_type")
+        if message == "login_required":
+            raise LoginRequired(exc, response=response, **last_json)
+        if message == "challenge_required":
+            raise ChallengeRequired(**last_json)
+        if message == "checkpoint_required":
+            raise CheckpointRequired(**last_json)
+        if message == "consent_required":
+            raise ConsentRequired(**last_json)
+        if message == "feedback_required":
+            raise FeedbackRequired(exc, response=response, **last_json)
+        if error_type == "rate_limit_error":
+            raise RateLimitError(exc, response=response, **last_json)
+        if message == "user_blocked":
+            raise SentryBlock(exc, response=response, **last_json)
+        if "not authorized to view user" in message:
+            raise PrivateAccount(exc, response=response, **last_json)
+        if "unable to fetch followers" in message or "error generating user info response" in message:
+            raise UserNotFound(exc, response=response, **last_json)
+        if getattr(response, "status_code", None) == 404 and getattr(response, "content", None) == b"Not Found":
+            raise ChallengeRequired(**last_json)
+
+        match getattr(response, "status_code", None):
+            case 400:
+                exc_cls = ClientBadRequestError
+            case 401:
+                exc_cls = ClientUnauthorizedError
+            case 403:
+                exc_cls = ClientForbiddenError
+            case 404:
+                exc_cls = ClientNotFoundError
+            case 429:
+                exc_cls = ClientThrottledError
+            case _:
+                exc_cls = ClientError
+        raise exc_cls(exc, response=response, **last_json)
+
+    async def private_graphql_www_request(
+        self,
+        friendly_name: str,
+        variables: Optional[dict] = None,
+        client_doc_id: Optional[str] = None,
+        domain: str = PRIVATE_GRAPHQL_WWW_DOMAIN,
+        extra_headers: Optional[dict] = None,
+    ) -> dict:
+        data = {
+            "method": "post",
+            "pretty": "false",
+            "format": "json",
+            "server_timestamps": "true",
+            "locale": "user",
+            "purpose": "fetch",
+            "fb_api_req_friendly_name": friendly_name,
+            "enable_canonical_naming": "true",
+            "enable_canonical_variable_overrides": "true",
+            "enable_canonical_naming_ambiguous_type_prefixing": "true",
+            "variables": json.dumps(variables or {}, separators=(",", ":")),
+        }
+        if client_doc_id:
+            data["client_doc_id"] = str(client_doc_id)
+        headers = {
+            "X-FB-Friendly-Name": friendly_name,
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        }
+        if client_doc_id:
+            headers["X-Client-Doc-Id"] = str(client_doc_id)
+        if extra_headers:
+            headers.update(extra_headers)
+        merged = dict(self.base_headers)
+        merged.update(headers)
+        merged["Host"] = domain
+        if self.authorization:
+            merged.setdefault("Authorization", self.authorization)
+        if self.request_timeout:
+            await asyncio.sleep(self.request_timeout)
+        url = f"https://{domain}/graphql_www"
+        response = None
+        try:
+            self.private_requests_count += 1
+            response = await self.private.post(
+                url,
+                data=data,
+                headers=merged,
+                timeout=self.read_timeout,
+            )
+            self.request_log(response)
+            self.last_response = response
+            response.raise_for_status()
+            self.last_json = self._json_from_graphql_response(response)
+        except orjson.JSONDecodeError as exc:
+            url = response.url if response else url
+            raise ClientJSONDecodeError(
+                "JSONDecodeError {0!s} while opening {1!s}".format(exc, url),
+                response=response,
+            )
+        except httpx_ext.HTTPError as exc:
+            self._raise_graphql_http_error(exc, response)
+        except (httpx_ext.ConnectError, httpx_ext.ReadError) as exc:
+            raise ClientConnectionError("{} {}".format(exc.__class__.__name__, str(exc)))
+        if self.last_json.get("errors"):
+            raise ClientGraphqlError(self.last_json.get("errors"))
+        if self.last_json.get("status") == "fail":
+            raise ClientError(response=response, **self.last_json)
+        return self.last_json
+
     async def private_graphql_query_request(
         self,
         friendly_name: str,
@@ -420,70 +539,7 @@ class GraphQLRequestMixin(ClientMixin):
         try:
             response.raise_for_status()
         except httpx_ext.HTTPError as e:
-            # First, attempt body-based promotion to the IG-specific
-            # exception types — `_send_private_request` does the same
-            # because IG returns recoverable account-state failures
-            # (login_required, challenge_required, rate_limit_error)
-            # as JSON 4xx bodies that the caller's relogin/challenge
-            # flow needs to recognize. Only fall back to HTTP-status
-            # mapping if the body is missing or doesn't match.
-            try:
-                body_json = response.json()
-                if isinstance(body_json, dict):
-                    self.last_json = body_json
-                    last_json = body_json
-                else:
-                    last_json = {}
-            except Exception:
-                last_json = {}
-
-            message = ""
-            error_type = None
-            if isinstance(last_json, dict):
-                message = (last_json.get("message") or "").lower()
-                error_type = last_json.get("error_type")
-
-            # Body promotions (priority over status code).
-            if message == "login_required":
-                raise LoginRequired(e, response=response, **last_json)
-            if message == "challenge_required":
-                raise ChallengeRequired(**last_json)
-            if message == "checkpoint_required":
-                raise CheckpointRequired(**last_json)
-            if message == "consent_required":
-                raise ConsentRequired(**last_json)
-            if message == "feedback_required":
-                raise FeedbackRequired(e, response=response, **last_json)
-            if error_type == "rate_limit_error":
-                raise RateLimitError(e, response=response, **last_json)
-            if message == "user_blocked":
-                raise SentryBlock(e, response=response, **last_json)
-            if "not authorized to view user" in message:
-                raise PrivateAccount(e, response=response, **last_json)
-            if "unable to fetch followers" in message or "error generating user info response" in message:
-                raise UserNotFound(e, response=response, **last_json)
-
-            # 404 with body b"Not Found" is a masked challenge on the
-            # private mobile surface (mirrors private.py:598). Promote
-            # before the generic 404 → ClientNotFoundError fallback.
-            if getattr(response, "status_code", None) == 404 and getattr(response, "content", None) == b"Not Found":
-                raise ChallengeRequired(**last_json)
-
-            # HTTP-status fallback.
-            match getattr(response, "status_code", None):
-                case 400:
-                    exc = ClientBadRequestError
-                case 401:
-                    exc = ClientUnauthorizedError
-                case 403:
-                    exc = ClientForbiddenError
-                case 404:
-                    exc = ClientNotFoundError
-                case 429:
-                    exc = ClientThrottledError
-                case _:
-                    exc = ClientError
-            raise exc(e, response=response, **last_json)
+            self._raise_graphql_http_error(e, response)
         try:
             body = response.json()
         except orjson.JSONDecodeError:

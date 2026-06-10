@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import os
 import subprocess
 import unittest
@@ -8,6 +9,8 @@ from unittest.mock import AsyncMock, Mock
 from aiograpi import Client
 from aiograpi.exceptions import ChallengeRequired, ClientError, FeedbackRequired, SignupSpamError
 from aiograpi.mixins.challenge import ChallengeChoice
+from aiograpi.types import UserShort
+from aiograpi.utils.serialization import dumps
 
 
 def _load_live_signup_module():
@@ -23,6 +26,183 @@ SignUpTestCase = LIVE_SIGNUP_MODULE.SignUpTestCase
 
 
 class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    def caa_response(
+        self,
+        reg_info='{"contactpoint":"addr@example.com"}',
+        reg_context="ctx-1",
+        email_token="email-token-1",
+        registration_response=None,
+    ):
+        escaped_reg_info = reg_info.replace('"', '\\"')
+        chunks = [
+            (
+                '(f4i (dkc "reg_info" "reg_context" "email_token") '
+                f'(dkc "{escaped_reg_info}" "{reg_context}" "{email_token}"))'
+            )
+        ]
+        if registration_response:
+            response_json = json.dumps(
+                {"registration_response": json.dumps(registration_response, separators=(",", ":"))}
+            )
+            chunks.append(f"(dsh (fom 1 1 {json.dumps(response_json)}))")
+        return {
+            "layout": {
+                "bloks_payload": {
+                    "ft": {"state": " ".join(chunks)},
+                }
+            },
+            "status": "ok",
+        }
+
+    async def test_caa_extract_state_reads_bloks_dkc_maps_and_registration_response(self):
+        client = Client()
+        registration_response = {
+            "account_created": True,
+            "created_user": {
+                "pk": "123",
+                "username": "example",
+                "full_name": "Example User",
+                "profile_pic_url": "https://example.com/avatar.jpg",
+            },
+        }
+
+        state = client._caa_extract_state(self.caa_response(registration_response=registration_response))
+
+        self.assertEqual(state["reg_context"], "ctx-1")
+        self.assertEqual(state["email_token"], "email-token-1")
+        self.assertEqual(state["reg_info"], '{"contactpoint":"addr@example.com"}')
+        self.assertEqual(state["registration_response"], registration_response)
+
+    async def test_caa_extract_state_reads_graphql_bloks_bundle_action(self):
+        client = Client()
+        response = {
+            "data": {
+                "1$bloks_action(bk_context:$bk_context,params:$params)": {
+                    "action": {
+                        "action_bundle": {
+                            "bloks_bundle_action": json.dumps(
+                                self.caa_response(reg_context="ctx-from-graphql", email_token="token-from-graphql"),
+                                separators=(",", ":"),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        state = client._caa_extract_state(response)
+
+        self.assertEqual(state["reg_context"], "ctx-from-graphql")
+        self.assertEqual(state["email_token"], "token-from-graphql")
+
+    async def test_signup_caa_email_runs_modern_email_flow(self):
+        client = Client()
+        client.uuid = "uuid-1"
+        client.phone_id = "family-device-id"
+        client.android_device_id = "android-id"
+        client.mid = "machine-id"
+        client.bloks_versioning_id = "bloks-version"
+        client.waterfall_id = "waterfall-id"
+        client.wait_seconds = 0
+        client.challenge_code_handler = AsyncMock(return_value="123456")
+        registration_response = {
+            "account_created": True,
+            "created_user": {
+                "pk": "123",
+                "username": "example",
+                "full_name": "Example User",
+                "profile_pic_url": "https://example.com/avatar.jpg",
+            },
+        }
+        graphql_responses = [
+            self.caa_response(reg_context=f"ctx-gql-{index}", email_token=f"email-token-{index}") for index in range(8)
+        ]
+        graphql_responses.append(self.caa_response(registration_response=registration_response))
+        async_responses = [
+            self.caa_response(reg_context=f"ctx-async-{index}", email_token=f"email-token-async-{index}")
+            for index in range(4)
+        ]
+        client.caa_reg_graphql = AsyncMock(side_effect=graphql_responses)
+        client.caa_reg_async_action = AsyncMock(side_effect=async_responses)
+
+        user = await client.signup_caa_email(
+            username="example",
+            password="password",
+            email="addr@example.com",
+            full_name="Example User",
+            year=1995,
+            month=6,
+            day=9,
+        )
+
+        self.assertIsInstance(user, UserShort)
+        self.assertEqual(user.pk, "123")
+        self.assertEqual(user.username, "example")
+        self.assertEqual(user.full_name, "Example User")
+        self.assertEqual(
+            [call.args[0] for call in client.caa_reg_graphql.call_args_list],
+            [
+                "com.bloks.www.bloks.caa.reg.aymh_create_account_button.async",
+                "com.bloks.www.bloks.caa.reg.async.contactpoint_prefill.async",
+                "com.bloks.www.bloks.caa.reg.contactpoint_phone",
+                "com.bloks.www.bloks.caa.reg.contactpoint_email",
+                "com.bloks.www.bloks.caa.reg.confirmation.async",
+                "com.bloks.www.bloks.caa.reg.password.async",
+                "com.bloks.www.bloks.caa.reg.birthday.async",
+                "com.bloks.www.bloks.caa.reg.username.async",
+                "com.bloks.www.bloks.caa.reg.create.account.async",
+            ],
+        )
+        self.assertEqual(
+            [call.args[0] for call in client.caa_reg_async_action.call_args_list],
+            [
+                "com.bloks.www.bloks.caa.reg.async.expose_ntm_experiment.async",
+                "com.bloks.www.bloks.caa.reg.async.contactpoint_email_new.async",
+                "com.bloks.www.bloks.caa.reg.send_confirmation_email.async",
+                "com.bloks.www.bloks.caa.reg.name_vtwo.async",
+            ],
+        )
+        client.challenge_code_handler.assert_awaited_once_with("example", ChallengeChoice.EMAIL)
+        password_call = client.caa_reg_graphql.call_args_list[5]
+        self.assertRegex(
+            password_call.kwargs["client_input_params"]["encrypted_password"],
+            r"^#PWD_INSTAGRAM:0:\d+:password$",
+        )
+        self.assertEqual(password_call.kwargs["client_input_params"]["spi_action"], 1)
+        self.assertEqual(
+            password_call.kwargs["server_params"]["flow_modifier"],
+            dumps({"flow_name": "new_to_family_ig_default", "flow_type": "ntf"}),
+        )
+        birthday_call = client.caa_reg_graphql.call_args_list[6]
+        self.assertEqual(birthday_call.kwargs["client_input_params"]["birthday_or_current_date_string"], "09-06-1995")
+        username_call = client.caa_reg_graphql.call_args_list[7]
+        self.assertEqual(username_call.kwargs["server_params"]["action"], 1)
+        self.assertEqual(username_call.kwargs["server_params"]["post_tos"], 0)
+        email_new_call = client.caa_reg_async_action.call_args_list[1]
+        self.assertIsNone(email_new_call.kwargs["server_params"]["reg_context"])
+        self.assertEqual(email_new_call.kwargs["client_input_params"]["email_prefilled"], 0)
+        self.assertEqual(email_new_call.kwargs["client_input_params"]["prefetch_version"], 11)
+        self.assertEqual(email_new_call.kwargs["server_params"]["cp_funnel"], 0)
+        self.assertEqual(email_new_call.kwargs["server_params"]["prefetch_on_field"], 1)
+
+    async def test_caa_reg_async_action_allows_prelogin_bloks_request(self):
+        client = Client()
+        client.uuid = "uuid-1"
+        client.phone_id = "family-device-id"
+        client.android_device_id = "android-id"
+        client.mid = "machine-id"
+        client.waterfall_id = "waterfall-id"
+        client.bloks_async_action = AsyncMock(return_value={"status": "ok"})
+        state = client._caa_initial_state(email="addr@example.com")
+
+        result = await client.caa_reg_async_action("com.example.action", state=state)
+
+        self.assertEqual(result, {"status": "ok"})
+        client.bloks_async_action.assert_awaited_once()
+        self.assertEqual(client.bloks_async_action.call_args.args[0], "com.example.action")
+        self.assertEqual(client.bloks_async_action.call_args.kwargs["domain"], "b.i.instagram.com")
+        self.assertTrue(client.bloks_async_action.call_args.kwargs["login"])
+
     async def test_signup_requires_email_or_phone_number(self):
         client = Client()
 
@@ -44,19 +224,21 @@ class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.last_response = Mock(headers={"ig-set-authorization": ""})
 
         with unittest.mock.patch("aiograpi.mixins.signup.extract_user_short", return_value="created-user"):
-            with self.assertWarnsRegex(RuntimeWarning, "legacy account-create flow"):
-                result = await client.signup(
-                    username="example",
-                    password="password",
-                    email="",
-                    phone_number="+15551234567",
-                    full_name="Example User",
-                    year=2000,
-                    month=5,
-                    day=12,
-                )
+            with unittest.mock.patch("builtins.print") as print_mock:
+                with self.assertWarnsRegex(RuntimeWarning, "legacy account-create flow"):
+                    result = await client.signup(
+                        username="example",
+                        password="password",
+                        email="",
+                        phone_number="+15551234567",
+                        full_name="Example User",
+                        year=2000,
+                        month=5,
+                        day=12,
+                    )
 
         self.assertEqual(result, "created-user")
+        print_mock.assert_not_called()
         client.check_email.assert_not_awaited()
         client.check_phone_number.assert_awaited_once_with("+15551234567")
         client.send_signup_sms_code.assert_awaited_once_with("+15551234567")
@@ -327,6 +509,18 @@ class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("SMS code required", str(ctx.exception))
 
+    async def test_challenge_code_or_raised_does_not_print_code_value(self):
+        client = Client()
+        client.username = "example"
+        client.last_json = {}
+        client.challenge_code_handler = AsyncMock(return_value="123456")
+
+        with unittest.mock.patch("builtins.print") as print_mock:
+            result = await client.challenge_code_or_raised(ChallengeChoice.EMAIL, wait_seconds=0, attempts=1)
+
+        self.assertEqual(result, "123456")
+        print_mock.assert_not_called()
+
     async def test_signup_passes_phone_number_to_challenge_flow(self):
         client = Client()
         client.wait_seconds = 0
@@ -368,13 +562,13 @@ class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
 
 class SignupLiveHelperRegressionTestCase(unittest.TestCase):
-    def test_signup_email_command_receives_username_context(self):
+    def test_get_signup_email_address_command_receives_username_context(self):
         case = SignUpTestCase("test_email_signup_live")
         completed = subprocess.CompletedProcess(args="email-command", returncode=0, stdout="fresh@example.test\n")
 
         with unittest.mock.patch.dict(os.environ, {"IG_SIGNUP_EMAIL_COMMAND": "email-command"}, clear=True):
             with unittest.mock.patch.object(LIVE_SIGNUP_MODULE.subprocess, "run", return_value=completed) as run:
-                email = case.signup_email("freshuser")
+                email = case._get_signup_email_address("freshuser")
 
         self.assertEqual(email, "fresh@example.test")
         self.assertEqual(run.call_args.kwargs["env"]["IG_SIGNUP_USERNAME"], "freshuser")
@@ -398,12 +592,12 @@ class SignupLiveHelperRegressionTestCase(unittest.TestCase):
         self.assertEqual(run.call_args.kwargs["env"]["IG_SIGNUP_USERNAME"], "freshuser")
         self.assertEqual(run.call_args.kwargs["env"]["IG_SIGNUP_EMAIL"], "fresh@example.test")
 
-    def test_signup_email_skips_without_static_email_or_command(self):
+    def test_get_signup_email_address_skips_without_static_email_or_command(self):
         case = SignUpTestCase("test_email_signup_live")
 
         with unittest.mock.patch.dict(os.environ, {}, clear=True):
             with self.assertRaises(unittest.SkipTest):
-                case.signup_email("freshuser")
+                case._get_signup_email_address("freshuser")
 
     def test_signup_phone_number_prefers_signup_specific_env(self):
         case = SignUpTestCase("test_phone_signup_live")

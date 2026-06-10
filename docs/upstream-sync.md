@@ -5,7 +5,7 @@
 The current recorded API baseline is:
 
 ```text
-instagrapi 2.8.19
+instagrapi 2.9.0
 ```
 
 `aiograpi 1.0.x` established the SemVer async baseline through `instagrapi 2.7.17`, including Bloks login fallback
@@ -21,6 +21,8 @@ challenge context handling, and clearer Reel/clip upload failure details.
 
 `aiograpi 1.2.x` continues the mirror through `instagrapi 2.8.19`. It adds Direct media share to existing threads, Direct message request privacy exceptions, private-first high-level user/media/story lookups for authenticated clients, sessionid username recovery via private profile stream, clear manual handling for Bloks redirect checkpoints, confirmed Reel Facebook destination normalization, hashtag private section fixes, private business contact field mapping, story metadata extraction, and private incomplete-read retry handling.
 
+`aiograpi 1.3.0` continues the mirror through `instagrapi 2.9.0`. It adds the experimental modern CAA email signup flow via `signup_caa_email(...)`, the `graphql_www` Bloks app wrapper used by registration, and per-request private headers/domain routing so Bloks friendly names do not leak onto unrelated private requests.
+
 ## Release policy
 
 - Use one `aiograpi` feature release for a large upstream sync.
@@ -28,7 +30,7 @@ challenge context handling, and clearer Reel/clip upload failure details.
 - Mention the upstream range in GitHub, PyPI, and Telegram release notes.
 
 For the 2026-05 sync, the public releases are `aiograpi 0.9.0` and newer.
-`aiograpi 0.9.0` synced through `instagrapi 2.5.18`, and subsequent `aiograpi 0.9.x` patch releases continued that baseline through `instagrapi 2.6.8`, plus targeted maintenance ports. `aiograpi 1.0.x` recorded the SemVer baseline through `instagrapi 2.7.17`; `aiograpi 1.1.0` records the MQTT/FBNS baseline through `instagrapi 2.8.2`; `aiograpi 1.2.x` records the follow-up high-level/private-first, Reel Facebook destination, hashtag, metadata, and private incomplete-read retry baseline through `instagrapi 2.8.19`.
+`aiograpi 0.9.0` synced through `instagrapi 2.5.18`, and subsequent `aiograpi 0.9.x` patch releases continued that baseline through `instagrapi 2.6.8`, plus targeted maintenance ports. `aiograpi 1.0.x` recorded the SemVer baseline through `instagrapi 2.7.17`; `aiograpi 1.1.0` records the MQTT/FBNS baseline through `instagrapi 2.8.2`; `aiograpi 1.2.x` records the follow-up high-level/private-first, Reel Facebook destination, hashtag, metadata, and private incomplete-read retry baseline through `instagrapi 2.8.19`; `aiograpi 1.3.0` records the CAA signup baseline through `instagrapi 2.9.0`.
 
 ## Porting rules
 

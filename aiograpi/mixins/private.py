@@ -381,8 +381,12 @@ class PrivateRequestMixin(ClientMixin):
         self.last_response = None
         self.last_json = last_json = {}  # for Sentry context in traceback
         self.private.headers.update(self.base_headers)
-        if headers:
-            self.private.headers.update(headers)
+        # Per-request overrides (caller headers such as X-FB-Friendly-Name, and
+        # the Host override used for domain routing) must not be merged into the
+        # persistent session headers, or they leak onto unrelated later requests.
+        request_headers = dict(headers) if headers else {}
+        if domain:
+            request_headers["Host"] = domain
         if self.last_response_ts and (time.time() - self.last_response_ts) < 1.0:
             await self.small_delay()
         if not login:
@@ -396,7 +400,7 @@ class PrivateRequestMixin(ClientMixin):
             if endpoint == "/challenge/":  # wow so hard, is it safe tho?
                 endpoint = "/v1/challenge/"
 
-            api_url = f"https://{self.domain or config.API_DOMAIN}/api{endpoint}"
+            api_url = f"https://{domain or self.domain or config.API_DOMAIN}/api{endpoint}"
             self.logger.info(api_url)
             if data:  # POST
                 # Client.direct_answer raw dict
@@ -411,6 +415,7 @@ class PrivateRequestMixin(ClientMixin):
                     api_url,
                     data=data,
                     params=params,
+                    headers=request_headers or None,
                     timeout=self.read_timeout,
                 )
             else:  # GET
@@ -418,6 +423,7 @@ class PrivateRequestMixin(ClientMixin):
                 response = await self.private.get(
                     api_url,
                     params=params,
+                    headers=request_headers or None,
                     timeout=self.read_timeout,
                 )
             response_text = response.text.strip()

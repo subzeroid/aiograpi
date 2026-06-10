@@ -62,6 +62,28 @@ class RequestLoggingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["data"]["timeline"]["items"][0]["media"]["id"], "1")
         self.assertEqual(result["data"]["timeline"]["items"][0]["media"]["code"], "abc")
 
+    async def test_private_graphql_www_request_accepts_incremental_json_lines(self):
+        client = Client()
+        response = Mock()
+        response.url = "https://b.i.instagram.com/graphql_www"
+        response.text = (
+            '{"data":{"viewer":{"id":"1","profile":{"username":"example"}}},"status":"ok"}\n'
+            '{"path":["viewer","profile"],"data":{"full_name":"Example User"}}\n'
+        )
+        response.json.side_effect = _json_decode_error()
+        response.raise_for_status.return_value = None
+        client.private.post = AsyncMock(return_value=response)
+        client.request_log = Mock()
+
+        result = await client.private_graphql_www_request(
+            "IGBloksAppRootQuery-com.example.app",
+            {"params": {"app_id": "com.example.app"}},
+            client_doc_id="doc-id",
+        )
+
+        self.assertEqual(result["data"]["viewer"]["profile"]["username"], "example")
+        self.assertEqual(result["data"]["viewer"]["profile"]["full_name"], "Example User")
+
     async def test_graphql_json_decode_error_log_truncates_response_body(self):
         client = Client()
         client.last_response_ts = 0
