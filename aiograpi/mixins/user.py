@@ -1029,10 +1029,13 @@ class UserMixin(ClientMixin):
             Tuple of List of users and max_id
         """
         unique_set = set()
-        users = []
+        users: List[UserShort] = []
         while True:
+            count = MAX_USER_COUNT
+            if max_amount:
+                count = min(max_amount - len(users), MAX_USER_COUNT)
             params = {
-                "count": max_amount or MAX_USER_COUNT,
+                "count": count,
                 "rank_token": self.rank_token,
                 "search_surface": "follow_list_page",
                 "query": "",
@@ -1234,6 +1237,8 @@ class UserMixin(ClientMixin):
             if self._has_private_auth():
                 try:
                     users = await self.user_followers_v1(user_id, amount)
+                    if self.last_json.get("should_limit_list_of_followers") and (not amount or len(users) < amount):
+                        users = await self.user_followers_gql(user_id, amount)
                 except Exception as e:
                     if not isinstance(e, ClientError):
                         self.logger.exception(e)

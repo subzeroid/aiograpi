@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock
 from aiograpi import Client
 from aiograpi.exceptions import ClientError, ClientGraphqlError, ClientJSONDecodeError, UserNotFound
 from aiograpi.extractors import extract_user_short, extract_user_v1
-from aiograpi.mixins.user import UserMixin
+from aiograpi.mixins.user import MAX_USER_COUNT, UserMixin
 
 
 class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -274,6 +274,56 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         client.private_request.assert_awaited_once()
         self.assertEqual(client.private_request.call_args.kwargs["params"]["order"], "date_followed_latest")
+
+    async def test_user_followers_v1_chunk_caps_count_to_max_user_count(self):
+        client = Client()
+        client.uuid = "rank-token"
+        client.private_request = AsyncMock(return_value={"users": [], "next_max_id": None})
+
+        await client.user_followers_v1_chunk("123", max_amount=MAX_USER_COUNT + 1)
+
+        client.private_request.assert_awaited_once()
+        self.assertEqual(client.private_request.call_args.kwargs["params"]["count"], MAX_USER_COUNT)
+
+    async def test_user_followers_falls_back_when_private_list_is_limited(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client._users_followers = {}
+        private_user = Mock(pk="private")
+        public_user = Mock(pk="public")
+
+        async def private_lookup(user_id, amount):
+            client.last_json = {"should_limit_list_of_followers": True}
+            return [private_user]
+
+        client.user_followers_v1 = AsyncMock(side_effect=private_lookup)
+        client.user_followers_gql = AsyncMock(return_value=[public_user])
+
+        result = await client.user_followers("123", amount=2, use_cache=False)
+
+        self.assertEqual(list(result.keys()), ["public"])
+        client.user_followers_v1.assert_awaited_once_with("123", 2)
+        client.user_followers_gql.assert_awaited_once_with("123", 2)
+
+    async def test_user_followers_default_amount_falls_back_when_private_list_is_limited(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client._users_followers = {}
+        private_user = Mock(pk="private")
+        public_user = Mock(pk="public")
+
+        async def private_lookup(user_id, amount):
+            client.last_json = {"should_limit_list_of_followers": True}
+            return [private_user]
+
+        client.user_followers_v1 = AsyncMock(side_effect=private_lookup)
+        client.user_followers_gql = AsyncMock(return_value=[public_user])
+
+        result = await client.user_followers("123", use_cache=False)
+
+        self.assertEqual(list(result.keys()), ["public"])
+        client.user_followers_v1.assert_awaited_once_with("123", 0)
+        client.user_followers_gql.assert_awaited_once_with("123", 0)
 
     async def test_user_followers_private_gql_chunk_extracts_followers_payload(self):
         client = Client()
