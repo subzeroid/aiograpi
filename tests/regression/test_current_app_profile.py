@@ -86,3 +86,18 @@ def test_constructor_override_app_version_replaces_saved_profile_with_current_de
 
     assert client.device_settings["app_version"] == config.DEFAULT_APP_VERSION
     assert client.device_settings["version_code"] == "961145276"
+
+
+def test_unknown_saved_app_without_bloks_hash_uses_current_default_profile():
+    client = Client(
+        {
+            "device_settings": {
+                "app_version": "431.0.0.47.82",
+                "version_code": "979332773",
+            },
+        }
+    )
+
+    assert client.device_settings["app_version"] == config.DEFAULT_APP_VERSION
+    assert client.device_settings["version_code"] == "961145276"
+    assert client.bloks_versioning_id == "7189b949425f9bf80ea8bd880cf5a3080b292d9b1c4b38a18d112f7c4b71e7a8"
