@@ -140,7 +140,9 @@ class UserShort(TypesBaseModel):
     profile_pic_url_hd: Optional[HttpUrl] = None
     is_private: Optional[bool] = None
     stories: List = Field(default_factory=list)
-    # is_verified: bool  # not found in hashtag_medias_v1
+    is_verified: Optional[bool] = None
+    latest_reel_media: Optional[int] = None
+    has_anonymous_profile_picture: Optional[bool] = None
 
 
 class Viewer(UserShort):

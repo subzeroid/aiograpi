@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
 from aiograpi.exceptions import ClientError, ClientGraphqlError, ClientJSONDecodeError, UserNotFound
-from aiograpi.extractors import extract_user_v1
+from aiograpi.extractors import extract_user_short, extract_user_v1
 from aiograpi.mixins.user import UserMixin
 
 
@@ -97,6 +97,26 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(user.username, "instagram")
         client.user_web_profile_info_gql.assert_awaited_once_with("25025320")
         client.public_graphql_request.assert_not_called()
+
+    async def test_extract_user_short_preserves_follower_payload_fields(self):
+        payload = {
+            "pk": 123,
+            "id": "123",
+            "username": "follower",
+            "full_name": "Follower",
+            "is_private": False,
+            "is_verified": True,
+            "latest_reel_media": 1710000123,
+            "has_anonymous_profile_picture": False,
+            "profile_pic_url": "https://example.com/pic.jpg",
+        }
+
+        user = extract_user_short(payload)
+
+        self.assertEqual(user.pk, "123")
+        self.assertTrue(user.is_verified)
+        self.assertEqual(user.latest_reel_media, 1710000123)
+        self.assertFalse(user.has_anonymous_profile_picture)
 
     async def test_user_web_profile_info_gql_uses_public_doc_id_endpoint(self):
         client = Client()
