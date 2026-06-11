@@ -3,7 +3,67 @@ from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
+from aiograpi.extractors import extract_media_v1
 from aiograpi.types import StoryMedia
+
+
+class MediaClipsMetadataRegressionTestCase(unittest.TestCase):
+    def _media_payload(self):
+        return {
+            "pk": "1",
+            "id": "1_2",
+            "code": "abc",
+            "taken_at": 1710000000,
+            "media_type": 2,
+            "product_type": "clips",
+            "usertags": None,
+            "carousel_media": None,
+            "user": {
+                "pk": "2",
+                "username": "example",
+                "profile_pic_url": "https://example.com/profile.jpg",
+            },
+            "image_versions2": {
+                "candidates": [{"url": "https://example.com/x.jpg", "width": 100, "height": 100}],
+            },
+        }
+
+    def _clips_metadata_payload(self, **overrides):
+        payload = {
+            "clips_creation_entry_point": "clips",
+            "achievements_info": {"num_earned_achievements": None, "show_achievements": False},
+            "additional_audio_info": {
+                "additional_audio_username": None,
+                "audio_reattribution_info": {"should_allow_restore": False},
+            },
+            "audio_ranking_info": {"best_audio_cluster_id": ""},
+            "audio_type": "original_sounds",
+            "branded_content_tag_info": {"can_add_tag": True},
+            "content_appreciation_info": {"enabled": False},
+            "music_canonical_id": "",
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_extract_media_v1_does_not_default_missing_clips_shared_to_fb_to_false(self):
+        payload = self._media_payload()
+        payload["clips_metadata"] = self._clips_metadata_payload()
+
+        media = extract_media_v1(payload)
+
+        self.assertIsNone(media.clips_metadata.is_shared_to_fb)
+        self.assertIsNone(media.model_dump()["clips_metadata"]["is_shared_to_fb"])
+
+    def test_extract_media_v1_preserves_clips_shared_to_fb_when_present(self):
+        for value in (False, True):
+            with self.subTest(value=value):
+                payload = self._media_payload()
+                payload["clips_metadata"] = self._clips_metadata_payload(is_shared_to_fb=value)
+
+                media = extract_media_v1(payload)
+
+                self.assertIs(media.clips_metadata.is_shared_to_fb, value)
+                self.assertIs(media.model_dump()["clips_metadata"]["is_shared_to_fb"], value)
 
 
 class MediaActionPayloadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
