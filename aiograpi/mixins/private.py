@@ -511,7 +511,7 @@ class PrivateRequestMixin(ClientMixin):
             response = self.last_response
             try:
                 self.last_json = last_json = response.json()
-            except (orjson.JSONDecodeError, AttributeError):
+            except (ValueError, AttributeError):
                 self.logger.warning(
                     "ClientUnknownError1. response text: %r (%r)",
                     response and response.text,
