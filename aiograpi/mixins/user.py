@@ -846,10 +846,13 @@ class UserMixin(ClientMixin):
             Tuple of List of users and max_id
         """
         unique_set = set()
-        users = []
+        users: List[UserShort] = []
         while True:
+            count = MAX_USER_COUNT
+            if max_amount:
+                count = min(max_amount - len(users), MAX_USER_COUNT)
             params = {
-                "count": max_amount or MAX_USER_COUNT,
+                "count": count,
                 "rank_token": self.rank_token,
                 "search_surface": "follow_list_page",
                 "query": "",
