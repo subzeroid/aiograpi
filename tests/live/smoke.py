@@ -153,6 +153,18 @@ async def main():
                 failures.append((name, e))
                 print(f"REQ {name} FAIL: {type(e).__name__}: {str(e)[:140]}")
 
+        try:
+            followers = await cl.user_followers_v1("25025320", amount=5)
+            assert len(followers) == 5
+            follower = followers[0]
+            assert isinstance(follower.is_verified, bool)
+            assert isinstance(follower.latest_reel_media, int)
+            assert isinstance(follower.has_anonymous_profile_picture, bool)
+            print("REQ user_followers_extended_fields: ok")
+        except Exception as e:
+            failures.append(("user_followers_extended_fields", e))
+            print(f"REQ user_followers_extended_fields FAIL: {type(e).__name__}: {str(e)[:140]}")
+
     # OPTIONAL: chapi-ported endpoints — record but don't fail
     if cl is not None:
         rank_token = str(uuid.uuid4())
