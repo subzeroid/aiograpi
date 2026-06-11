@@ -22,6 +22,18 @@ class HashtagMixin(ClientMixin):
     Helpers for managing Hashtag
     """
 
+    def _hashtag_section_media_nodes(self, section):
+        layout_content = section.get("layout_content") or {}
+        one_by_two_item = layout_content.get("one_by_two_item") or {}
+        if isinstance(one_by_two_item, dict):
+            clips = one_by_two_item.get("clips") or {}
+            if isinstance(clips, dict):
+                for node in clips.get("items") or []:
+                    yield node
+        for key in ("fill_items", "medias"):
+            for node in layout_content.get(key) or []:
+                yield node
+
     def _normalize_hashtag_name(self, name: str) -> str:
         normalized = name.strip()
         if normalized.startswith("#"):
@@ -165,9 +177,7 @@ class HashtagMixin(ClientMixin):
             ids = result.get("next_media_ids")
             next_max_id = base64.b64encode(json.dumps([np, ids]).encode()).decode()
         for section in result["sections"]:
-            layout_content = section.get("layout_content") or {}
-            nodes = layout_content.get("medias") or []
-            for node in nodes:
+            for node in self._hashtag_section_media_nodes(section):
                 if max_amount and len(medias) >= max_amount:
                     break
                 try:
