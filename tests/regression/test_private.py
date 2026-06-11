@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client, httpx_ext
-from aiograpi.exceptions import DirectMessageRequestsDisabled
+from aiograpi.exceptions import ClientNotFoundError, DirectMessageRequestsDisabled
 
 
 class PrivateRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -49,6 +49,19 @@ class PrivateRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(cm.exception.message, payload["message"])
         self.assertEqual(cm.exception.status, "fail")
+
+    async def test_send_private_request_ignores_non_json_body_on_http_error(self):
+        client = self._build_client()
+        response = self._response({}, status_code=404)
+        response.content = b"<html>not found</html>"
+        response.text = response.content.decode("utf-8")
+        response.json.side_effect = ValueError("bad json")
+        client.private.get = AsyncMock(return_value=response)
+
+        with self.assertRaises(ClientNotFoundError):
+            await client._send_private_request("users/999/info/")
+
+        self.assertEqual(client.last_json, {})
 
     async def test_private_request_retries_remote_protocol_error_once(self):
         client = self._build_client()
