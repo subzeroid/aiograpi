@@ -11,7 +11,6 @@ from aiograpi import httpx_ext
 from aiograpi.exceptions import (
     AboutUsError,
     AccountSuspended,
-    ChallengeRequired,
     ClientBadRequestError,
     ClientConnectionError,
     ClientError,
@@ -269,7 +268,7 @@ class PublicRequestMixin(ClientMixin):
             if "/login/" in url:
                 raise ClientLoginRequired(e, response=response)
             elif "/challenge/" in url:
-                raise ChallengeRequired(e, response=response)
+                raise ClientLoginRequired(e, response=response)
             elif "/suspended/" in url:
                 raise AccountSuspended(e, response=response)
             elif "/terms/unblock" in url:
