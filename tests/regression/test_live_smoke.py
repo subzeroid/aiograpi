@@ -78,6 +78,17 @@ class _FakeLiveClient:
     async def user_followers(self, user_id, amount=0, use_cache=True):
         return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
 
+    async def user_followers_v1(self, user_id, amount=0, use_cache=True):
+        return [
+            types.SimpleNamespace(
+                pk=str(i),
+                is_verified=False,
+                latest_reel_media=1710000000 + i,
+                has_anonymous_profile_picture=False,
+            )
+            for i in range(amount)
+        ]
+
     async def user_following(self, user_id, amount=0, use_cache=True):
         return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
 
@@ -229,6 +240,7 @@ print(sys.modules["aiograpi"].__file__)
             "username_from_user_id",
             "user_medias",
             "user_medias_paginated",
+            "user_followers_extended_fields",
             "user_following",
             "user_stories",
         ]:
