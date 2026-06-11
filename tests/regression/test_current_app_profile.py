@@ -101,3 +101,31 @@ def test_unknown_saved_app_without_bloks_hash_uses_current_default_profile():
     assert client.device_settings["app_version"] == config.DEFAULT_APP_VERSION
     assert client.device_settings["version_code"] == "961145276"
     assert client.bloks_versioning_id == "7189b949425f9bf80ea8bd880cf5a3080b292d9b1c4b38a18d112f7c4b71e7a8"
+
+
+def test_legacy_saved_app_without_bloks_hash_is_not_overridden_by_default():
+    client = Client(
+        {
+            "device_settings": {
+                "app_version": "269.0.0.19.301",
+                "version_code": "301484483",
+            },
+        }
+    )
+
+    assert client.device_settings["app_version"] == "269.0.0.19.301"
+    assert client.device_settings["version_code"] == "301484483"
+    assert client.bloks_versioning_id is None
+
+
+def test_explicit_set_device_preserves_unknown_incomplete_app_profile():
+    client = Client()
+    device = {
+        "app_version": "431.0.0.47.82",
+        "version_code": "979332773",
+    }
+
+    client.set_device(device)
+
+    assert client.device_settings["app_version"] == "431.0.0.47.82"
+    assert client.device_settings["version_code"] == "979332773"
