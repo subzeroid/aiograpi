@@ -285,6 +285,16 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.private_request.assert_awaited_once()
         self.assertEqual(client.private_request.call_args.kwargs["params"]["count"], MAX_USER_COUNT)
 
+    async def test_user_following_v1_chunk_caps_count_to_max_user_count(self):
+        client = Client()
+        client.uuid = "rank-token"
+        client.private_request = AsyncMock(return_value={"users": [], "next_max_id": None})
+
+        await client.user_following_v1_chunk("123", max_amount=MAX_USER_COUNT + 1)
+
+        client.private_request.assert_awaited_once()
+        self.assertEqual(client.private_request.call_args.kwargs["params"]["count"], MAX_USER_COUNT)
+
     async def test_user_followers_falls_back_when_private_list_is_limited(self):
         client = Client()
         client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
