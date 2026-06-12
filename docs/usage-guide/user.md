@@ -12,7 +12,7 @@ View a list of a user's medias, following and followers
 | search_following(user_id: str, query: str)    | List[UserShort]       | Search by following                                          |
 | user_info(user_id: str)                       | User                  | Get user info                                                |
 | user_info_by_username(username: str)          | User                  | Get user info by username                                    |
-| user_follow(user_id: str)                     | bool                  | Follow user                                                  |
+| user_follow(user_id: str)                     | bool                  | Follow user, or request to follow a private user             |
 | user_unfollow(user_id: str)                   | bool                  | Unfollow user                                                |
 | user_follow_requests(amount: int = 0)         | List[UserShort]       | Get pending incoming follow requests                         |
 | user_follow_request_approve(user_id: str)     | bool                  | Approve a pending incoming follow request                    |
@@ -52,6 +52,8 @@ Low level methods:
 | user_follow_requests_chunk(max_amount: int = 0, max_id: str = "")                   | Tuple[List[UserShort], str] | Get pending incoming follow requests by Private Mobile API and max_id      |
 | search_followers_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by followers by Private Mobile API                                  |
 | search_following_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by following by Private Mobile API                                  |
+
+`user_follow()` returns `True` when Instagram reports either an immediate follow or an outgoing follow request for a private account. Use `user_friendship_v1()` when you need to distinguish `following` from `outgoing_request`.
 
 Example:
 
