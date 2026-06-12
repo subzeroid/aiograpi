@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Union
 
 from aiograpi.exceptions import ClientGraphqlError
@@ -6,6 +6,9 @@ from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Note, Track, UserShort
 from aiograpi.utils.serialization import dumps
 
+INBOX_TRAY_CLIENT_DOC_ID = "26838444193647008103482058049"
+INBOX_TRAY_FRIENDLY_NAME = "InboxTrayRequest"
+INBOX_TRAY_ROOT_FIELD = "xdt_get_inbox_tray_items"
 CREATE_INBOX_TRAY_ITEM_CLIENT_DOC_ID = "3510400299951610199199089856"
 CREATE_INBOX_TRAY_ITEM_FRIENDLY_NAME = "CreateInboxTrayItemRequest"
 
@@ -24,8 +27,14 @@ class NoteMixin(ClientMixin):
 
     @staticmethod
     def _note_from_note_dict(data: Dict) -> Note:
+        note_id = data.get("note_id") or data.get("id")
         author = data.get("author") or {}
-        user_id = str(data.get("author_id") or author.get("pk") or author.get("id"))
+        user_id = str(data.get("author_id") or author.get("pk") or author.get("id") or "")
+        created_at = int(data.get("1lcreated_at") or data.get("created_at") or 0)
+        expires_at = data.get("1lexpires_at") or data.get("expires_at")
+        if expires_at is None:
+            # Inbox tray GraphQL omits expires_at in current app responses; Notes expire after 24 hours.
+            expires_at = int((datetime.fromtimestamp(created_at, tz=timezone.utc) + timedelta(days=1)).timestamp())
         user = UserShort(
             pk=str(author.get("pk") or author.get("id") or user_id),
             username=author.get("username"),
@@ -34,17 +43,45 @@ class NoteMixin(ClientMixin):
             is_private=author.get("is_private"),
         )
         return Note(
-            id=str(data["note_id"]),
+            id=str(note_id),
             text=data.get("text") or "",
             user_id=user_id,
             user=user,
             audience=int(data.get("audience", 0)),
-            created_at=datetime.fromtimestamp(int(data.get("1lcreated_at", 0)), tz=timezone.utc),
-            expires_at=datetime.fromtimestamp(int(data.get("1lexpires_at", 0)), tz=timezone.utc),
+            created_at=datetime.fromtimestamp(created_at, tz=timezone.utc),
+            expires_at=datetime.fromtimestamp(int(expires_at), tz=timezone.utc),
             is_emoji_only=bool(data.get("is_emoji_only", False)),
             has_translation=bool(data.get("has_translation", False)),
             note_style=int(data.get("note_style", 0)),
         )
+
+    @staticmethod
+    def _user_from_inbox_tray_item(item: Dict, user_id: str) -> Dict:
+        users = (item.get("pog_info") or {}).get("pog_users") or []
+        for user in users:
+            if str(user.get("id") or user.get("pk")) == str(user_id):
+                return user
+        return users[0] if users else {}
+
+    @classmethod
+    def _note_dict_from_inbox_tray_item(cls, item: Dict) -> Dict:
+        note_dict = dict(item.get("note_dict") or {})
+        if not note_dict:
+            return {}
+        note_dict.setdefault("note_id", item.get("inbox_tray_item_id") or item.get("id"))
+        author = note_dict.get("author") or {}
+        user_id = str(note_dict.get("author_id") or author.get("pk") or author.get("id") or "")
+        if not author:
+            user = cls._user_from_inbox_tray_item(item, user_id)
+            if user:
+                note_dict["author"] = {
+                    "pk": user.get("pk") or user.get("id"),
+                    "username": user.get("username"),
+                    "full_name": user.get("full_name") or "",
+                    "profile_pic_url": user.get("profile_pic_url"),
+                    "is_private": user.get("is_private"),
+                }
+        return note_dict
 
     @staticmethod
     def _note_dict_from_create_inbox_tray_item(result: Dict) -> Dict:
@@ -55,6 +92,13 @@ class NoteMixin(ClientMixin):
                     return note_dict
         raise ClientGraphqlError("Failed to create music Note")
 
+    @staticmethod
+    def _inbox_tray_from_graphql_result(result: Dict) -> Dict:
+        for payload in (result.get("data") or {}).values():
+            if isinstance(payload, dict) and "inbox_tray_items" in payload:
+                return payload
+        raise ClientGraphqlError("Failed to retrieve Notes in Direct")
+
     async def get_notes(self) -> List[Note]:
         """
         Retrieves Notes in Direct
@@ -64,12 +108,31 @@ class NoteMixin(ClientMixin):
         List[Notes]
             List of all the Notes in Direct
         """
-        result = await self.private_request("notes/get_notes/")
-        assert result.get("status", "") == "ok", "Failed to retrieve Notes in Direct"
+        result = await self.private_graphql_query_request(
+            friendly_name=INBOX_TRAY_FRIENDLY_NAME,
+            root_field_name=INBOX_TRAY_ROOT_FIELD,
+            variables={
+                "should_fetch_friend_map_user": True,
+                "should_fetch_friend_map_entrypoint": False,
+                "should_fetch_comment_info": False,
+                "request": {
+                    "include_quicksnap_pog": False,
+                    "include_friend_map_pog": False,
+                    "inbox_tray_item_ids_on_client": [],
+                },
+                "is_saved_media_on_map_enabled": False,
+                "is_location_likes_v2_enabled": True,
+            },
+            client_doc_id=INBOX_TRAY_CLIENT_DOC_ID,
+            priority="u=3, i",
+        )
+        inbox_tray = self._inbox_tray_from_graphql_result(result)
 
         notes = []
-        for item in result.get("items", []):
-            notes.append(Note(**item))
+        for item in inbox_tray.get("inbox_tray_items") or []:
+            note_dict = self._note_dict_from_inbox_tray_item(item)
+            if note_dict:
+                notes.append(self._note_from_note_dict(note_dict))
         return notes
 
     def get_note_by_user(self, notes: List[Note], username: str) -> Optional[Note]:

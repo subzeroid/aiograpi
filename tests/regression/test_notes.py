@@ -52,6 +52,74 @@ class NoteMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         )
         assert result == expected
 
+    async def test_get_notes_uses_inbox_tray_graphql_items(self):
+        client = Client()
+        graphql_response = {
+            "data": {
+                "__typename": "XDTGetInboxTrayItemsResponse",
+                "1$xdt_get_inbox_tray_items(request:$request)": {
+                    "inbox_tray_items": [
+                        {
+                            "inbox_tray_item_id": "18072502430410984",
+                            "note_dict": {
+                                "text": "hello from notes",
+                                "author_id": "123",
+                                "audience": 0,
+                                "created_at": 1710000000,
+                                "is_emoji_only": False,
+                                "note_style": 0,
+                            },
+                            "pog_info": {
+                                "pog_users": [
+                                    {
+                                        "id": "123",
+                                        "username": "example",
+                                        "full_name": "Example User",
+                                        "profile_pic_url": "https://example.com/p.jpg",
+                                        "is_private": False,
+                                    }
+                                ]
+                            },
+                        }
+                    ]
+                },
+            }
+        }
+        client.private_request = AsyncMock(return_value={"status": "old"})
+        client.private_graphql_query_request = AsyncMock(return_value=graphql_response)
+
+        notes = await client.get_notes()
+
+        client.private_request.assert_not_called()
+        client.private_graphql_query_request.assert_awaited_once_with(
+            friendly_name="InboxTrayRequest",
+            root_field_name="xdt_get_inbox_tray_items",
+            variables={
+                "should_fetch_friend_map_user": True,
+                "should_fetch_friend_map_entrypoint": False,
+                "should_fetch_comment_info": False,
+                "request": {
+                    "include_quicksnap_pog": False,
+                    "include_friend_map_pog": False,
+                    "inbox_tray_item_ids_on_client": [],
+                },
+                "is_saved_media_on_map_enabled": False,
+                "is_location_likes_v2_enabled": True,
+            },
+            client_doc_id="26838444193647008103482058049",
+            priority="u=3, i",
+        )
+        assert len(notes) == 1
+        note = notes[0]
+        assert note.id == "18072502430410984"
+        assert note.text == "hello from notes"
+        assert note.user_id == "123"
+        assert note.user.pk == "123"
+        assert note.user.username == "example"
+        assert note.user.full_name == "Example User"
+        assert note.created_at == datetime(2024, 3, 9, 16, 0, tzinfo=timezone.utc)
+        assert note.expires_at == datetime(2024, 3, 10, 16, 0, tzinfo=timezone.utc)
+
     async def test_create_music_note_uses_create_inbox_tray_item_graphql_payload(self):
         client = Client()
         client.uuid = "uuid-1"
