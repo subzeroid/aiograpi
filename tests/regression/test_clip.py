@@ -265,6 +265,54 @@ class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             "validation_check_bypass": True,
         }
 
+    async def test_clip_share_to_fb_unified_destination_tries_android_surface_variants(self):
+        client = _build_client()
+        default_config = {
+            "data": {
+                "xcxp_unified_crossposting_configs_root": {
+                    "configs": [],
+                }
+            },
+            "status": "ok",
+        }
+        reels_only_config = {
+            "data": {
+                "xcxp_unified_crossposting_configs_root": {
+                    "configs": [
+                        {
+                            "source_surface": "REELS",
+                            "destination_app": "FB",
+                            "destination_surface": "REELS",
+                            "destination": {
+                                "destination_id": "reels-destination-id",
+                                "destination_type": "USER",
+                            },
+                        },
+                    ],
+                }
+            },
+            "status": "ok",
+        }
+        client.clip_share_to_fb_unified_config = AsyncMock(side_effect=[default_config, reels_only_config])
+
+        result = await client.clip_share_to_fb_unified_destination()
+
+        assert result == {
+            "destination_id": "reels-destination-id",
+            "destination_type": "USER",
+        }
+        assert client.clip_share_to_fb_unified_config.await_count == 2
+        assert client.clip_share_to_fb_unified_config.call_args_list[0].kwargs == {}
+        assert client.clip_share_to_fb_unified_config.call_args_list[1].kwargs == {
+            "crosspost_app_surface_list": [
+                {
+                    "source_surface": "REELS",
+                    "destination_app": "FB",
+                    "destination_surface": "REELS",
+                }
+            ]
+        }
+
     async def test_clip_share_to_fb_unified_destination_ignores_generic_account_center_ids(self):
         client = _build_client()
 

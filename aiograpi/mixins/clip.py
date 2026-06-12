@@ -31,22 +31,33 @@ def _make_tmp_path(suffix: str) -> str:
 CLIP_FB_CROSSPOSTING_UNIFIED_CONFIG_CLIENT_DOC_ID = "216179630714134719310007237117"
 CLIP_FB_CROSSPOSTING_UNIFIED_CONFIG_FRIENDLY_NAME = "CrosspostingUnifiedConfigsQuery"
 CLIP_FB_CROSSPOSTING_UNIFIED_CONFIG_ROOT_FIELD = "xcxp_unified_crossposting_configs_root"
+CLIP_FB_STORY_CROSSPOSTING_SURFACE = {
+    "source_surface": "STORY",
+    "destination_app": "FB",
+    "destination_surface": "STORY",
+}
+CLIP_FB_FEED_CROSSPOSTING_SURFACE = {
+    "source_surface": "FEED",
+    "destination_app": "FB",
+    "destination_surface": "FEED",
+}
+CLIP_FB_REELS_CROSSPOSTING_SURFACE = {
+    "source_surface": "REELS",
+    "destination_app": "FB",
+    "destination_surface": "REELS",
+}
 CLIP_FB_CROSSPOSTING_SURFACES = [
-    {
-        "source_surface": "STORY",
-        "destination_app": "FB",
-        "destination_surface": "STORY",
-    },
-    {
-        "source_surface": "FEED",
-        "destination_app": "FB",
-        "destination_surface": "FEED",
-    },
-    {
-        "source_surface": "REELS",
-        "destination_app": "FB",
-        "destination_surface": "REELS",
-    },
+    CLIP_FB_STORY_CROSSPOSTING_SURFACE,
+    CLIP_FB_FEED_CROSSPOSTING_SURFACE,
+    CLIP_FB_REELS_CROSSPOSTING_SURFACE,
+]
+CLIP_FB_CROSSPOSTING_SURFACE_FALLBACKS = [
+    [CLIP_FB_REELS_CROSSPOSTING_SURFACE],
+    [
+        CLIP_FB_REELS_CROSSPOSTING_SURFACE,
+        CLIP_FB_STORY_CROSSPOSTING_SURFACE,
+        CLIP_FB_FEED_CROSSPOSTING_SURFACE,
+    ],
 ]
 
 
@@ -323,6 +334,11 @@ class UploadClipMixin(ClientMixin):
                     merged.update(nested)
             yield merged
 
+    async def _clip_share_to_fb_unified_config_variants(self):
+        yield await self.clip_share_to_fb_unified_config()
+        for surface_list in CLIP_FB_CROSSPOSTING_SURFACE_FALLBACKS:
+            yield await self.clip_share_to_fb_unified_config(crosspost_app_surface_list=surface_list)
+
     async def clip_share_to_fb_unified_destination(
         self,
         config: Optional[Dict[str, object]] = None,
@@ -340,12 +356,24 @@ class UploadClipMixin(ClientMixin):
         Dict[str, object]
             Normalized destination fields.
         """
-        unified_config = config if config is not None else await self.clip_share_to_fb_unified_config()
-        for candidate in self._clip_share_to_fb_unified_destination_candidates(unified_config or {}):
-            try:
-                return await self.clip_share_to_fb_destination(config=candidate, use_unified_config=False)
-            except ClientError:
-                continue
+
+        async def resolve(unified_config: Dict[str, object]) -> Optional[Dict[str, object]]:
+            for candidate in self._clip_share_to_fb_unified_destination_candidates(unified_config or {}):
+                try:
+                    return await self.clip_share_to_fb_destination(config=candidate, use_unified_config=False)
+                except ClientError:
+                    continue
+            return None
+
+        if config is not None:
+            destination = await resolve(config)
+            if destination:
+                return destination
+        else:
+            async for unified_config in self._clip_share_to_fb_unified_config_variants():
+                destination = await resolve(unified_config)
+                if destination:
+                    return destination
         raise ClientError("Facebook Reel sharing unified config has no confirmed Reel Facebook destination")
 
     async def clip_share_to_fb_destination(
