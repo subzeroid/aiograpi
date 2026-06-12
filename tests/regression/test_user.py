@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock
 from aiograpi import Client
 from aiograpi.exceptions import ClientError, ClientGraphqlError, ClientJSONDecodeError, UserNotFound
 from aiograpi.extractors import extract_user_short, extract_user_v1
-from aiograpi.mixins.user import MAX_USER_COUNT, UserMixin
+from aiograpi.mixins.user import MAX_USER_COUNT, USER_INFO_BY_USERNAME_V2_DOC_ID, USER_INFO_V2_DOC_ID, UserMixin
 
 
 class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -244,8 +244,36 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result, "user")
         client.public_doc_id_graphql_request.assert_awaited_once_with(
-            "26347858941511777", {"hasQuery": True, "query": "example"}
+            USER_INFO_BY_USERNAME_V2_DOC_ID, {"hasQuery": True, "query": "example"}
         )
+
+    async def test_user_info_v2_gql_uses_profile_doc_id(self):
+        client = Client()
+        client._inject_sessionid_for_v2_gql = Mock()
+        client.public_doc_id_graphql_request = AsyncMock(
+            return_value={
+                "user": {
+                    "id": "25025320",
+                    "username": "instagram",
+                    "full_name": "Instagram",
+                    "is_private": False,
+                    "is_verified": True,
+                    "profile_pic_url": "https://example.com/pic.jpg",
+                    "profile_pic_url_hd": None,
+                    "media_count": 0,
+                    "follower_count": 0,
+                    "following_count": 0,
+                    "is_business": False,
+                }
+            }
+        )
+
+        user = await client.user_info_v2_gql("25025320")
+
+        client.public_doc_id_graphql_request.assert_awaited_once()
+        self.assertEqual(client.public_doc_id_graphql_request.await_args.args[0], USER_INFO_V2_DOC_ID)
+        self.assertEqual(client.public_doc_id_graphql_request.await_args.args[1]["id"], "25025320")
+        self.assertEqual(user.pk, "25025320")
 
     async def test_user_stream_by_username_v1_normalizes_endpoint(self):
         client = Client()
