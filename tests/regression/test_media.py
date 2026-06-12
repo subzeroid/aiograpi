@@ -65,6 +65,20 @@ class MediaClipsMetadataRegressionTestCase(unittest.TestCase):
                 self.assertIs(media.clips_metadata.is_shared_to_fb, value)
                 self.assertIs(media.model_dump()["clips_metadata"]["is_shared_to_fb"], value)
 
+    def test_extract_media_v1_normalizes_video_counts(self):
+        payload = self._media_payload()
+        payload.update(
+            {
+                "video_view_count": 1234,
+                "video_play_count": 5678,
+            }
+        )
+
+        media = extract_media_v1(payload)
+
+        self.assertEqual(media.view_count, 1234)
+        self.assertEqual(media.play_count, 5678)
+
 
 class MediaActionPayloadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     def _build_logged_in_client(self):
