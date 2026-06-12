@@ -42,6 +42,8 @@ MAX_USER_COUNT = 200
 INFO_FROM_MODULES = ("self_profile", "feed_timeline", "reel_feed_timeline")
 FOLLOWERS_ORDERS = ("date_followed_latest", "date_followed_earliest")
 USER_WEB_PROFILE_DOC_ID = "26762473490008061"
+USER_INFO_V2_DOC_ID = "25980296051578533"
+USER_INFO_BY_USERNAME_V2_DOC_ID = "26347858941511777"
 
 logger = logging.getLogger(__name__)
 
@@ -311,7 +313,7 @@ class UserMixin(ClientMixin):
             "__relay_internal__pv__PolarisRepostsConsumptionEnabledrelayprovider": False,
         }
         self._inject_sessionid_for_v2_gql()
-        data = await self.public_doc_id_graphql_request("25980296051578533", variables)
+        data = await self.public_doc_id_graphql_request(USER_INFO_V2_DOC_ID, variables)
         user_data = (data or {}).get("user")
         if user_data is None:
             raise UserNotFound("User not found", user_id=user_id)
@@ -339,7 +341,9 @@ class UserMixin(ClientMixin):
         """
         username = self._normalize_username(username)
         self._inject_sessionid_for_v2_gql()
-        data = await self.public_doc_id_graphql_request("26347858941511777", {"hasQuery": True, "query": username})
+        data = await self.public_doc_id_graphql_request(
+            USER_INFO_BY_USERNAME_V2_DOC_ID, {"hasQuery": True, "query": username}
+        )
         # Defend against `{"xdt_api__v1__fbsearch__non_profiled_serp": null}` —
         # `.get(key, {})` returns the default ONLY when key is absent;
         # if the key is present with value `None`, the chained `.get` would
