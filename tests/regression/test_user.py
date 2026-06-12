@@ -502,6 +502,14 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(data["include_follow_friction_check"], "1")
         self.assertEqual(data["container_module"], "profile")
 
+    async def test_user_follow_returns_true_for_pending_private_follow_request(self):
+        client = self._build_private_client()
+        client.private_request = AsyncMock(
+            return_value={"friendship_status": {"following": False, "outgoing_request": True}}
+        )
+
+        self.assertTrue(await client.user_follow("42"))
+
     async def test_user_unfollow_posts_current_action_context(self):
         client = self._build_action_client()
         client.private_request = AsyncMock(return_value={"friendship_status": {"following": False}})
