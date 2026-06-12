@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
-from aiograpi.extractors import extract_media_v1
+from aiograpi.extractors import extract_media_gql, extract_media_v1
 from aiograpi.types import StoryMedia
 
 
@@ -75,6 +75,33 @@ class MediaClipsMetadataRegressionTestCase(unittest.TestCase):
         )
 
         media = extract_media_v1(payload)
+
+        self.assertEqual(media.view_count, 1234)
+        self.assertEqual(media.play_count, 5678)
+
+    def test_extract_media_gql_normalizes_video_counts(self):
+        payload = {
+            "__typename": "GraphVideo",
+            "id": "1",
+            "shortcode": "abc",
+            "taken_at_timestamp": 1710000000,
+            "owner": {
+                "id": "2",
+                "username": "example",
+                "profile_pic_url": "https://example.com/profile.jpg",
+            },
+            "display_resources": [],
+            "edge_media_to_comment": {"count": 0},
+            "edge_media_preview_like": {"count": 0},
+            "edge_media_to_caption": {"edges": []},
+            "edge_media_to_tagged_user": {"edges": []},
+            "edge_sidecar_to_children": {"edges": []},
+            "edge_media_to_sponsor_user": {"edges": []},
+            "video_view_count": 1234,
+            "video_play_count": 5678,
+        }
+
+        media = extract_media_gql(payload)
 
         self.assertEqual(media.view_count, 1234)
         self.assertEqual(media.play_count, 5678)

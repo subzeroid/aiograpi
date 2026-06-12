@@ -149,6 +149,7 @@ def extract_media_gql(data):
         location=extract_location(location) if location else None,
         user=user,
         view_count=media.get("video_view_count", 0),
+        play_count=media.get("play_count", media.get("video_play_count")),
         comment_count=json_value(media, "edge_media_to_comment", "count"),
         like_count=json_value(media, "edge_media_preview_like", "count"),
         caption_text=json_value(media, "edge_media_to_caption", "edges", 0, "node", "text", default=""),
