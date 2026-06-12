@@ -1,4 +1,6 @@
 import json
+import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -699,3 +701,68 @@ class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert upload_extra["music_params"]["audio_asset_start_time_in_ms"] == 1500
         assert upload_extra["music_params"]["overlap_duration_in_ms"] == 2500
         assert "clips_audio_metadata" in upload_extra
+
+    async def test_clip_upload_as_reel_with_music_keeps_audio_window_inside_track(self):
+        client = _build_client()
+        track = Mock(
+            uri="https://example.com/track.m4a",
+            highlight_start_times_in_ms=[173000],
+            display_artist="Artist",
+            id="track-id",
+            audio_cluster_id="cluster-id",
+            title="Track title",
+        )
+        audio_segments = []
+
+        class FakeAudioClip:
+            def __init__(self, path):
+                self.path = path
+                self.duration = 174.0
+
+            def subclipped(self, start, end):
+                if end > self.duration:
+                    raise OSError(f"end {end} exceeds audio duration {self.duration}")
+                audio_segments.append((start, end))
+                return self
+
+            def close(self):
+                return None
+
+        class FakeVideoClip:
+            def __init__(self, path):
+                self.path = path
+                self.duration = 2.5
+
+            def with_audio(self, audio_clip):
+                self.audio_clip = audio_clip
+                return self
+
+            def write_videofile(self, path):
+                Path(path).write_bytes(b"video")
+
+            def close(self):
+                return None
+
+        fake_mp = types.ModuleType("moviepy")
+        fake_mp.VideoFileClip = FakeVideoClip
+        fake_mp.AudioFileClip = FakeAudioClip
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            audio_path = Path(tmpdir) / "track.m4a"
+            audio_path.write_bytes(b"audio")
+            video_path = Path(tmpdir) / "output.mp4"
+            client.track_download_by_url = AsyncMock(return_value=audio_path)
+            client.clip_upload = AsyncMock(return_value="uploaded")
+            with mock.patch.dict("sys.modules", {"moviepy": fake_mp}):
+                with mock.patch("aiograpi.mixins.clip._make_tmp_path", side_effect=[str(audio_path), str(video_path)]):
+                    result = await client.clip_upload_as_reel_with_music(
+                        Path("input.mp4"),
+                        "caption",
+                        track,
+                    )
+
+        assert result == "uploaded"
+        assert audio_segments == [(171.5, 174.0)]
+        upload_extra = client.clip_upload.call_args.kwargs["extra_data"]
+        assert upload_extra["music_params"]["audio_asset_start_time_in_ms"] == 171500
+        assert upload_extra["music_params"]["overlap_duration_in_ms"] == 2500
