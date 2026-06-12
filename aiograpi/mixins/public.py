@@ -439,6 +439,9 @@ class PublicRequestMixin(ClientMixin):
             "doc_id": doc_id,
             "server_timestamps": "true",
         }
+        inject_sessionid = getattr(self, "inject_sessionid_to_public", None)
+        if inject_sessionid:
+            inject_sessionid()
         # IG rejects bare /graphql/query/ POSTs — needs the iPhone web-app
         # signalling headers it sees from m.instagram.com (instaloader does
         # the same: see _default_http_header(empty_session_only=True)).
@@ -451,6 +454,9 @@ class PublicRequestMixin(ClientMixin):
                 "Instagram 273.0.0.16.70 (iPhone15,2; iOS 17_5_1; en_US; en-US; scale=3.00; 1290x2796; 470085518)"
             ),
         }
+        csrftoken = self.public.cookies_dict().get("csrftoken")
+        if csrftoken:
+            merged_headers["X-CSRFToken"] = csrftoken
         if headers:
             merged_headers.update(headers)
         body_json = await self.public_request(

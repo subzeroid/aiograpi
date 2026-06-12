@@ -21,3 +21,16 @@ class PublicRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaises(ClientLoginRequired):
             await client._send_public_request("https://www.instagram.com/graphql/query/", return_json=True)
+
+    async def test_public_doc_id_graphql_request_injects_logged_in_public_cookies(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "123:session", "ds_user_id": "123"}
+        client.public.set_cookies({"csrftoken": "csrf-token"})
+        client.public_request = AsyncMock(return_value={"data": {"ok": True}})
+
+        result = await client.public_doc_id_graphql_request("doc-id", {"shortcode": "abc"})
+
+        self.assertEqual(result, {"ok": True})
+        self.assertEqual(client.public.cookies_dict()["sessionid"], "123:session")
+        headers = client.public_request.await_args.kwargs["headers"]
+        self.assertEqual(headers["X-CSRFToken"], "csrf-token")
