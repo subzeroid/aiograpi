@@ -94,6 +94,33 @@ class TrackMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             with_signature=False,
         )
 
+    async def test_music_bookmarked_posts_empty_payload_by_default(self):
+        client = Client()
+        client.uuid = "uuid-1"
+        client.private_request = AsyncMock(return_value={"items": [], "status": "ok"})
+
+        result = await client.music_bookmarked()
+
+        self.assertEqual(result, {"items": [], "status": "ok"})
+        client.private_request.assert_awaited_once_with(
+            "music/playlist/bookmarked/",
+            data={"_uuid": "uuid-1"},
+            with_signature=False,
+        )
+
+    async def test_music_bookmarked_forwards_max_id(self):
+        client = Client()
+        client.uuid = "uuid-1"
+        client.private_request = AsyncMock(return_value={"items": [], "status": "ok"})
+
+        await client.music_bookmarked(max_id="cursor-1")
+
+        client.private_request.assert_awaited_once_with(
+            "music/playlist/bookmarked/",
+            data={"_uuid": "uuid-1", "max_id": "cursor-1"},
+            with_signature=False,
+        )
+
     async def test_music_clips_audio_browser_posts_browse_session(self):
         client = Client()
         client.uuid = "uuid-1"

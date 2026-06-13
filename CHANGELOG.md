@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.3.17] - 2026-06-13
+
+### Added
+
+- Added async `music_bookmarked(max_id="")` for retrieving bookmarked music tracks.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.9.17.
+
 ## [1.3.16] - 2026-06-13
 
 ### Added
