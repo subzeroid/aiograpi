@@ -2453,6 +2453,52 @@ class UserMixin(ClientMixin):
             return chained
         return await self.fetch_suggestion_details(user_id, chained_ids)
 
+    async def address_book_link(self, contacts: List[dict], include: str = "extra_display_name,thumbnails") -> dict:
+        """
+        Upload/link address book contacts and return Instagram's raw suggestions response.
+
+        Parameters
+        ----------
+        contacts: List[dict]
+            Address book contacts in Instagram's mobile payload shape, for example
+            ``{"phone_numbers": [{"phone_number": "+15555550123"}],
+            "email_addresses": [], "first_name": "Test", "last_name": "Contact"}``.
+        include: str, optional
+            Optional response fields requested from Instagram. Defaults to
+            ``"extra_display_name,thumbnails"``.
+
+        Returns
+        -------
+        dict
+            Raw ``address_book/link/`` response, usually containing suggested users
+            when Instagram matches uploaded contacts.
+        """
+        data = {
+            "contacts": json.dumps(contacts, separators=(",", ":")),
+            "_uuid": self.uuid,
+        }
+        if self.user_id:
+            data["_uid"] = str(self.user_id)
+        return await self.private_request(
+            "address_book/link/",
+            data=data,
+            params={"include": include} if include else None,
+        )
+
+    async def address_book_unlink(self) -> dict:
+        """
+        Disconnect the uploaded address book from the current account.
+
+        Returns
+        -------
+        dict
+            Raw ``address_book/unlink/`` response.
+        """
+        return await self.private_request(
+            "address_book/unlink/",
+            data={"_uuid": self.uuid},
+        )
+
     async def discover_recommended_accounts_for_category_v1(self, user_id: str) -> dict:
         """
         Get business-category-similar accounts for a target user.
