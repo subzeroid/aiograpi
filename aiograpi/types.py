@@ -101,6 +101,21 @@ class About(TypesBaseModel):
     former_usernames: Optional[str] = ""
 
 
+class AddressBookPhone(TypesBaseModel):
+    phone_number: str
+
+
+class AddressBookEmail(TypesBaseModel):
+    email_address: str
+
+
+class AddressBookContact(TypesBaseModel):
+    phone_numbers: List[AddressBookPhone] = Field(default_factory=list)
+    email_addresses: List[AddressBookEmail] = Field(default_factory=list)
+    first_name: str = ""
+    last_name: str = ""
+
+
 class Account(TypesBaseModel):
     pk: str
     username: str

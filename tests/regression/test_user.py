@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
+from aiograpi import types as ig_types
 from aiograpi.exceptions import ClientError, ClientGraphqlError, ClientJSONDecodeError, UserNotFound
 from aiograpi.extractors import extract_user_short, extract_user_v1
 from aiograpi.mixins.user import MAX_USER_COUNT, USER_INFO_BY_USERNAME_V2_DOC_ID, USER_INFO_V2_DOC_ID, UserMixin
@@ -590,6 +591,36 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             "address_book/link/",
             data={"contacts": "[]", "_uuid": "uuid"},
             params=None,
+        )
+
+    async def test_address_book_link_accepts_typed_contacts_and_include_list(self):
+        client = Client()
+        client.uuid = "uuid"
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+        contact = ig_types.AddressBookContact(
+            phone_numbers=[ig_types.AddressBookPhone(phone_number="+15555550123")],
+            email_addresses=[ig_types.AddressBookEmail(email_address="test@example.com")],
+            first_name="Test",
+            last_name="Contact",
+        )
+        expected_contacts = [
+            {
+                "phone_numbers": [{"phone_number": "+15555550123"}],
+                "email_addresses": [{"email_address": "test@example.com"}],
+                "first_name": "Test",
+                "last_name": "Contact",
+            }
+        ]
+
+        await client.address_book_link([contact], include=["extra_display_name", "thumbnails"])
+
+        client.private_request.assert_awaited_once_with(
+            "address_book/link/",
+            data={
+                "contacts": json.dumps(expected_contacts, separators=(",", ":")),
+                "_uuid": "uuid",
+            },
+            params={"include": "extra_display_name,thumbnails"},
         )
 
     async def test_address_book_unlink_posts_uuid(self):

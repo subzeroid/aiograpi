@@ -36,7 +36,7 @@ View a list of a user's medias, following and followers
 | close_friend_add(user_id: str)                | bool                  | Add to Close Friends List                                    |
 | close_friend_remove(user_id: str)             | bool                  | Remove from Close Friends List                               |
 | user_suggested_profiles(user_id: str, expand_suggestion: bool = False) | dict | Suggested profiles ("Suggested for you") for a profile. Wraps `chaining` and, with `expand_suggestion=True`, returns the raw `fetch_suggestion_details` payload (`items` in current app responses) |
-| address_book_link(contacts: List[dict], include: str = "extra_display_name,thumbnails") | dict | Upload/link address book contacts and return Instagram's raw contact-based suggestions response |
+| address_book_link(contacts: List[AddressBookContact \| dict], include: Sequence[str] \| str = ("extra_display_name", "thumbnails")) | dict | Upload/link address book contacts and return Instagram's raw contact-based suggestions response |
 | address_book_unlink()                         | dict                  | Disconnect the uploaded address book from the current account |
 
 Low level methods:
