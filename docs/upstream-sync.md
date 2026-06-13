@@ -32,7 +32,7 @@ challenge context handling, and clearer Reel/clip upload failure details.
 - Mention the upstream range in GitHub, PyPI, and Telegram release notes.
 
 For the 2026-05 sync, the public releases are `aiograpi 0.9.0` and newer.
-`aiograpi 0.9.0` synced through `instagrapi 2.5.18`, and subsequent `aiograpi 0.9.x` patch releases continued that baseline through `instagrapi 2.6.8`, plus targeted maintenance ports. `aiograpi 1.0.x` recorded the SemVer baseline through `instagrapi 2.7.17`; `aiograpi 1.1.0` records the MQTT/FBNS baseline through `instagrapi 2.8.2`; `aiograpi 1.2.x` records the follow-up high-level/private-first, Reel Facebook destination, hashtag, metadata, and private incomplete-read retry baseline through `instagrapi 2.8.19`; `aiograpi 1.3.0` records the CAA signup baseline through `instagrapi 2.9.0`; `aiograpi 1.3.1` records the suggested-profiles helper baseline through `instagrapi 2.9.1`.
+`aiograpi 0.9.0` synced through `instagrapi 2.5.18`, and subsequent `aiograpi 0.9.x` patch releases continued that baseline through `instagrapi 2.6.8`, plus targeted maintenance ports. `aiograpi 1.0.x` recorded the SemVer baseline through `instagrapi 2.7.17`; `aiograpi 1.1.0` records the MQTT/FBNS baseline through `instagrapi 2.8.2`; `aiograpi 1.2.x` records the follow-up high-level/private-first, Reel Facebook destination, hashtag, metadata, and private incomplete-read retry baseline through `instagrapi 2.8.19`; `aiograpi 1.3.0` records the CAA signup baseline through `instagrapi 2.9.0`; `aiograpi 1.3.1` records the suggested-profiles helper baseline through `instagrapi 2.9.1`; `aiograpi 1.3.16` records the Reel mashup-info helper baseline through `instagrapi 2.9.16`.
 
 ## Porting rules
 

@@ -70,3 +70,27 @@ class ClientMediaCountAliasLiveTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIn("video_play_count", payload)
         self.assertEqual(media.view_count, payload["video_view_count"])
         self.assertEqual(media.play_count, payload["video_play_count"])
+
+
+class ClientClipMashupInfoLiveTestCase(unittest.IsolatedAsyncioTestCase):
+    async def live_client(self):
+        test_accounts_url = os.getenv("TEST_ACCOUNTS_URL")
+        if not test_accounts_url:
+            self.skipTest("TEST_ACCOUNTS_URL is required for clip mashup info live tests")
+        accounts = await _fetch_accounts(test_accounts_url, count=20)
+        cl = await _login_first_usable(accounts)
+        if cl is None:
+            self.skipTest("Could not login with any test account")
+        return cl
+
+    async def test_clip_mashup_info_live(self):
+        cl = await self.live_client()
+        media_pk = cl.media_pk_from_code("C_BM2yAN4Rm")
+
+        result = await cl.clip_mashup_info(media_pk)
+
+        self.assertEqual(result.get("status"), "ok")
+        mashup_info = result.get("mashup_info")
+        self.assertIsInstance(mashup_info, dict)
+        self.assertIn("is_reuse_allowed", mashup_info)
+        self.assertIn("mashups_allowed", mashup_info)

@@ -61,6 +61,31 @@ def _build_media_payload():
 
 
 class ClipPinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_clip_mashup_info_posts_media_id_and_identity(self):
+        client = Client()
+        client._user_id = "29060001803"
+        client.uuid = "uuid"
+        expected = {
+            "mashup_info": {
+                "is_reuse_allowed": True,
+                "mashups_allowed": True,
+            },
+            "status": "ok",
+        }
+        client.private_request = AsyncMock(return_value=expected)
+
+        result = await client.clip_mashup_info("3894040329476845448")
+
+        assert result == expected
+        client.private_request.assert_awaited_once_with(
+            "clips/get_mashup_info_for_media/",
+            data={
+                "media_id": "3894040329476845448",
+                "_uid": "29060001803",
+                "_uuid": "uuid",
+            },
+        )
+
     async def test_clip_pin_uses_reels_grid_payload(self):
         client = Client()
         client.private_request = AsyncMock(return_value={"status": "ok"})
