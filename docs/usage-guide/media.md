@@ -49,6 +49,7 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | archive_medias(amount: int = 0)                                 | List\[Media]       | Get your archived feed posts
 | media_pin(media_id: str)                                        | bool               | Pin a media to user profile
 | media_unpin(media_id: str)                                      | bool               | Unpin a media to user profile
+| clip_mashup_info(media_pk: str)                                 | dict               | Fetch Reel remix/reuse availability metadata
 | clip_pin(media_pk: str)                                         | bool               | Pin a Reel to the Reels tab/profile Reels grid
 | clip_unpin(media_pk: str)                                       | bool               | Unpin a Reel from the Reels tab/profile Reels grid
 
