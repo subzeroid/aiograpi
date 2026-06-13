@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.4.4] - 2026-06-14
+
+### Fixed
+
+- Added regression coverage for bulk public story lookups so `users_stories_gql(...)` continues to populate `UserShort.stories` instead of losing story items for users discovered from comments.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.10.4.
+
 ## [1.4.3] - 2026-06-13
 
 ### Fixed

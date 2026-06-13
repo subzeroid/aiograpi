@@ -35,3 +35,32 @@ class StoryMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         stories = await client._user_stories_public("123", amount=1)
 
         self.assertEqual(stories, [])
+
+    async def test_users_stories_gql_populates_user_short_stories(self):
+        client = Client()
+        story_payload = {
+            "id": "1234567890",
+            "owner": {
+                "id": "123",
+                "username": "alice",
+                "full_name": "Alice",
+                "profile_pic_url": "https://example.com/alice.jpg",
+                "is_private": False,
+            },
+            "display_url": "https://example.com/story.jpg",
+            "taken_at_timestamp": 1_700_000_000,
+            "is_video": False,
+            "tappable_objects": [],
+            "edge_media_to_sponsor_user": {"edges": []},
+        }
+
+        client.public_graphql_request = AsyncMock(
+            return_value={"reels_media": [{"owner": story_payload["owner"], "items": [story_payload]}]}
+        )
+
+        users = await client.users_stories_gql(["123"])
+
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0].pk, "123")
+        self.assertEqual(len(users[0].stories), 1)
+        self.assertEqual(users[0].stories[0].id, "1234567890_123")
