@@ -389,6 +389,8 @@ class TrackMixin(ClientMixin):
         }
         result = await self._track_request(data)
         track = json_value(result, "metadata", "music_info", "music_asset_info")
+        if not track:
+            raise TrackNotFound(music_canonical_id=str(music_canonical_id))
         return extract_track(track)
 
     async def track_info_by_id(self, track_id: str, max_id: str = "") -> Dict:

@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 from aiograpi import Client
+from aiograpi.exceptions import TrackNotFound
 
 
 class TrackMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -152,6 +153,26 @@ class TrackMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             "music/verify_original_audio_title/",
             data={"original_audio_name": "Original Audio", "_uuid": "uuid-1"},
             with_signature=False,
+        )
+
+    async def test_track_info_by_canonical_id_raises_track_not_found_when_music_asset_missing(self):
+        client = Client()
+        client.uuid = "uuid-1"
+        client._track_request = AsyncMock(
+            return_value={"metadata": {"music_info": {"music_asset_info": None}}, "status": "ok"}
+        )
+
+        with self.assertRaises(TrackNotFound) as cm:
+            await client.track_info_by_canonical_id("18159860503036324")
+
+        self.assertEqual(cm.exception.music_canonical_id, "18159860503036324")
+        client._track_request.assert_awaited_once_with(
+            {
+                "tab_type": "clips",
+                "referrer_media_id": "",
+                "_uuid": "uuid-1",
+                "music_canonical_id": "18159860503036324",
+            }
         )
 
     async def test_track_download_by_url_uses_httpx_request(self):
