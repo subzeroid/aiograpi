@@ -1,6 +1,7 @@
 import os
 import unittest
 
+from aiograpi.exceptions import TrackNotFound
 from tests.live.smoke import _fetch_accounts, _login_first_usable
 
 
@@ -22,3 +23,11 @@ class ClientTrackLiveTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result.get("status"), "ok")
         self.assertIsInstance(result.get("items"), list)
+
+    async def test_track_info_by_canonical_id_missing_live(self):
+        cl = await self.live_client()
+
+        with self.assertRaises(TrackNotFound) as cm:
+            await cl.track_info_by_canonical_id("0")
+
+        self.assertEqual(cm.exception.music_canonical_id, "0")
