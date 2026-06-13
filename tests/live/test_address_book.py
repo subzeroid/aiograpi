@@ -2,6 +2,7 @@ import os
 import unittest
 
 from aiograpi import Client
+from aiograpi import types as ig_types
 from tests.live.smoke import _fetch_accounts
 
 
@@ -31,14 +32,13 @@ class ClientAddressBookLiveTestCase(unittest.IsolatedAsyncioTestCase):
         cl = await self.live_client()
         self.addAsyncCleanup(cl.address_book_unlink)
         contacts = [
-            {
-                "phone_numbers": [{"phone_number": "+15555550123"}],
-                "email_addresses": [],
-                "first_name": "Test",
-                "last_name": "Contact",
-            }
+            ig_types.AddressBookContact(
+                phone_numbers=[ig_types.AddressBookPhone(phone_number="+15555550123")],
+                first_name="Test",
+                last_name="Contact",
+            )
         ]
 
-        result = await cl.address_book_link(contacts)
+        result = await cl.address_book_link(contacts, include=["extra_display_name", "thumbnails"])
 
         self.assertEqual(result.get("status"), "ok")
