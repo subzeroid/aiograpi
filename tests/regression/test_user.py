@@ -552,6 +552,59 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(data["radio_type"], "wifi-none")
         self.assertEqual(data["container_module"], "profile")
 
+    async def test_address_book_link_posts_contacts_payload(self):
+        client = Client()
+        client.uuid = "uuid"
+        client._user_id = "123"
+        client.private_request = AsyncMock(return_value={"users": []})
+        contacts = [
+            {
+                "phone_numbers": [{"phone_number": "+15555550123"}],
+                "email_addresses": [],
+                "first_name": "Test",
+                "last_name": "Contact",
+            }
+        ]
+
+        result = await client.address_book_link(contacts)
+
+        self.assertEqual(result, {"users": []})
+        client.private_request.assert_awaited_once_with(
+            "address_book/link/",
+            data={
+                "contacts": json.dumps(contacts, separators=(",", ":")),
+                "_uuid": "uuid",
+                "_uid": "123",
+            },
+            params={"include": "extra_display_name,thumbnails"},
+        )
+
+    async def test_address_book_link_allows_empty_include(self):
+        client = Client()
+        client.uuid = "uuid"
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        await client.address_book_link([], include="")
+
+        client.private_request.assert_awaited_once_with(
+            "address_book/link/",
+            data={"contacts": "[]", "_uuid": "uuid"},
+            params=None,
+        )
+
+    async def test_address_book_unlink_posts_uuid(self):
+        client = Client()
+        client.uuid = "uuid"
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.address_book_unlink()
+
+        self.assertEqual(result, {"status": "ok"})
+        client.private_request.assert_awaited_once_with(
+            "address_book/unlink/",
+            data={"_uuid": "uuid"},
+        )
+
     async def test_user_stream_by_id_v1_parses_first_json_line_from_stream_response(self):
         client = Client()
         client.last_json = {}
