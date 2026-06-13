@@ -186,6 +186,14 @@ class UnknownError(PrivateError):
     pass
 
 
+class AccountEditError(PrivateError):
+    pass
+
+
+class AccountContactPointRequired(AccountEditError):
+    pass
+
+
 class TrackNotFound(NotFoundError):
     pass
 

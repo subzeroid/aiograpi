@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.4.3] - 2026-06-13
+
+### Fixed
+
+- Raised `AccountEditError` for `accounts/edit_profile/` failures, with the more specific `AccountContactPointRequired` when Instagram requires an email or confirmed phone number, instead of surfacing these profile-edit responses as generic unknown/status-fail errors.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.10.3.
+
 ## [1.4.2] - 2026-06-13
 
 ### Fixed

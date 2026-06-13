@@ -53,6 +53,8 @@
 | BadPassword              | PrivateError | Raises when get message=bad_password
 | TwoFactorRequired        | PrivateError | Raises when get message=two_factor_required
 | UnknownError             | PrivateError | Raises when get unknown message (new message from instagram)
+| AccountEditError         | PrivateError | Raises when `accounts/edit_profile/` returns an account edit failure
+| AccountContactPointRequired | AccountEditError | Raises when profile editing requires an email or confirmed phone number
 | BadCredentials           | PrivateError | The login and password pair for your account have not been passed
 | IsRegulatedC18Error      | ClientBadRequestError | The user is limited to 18+
 
