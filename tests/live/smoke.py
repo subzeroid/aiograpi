@@ -301,6 +301,7 @@ async def main():
                 {},
             ),
             ("music_trending", "music_trending", (), {}),
+            ("music_bookmarked", "music_bookmarked", (), {}),
             ("music_search_v2", "music_search_v2", ("love",), {}),
             ("music_clips_audio_browser", "music_clips_audio_browser", (), {}),
         ]
