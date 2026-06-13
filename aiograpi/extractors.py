@@ -45,6 +45,15 @@ from .utils import InstagramIdCodec, json_value
 logger = logging.getLogger(__name__)
 
 MEDIA_TYPES_GQL = {"GraphImage": 1, "GraphVideo": 2, "GraphSidecar": 8, "StoryVideo": 2}
+XDT_MEDIA_TYPES_GQL = {
+    "XDTGraphImage": "GraphImage",
+    "XDTGraphVideo": "GraphVideo",
+    "XDTGraphSidecar": "GraphSidecar",
+}
+
+
+def _normalize_media_gql_typename(data):
+    data["__typename"] = XDT_MEDIA_TYPES_GQL.get(data.get("__typename"), data.get("__typename"))
 
 
 def extract_media_v1(data):
@@ -114,6 +123,7 @@ def extract_media_v1_xma(data):
 def extract_media_gql(data):
     """Extract media from GraphQL"""
     media = deepcopy(data)
+    _normalize_media_gql_typename(media)
     user = extract_user_short(media["owner"])
     # if "full_name" in user:
     #     user = extract_user_short(user)
@@ -193,6 +203,8 @@ def extract_resource_v1(data):
 
 
 def extract_resource_gql(data):
+    data = deepcopy(data)
+    _normalize_media_gql_typename(data)
     data["media_type"] = MEDIA_TYPES_GQL[data["__typename"]]
     return Resource(pk=data["id"], thumbnail_url=data["display_url"], **data)
 
