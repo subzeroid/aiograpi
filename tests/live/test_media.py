@@ -71,6 +71,15 @@ class ClientMediaCountAliasLiveTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(media.view_count, payload["video_view_count"])
         self.assertEqual(media.play_count, payload["video_play_count"])
 
+    async def test_media_info_gql_normalizes_live_xdt_sidecar_children(self):
+        code = "Cu59OMFPQde"
+        media, payload = await self.live_media(code)
+
+        self.assertIn(payload.get("__typename"), {"GraphSidecar", "XDTGraphSidecar"})
+        self.assertEqual(media.media_type, 8)
+        self.assertGreaterEqual(len(media.resources), 1)
+        self.assertTrue(all(resource.media_type in {1, 2} for resource in media.resources))
+
 
 class ClientClipMashupInfoLiveTestCase(unittest.IsolatedAsyncioTestCase):
     async def live_client(self):
