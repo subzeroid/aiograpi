@@ -3,7 +3,12 @@ import unittest
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client, httpx_ext
-from aiograpi.exceptions import ClientNotFoundError, DirectMessageRequestsDisabled
+from aiograpi.exceptions import (
+    AccountContactPointRequired,
+    AccountEditError,
+    ClientNotFoundError,
+    DirectMessageRequestsDisabled,
+)
 
 
 class PrivateRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -44,6 +49,60 @@ class PrivateRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             await client._send_private_request(
                 "direct_v2/threads/broadcast/text/",
                 data={"text": "hi"},
+                with_signature=False,
+            )
+
+        self.assertEqual(cm.exception.message, payload["message"])
+        self.assertEqual(cm.exception.status, "fail")
+
+    async def test_send_private_request_promotes_account_edit_contact_point_required_http_error(self):
+        client = self._build_client()
+        payload = {
+            "message": {"errors": ["You need an email or confirmed phone number."]},
+            "status": "fail",
+        }
+        client.private.post = AsyncMock(return_value=self._response(payload, status_code=400))
+
+        with self.assertRaises(AccountContactPointRequired) as cm:
+            await client._send_private_request(
+                "accounts/edit_profile/",
+                data={"external_url": ""},
+                with_signature=False,
+            )
+
+        self.assertEqual(cm.exception.message, payload["message"])
+        self.assertEqual(cm.exception.status, "fail")
+
+    async def test_send_private_request_promotes_account_edit_contact_point_required_status_fail(self):
+        client = self._build_client()
+        payload = {
+            "message": {"errors": ["You need an email or confirmed phone number."]},
+            "status": "fail",
+        }
+        client.private.post = AsyncMock(return_value=self._response(payload))
+
+        with self.assertRaises(AccountContactPointRequired) as cm:
+            await client._send_private_request(
+                "accounts/edit_profile/",
+                data={"external_url": ""},
+                with_signature=False,
+            )
+
+        self.assertEqual(cm.exception.message, payload["message"])
+        self.assertEqual(cm.exception.status, "fail")
+
+    async def test_send_private_request_promotes_account_edit_unknown_server_error(self):
+        client = self._build_client()
+        payload = {
+            "message": "Unknown Server Error.",
+            "status": "fail",
+        }
+        client.private.post = AsyncMock(return_value=self._response(payload, status_code=400))
+
+        with self.assertRaises(AccountEditError) as cm:
+            await client._send_private_request(
+                "accounts/edit_profile/",
+                data={"external_url": ""},
                 with_signature=False,
             )
 
