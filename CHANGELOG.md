@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.4.0] - 2026-06-13
+
+### Fixed
+
+- Normalized challenge `api_path` values that already include `/api/` or `/api/v1/` so login challenge resolution does not request `/api/v1/api/challenge/...`.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.10.0.
+
 ## [1.3.19] - 2026-06-13
 
 ### Changed
