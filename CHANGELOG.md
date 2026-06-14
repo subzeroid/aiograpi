@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.4.8] - 2026-06-14
+
+### Added
+
+- Added `challenge_bloks_redirect_dismiss()` for resuming a pending Bloks redirect checkpoint after manual approval in the official Instagram app.
+
+### Changed
+
+- Bloks redirect checkpoints now try the challenge-navigation acknowledge path before falling back to manual verification, and `PASSWORD_RESET` redirects can use the configured password-change handler.
+- Synced the recorded upstream baseline to `instagrapi` 2.10.8.
+
 ## [1.4.7] - 2026-06-14
 
 ### Fixed
