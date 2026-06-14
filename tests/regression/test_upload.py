@@ -123,6 +123,77 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(extra_data, {"disable_comments": 1})
         self.assertEqual(client.album_upload.call_args.kwargs["schedule_at"], schedule_at)
 
+    async def test_photo_upload_adds_coauthor_user_ids_without_mutating_extra_data(self):
+        client = self.build_client()
+        extra_data = {"disable_comments": 1}
+        client.photo_rupload = AsyncMock(return_value=("1", 720, 720))
+        client.photo_configure = AsyncMock(return_value={"status": "ok"})
+        client._extract_configured_media_or_recent = AsyncMock(return_value=self.build_media(media_type=1))
+
+        with unittest.mock.patch("asyncio.sleep", new=AsyncMock()):
+            media = await client.photo_upload(
+                Path("example.jpg"),
+                "caption",
+                extra_data=extra_data,
+                coauthor_user_ids=[123, "456"],
+            )
+
+        self.assertIsInstance(media, Media)
+        self.assertEqual(extra_data, {"disable_comments": 1})
+        configure_extra = client.photo_configure.call_args.kwargs["extra_data"]
+        self.assertEqual(configure_extra["disable_comments"], 1)
+        self.assertEqual(configure_extra["invite_coauthor_user_ids"], ["123", "456"])
+
+    async def test_video_upload_adds_coauthor_user_ids(self):
+        client = self.build_client()
+        client.video_rupload = AsyncMock(return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg")))
+        client.video_configure = AsyncMock(return_value={"status": "ok"})
+        client._extract_configured_media_or_raise = lambda configured, *args, **kwargs: self.build_media(media_type=2)
+
+        with unittest.mock.patch("asyncio.sleep", new=AsyncMock()):
+            media = await client.video_upload(
+                Path("example.mp4"),
+                "caption",
+                coauthor_user_ids=["123", "456"],
+            )
+
+        self.assertIsInstance(media, Media)
+        self.assertEqual(
+            client.video_configure.call_args.kwargs["extra_data"]["invite_coauthor_user_ids"], ["123", "456"]
+        )
+
+    async def test_album_upload_adds_coauthor_user_ids(self):
+        client = self.build_client()
+        client.photo_rupload = AsyncMock(return_value=("1", 720, 720))
+        client.album_configure = AsyncMock(return_value={"status": "ok"})
+        client._extract_configured_media_or_raise = lambda configured, *args, **kwargs: self.build_media(media_type=8)
+
+        media = await client.album_upload(
+            [Path("one.jpg")],
+            "caption",
+            configure_timeout=0,
+            coauthor_user_ids=["123", "456"],
+        )
+
+        self.assertIsInstance(media, Media)
+        self.assertEqual(
+            client.album_configure.call_args.kwargs["extra_data"]["invite_coauthor_user_ids"], ["123", "456"]
+        )
+
+    async def test_coauthor_user_ids_rejects_conflicting_extra_data_key(self):
+        client = self.build_client()
+
+        with self.assertRaises(ValueError) as ctx:
+            await client.photo_upload(
+                Path("example.jpg"),
+                "caption",
+                extra_data={"invite_coauthor_user_ids": ["789"]},
+                coauthor_user_ids=["123"],
+            )
+
+        self.assertIn("coauthor_user_ids", str(ctx.exception))
+        self.assertIn("invite_coauthor_user_ids", str(ctx.exception))
+
     async def test_story_music_extra_data_builds_story_music_payload_from_dict(self):
         client = self.build_client()
         track = {

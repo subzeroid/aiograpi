@@ -33,6 +33,7 @@ from aiograpi.types import (
 )
 from aiograpi.utils.serialization import dumps
 from aiograpi.utils.timing import date_time_original
+from aiograpi.utils.upload import with_coauthor_user_ids
 from aiograpi.utils.video import MOVIEPY_2_INSTALL_MESSAGE, analyze_video_for_upload
 
 
@@ -445,6 +446,7 @@ class UploadVideoMixin(ClientMixin):
         location: Location = None,
         extra_data: Dict[str, Any] = {},
         schedule_at: Optional[Union[int, datetime]] = None,
+        coauthor_user_ids: Optional[List[Union[int, str]]] = None,
     ) -> Media:
         """
         Upload video and configure to feed
@@ -465,6 +467,8 @@ class UploadVideoMixin(ClientMixin):
             Dict of extra data, if you need to add your params, like {"share_to_facebook": 1}.
         schedule_at: int or datetime, optional
             Unix timestamp in seconds or datetime when the video should be published.
+        coauthor_user_ids: List[int | str], optional
+            Instagram user IDs to invite as post coauthors.
 
         Returns
         -------
@@ -474,6 +478,7 @@ class UploadVideoMixin(ClientMixin):
         path = Path(path)
         if thumbnail is not None:
             thumbnail = Path(thumbnail)
+        extra_data = with_coauthor_user_ids(extra_data, coauthor_user_ids)
         extra_data = self._scheduled_extra_data(extra_data, schedule_at)
         upload_id, width, height, duration, thumbnail = await self.video_rupload(path, thumbnail, to_story=False)
         for attempt in range(50):
