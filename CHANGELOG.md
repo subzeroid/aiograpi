@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.4.7] - 2026-06-14
+
+### Fixed
+
+- Closed generated Reel/IGTV thumbnail image handles during crop processing and rewrote thumbnails in binary mode, avoiding stale local file locks on Windows after video uploads.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.10.7.
+
 ## [1.4.6] - 2026-06-14
 
 ### Fixed
