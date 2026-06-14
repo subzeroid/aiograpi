@@ -9,6 +9,8 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 from urllib.parse import parse_qs, urlsplit
 
+from aiograpi.types import UserShort
+
 
 def _load_live_smoke_module():
     smoke_path = Path(__file__).resolve().parents[1] / "live" / "smoke.py"
@@ -88,6 +90,9 @@ class _FakeLiveClient:
             )
             for i in range(amount)
         ]
+
+    async def fbsearch_suggested_profiles(self, user_id):
+        return [UserShort(pk="2", username="suggested", stories=[])]
 
     async def user_following(self, user_id, amount=0, use_cache=True):
         return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
@@ -241,6 +246,7 @@ print(sys.modules["aiograpi"].__file__)
             "user_medias",
             "user_medias_paginated",
             "user_followers_extended_fields",
+            "fbsearch_suggested_profiles",
             "user_following",
             "user_stories",
         ]:

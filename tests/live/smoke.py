@@ -23,6 +23,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from aiograpi import Client
+from aiograpi.types import UserShort
 from tests.live.auth_helpers import login_with_timeout
 
 
@@ -164,6 +165,16 @@ async def main():
         except Exception as e:
             failures.append(("user_followers_extended_fields", e))
             print(f"REQ user_followers_extended_fields FAIL: {type(e).__name__}: {str(e)[:140]}")
+
+        try:
+            suggested = await cl.fbsearch_suggested_profiles("25025320")
+            assert suggested
+            assert isinstance(suggested[0], UserShort)
+            assert isinstance(suggested[0].stories, list)
+            print(f"REQ fbsearch_suggested_profiles: {_summarize(suggested)}")
+        except Exception as e:
+            failures.append(("fbsearch_suggested_profiles", e))
+            print(f"REQ fbsearch_suggested_profiles FAIL: {type(e).__name__}: {str(e)[:140]}")
 
     # OPTIONAL: chapi-ported endpoints — record but don't fail
     if cl is not None:
