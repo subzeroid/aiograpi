@@ -32,6 +32,7 @@ from aiograpi.types import (
 )
 from aiograpi.utils.serialization import dumps
 from aiograpi.utils.timing import date_time_original
+from aiograpi.utils.upload import with_coauthor_user_ids
 
 try:
     from PIL import Image
@@ -229,6 +230,7 @@ class UploadPhotoMixin(ClientMixin):
         location: Location = None,
         extra_data: Dict[str, str] = {},
         schedule_at: Optional[Union[int, datetime]] = None,
+        coauthor_user_ids: Optional[List[Union[int, str]]] = None,
     ) -> Media:
         """
         Upload photo and configure to feed
@@ -249,6 +251,8 @@ class UploadPhotoMixin(ClientMixin):
             Dict of extra data, if you need to add your params, like {"share_to_facebook": 1}.
         schedule_at: int or datetime, optional
             Unix timestamp in seconds or datetime when the photo should be published.
+        coauthor_user_ids: List[int | str], optional
+            Instagram user IDs to invite as post coauthors.
 
         Returns
         -------
@@ -260,6 +264,7 @@ class UploadPhotoMixin(ClientMixin):
         if path.suffix.lower() not in valid_extensions:
             raise ValueError("Invalid file format. Only JPG/JPEG/PNG/WEBP files are supported.")
 
+        extra_data = with_coauthor_user_ids(extra_data, coauthor_user_ids)
         extra_data = self._scheduled_extra_data(extra_data, schedule_at)
         previous_media_ids = await self._current_media_ids()
         upload_id, width, height = await self.photo_rupload(path, upload_id)

@@ -277,10 +277,10 @@ Upload medias to your feed. Common arguments:
 
 | Method                                                                                                                                 | Return  | Description
 | -------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------
-| photo_upload(path: Path, caption: str, upload_id: str, usertags: List[Usertag], location: Location, extra_data: Dict = {}, schedule_at: int \| datetime = None)             | Media   | Upload photo (Support JPG files)
+| photo_upload(path: Path, caption: str, upload_id: str, usertags: List[Usertag], location: Location, extra_data: Dict = {}, schedule_at: int \| datetime = None, coauthor_user_ids: List[int \| str] = None)             | Media   | Upload photo (Support JPG files)
 | photo_upload_with_music(path: Path, caption: str, track: Track, extra_data: Dict = {}, schedule_at: int \| datetime = None) | Media | Upload feed photo with music metadata
-| video_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, schedule_at: int \| datetime = None)            | Media   | Upload video (Support MP4 files)
-| album_upload(paths: List[Path], caption: str, usertags: List[Usertag] or List[List[Usertag]], location: Location, extra_data: Dict = {}, schedule_at: int \| datetime = None) | Media   | Upload Album (Support JPG/MP4 files)
+| video_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, schedule_at: int \| datetime = None, coauthor_user_ids: List[int \| str] = None)            | Media   | Upload video (Support MP4 files)
+| album_upload(paths: List[Path], caption: str, usertags: List[Usertag] or List[List[Usertag]], location: Location, extra_data: Dict = {}, schedule_at: int \| datetime = None, coauthor_user_ids: List[int \| str] = None) | Media   | Upload Album (Support JPG/MP4 files)
 | album_upload_with_music(paths: List[Path], caption: str, track: Track, usertags: List[Usertag] or List[List[Usertag]], extra_data: Dict = {}, schedule_at: int \| datetime = None) | Media | Upload feed album/carousel with music metadata
 | igtv_upload(path: Path, title: str, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}) | Media   | Upload IGTV (Support MP4 files)
 | clip_upload(path: Path, caption: str, thumbnail: Path, usertags: List[Usertag], location: Location, extra_data: Dict = {}, trial: bool = False, share_to_facebook: bool = False) | Media | Upload Reels Clip (Support MP4 files), optionally as a Trial Reel or cross-posted to Facebook
@@ -366,7 +366,7 @@ In `extra_data`, you can pass additional media settings, for example:
 | custom_accessibility_caption  | String | [Set alternative text](https://github.com/subzeroid/instagrapi/issues/351) `{"custom_accessibility_caption": "ALT TEXT HERE"}`
 | like_and_view_counts_disabled | Int    | [Disable like and view counts](https://github.com/subzeroid/instagrapi/issues/382) `{"like_and_view_counts_disabled": 1}`
 | disable_comments              | Int    | Disable comments `{"disable_comments": 1}`
-| invite_coauthor_user_id       | Int    | Add a coauthor to the post `{"invite_coauthor_user_id": "USER ID OF COAUTHOR HERE"}`. You also need to add this user to `usertags`
+| invite_coauthor_user_ids      | List   | Low-level coauthor invite field. Prefer `coauthor_user_ids=[...]` on `photo_upload`, `video_upload`, or `album_upload`
 
 ### Example:
 
