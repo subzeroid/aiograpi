@@ -81,7 +81,7 @@ class FbSearchMixin(ClientMixin):
             "include_friendship_status": "true",
         }
         result = await self.private_request("fbsearch/accounts_recs/", params=params)
-        return result["users"]
+        return [extract_user_short(item) for item in result["users"]]
 
     async def web_search_topsearch_hashtags(self, query: str) -> List[Hashtag]:
         result = await self.web_search_topsearch(query)
