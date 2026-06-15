@@ -2,6 +2,8 @@ import os
 import unittest
 
 from aiograpi import Client
+from aiograpi import types as ig_types
+from aiograpi.extractors import extract_user_short
 from tests.live.smoke import _fetch_accounts
 
 
@@ -64,3 +66,36 @@ class ClientUserFollowActionLiveTestCase(unittest.IsolatedAsyncioTestCase):
                 await requester.user_unfollow(target_id)
             except Exception:
                 pass
+
+
+class ClientPrivateGraphQLV2UserFieldsLiveTestCase(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.test_accounts_url = os.getenv("TEST_ACCOUNTS_URL")
+        if not self.test_accounts_url:
+            self.skipTest("TEST_ACCOUNTS_URL is required for private GraphQL v2 user field live tests")
+
+    async def test_user_followers_private_gql_preserves_v2_user_fields(self):
+        clients = await _fresh_reusable_user_clients(self.test_accounts_url, count=10)
+        if not clients:
+            self.skipTest("At least one reusable TEST_ACCOUNTS_URL session is required")
+        cl = clients[0]
+        user_id = await cl.user_id_from_username("instagram")
+        result = await cl.private_graphql_followers_list(user_id, cl.rank_token, order="date_followed_latest")
+        data = result.get("data") or {}
+        followers = next(
+            (value for key, value in data.items() if "xdt_api__v1__friendships__followers" in key),
+            {},
+        )
+        raw_user = next((user for user in followers.get("users", []) if user.get("friendship_status")), None)
+        if raw_user is None:
+            self.skipTest("private GraphQL followers payload did not include friendship_status")
+
+        rich_user = extract_user_short(dict(raw_user))
+
+        self.assertIsNotNone(rich_user.latest_reel_media)
+        self.assertIsInstance(rich_user.account_badges, list)
+        self.assertIsInstance(rich_user.friendship_status, ig_types.RelationshipShort)
+        for field in ("profile_pic_id", "fbid_v2", "interop_messaging_user_fbid", "strong_id__"):
+            raw_value = raw_user.get(field)
+            if raw_value is not None:
+                self.assertEqual(getattr(rich_user, field), str(raw_value))
