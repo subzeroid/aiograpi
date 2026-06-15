@@ -50,10 +50,13 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | media_pin(media_id: str)                                        | bool               | Pin a media to user profile
 | media_unpin(media_id: str)                                      | bool               | Unpin a media to user profile
 | clip_mashup_info(media_pk: str)                                 | dict               | Fetch Reel remix/reuse availability metadata
+| clip_seen(media_ids: List[str], blend_media_ids: List[str] = None) | bool            | Mark Reels/Clips as seen through the Clips seen-state endpoint
 | clip_pin(media_pk: str)                                         | bool               | Pin a Reel to the Reels tab/profile Reels grid
 | clip_unpin(media_pk: str)                                       | bool               | Unpin a Reel from the Reels tab/profile Reels grid
 
 Media notes are separate from Direct inbox Notes. Use `media_note_create()` and `media_note_delete()` for the note surface attached to a post or Reel; use the [Notes guide](notes.md) for Direct inbox Notes.
+
+Use `clip_seen()` for Reels/Clips. `media_seen()` keeps the older story/reel-tray seen payload. Instagram still decides whether a seen-state event is counted in view analytics.
 
 `media_share_to_story()` uploads a story background and attaches the feed media as a story sticker. Pass a 9:16
 background image, or omit `background` to generate a temporary black 720x1280 image.
