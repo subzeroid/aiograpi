@@ -7,6 +7,7 @@ from aiograpi import types as ig_types
 from aiograpi.exceptions import ClientError, ClientGraphqlError, ClientJSONDecodeError, UserNotFound
 from aiograpi.extractors import extract_user_short, extract_user_v1
 from aiograpi.mixins.user import MAX_USER_COUNT, USER_INFO_BY_USERNAME_V2_DOC_ID, USER_INFO_V2_DOC_ID, UserMixin
+from aiograpi.types import UserShort
 
 
 class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -518,6 +519,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_user_follow_posts_current_action_context(self):
         client = self._build_action_client()
+        client.user_friendship_v1 = AsyncMock(return_value=Mock(following=False, outgoing_request=False))
         client.private_request = AsyncMock(return_value={"friendship_status": {"following": True}})
 
         self.assertTrue(await client.user_follow("42"))
@@ -533,11 +535,37 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_user_follow_returns_true_for_pending_private_follow_request(self):
         client = self._build_private_client()
+        client.user_friendship_v1 = AsyncMock(return_value=Mock(following=False, outgoing_request=False))
         client.private_request = AsyncMock(
             return_value={"friendship_status": {"following": False, "outgoing_request": True}}
         )
 
         self.assertTrue(await client.user_follow("42"))
+
+    async def test_user_follow_skips_create_when_friendship_already_following(self):
+        client = self._build_private_client()
+        client.user_friendship_v1 = AsyncMock(return_value=Mock(following=True, outgoing_request=False))
+        client.private_request = AsyncMock(
+            side_effect=AssertionError("already-followed users should not be followed again")
+        )
+
+        self.assertFalse(await client.user_follow("42"))
+
+        client.user_friendship_v1.assert_awaited_once_with("42")
+        client.private_request.assert_not_awaited()
+
+    async def test_user_follow_updates_existing_following_cache_after_success(self):
+        client = self._build_private_client()
+        client._users_following = {str(client.user_id): {}}
+        client.user_friendship_v1 = AsyncMock(return_value=Mock(following=False, outgoing_request=False))
+        client.private_request = AsyncMock(return_value={"friendship_status": {"following": True}})
+
+        self.assertTrue(await client.user_follow("42"))
+        self.assertFalse(await client.user_follow("42"))
+
+        client.private_request.assert_awaited_once()
+        self.assertIn("42", client._users_following[str(client.user_id)])
+        self.assertIsInstance(client._users_following[str(client.user_id)]["42"], UserShort)
 
     async def test_user_unfollow_posts_current_action_context(self):
         client = self._build_action_client()

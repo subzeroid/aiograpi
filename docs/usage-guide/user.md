@@ -55,7 +55,7 @@ Low level methods:
 | search_followers_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by followers by Private Mobile API                                  |
 | search_following_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by following by Private Mobile API                                  |
 
-`user_follow()` returns `True` when Instagram reports either an immediate follow or an outgoing follow request for a private account. Use `user_friendship_v1()` when you need to distinguish `following` from `outgoing_request`.
+`user_follow()` returns `True` only when it sends a new follow action and Instagram reports either an immediate follow or a new outgoing follow request for a private account. It returns `False` when the current account already follows the target or already has a pending outgoing follow request. Use `user_friendship_v1()` when you need to distinguish `following` from `outgoing_request`.
 
 Example:
 
