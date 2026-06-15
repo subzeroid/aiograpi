@@ -17,6 +17,8 @@ from aiograpi.types import Comment
 from aiograpi.utils.auth import generate_jazoest
 from aiograpi.utils.serialization import dumps
 
+MEDIA_COMMENTS_DOC_ID = "6974885689225067"
+
 
 class CommentMixin(ClientMixin):
     """
@@ -142,6 +144,7 @@ class CommentMixin(ClientMixin):
             A list of objects of Comment
         """
         media_pk = str(self.media_pk(media_pk))
+        shortcode = self.media_code_from_pk(media_pk)  # type: ignore[attr-defined]
         comments = []
 
         # shortcode = self.media_code_from_pk(media_pk)
@@ -172,7 +175,6 @@ class CommentMixin(ClientMixin):
         #     page_info.get("end_cursor") if page_info.get("has_next_page") else None
         # )
 
-        doc_id = "6974885689225067"
         variables = {
             "after": end_cursor or None,
             "before": None,
@@ -181,16 +183,12 @@ class CommentMixin(ClientMixin):
             "media_id": media_pk,
             "sort_order": "popular",
         }
-        data = {
-            "variables": dumps(variables),
-            "doc_id": doc_id,
-            "fb_dtsg": await self.fb_dtsg,
-            # OPTIONAL (may have random values):
-            "jazoest": generate_jazoest(self.phone_id),
-            **GQL_STUFF,
-        }
-        resp = await self.graphql_request(data=data)
-        if data := resp["data"]:
+        data = await self.public_doc_id_graphql_request(
+            MEDIA_COMMENTS_DOC_ID,
+            variables,
+            referer=f"https://www.instagram.com/p/{shortcode}/",
+        )
+        if data:
             key = None
             for key in data.keys():
                 if "comments" in key:
@@ -199,7 +197,7 @@ class CommentMixin(ClientMixin):
             for edge in item.get("edges", []):
                 comments.append(edge["node"])
             page_info = item.get("page_info", {})
-            end_cursor = page_info.get("end_cursor") if page_info.get("has_next_page") else None
+            end_cursor = str(page_info.get("end_cursor") or "") if page_info.get("has_next_page") else ""
             return comments, end_cursor
         return [], ""
 
@@ -236,6 +234,25 @@ class CommentMixin(ClientMixin):
         if amount:
             comments = comments[:amount]
         return comments
+
+    async def media_comments_public_gql_chunk(self, code: str, end_cursor: str = "") -> Tuple[List[dict], str]:
+        """
+        Get one public GraphQL comments page by media shortcode.
+        """
+        return await self.media_comments_gql_chunk(
+            self.media_pk_from_code(code),  # type: ignore[attr-defined]
+            end_cursor=end_cursor,
+        )
+
+    async def media_comments_public_gql(self, code: str, amount: int = 50, max_requests: int = 0) -> List[dict]:
+        """
+        Get public GraphQL comments by media shortcode.
+        """
+        return await self.media_comments_gql(
+            self.media_pk_from_code(code),  # type: ignore[attr-defined]
+            amount=amount,
+            max_requests=max_requests,
+        )
 
     async def media_stream_comments_v1_chunk(
         self, media_id: str, min_id: str = "", max_id: str = ""

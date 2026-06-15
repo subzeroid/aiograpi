@@ -11,6 +11,10 @@ when Instagram returns feedback/challenge responses.
 | media_comment(media_id: str, text: str, replied_to_comment_id: Optional[int] = None) | Comment            | Add new comment to media
 | media_comments(media_id: str, amount: int = 0)                                          | List\[Comment]     | Get a list comments for media (amount=0 - all comments)
 | media_comments_chunk(media_id: str, max_amount: int, min_id: str = None) | Tuple[List[Comment], str] | Get chunk of comments on a media and end_cursor
+| media_comments_gql(media_pk: str, amount: int = 50, max_requests: int = 0) | List\[dict] | Get comments through the public web GraphQL doc_id endpoint
+| media_comments_gql_chunk(media_pk: str, end_cursor: str = "") | Tuple[List[dict], str] | Get one public web GraphQL comments page
+| media_comments_public_gql(code: str, amount: int = 50, max_requests: int = 0) | List\[dict] | Get public web GraphQL comments by media shortcode
+| media_comments_public_gql_chunk(code: str, end_cursor: str = "") | Tuple[List[dict], str] | Get one public web GraphQL comments page by media shortcode
 | media_comment_replies(media_id: str, comment_id: str, amount: int = 0) | List\[Comment] | Get replies for a parent media comment
 | media_comment_replies_chunk(media_id: str, comment_id: str, max_amount: int, min_id: str = None) | Tuple[List[Comment], str] | Get chunk of replies and the next child cursor
 | media_check_offensive_comment_v2(media_id: str, comment: str) | dict | Lightweight offensive-comment preflight response
@@ -85,6 +89,10 @@ QVFBQmZCa1dxaFB5eFpBY2luVFMwLWdmN2ZCcUV6OF9hQWlIQk12ZWZqUlctZ2pOa1J5YjJ6bFY5Q1do
 >>> next_min_id
 QVFEbHpIWmpFc3BNUkgzUFVuOGZOQlhDQ1hHeWlVWHlJSnBhb2FHbFB3YlJtNThnOUlrd01JUWdKRmRwZTRpWWU0bnZmX3VMNHlwcDBkWTJpZjQ2NE9SeQ==
 
+>>> public_comments = await cl.media_comments_public_gql("CjPUjEvDKT4", amount=40)
+>>> public_comments[0]["text"]
+'Example public comment'
+
 >>> preflight = await cl.media_check_offensive_comment_v2(media_id, "Some draft text")
 >>> preflight["is_offensive"]
 False
@@ -104,4 +112,5 @@ True
 
 Notes:
 
+* `media_comments_public_gql()` accepts a media shortcode and automatically builds the current public GraphQL `doc_id` request and post referer. Public web endpoints are still Instagram-gated and may return 401/403/429 depending on IP, TLS fingerprint, cookies, or session state.
 * `media_check_offensive_comment_v2()` can be used as an explicit lightweight preflight before `media_comment()`. `media_comment()` does not run extra preflight requests automatically, so callers can choose the request volume and handle the raw response.

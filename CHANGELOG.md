@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.4.10] - 2026-06-15
+
+### Added
+
+- Added `media_comments_public_gql(...)` and `media_comments_public_gql_chunk(...)` for public web GraphQL comments by media shortcode.
+
+### Changed
+
+- `media_comments_gql_chunk(...)` now uses the public `doc_id` GraphQL request path instead of the session-backed web GraphQL form.
+- Synced the recorded upstream baseline to `instagrapi` 2.10.10.
+
 ## [1.4.9] - 2026-06-14
 
 ### Added

@@ -94,6 +94,43 @@ class CommentRepliesRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert all(isinstance(reply, Comment) for reply in replies)
         assert replies[0].replied_to_comment_id == "100"
 
+    async def test_media_comments_gql_chunk_posts_public_doc_id_query(self):
+        client = Client()
+        client.public_doc_id_graphql_request = AsyncMock(
+            return_value={
+                "xdt_media_comments": {
+                    "edges": [{"node": {"pk": "101", "text": "hello"}}],
+                    "page_info": {"has_next_page": True, "end_cursor": "cursor-2"},
+                }
+            }
+        )
+
+        comments, cursor = await client.media_comments_gql_chunk("3441088131388376166", end_cursor="cursor-1")
+
+        self.assertEqual(comments, [{"pk": "101", "text": "hello"}])
+        self.assertEqual(cursor, "cursor-2")
+        client.public_doc_id_graphql_request.assert_awaited_once_with(
+            "6974885689225067",
+            {
+                "after": "cursor-1",
+                "before": None,
+                "first": 50,
+                "last": None,
+                "media_id": "3441088131388376166",
+                "sort_order": "popular",
+            },
+            referer="https://www.instagram.com/p/C_BM2yAN4Rm/",
+        )
+
+    async def test_media_comments_public_gql_uses_shortcode_without_manual_graphql_params(self):
+        client = Client()
+        client.media_comments_gql = AsyncMock(return_value=[{"pk": "101"}])
+
+        comments = await client.media_comments_public_gql("C_BM2yAN4Rm", amount=12, max_requests=2)
+
+        self.assertEqual(comments, [{"pk": "101"}])
+        client.media_comments_gql.assert_awaited_once_with("3441088131388376166", amount=12, max_requests=2)
+
     async def test_comment_pin_posts_to_slash_terminated_endpoint(self):
         client = self._build_logged_in_client()
         client.private_request = AsyncMock(return_value={"status": "ok"})
