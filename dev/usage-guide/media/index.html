@@ -2030,6 +2030,9 @@ background image, or omit <code>background</code> to generate a temporary black 
 </tr>
 </tbody>
 </table>
+<p><code>photo_download()</code> resolves photo metadata through the public/web media-info path first so it can use the largest
+display resource Instagram exposes for the post, then falls back to private/mobile metadata when the public web
+endpoint is gated. It does not rewrite CDN URLs manually.</p>
 <h3 id="example_1">Example:</h3>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
