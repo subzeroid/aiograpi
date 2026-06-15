@@ -180,6 +180,146 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             client.album_configure.call_args.kwargs["extra_data"]["invite_coauthor_user_ids"], ["123", "456"]
         )
 
+    async def test_clip_interest_topics_requests_reel_topic_catalog(self):
+        client = self.build_client()
+        expected = {
+            "sub_interests": [
+                {"name": "Technology", "fit_id": 607271032992452},
+            ],
+            "status": "ok",
+        }
+        client.private_request = AsyncMock(return_value=expected)
+
+        result = await client.clip_interest_topics()
+
+        client.private_request.assert_awaited_once_with(
+            "interest_nux/list_all/",
+            params={"caller": "INTEREST_NUX"},
+            with_signature=False,
+        )
+        self.assertEqual(result, expected["sub_interests"])
+
+    async def test_photo_rupload_sends_private_auth_headers(self):
+        client = self.build_client()
+        client.authorization_data = {
+            "ds_user_id": "1",
+            "sessionid": "1:session",
+            "should_use_header_over_cookies": True,
+        }
+        response = unittest.mock.Mock(status_code=200)
+        opened = unittest.mock.Mock()
+        opened.__enter__ = unittest.mock.Mock(return_value=unittest.mock.Mock(size=(720, 720)))
+        opened.__exit__ = unittest.mock.Mock(return_value=False)
+
+        with unittest.mock.patch("aiograpi.mixins.photo.prepare_image", return_value=(b"photo-bytes", (720, 720))):
+            with unittest.mock.patch("aiograpi.mixins.photo.Image.open", return_value=opened):
+                with unittest.mock.patch("random.randint", return_value=1234567890):
+                    client.private.post = AsyncMock(return_value=response)
+                    upload_id, width, height = await client.photo_rupload(Path("image.jpg"), upload_id="upload-id")
+
+        self.assertEqual((upload_id, width, height), ("upload-id", 720, 720))
+        headers = client.private.post.call_args.kwargs["headers"]
+        self.assertEqual(headers["Authorization"], client.authorization)
+        self.assertEqual(headers["IG-U-DS-USER-ID"], "1")
+        self.assertEqual(headers["X-Entity-Length"], "11")
+        self.assertEqual(headers["X-Entity-Name"], "upload-id_0_1234567890")
+
+    async def test_clip_upload_uses_current_reels_rupload_shape(self):
+        client = self.build_client()
+        client.last_json = {"media": {"pk": "1", "id": "1_1", "code": "abc", "media_type": 2}}
+        client.authorization_data = {
+            "ds_user_id": "1",
+            "sessionid": "1:session",
+            "should_use_header_over_cookies": True,
+        }
+        ok_response = unittest.mock.Mock(status_code=200)
+        client.private.get = AsyncMock(return_value=ok_response)
+        client.private.post = AsyncMock(side_effect=[ok_response, ok_response])
+        client.clip_configure = AsyncMock(return_value={"status": "ok"})
+        client._extract_configured_media_or_raise = lambda configured, *args, **kwargs: self.build_media(media_type=2)
+
+        with unittest.mock.patch(
+            "aiograpi.mixins.clip.analyze_video",
+            return_value=(Path("/tmp/thumb.jpg"), 720, 1280, 6.023),
+        ):
+            with unittest.mock.patch("builtins.open", unittest.mock.mock_open(read_data=b"video-bytes")):
+                with unittest.mock.patch("asyncio.sleep", new=AsyncMock()):
+                    media = await client.clip_upload(Path("example.mp4"), "caption")
+
+        self.assertIsInstance(media, Media)
+        upload_settings_call = client.private.post.call_args_list[0]
+        self.assertRegex(
+            upload_settings_call.args[0],
+            r"https://i\.instagram\.com/upload_settings/[0-9a-f-]{36}$",
+        )
+        settings_headers = upload_settings_call.kwargs["headers"]
+        self.assertEqual(settings_headers["Authorization"], client.authorization)
+        self.assertEqual(settings_headers["IG-U-DS-USER-ID"], "1")
+        self.assertEqual(settings_headers["Content-Type"], "application/json")
+        self.assertEqual(settings_headers["X-Entity-Name"], "upload_settings")
+        self.assertEqual(settings_headers["X-Entity-Type"], "application/json")
+        self.assertIn("X_FB_VIDEO_WATERFALL_ID", settings_headers)
+        upload_settings = json.loads(upload_settings_call.kwargs["data"])
+        upload_props = upload_settings["upload_setting_properties"]
+        self.assertEqual(upload_props["context"]["source_type"], "clips")
+        self.assertEqual(upload_props["context"]["target_id"], 1)
+        self.assertEqual(upload_props["video"]["video_original_file_size"], 11)
+        self.assertEqual(upload_props["video"]["video_duration_milliseconds"], 6023)
+
+        init_headers = client.private.get.call_args.kwargs["headers"]
+        self.assertEqual(init_headers["Authorization"], client.authorization)
+        self.assertEqual(init_headers["IG-U-DS-USER-ID"], "1")
+        self.assertEqual(init_headers["X-Entity-Type"], "video/mp4")
+        rupload_params = json.loads(init_headers["X-Instagram-Rupload-Params"])
+        self.assertEqual(rupload_params["share_type"], "reels")
+        self.assertEqual(rupload_params["is_clips_video"], "1")
+        self.assertEqual(rupload_params["upload_media_duration_ms"], "6023")
+        self.assertEqual(rupload_params["upload_media_height"], "1280")
+        self.assertEqual(rupload_params["upload_media_width"], "720")
+
+        video_upload_call = client.private.post.call_args_list[1]
+        upload_name = init_headers["X_FB_VIDEO_WATERFALL_ID"].rsplit("_", 2)[0]
+        self.assertIn("/rupload_igvideo/", client.private.get.call_args.args[0])
+        self.assertTrue(video_upload_call.args[0].startswith("https://i.instagram.com/rupload_igvideo/"))
+        headers = video_upload_call.kwargs["headers"]
+        self.assertEqual(headers["Authorization"], client.authorization)
+        self.assertEqual(headers["IG-U-DS-USER-ID"], "1")
+        self.assertEqual(headers["Content-Type"], "application/octet-stream")
+        self.assertEqual(headers["X-Entity-Type"], "video/mp4")
+        self.assertEqual(headers["X-Entity-Length"], "11")
+        self.assertEqual(headers["Content-Length"], "11")
+        self.assertEqual(headers["Offset"], "0")
+        self.assertTrue(headers["X-Entity-Name"])
+        self.assertIn("X-Instagram-Rupload-Params", headers)
+        self.assertTrue(upload_name)
+
+    async def test_clip_upload_topics_adds_interest_topics_without_mutating_extra_data(self):
+        client = self.build_client()
+        ok_response = unittest.mock.Mock(status_code=200)
+        client.private.get = AsyncMock(return_value=ok_response)
+        client.private.post = AsyncMock(side_effect=[ok_response, ok_response])
+        client.clip_configure = AsyncMock(return_value={"status": "ok"})
+        client._extract_configured_media_or_raise = lambda configured, *args, **kwargs: self.build_media(media_type=2)
+        extra_data = {"disable_comments": "1"}
+
+        with unittest.mock.patch(
+            "aiograpi.mixins.clip.analyze_video",
+            return_value=(Path("/tmp/thumb.jpg"), 720, 1280, 6.023),
+        ):
+            with unittest.mock.patch("builtins.open", unittest.mock.mock_open(read_data=b"video-bytes")):
+                with unittest.mock.patch("asyncio.sleep", new=AsyncMock()):
+                    await client.clip_upload(
+                        Path("example.mp4"),
+                        "caption",
+                        topics=[123, "456"],
+                        extra_data=extra_data,
+                    )
+
+        self.assertEqual(extra_data, {"disable_comments": "1"})
+        configure_extra = client.clip_configure.call_args.kwargs["extra_data"]
+        self.assertEqual(configure_extra["disable_comments"], "1")
+        self.assertEqual(configure_extra["interest_topics"], ["123", "456"])
+
     async def test_coauthor_user_ids_rejects_conflicting_extra_data_key(self):
         client = self.build_client()
 

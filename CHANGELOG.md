@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.4.14] - 2026-06-15
+
+### Added
+
+- Added `clip_interest_topics()` and `topics=[...]` support for `clip_upload(...)`, sending Reel topic `fit_id` values as Instagram's Android `interest_topics` configure field.
+- Added live coverage for Reel uploads with topics.
+
+### Fixed
+
+- Direct Reel upload setup, Reel video rupload, and photo thumbnail rupload now include private auth headers, avoiding `login_required` failures for header-auth sessions.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.10.13.
+
+## [1.4.13] - 2026-06-15
+
+### Added
+
+- Added `clip_seen(...)` for marking Reels/Clips as seen via Instagram's current seen-state endpoint.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.10.12.
+
 ## [1.4.12] - 2026-06-15
 
 ### Fixed
