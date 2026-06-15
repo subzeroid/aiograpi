@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.6.0] - 2026-06-15
+
+### Added
+
+- Added live coverage for preserving v2-only `UserShort` fields from private GraphQL follow-list payloads.
+
+### Changed
+
+- `UserShort` now preserves selected private GraphQL v2 fields when Instagram sends them: `friendship_status`, `profile_pic_id`, `fbid_v2`, `interop_messaging_user_fbid`, `strong_id__`, and raw `account_badges`.
+- `extract_user_short(...)` now populates `latest_reel_media` from Instagram's current `1llatest_reel_media` key.
+- Synced the recorded upstream baseline to `instagrapi` 2.12.0.
+
 ## [1.5.0] - 2026-06-15
 
 ### Added
