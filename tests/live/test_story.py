@@ -109,3 +109,48 @@ class ClientStoryPollVoteLiveTestCase(unittest.IsolatedAsyncioTestCase):
         finally:
             if story:
                 self.assertTrue(await author.story_delete(story.id))
+
+
+async def _story_likers_until_contains(client, story_pk, expected_user_id, attempts=12, delay=5):
+    last_liker_ids = []
+    for attempt in range(attempts):
+        if attempt:
+            await asyncio.sleep(delay)
+        likers = await client.story_likers(story_pk, amount=20)
+        last_liker_ids = [str(liker.pk) for liker in likers]
+        if str(expected_user_id) in last_liker_ids:
+            return likers
+    raise RuntimeError(f"Story likers did not include {expected_user_id} after {attempts} attempts: {last_liker_ids}")
+
+
+class ClientStoryLikersLiveTestCase(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.test_accounts_url = os.getenv("TEST_ACCOUNTS_URL")
+        if not self.test_accounts_url:
+            self.skipTest("TEST_ACCOUNTS_URL is required for story likers live tests")
+
+    async def test_story_likers_live(self):
+        timeout = int(os.getenv("AIOGRAPI_STORY_LIKERS_LIVE_TIMEOUT", "240"))
+        await asyncio.wait_for(self._test_story_likers_live(), timeout=timeout)
+
+    async def _test_story_likers_live(self):
+        clients = await _fresh_reusable_story_clients(self.test_accounts_url)
+        if len(clients) < 2:
+            self.skipTest("At least two reusable TEST_ACCOUNTS_URL sessions are required")
+
+        author, liker = clients[:2]
+        story = None
+        try:
+            story = await author.photo_upload_to_story(Path("examples/background.png"), "Story likers live test")
+            await _story_payload_for_viewer(liker, author.user_id, story)
+            seen = await liker.story_seen([story.pk])
+            liked = await liker.story_like(story.id)
+            likers = await _story_likers_until_contains(author, story.pk, liker.user_id)
+
+            self.assertTrue(story.id)
+            self.assertTrue(seen)
+            self.assertTrue(liked)
+            self.assertIn(str(liker.user_id), [str(user.pk) for user in likers])
+        finally:
+            if story:
+                self.assertTrue(await author.story_delete(story.id))
