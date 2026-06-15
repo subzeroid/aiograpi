@@ -595,7 +595,7 @@ class StoryMixin(ClientMixin):
             likers = likers[:amount]
         return likers
 
-    async def story_like(self, story_id: str, revert: bool = False) -> bool:
+    async def story_like(self, story_id: str, revert: bool = False, mark_seen: bool = True) -> bool:
         """
         Like a story
 
@@ -605,6 +605,8 @@ class StoryMixin(ClientMixin):
             Unique identifier of a Story
         revert: bool, optional
             If liked, whether or not to unlike. Default is False
+        mark_seen: bool, optional
+            Mark story as seen before liking. Default is True
 
         Returns
         -------
@@ -614,6 +616,8 @@ class StoryMixin(ClientMixin):
         if not self.user_id:
             raise PreLoginRequired
         media_id = await self.media_id(story_id)
+        if mark_seen and not revert:
+            await self.story_seen([self.media_pk(media_id)])
         data = {
             "media_id": media_id,
             "_uid": str(self.user_id),

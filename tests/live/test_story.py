@@ -143,12 +143,10 @@ class ClientStoryLikersLiveTestCase(unittest.IsolatedAsyncioTestCase):
         try:
             story = await author.photo_upload_to_story(Path("examples/background.png"), "Story likers live test")
             await _story_payload_for_viewer(liker, author.user_id, story)
-            seen = await liker.story_seen([story.pk])
             liked = await liker.story_like(story.id)
             likers = await _story_likers_until_contains(author, story.pk, liker.user_id)
 
             self.assertTrue(story.id)
-            self.assertTrue(seen)
             self.assertTrue(liked)
             self.assertIn(str(liker.user_id), [str(user.pk) for user in likers])
         finally:
