@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.4.12] - 2026-06-15
+
+### Fixed
+
+- Fixed legacy `signup(...)` helper requests in logged-out/sessionless flows so the async pre-login guard does not raise `PreLoginRequired` before Instagram receives signup config, email, phone, age-check, or account-create requests.
+
 ## [1.4.11] - 2026-06-15
 
 ### Changed

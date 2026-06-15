@@ -211,6 +211,35 @@ class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("email or phone_number", str(ctx.exception))
 
+    async def test_legacy_signup_helpers_allow_sessionless_private_requests(self):
+        client = Client()
+        client.uuid = "uuid"
+        client.phone_id = "phone-id"
+        client.android_device_id = "android-id"
+        client.waterfall_id = "waterfall-id"
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+
+        await client.get_signup_config()
+        await client.check_username("example")
+        await client.check_email("addr@example.com")
+        await client.check_phone_number("+15551234567")
+        await client.send_signup_sms_code("+15551234567")
+        await client.send_verify_email("addr@example.com")
+        await client.check_confirmation_code("addr@example.com", "123456")
+        await client.check_age_eligibility(2000, 5, 12)
+        await client.accounts_create(
+            username="example",
+            password="password",
+            email="addr@example.com",
+            email_code="signup-code",
+        )
+
+        self.assertEqual(client.private_request.await_count, 9)
+        for call in client.private_request.call_args_list:
+            with self.subTest(endpoint=call.args[0]):
+                self.assertTrue(call.kwargs.get("login"))
+
     async def test_signup_with_phone_number_uses_sms_flow(self):
         client = Client()
         client.wait_seconds = 0

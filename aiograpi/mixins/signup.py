@@ -713,12 +713,17 @@ class SignUpMixin(ClientMixin):
             print(f"ERROR: {e}", data)
 
     async def check_username(self, username):
-        return await self.private_request("users/check_username/", data={"username": username, "_uuid": self.uuid})
+        return await self.private_request(
+            "users/check_username/",
+            data={"username": username, "_uuid": self.uuid},
+            login=True,
+        )
 
     async def get_signup_config(self) -> dict:
         return await self.private_request(
             "consent/get_signup_config/",
             params={"guid": self.uuid, "main_account_selected": False},
+            login=True,
         )
 
     async def check_email(self, email) -> dict:
@@ -733,6 +738,7 @@ class SignUpMixin(ClientMixin):
                 "qe_id": str(uuid4()),
                 "waterfall_id": self.waterfall_id,
             },
+            login=True,
         )
 
     async def send_verify_email(self, email) -> dict:
@@ -746,6 +752,7 @@ class SignUpMixin(ClientMixin):
                 "waterfall_id": self.waterfall_id,
                 "auto_confirm_only": "false",
             },
+            login=True,
         )
 
     async def check_confirmation_code(self, email, code) -> dict:
@@ -758,12 +765,14 @@ class SignUpMixin(ClientMixin):
                 "email": email,
                 "waterfall_id": self.waterfall_id,
             },
+            login=True,
         )
 
     async def check_age_eligibility(self, year, month, day):
         return await self.private_request(
             "consent/check_age_eligibility/",
             data={"_csrftoken": self.token, "day": day, "year": year, "month": month},
+            login=True,
             with_signature=False,
         )
 
@@ -840,7 +849,7 @@ class SignUpMixin(ClientMixin):
                 phone_data["is_secondary_account_creation"] = "true"
             data = dict(data, **phone_data)
         try:
-            return await self.private_request(endpoint, data)
+            return await self.private_request(endpoint, data, login=True)
         except FeedbackRequired as exc:
             if getattr(exc, "spam", False):
                 details = vars(exc).copy()
@@ -973,6 +982,7 @@ class SignUpMixin(ClientMixin):
                 "device_id": self.android_device_id,
                 "prefill_shown": "False",
             },
+            login=True,
         )
 
     async def send_signup_sms_code(self, phone_number: str):
@@ -986,4 +996,5 @@ class SignUpMixin(ClientMixin):
                 "android_build_type": "release",
                 "waterfall_id": self.waterfall_id,
             },
+            login=True,
         )
