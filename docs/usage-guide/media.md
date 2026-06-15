@@ -234,6 +234,10 @@ True
 | clip_download(media_pk: int, folder: Path)                   | Path    | Download Reels Clip (path to video with best resolution)             |
 | clip_download_by_url(url: str, filename: str, folder: Path)  | Path    | Download Reels Clip by URL (path to video with best resolution)      |
 
+`photo_download()` resolves photo metadata through the public/web media-info path first so it can use the largest
+display resource Instagram exposes for the post, then falls back to private/mobile metadata when the public web
+endpoint is gated. It does not rewrite CDN URLs manually.
+
 ### Example:
 
 ``` python
