@@ -225,3 +225,39 @@ class StoryMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         likers = await client.story_likers("1234567890_1")
 
         self.assertEqual(likers, [])
+
+    async def test_story_like_marks_story_seen_before_liking(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client.story_seen = AsyncMock(return_value=True)
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.story_like("1234567890_1")
+
+        self.assertTrue(result)
+        client.story_seen.assert_awaited_once_with(["1234567890"])
+        client.private_request.assert_awaited_once()
+        self.assertEqual(client.private_request.call_args.args[0], "story_interactions/send_story_like")
+
+    async def test_story_like_can_skip_mark_seen(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client.story_seen = AsyncMock(return_value=True)
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.story_like("1234567890_1", mark_seen=False)
+
+        self.assertTrue(result)
+        client.story_seen.assert_not_awaited()
+
+    async def test_story_unlike_does_not_mark_story_seen(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client.story_seen = AsyncMock(return_value=True)
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.story_unlike("1234567890_1")
+
+        self.assertTrue(result)
+        client.story_seen.assert_not_awaited()
+        self.assertEqual(client.private_request.call_args.args[0], "story_interactions/unsend_story_like")
