@@ -1451,6 +1451,11 @@
 <td>Unlike a story</td>
 </tr>
 <tr>
+<td>story_poll_vote(story_id: str, poll_id: str, vote: int)</td>
+<td>bool</td>
+<td>Vote in a story poll sticker</td>
+</tr>
+<tr>
 <td>archive_story_days(amount: int = 0, include_memories: bool = True)</td>
 <td>List[StoryArchiveDay]</td>
 <td>Get story archive day shells</td>
@@ -1555,7 +1560,7 @@ a local MP4 before upload. They add Story music metadata and bake the selected t
 expose Instagram's native interactive lyrics/music sticker UI.</p>
 <p>Examples:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">StoryMention</span><span class="p">,</span> <span class="n">StoryMedia</span><span class="p">,</span> <span class="n">StoryLink</span><span class="p">,</span> <span class="n">StoryHashtag</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">StoryMention</span><span class="p">,</span> <span class="n">StoryMedia</span><span class="p">,</span> <span class="n">StoryLink</span><span class="p">,</span> <span class="n">StoryHashtag</span><span class="p">,</span> <span class="n">StoryPoll</span>
 
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
@@ -1572,6 +1577,13 @@ expose Instagram's native interactive lyrics/music sticker UI.</p>
     <span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="n">StoryLink</span><span class="p">(</span><span class="n">webUri</span><span class="o">=</span><span class="s1">&#39;https://github.com/subzeroid/aiograpi&#39;</span><span class="p">)],</span>
     <span class="n">hashtags</span><span class="o">=</span><span class="p">[</span><span class="n">StoryHashtag</span><span class="p">(</span><span class="n">hashtag</span><span class="o">=</span><span class="n">hashtag</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.23</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.32</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.22</span><span class="p">)],</span>
     <span class="n">medias</span><span class="o">=</span><span class="p">[</span><span class="n">StoryMedia</span><span class="p">(</span><span class="n">media_pk</span><span class="o">=</span><span class="n">media_pk</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)],</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Upload a story poll:</p>
+<div class="highlight"><pre><span></span><code><span class="n">story</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">photo_upload_to_story</span><span class="p">(</span>
+    <span class="s2">&quot;/app/image.jpg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Poll&quot;</span><span class="p">,</span>
+    <span class="n">polls</span><span class="o">=</span><span class="p">[</span><span class="n">StoryPoll</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">question</span><span class="o">=</span><span class="s2">&quot;Pick one&quot;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Yes&quot;</span><span class="p">,</span> <span class="s2">&quot;No&quot;</span><span class="p">])],</span>
 <span class="p">)</span>
 </code></pre></div>
 <p>Share a feed media to story:</p>
@@ -1653,6 +1665,11 @@ pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="
 
 <span class="c1"># another way to unlike story</span>
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_like</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">],</span> <span class="n">revert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<p>Vote in story poll:</p>
+<div class="highlight"><pre><span></span><code><span class="n">story</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_info</span><span class="p">(</span><span class="n">STORY_ID</span><span class="p">)</span>
+<span class="n">poll</span> <span class="o">=</span> <span class="n">story</span><span class="o">.</span><span class="n">polls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_poll_vote</span><span class="p">(</span><span class="n">story</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">poll</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 </code></pre></div>
 <p>More stories here <a href="https://www.instagram.com/wrclive/">https://www.instagram.com/wrclive/</a></p>
 
