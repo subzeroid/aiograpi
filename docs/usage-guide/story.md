@@ -12,6 +12,7 @@
 | story_viewers(story_pk: int, amount: int = 20)                         | List[UserShort] | List of story viewers (via Private API)
 | story_like(story_id: str, revert: bool = False)                        | bool            | Like a story
 | story_unlike(story_id: str)                                            | bool            | Unlike a story
+| story_poll_vote(story_id: str, poll_id: str, vote: int)                | bool            | Vote in a story poll sticker
 | archive_story_days(amount: int = 0, include_memories: bool = True)      | List[StoryArchiveDay] | Get story archive day shells
 | archive_stories(amount: int = 0)                                       | List[Story]     | Get archived stories
 
@@ -75,7 +76,7 @@ Examples:
 
 ``` python
 from aiograpi import Client
-from aiograpi.types import StoryMention, StoryMedia, StoryLink, StoryHashtag
+from aiograpi.types import StoryMention, StoryMedia, StoryLink, StoryHashtag, StoryPoll
 
 cl = Client()
 await cl.login(USERNAME, PASSWORD)
@@ -92,6 +93,16 @@ await cl.video_upload_to_story(
     links=[StoryLink(webUri='https://github.com/subzeroid/aiograpi')],
     hashtags=[StoryHashtag(hashtag=hashtag, x=0.23, y=0.32, width=0.5, height=0.22)],
     medias=[StoryMedia(media_pk=media_pk, x=0.5, y=0.5, width=0.6, height=0.8)],
+)
+```
+
+Upload a story poll:
+
+```python
+story = await cl.photo_upload_to_story(
+    "/app/image.jpg",
+    "Poll",
+    polls=[StoryPoll(x=0.5, y=0.5, width=0.7, height=0.3, question="Pick one", options=["Yes", "No"])],
 )
 ```
 
@@ -175,6 +186,14 @@ await cl.story_unlike(info['id']) # To unlike story
 
 # another way to unlike story
 await cl.story_like(info['id'], revert=True)
+```
+
+Vote in story poll:
+
+```python
+story = await cl.story_info(STORY_ID)
+poll = story.polls[0]
+await cl.story_poll_vote(story.id, poll.id, 0)
 ```
 
 More stories here [https://www.instagram.com/wrclive/](https://www.instagram.com/wrclive/)

@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.4.15] - 2026-06-15
+
+### Added
+
+- Added async `story_poll_vote(story_id, poll_id, vote)` for voting in Instagram story poll stickers.
+- Added private story poll extraction so `Story.polls` includes poll ids, questions, options, vote state, and raw poll payloads from `story_polls`.
+- Added live coverage for uploading a story poll, voting from a second account, verifying the vote state, and cleaning up the story.
+
+### Changed
+
+- Synced the recorded upstream baseline to `instagrapi` 2.10.14.
+
 ## [1.4.14] - 2026-06-15
 
 ### Added
