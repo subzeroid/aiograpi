@@ -61,6 +61,26 @@ def _build_media_payload():
 
 
 class ClipPinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_clip_seen_posts_write_seen_state_payload(self):
+        client = Client()
+        client._user_id = "29060001803"
+        client.uuid = "uuid"
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.clip_seen(
+            ["3917361171492779700_25025320", "3917361171492779701"],
+            blend_media_ids=["3917361171492779702_25025320"],
+        )
+
+        assert result is True
+        client.private_request.assert_awaited_once()
+        assert client.private_request.call_args.args[0] == "clips/write_seen_state/"
+        payload = client.private_request.call_args.kwargs["data"]
+        assert json.loads(payload["impressions"]) == ["3917361171492779700", "3917361171492779701"]
+        assert json.loads(payload["blend_impressions"]) == ["3917361171492779702"]
+        assert payload["_uid"] == "29060001803"
+        assert payload["_uuid"] == "uuid"
+
     async def test_clip_mashup_info_posts_media_id_and_identity(self):
         client = Client()
         client._user_id = "29060001803"

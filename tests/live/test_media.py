@@ -85,11 +85,12 @@ class ClientClipMashupInfoLiveTestCase(unittest.IsolatedAsyncioTestCase):
     async def live_client(self):
         test_accounts_url = os.getenv("TEST_ACCOUNTS_URL")
         if not test_accounts_url:
-            self.skipTest("TEST_ACCOUNTS_URL is required for clip mashup info live tests")
+            self.skipTest("TEST_ACCOUNTS_URL is required for clip live tests")
         accounts = await _fetch_accounts(test_accounts_url, count=20)
         cl = await _login_first_usable(accounts)
         if cl is None:
             self.skipTest("Could not login with any test account")
+        cl.request_timeout = 0
         return cl
 
     async def test_clip_mashup_info_live(self):
@@ -103,3 +104,14 @@ class ClientClipMashupInfoLiveTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(mashup_info, dict)
         self.assertIn("is_reuse_allowed", mashup_info)
         self.assertIn("mashups_allowed", mashup_info)
+
+    async def test_clip_seen_live(self):
+        cl = await self.live_client()
+        try:
+            medias = await cl.user_clips_v1("25025320", amount=3)
+        except Exception as exc:
+            self.skipTest(f"Could not fetch public Instagram clips: {type(exc).__name__}: {str(exc)[:120]}")
+        if not medias:
+            self.skipTest("Public Instagram clips feed returned no media")
+
+        self.assertTrue(await cl.clip_seen([medias[0].id]))
