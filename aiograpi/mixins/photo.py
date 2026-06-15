@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from aiograpi import config
 from aiograpi.exceptions import (
+    ClientError,
     PhotoConfigureError,
     PhotoConfigureStoryError,
     PhotoNotUpload,
@@ -45,7 +46,16 @@ class DownloadPhotoMixin(ClientMixin):
     Helpers for downloading photo
     """
 
-    async def photo_download(self, media_pk: int, folder: Path = "", overwrite: bool = True) -> Path:
+    async def _photo_download_media_info(self, media_pk: str) -> Media:
+        try:
+            media = await self.media_info_gql(media_pk)
+        except ClientError:
+            media = None
+        if media and media.media_type == 1 and media.thumbnail_url:
+            return media
+        return await self.media_info(media_pk)
+
+    async def photo_download(self, media_pk: Union[int, str], folder: Path = "", overwrite: bool = True) -> Path:
         """
         Download photo using media pk
 
@@ -65,11 +75,14 @@ class DownloadPhotoMixin(ClientMixin):
         Path
             Path for the file downloaded
         """
-        media = await self.media_info(media_pk)
+        media_pk_str = self.media_pk(str(media_pk))
+        media = await self._photo_download_media_info(media_pk_str)
         if media.media_type != 1:
             raise Exception("Must been photo")
-        filename = "{username}_{media_pk}".format(username=media.user.username, media_pk=media_pk)
-        return await self.photo_download_by_url(media.thumbnail_url, filename, folder, overwrite=overwrite)
+        if not media.thumbnail_url:
+            raise Exception("Photo thumbnail URL is empty")
+        filename = "{username}_{media_pk}".format(username=media.user.username, media_pk=media_pk_str)
+        return await self.photo_download_by_url(str(media.thumbnail_url), filename, folder, overwrite=overwrite)
 
     async def photo_download_by_url(
         self,

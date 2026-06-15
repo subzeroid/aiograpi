@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.4.11] - 2026-06-15
+
+### Changed
+
+- `photo_download(...)` now resolves photo metadata through the public/web media-info path first so it can use the largest display resource Instagram exposes, with private/mobile metadata as the fallback when the public endpoint is gated.
+- Synced the recorded upstream baseline to `instagrapi` 2.10.11.
+
 ## [1.4.10] - 2026-06-15
 
 ### Added
