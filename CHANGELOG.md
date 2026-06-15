@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.5.0] - 2026-06-15
+
+### Added
+
+- Added live coverage for the first-follow `True` / duplicate-follow `False` workflow.
+
+### Changed
+
+- `user_follow(...)` now returns `False` for already-followed targets or existing outgoing follow requests, so duplicate `friendships/create` responses are not counted as new follow actions.
+- Successful `user_follow(...)` calls now preserve and update the current account's following cache instead of clearing it.
+- Synced the recorded upstream baseline to `instagrapi` 2.11.0.
+
 ## [1.4.15] - 2026-06-15
 
 ### Added
