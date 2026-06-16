@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.10.0] - 2026-06-16
+
+### Added
+
+- Added `Client.hashtag_medias_paginated(...)`, `Client.hashtag_medias_paginated_gql(...)`, and `Client.hashtag_medias_paginated_v1(...)` as async helpers for one-page hashtag media pagination with returned cursors.
+- Added reusable-session live coverage for hashtag media pagination.
+
+### Changed
+
+- Documented `Client.media_search(...)` and hashtag media pagination helpers.
+- Synced the recorded upstream baseline to `instagrapi` 2.16.0.
+
 ## [1.9.0] - 2026-06-16
 
 ### Added
