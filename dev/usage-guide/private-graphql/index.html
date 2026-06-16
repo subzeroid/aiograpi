@@ -1631,6 +1631,10 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <td><code>Client.fbsearch_typehead(query)</code></td>
 </tr>
 <tr>
+<td>Top media search</td>
+<td><code>Client.media_search(query, amount=27)</code></td>
+</tr>
+<tr>
 <td>Generic SERP fetch (top / user / clips / popular)</td>
 <td><code>Client.fbsearch_item(item_id, search_surface, query)</code></td>
 </tr>
@@ -1709,6 +1713,7 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <span class="n">top</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_topsearch_v2</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
 <span class="n">accounts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_accounts_v2</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
 <span class="n">reels</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_reels_v2</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
+<span class="n">media_hits</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_search</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 
 <span class="c1"># Pagination: pass the cursor from the previous response back in.</span>
 <span class="n">more_accounts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_accounts_v2</span><span class="p">(</span>
