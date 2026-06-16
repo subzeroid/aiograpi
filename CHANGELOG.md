@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.8.1] - 2026-06-16
+
+### Changed
+
+- Removed Python 3.8-era `Literal` fallback aliases now that the package targets Python 3.10+.
+- Added `StoryResizeMode = Literal["fill", "fit"]` and typed story upload `resize_mode` parameters explicitly.
+- `direct_threads_chunk(selected_filter=...)` now raises `ValueError` for unsupported filters instead of relying on `assert`.
+- Synced the recorded upstream baseline to `instagrapi` 2.14.1.
+
 ## [1.6.0] - 2026-06-15
 
 ### Added
