@@ -16,6 +16,7 @@ from aiograpi.exceptions import (
     VideoNotUpload,
 )
 from aiograpi.mixins.base import ClientMixin
+from aiograpi.story import StoryBuilder
 from aiograpi.types import (
     DirectMessage,
     Location,
@@ -673,6 +674,7 @@ class UploadVideoMixin(ClientMixin):
         medias: List[StoryMedia] = [],
         polls: List[StoryPoll] = [],
         extra_data: Dict[str, str] = {},
+        resize_mode: str = "fill",
     ) -> Story:
         """
         Upload video as a story and configure it
@@ -701,6 +703,8 @@ class UploadVideoMixin(ClientMixin):
             List of polls to be included on this upload, default is empty list.
         extra_data: Dict[str, str], optional
             Dict of extra data, if you need to add your params, like {"share_to_facebook": 1}.
+        resize_mode: str, optional
+            Story resize mode: "fill" keeps current upload behavior, "fit" renders a Story canvas without cropping.
 
         Returns
         -------
@@ -710,56 +714,75 @@ class UploadVideoMixin(ClientMixin):
         path = Path(path)
         if thumbnail is not None:
             thumbnail = Path(thumbnail)
-        upload_id, width, height, duration, thumbnail = await self.video_rupload(path, thumbnail, to_story=True)
-        previous_story_ids = await self._current_story_ids()
-        story_kwargs = {
-            "links": links,
-            "mentions": mentions,
-            "hashtags": hashtags,
-            "locations": locations,
-            "stickers": stickers,
-            "medias": medias,
-            "polls": polls,
-        }
-        for attempt in range(50):
-            self.logger.debug(f"Attempt #{attempt} to configure Video: {path}")
-            await asyncio.sleep(3)
-            try:
-                configured = await self.video_configure_to_story(
-                    upload_id,
-                    width,
-                    height,
-                    duration,
-                    thumbnail,
-                    caption,
-                    mentions,
-                    locations,
-                    links,
-                    hashtags,
-                    stickers,
-                    medias,
-                    polls,
-                    extra_data=extra_data,
-                )
-            except Exception as e:
-                if "Transcode not finished yet" in str(e):
-                    """
-                    Response 202 status:
-                    {"message": "Transcode not finished yet.", "status": "fail"}
-                    """
-                    await asyncio.sleep(10)
-                    continue
-                raise e
-            if configured:
-                await self.expose()
-                return await self._extract_configured_story_or_recent(
-                    configured,
-                    VideoConfigureStoryError,
-                    "Video story upload",
-                    previous_story_ids,
-                    story_kwargs,
-                )
-        raise VideoConfigureStoryError(response=self.last_response, **self.last_json)
+        if resize_mode not in {"fill", "fit"}:
+            raise ValueError('resize_mode must be "fill" or "fit"')
+        rendered_story = None
+        upload_path = path
+        upload_thumbnail: Any = thumbnail
+        try:
+            if resize_mode == "fit":
+                rendered_story = StoryBuilder(path).video_fit()
+                upload_path = Path(rendered_story.path)
+                upload_thumbnail = None
+            upload_id, width, height, duration, thumbnail = await self.video_rupload(
+                upload_path,
+                upload_thumbnail,
+                to_story=True,
+            )
+            previous_story_ids = await self._current_story_ids()
+            story_kwargs = {
+                "links": links,
+                "mentions": mentions,
+                "hashtags": hashtags,
+                "locations": locations,
+                "stickers": stickers,
+                "medias": medias,
+                "polls": polls,
+            }
+            for attempt in range(50):
+                self.logger.debug(f"Attempt #{attempt} to configure Video: {path}")
+                await asyncio.sleep(3)
+                try:
+                    configured = await self.video_configure_to_story(
+                        upload_id,
+                        width,
+                        height,
+                        duration,
+                        thumbnail,
+                        caption,
+                        mentions,
+                        locations,
+                        links,
+                        hashtags,
+                        stickers,
+                        medias,
+                        polls,
+                        extra_data=extra_data,
+                    )
+                except Exception as e:
+                    if "Transcode not finished yet" in str(e):
+                        """
+                        Response 202 status:
+                        {"message": "Transcode not finished yet.", "status": "fail"}
+                        """
+                        await asyncio.sleep(10)
+                        continue
+                    raise e
+                if configured:
+                    await self.expose()
+                    return await self._extract_configured_story_or_recent(
+                        configured,
+                        VideoConfigureStoryError,
+                        "Video story upload",
+                        previous_story_ids,
+                        story_kwargs,
+                    )
+            raise VideoConfigureStoryError(response=self.last_response, **self.last_json)
+        finally:
+            if rendered_story:
+                for item in [rendered_story.path, *rendered_story.paths, f"{rendered_story.path}.jpg"]:
+                    with contextlib.suppress(OSError):
+                        Path(item).unlink()
 
     async def video_configure_to_story(
         self,

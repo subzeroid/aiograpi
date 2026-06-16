@@ -1,3 +1,4 @@
+import io
 import json
 import tempfile
 import types
@@ -6,8 +7,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import AsyncMock
 
+from PIL import Image
+
 from aiograpi import Client
-from aiograpi.types import Media, UserShort
+from aiograpi.types import Media, StoryBuild, UserShort
 
 
 class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -223,6 +226,59 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(headers["IG-U-DS-USER-ID"], "1")
         self.assertEqual(headers["X-Entity-Length"], "11")
         self.assertEqual(headers["X-Entity-Name"], "upload-id_0_1234567890")
+
+    async def test_photo_story_fit_resize_letterboxes_without_cropping(self):
+        client = self.build_client()
+        client.authorization_data = {
+            "ds_user_id": "1",
+            "sessionid": "1:session",
+            "should_use_header_over_cookies": True,
+        }
+        response = unittest.mock.Mock(status_code=200)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "wide.jpg"
+            image = Image.new("RGB", (1280, 720), "green")
+            image.paste("red", (0, 0, 320, 720))
+            image.paste("blue", (960, 0, 1280, 720))
+            image.save(path)
+
+            client.private.post = AsyncMock(return_value=response)
+            upload_id, width, height = await client.photo_rupload(
+                path,
+                upload_id="upload-id",
+                for_story=True,
+                resize_mode="fit",
+            )
+
+        self.assertEqual((upload_id, width, height), ("upload-id", 1080, 1920))
+        uploaded = client.private.post.call_args.kwargs["data"]
+        with Image.open(io.BytesIO(uploaded)) as prepared:
+            self.assertEqual(prepared.size, (1080, 1920))
+            self.assertEqual(prepared.getpixel((10, 960)), (254, 0, 0))
+            self.assertEqual(prepared.getpixel((1070, 960)), (0, 0, 254))
+            self.assertEqual(prepared.getpixel((540, 100)), (0, 0, 0))
+
+    async def test_video_story_fit_resize_renders_canvas_before_upload(self):
+        client = self.build_client()
+        client.video_rupload = AsyncMock(return_value=("1", 720, 1280, 5, Path("/tmp/thumb.jpg")))
+        client.video_configure_to_story = AsyncMock(return_value={"status": "ok"})
+        client._current_story_ids = AsyncMock(return_value=set())
+        client._extract_configured_story_or_recent = AsyncMock(return_value="uploaded")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fitted = Path(tmpdir) / "fitted.mp4"
+            fitted.touch()
+            rendered = StoryBuild(path=str(fitted), mentions=[], paths=[], stickers=[])
+            with unittest.mock.patch("aiograpi.mixins.video.StoryBuilder", create=True) as story_builder:
+                story_builder.return_value.video_fit.return_value = rendered
+                with unittest.mock.patch("asyncio.sleep", new=AsyncMock()):
+                    result = await client.video_upload_to_story(Path("wide.mp4"), resize_mode="fit")
+
+        self.assertEqual(result, "uploaded")
+        story_builder.assert_called_once_with(Path("wide.mp4"))
+        story_builder.return_value.video_fit.assert_called_once()
+        client.video_rupload.assert_awaited_once_with(Path(rendered.path), None, to_story=True)
 
     async def test_clip_upload_uses_current_reels_rupload_shape(self):
         client = self.build_client()

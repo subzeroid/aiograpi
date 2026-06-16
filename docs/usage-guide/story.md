@@ -52,11 +52,12 @@ Common arguments:
 * `links` - "Swipe Up" links (now use first)
 * `hashtags` - Add hashtags to story
 * `stickers` - Add stickers to story
+* `resize_mode` - Story media sizing mode: `"fill"` keeps the current crop/fill behavior, `"fit"` renders the full source media on a Story canvas without cropping
 
 | Method                               | Return   | Description
 | ------------------------------------ | -------- | -------------
-| photo_upload_to_story(path: Path, caption: str, upload_id: str, mentions: List[Usertag], locations: List[StoryLocation], links: List[StoryLink], hashtags: List[StoryHashtag], stickers: List[StorySticker], extra_data: Dict[str, str] = {})  | Story  | Upload photo (Support JPG files)
-| video_upload_to_story(path: Path, caption: str, thumbnail: Path, mentions: List[Usertag], locations: List[StoryLocation], links: List[StoryLink], hashtags: List[StoryHashtag], stickers: List[StorySticker], extra_data: Dict[str, str] = {}) | Story  | Upload video (Support MP4 files)
+| photo_upload_to_story(path: Path, caption: str = "", upload_id: str = "", mentions: List[StoryMention] = [], locations: List[StoryLocation] = [], links: List[StoryLink] = [], hashtags: List[StoryHashtag] = [], stickers: List[StorySticker] = [], medias: List[StoryMedia] = [], polls: List[StoryPoll] = [], extra_data: Dict[str, str] = {}, resize_mode: str = "fill")  | Story  | Upload photo to story
+| video_upload_to_story(path: Path, caption: str = "", thumbnail: Path = None, mentions: List[StoryMention] = [], locations: List[StoryLocation] = [], links: List[StoryLink] = [], hashtags: List[StoryHashtag] = [], stickers: List[StorySticker] = [], medias: List[StoryMedia] = [], polls: List[StoryPoll] = [], extra_data: Dict[str, str] = {}, resize_mode: str = "fill") | Story  | Upload video to story
 | photo_upload_to_story_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, duration: float = 15.0, extra_data: Dict = {}) | Story | Upload photo to story as a short video with the selected music track muxed into it
 | video_upload_to_story_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, extra_data: Dict = {}) | Story | Upload video to story with the selected music track muxed into it
 | story_music_extra_data(track: Track or dict, extra_data: Dict = {}) | dict | Build Story music configure fields for manual story upload `extra_data`
@@ -72,6 +73,10 @@ Story music helpers require the optional video dependencies, MoviePy `2.2.1`, an
 a local MP4 before upload. They add Story music metadata and bake the selected track into the uploaded media; they do not
 expose Instagram's native interactive lyrics/music sticker UI.
 
+Sizing notes:
+
+* For story uploads, use a 9:16 asset, pass `resize_mode="fit"` to keep the full source media visible on a Story canvas, or build one manually with `StoryBuilder`.
+* `resize_mode="fill"` is the default and keeps the existing crop/fill behavior.
 
 Examples:
 
@@ -131,6 +136,7 @@ MoviePy `2.2.1` currently declares `Pillow<12`, but aiograpi keeps `Pillow>=12.2
 | ----------------------------------------------------- | ---------- | ---------------------------------------- |
 | StoryBuilder.build_clip(clip: moviepy.Clip, max_duration: int = 0) | StoryBuild | Build CompositeVideoClip with background and mentioned users. Return MP4 file and mentions with coordinates |
 | StoryBuilder.video(max_duration: int = 0)            | StoryBuild | Call build_clip(VideoClip, max_duration) |
+| StoryBuilder.video_fit(max_duration: int = 0)        | StoryBuild | Build a 720x1280 Story video canvas that fits the full source video without cropping |
 | StoryBuilder.photo(max_duration: int = 0)            | StoryBuild | Call build_clip(ImageClip, max_duration) |
 
 Example:
@@ -174,6 +180,13 @@ Upload photo as video:
 ``` python
 buildout = StoryBuilder('/app/image.jpg').photo()
 await cl.video_upload_to_story(buildout.path)
+```
+
+Upload photo or video without cropping:
+
+``` python
+await cl.photo_upload_to_story(Path("/app/landscape.jpg"), resize_mode="fit")
+await cl.video_upload_to_story(Path("/app/landscape.mp4"), resize_mode="fit")
 ```
 
 Like & unlike story:
