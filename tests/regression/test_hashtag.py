@@ -2,10 +2,29 @@ import unittest
 from unittest.mock import AsyncMock
 
 from aiograpi import Client
+from aiograpi.exceptions import ClientError
 from aiograpi.types import Hashtag
 
 
 class HashtagRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    def _media_gql_payload(self, pk="1"):
+        return {
+            "__typename": "GraphImage",
+            "id": pk,
+            "shortcode": f"code-{pk}",
+            "taken_at_timestamp": 1710000000,
+            "owner": {
+                "id": "2",
+                "username": "example",
+                "profile_pic_url": "https://example.com/profile.jpg",
+            },
+            "display_resources": [{"src": f"https://example.com/{pk}.jpg", "config_width": 100, "config_height": 100}],
+            "edge_media_to_comment": {"count": 0},
+            "edge_media_preview_like": {"count": 0},
+            "edge_media_to_caption": {"edges": []},
+            "edge_media_to_tagged_user": {"edges": []},
+        }
+
     async def test_dead_public_a1_methods_are_removed(self):
         client = Client()
         removed_methods = (
@@ -122,6 +141,85 @@ class HashtagRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual([media.pk for media in medias], ["1", "2", "3", "4", "5"])
         self.assertIsNone(next_max_id)
+
+    async def test_hashtag_medias_paginated_gql_returns_page_and_cursor(self):
+        client = Client()
+        payload = self._media_gql_payload()
+        client.public_graphql_request = AsyncMock(
+            return_value={
+                "hashtag": {
+                    "edge_hashtag_to_media": {
+                        "page_info": {"has_next_page": True, "end_cursor": "next-page"},
+                        "edges": [{"node": payload}],
+                    }
+                }
+            }
+        )
+
+        medias, end_cursor = await client.hashtag_medias_paginated_gql("python", amount=1, end_cursor="cursor-1")
+
+        client.public_graphql_request.assert_awaited_once_with(
+            {"tag_name": "python", "show_ranked": False, "first": 1, "after": "cursor-1"},
+            query_hash="f92f56d47dc7a55b606908374b43a314",
+        )
+        self.assertEqual(end_cursor, "next-page")
+        self.assertEqual([media.pk for media in medias], ["1"])
+
+    async def test_hashtag_medias_paginated_v1_delegates_to_chunk(self):
+        client = Client()
+        client.hashtag_medias_v1_chunk = AsyncMock(return_value=(["m1"], "next-page"))
+
+        with self.assertWarnsRegex(UserWarning, "leading '#'"):
+            medias, end_cursor = await client.hashtag_medias_paginated_v1(
+                "#python",
+                amount=2,
+                tab_key="recent",
+                end_cursor="cursor-1",
+            )
+
+        client.hashtag_medias_v1_chunk.assert_awaited_once_with(
+            "python",
+            max_amount=2,
+            tab_key="recent",
+            max_id="cursor-1",
+        )
+        self.assertEqual(medias, ["m1"])
+        self.assertEqual(end_cursor, "next-page")
+
+    async def test_authorized_hashtag_medias_paginated_uses_private_before_public(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sid"}
+        client.hashtag_medias_paginated_v1 = AsyncMock(return_value=(["m1"], "next-page"))
+        client.hashtag_medias_paginated_gql = AsyncMock()
+
+        medias, end_cursor = await client.hashtag_medias_paginated("python", amount=5, end_cursor="cursor-1")
+
+        client.hashtag_medias_paginated_v1.assert_awaited_once_with(
+            "python",
+            amount=5,
+            tab_key="recent",
+            end_cursor="cursor-1",
+        )
+        client.hashtag_medias_paginated_gql.assert_not_awaited()
+        self.assertEqual(medias, ["m1"])
+        self.assertEqual(end_cursor, "next-page")
+
+    async def test_hashtag_medias_paginated_falls_back_to_private(self):
+        client = Client()
+        client.hashtag_medias_paginated_gql = AsyncMock(side_effect=ClientError("public unavailable"))
+        client.hashtag_medias_paginated_v1 = AsyncMock(return_value=(["m1"], "next-page"))
+
+        medias, end_cursor = await client.hashtag_medias_paginated("python", amount=5, end_cursor="cursor-1")
+
+        client.hashtag_medias_paginated_gql.assert_awaited_once_with("python", amount=5, end_cursor="cursor-1")
+        client.hashtag_medias_paginated_v1.assert_awaited_once_with(
+            "python",
+            amount=5,
+            tab_key="recent",
+            end_cursor="cursor-1",
+        )
+        self.assertEqual(medias, ["m1"])
+        self.assertEqual(end_cursor, "next-page")
 
     async def test_hashtag_following_fetches_current_account_hashtags(self):
         client = Client()
