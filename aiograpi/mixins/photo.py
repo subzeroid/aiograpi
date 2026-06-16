@@ -15,7 +15,7 @@ from aiograpi.exceptions import (
     PhotoConfigureStoryError,
     PhotoNotUpload,
 )
-from aiograpi.image_util import prepare_image
+from aiograpi.image_util import prepare_image, prepare_story_image_fit
 from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import (
     Location,
@@ -152,6 +152,7 @@ class UploadPhotoMixin(ClientMixin):
         upload_id: str = "",
         to_album: bool = False,
         for_story: bool = False,
+        resize_mode: str = "fill",
     ) -> tuple:
         """
         Upload photo to Instagram
@@ -165,6 +166,8 @@ class UploadPhotoMixin(ClientMixin):
         to_album: bool, optional
         for_story: bool, optional
             Useful for resize util only
+        resize_mode: str, optional
+            Story resize mode: "fill" crops oversized Story media to fill the canvas, "fit" letterboxes it.
 
         Returns
         -------
@@ -173,6 +176,10 @@ class UploadPhotoMixin(ClientMixin):
         """
         if not isinstance(path, Path):
             raise Exception(f"Path must been Path, now {path} ({type(path)})")
+        if resize_mode not in {"fill", "fit"}:
+            raise ValueError('resize_mode must be "fill" or "fit"')
+        if resize_mode == "fit" and not for_story:
+            raise ValueError('resize_mode="fit" is only supported for story uploads')
         valid_extensions = [".jpg", ".jpeg", ".png", ".webp"]
         if path.suffix.lower() not in valid_extensions:
             raise ValueError("Invalid file format. Only JPG/JPEG/PNG/WEBP files are supported.")
@@ -199,7 +206,9 @@ class UploadPhotoMixin(ClientMixin):
         }
         if to_album:
             rupload_params["is_sidecar"] = "1"
-        if for_story:
+        if for_story and resize_mode == "fit":
+            photo_data, photo_size = prepare_story_image_fit(str(path))
+        elif for_story:
             photo_data, photo_size = prepare_image(
                 str(path),
                 max_side=1080,
@@ -232,8 +241,11 @@ class UploadPhotoMixin(ClientMixin):
             self.logger.error("Photo Upload failed with the following response: %s", response)
             last_json = self.last_json  # local variable for read in sentry
             raise PhotoNotUpload(response.text, response=response, **last_json)
-        with Image.open(path) as im:
-            width, height = im.size
+        if for_story and resize_mode == "fit":
+            width, height = photo_size
+        else:
+            with Image.open(path) as im:
+                width, height = im.size
         return upload_id, width, height
 
     async def photo_upload(
@@ -479,6 +491,7 @@ class UploadPhotoMixin(ClientMixin):
         medias: List[StoryMedia] = [],
         polls: List[StoryPoll] = [],
         extra_data: Dict[str, str] = {},
+        resize_mode: str = "fill",
     ) -> Story:
         """
         Upload photo as a story and configure it
@@ -507,6 +520,8 @@ class UploadPhotoMixin(ClientMixin):
             List of polls to be included on this upload, default is empty list.
         extra_data: Dict[str, str], optional
             Dict of extra data, if you need to add your params, like {"share_to_facebook": 1}.
+        resize_mode: str, optional
+            Story resize mode: "fill" crops oversized media to fill the Story canvas, "fit" letterboxes it.
 
         Returns
         -------
@@ -514,7 +529,7 @@ class UploadPhotoMixin(ClientMixin):
             An object of Media class
         """
         path = Path(path)
-        upload_id, width, height = await self.photo_rupload(path, upload_id, for_story=True)
+        upload_id, width, height = await self.photo_rupload(path, upload_id, for_story=True, resize_mode=resize_mode)
         previous_story_ids = await self._current_story_ids()
         story_kwargs = {
             "links": links,

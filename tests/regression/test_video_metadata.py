@@ -12,6 +12,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+from PIL import Image
 
 
 def _box(name: str, payload: bytes) -> bytes:
@@ -72,6 +73,41 @@ def _write_real_mp4(folder: Path, name: str = "source.mp4", duration: float = 4.
             "lavfi",
             "-i",
             f"color=c=black:s=640x360:d={duration}",
+            "-pix_fmt",
+            "yuv420p",
+            str(path),
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
+    return path
+
+
+def _write_wide_panel_mp4(folder: Path, name: str = "wide-source.mp4", duration: float = 2.0) -> Path:
+    path = folder / name
+    subprocess.run(
+        [
+            _ffmpeg_exe(),
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            f"color=c=red:s=320x720:r=30:d={duration}",
+            "-f",
+            "lavfi",
+            "-i",
+            f"color=c=green:s=640x720:r=30:d={duration}",
+            "-f",
+            "lavfi",
+            "-i",
+            f"color=c=blue:s=320x720:r=30:d={duration}",
+            "-filter_complex",
+            "[0:v][1:v][2:v]hstack=inputs=3[v]",
+            "-map",
+            "[v]",
+            "-c:v",
+            "libx264",
             "-pix_fmt",
             "yuv420p",
             str(path),
@@ -196,8 +232,6 @@ def test_prepare_video_reports_video_extra_without_moviepy():
 
 
 def test_story_builder_photo_generates_video_with_moviepy_2():
-    from PIL import Image
-
     from aiograpi.story import StoryBuilder
     from aiograpi.utils.video import read_video_metadata
 
@@ -215,6 +249,42 @@ def test_story_builder_photo_generates_video_with_moviepy_2():
             metadata = read_video_metadata(output)
             assert (metadata.width, metadata.height) == (720, 1280)
             assert metadata.duration == pytest.approx(1.0, abs=0.25)
+        finally:
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(build.path)
+
+
+def test_story_builder_video_fit_generates_canvas_without_cropping():
+    from aiograpi.story import StoryBuilder
+    from aiograpi.utils.video import read_video_metadata
+
+    assert importlib.metadata.version("moviepy") == "2.2.1"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+        source = _write_wide_panel_mp4(tmpdir)
+        build = StoryBuilder(source).video_fit(max_duration=1)
+        output = Path(build.path)
+        frame = tmpdir / "frame.jpg"
+        try:
+            assert output.exists()
+            metadata = read_video_metadata(output)
+            assert (metadata.width, metadata.height) == (720, 1280)
+            assert metadata.duration == pytest.approx(1.0, abs=0.25)
+            subprocess.run(
+                [_ffmpeg_exe(), "-y", "-ss", "0.5", "-i", str(output), "-frames:v", "1", str(frame)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=True,
+            )
+            with Image.open(frame) as image:
+                left_mid = image.getpixel((10, 640))[:3]
+                center_mid = image.getpixel((360, 640))[:3]
+                right_mid = image.getpixel((710, 640))[:3]
+                top_center = image.getpixel((360, 100))[:3]
+            assert left_mid[0] > 150
+            assert center_mid[1] > 80
+            assert right_mid[2] > 150
+            assert sum(top_center) < 20
         finally:
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(build.path)
