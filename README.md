@@ -125,7 +125,7 @@ What you can rely on instead:
   IG migrated to. New high-level methods: `user_info_v2_gql`, `user_info_by_username_v2_gql`,
   `private_graphql_followers_list` / `following_list` / `clips_profile` / `inbox_tray_for_user`,
   `private_graphql_memories_pog` / `realtime_region_hint` / `top_audio_trends_eligible_categories`,
-  plus `fbsearch_keyword_typeahead` / `fbsearch_typeahead_stream` / `fbsearch_item`,
+  plus `media_search` / `fbsearch_keyword_typeahead` / `fbsearch_typeahead_stream` / `fbsearch_item`,
   `feed_user_stream_item`, `media_comment_infos`. All live-verified.
 - **Pure helpers go sync** (breaking from 0.0.x): `media_pk_from_code`, `media_code_from_pk`,
   `media_pk`, `share_info`, `share_code_from_url`, `share_info_by_url`, `highlight_pk_from_url`,
