@@ -162,6 +162,16 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert params["push_disabled"] == "false"
         assert client.get_settings()["push_disabled"] is False
 
+    async def test_direct_threads_chunk_rejects_unsupported_selected_filter(self):
+        client = _build_client()
+
+        with self.assertRaises(ValueError) as ctx:
+            await client.direct_threads_chunk(selected_filter="archived")
+
+        assert "selected_filter" in str(ctx.exception)
+        assert "flagged" in str(ctx.exception)
+        assert "unread" in str(ctx.exception)
+
     async def test_direct_search_sends_current_ranked_recipient_limits(self):
         client = _build_client()
         client.private_request = AsyncMock(return_value={"ranked_recipients": []})

@@ -1,7 +1,7 @@
 import json
 import logging
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 from orjson import JSONDecodeError
 
@@ -49,14 +49,8 @@ ADDRESS_BOOK_DEFAULT_INCLUDE = ("extra_display_name", "thumbnails")
 
 logger = logging.getLogger(__name__)
 
-try:
-    from typing import Literal
-
-    INFO_FROM_MODULE = Literal["self_profile", "feed_timeline", "reel_feed_timeline"]
-    FOLLOWERS_ORDER = Literal["date_followed_latest", "date_followed_earliest"]
-except Exception:
-    INFO_FROM_MODULE = str
-    FOLLOWERS_ORDER = str
+INFO_FROM_MODULE = Literal["self_profile", "feed_timeline", "reel_feed_timeline"]
+FOLLOWERS_ORDER = Literal["date_followed_latest", "date_followed_earliest"]
 
 
 class UserMixin(ClientMixin):

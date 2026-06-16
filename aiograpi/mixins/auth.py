@@ -10,7 +10,7 @@ import time
 import uuid
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Literal, Optional, Union
 from uuid import uuid4
 
 from pydantic import ValidationError
@@ -33,23 +33,14 @@ from aiograpi.utils.auth import gen_token, generate_jazoest
 from aiograpi.utils.serialization import dumps
 
 # from aiograpi.zones import CET
-TIMELINE_FEED_REASONS = (
+TIMELINE_FEED_REASON = Literal[
     "cold_start_fetch",
     "warm_start_fetch",
     "pagination",
     "pull_to_refresh",
     "auto_refresh",
-)
-REELS_TRAY_REASONS = ("cold_start", "pull_to_refresh")
-try:
-    from typing import Literal
-
-    TIMELINE_FEED_REASON = Literal[TIMELINE_FEED_REASONS]
-    REELS_TRAY_REASON = Literal[REELS_TRAY_REASONS]
-except ImportError:
-    # python <= 3.8
-    TIMELINE_FEED_REASON = str
-    REELS_TRAY_REASON = str
+]
+REELS_TRAY_REASON = Literal["cold_start", "pull_to_refresh"]
 
 
 class PreLoginFlowMixin(ClientMixin):
