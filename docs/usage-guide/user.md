@@ -8,6 +8,8 @@ View a list of a user's medias, following and followers
 |-----------------------------------------------|-----------------------|--------------------------------------------------------------|
 | user_followers(user_id: str, amount: int = 0, order: str = None) | Dict\[str, UserShort] | Get dict of follower users (amount=0 - fetch all followers); `order` uses the private mobile followers endpoint |
 | user_following(user_id: str, amount: int = 0) | Dict\[str, UserShort] | Get dict of following users (amount=0 - fetch all)           |
+| iter_user_followers_v1(user_id: str, amount: int = 0, page_size: int = 200, order: str = None) | AsyncIterator[UserShort] | Stream followers from the private/mobile API without building a full dict |
+| iter_user_following_v1(user_id: str, amount: int = 0, page_size: int = 200) | AsyncIterator[UserShort] | Stream following users from the private/mobile API without building a full dict |
 | search_followers(user_id: str, query: str)    | List[UserShort]       | Search by followers                                          |
 | search_following(user_id: str, query: str)    | List[UserShort]       | Search by following                                          |
 | user_info(user_id: str)                       | User                  | Get user info                                                |
@@ -47,9 +49,11 @@ Low level methods:
 | user_followers_gql(user_id: str, amount: int = 0)                                   | List[UserShort]             | Get user's followers information by Public Graphql API                     |
 | user_followers_v1_chunk(user_id: str, max_amount: int = 0, max_id: str = "", order: str = None) | Tuple[List[UserShort], str] | Get user's followers information by Private Mobile API and max_id (cursor) |
 | user_followers_v1(user_id: str, amount: int = 0, order: str = None)                 | List[UserShort]             | Get user's followers information by Private Mobile API                     |
+| iter_user_followers_v1(user_id: str, amount: int = 0, page_size: int = 200, order: str = None) | AsyncIterator[UserShort] | Stream followers page by page through `user_followers_v1_chunk()` |
 | user_followers_private_gql_chunk(user_id: str, max_amount: int = 0, max_id: str = None, rank_token: str = None, order: str = None) | Tuple[List[UserShort], str] | Get user's followers information by Private GraphQL API and max_id         |
 | user_followers_private_gql(user_id: str, amount: int = 0, rank_token: str = None, order: str = None) | List[UserShort] | Get user's followers information by Private GraphQL API                    |
 | user_following_v1(user_id: str, amount: int = 0)                                    | List[UserShort]             | Get user's following users information by Private Mobile API               |
+| iter_user_following_v1(user_id: str, amount: int = 0, page_size: int = 200)         | AsyncIterator[UserShort]     | Stream following users page by page through `user_following_v1_chunk()` |
 | user_following_gql(user_id: str, amount: int = 0)                                   | List[UserShort]             | Get user's following information by Public Graphql API                     |
 | user_follow_requests_chunk(max_amount: int = 0, max_id: str = "")                   | Tuple[List[UserShort], str] | Get pending incoming follow requests by Private Mobile API and max_id      |
 | search_followers_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by followers by Private Mobile API                                  |
@@ -118,6 +122,16 @@ await cl.login(USERNAME, PASSWORD)
 followers = await cl.user_followers(cl.user_id)
 for follower in followers.values():
     await cl.user_unfollow(follower.pk)
+```
+
+Example: Stream large follow lists without storing the full result:
+
+``` python
+async for follower in cl.iter_user_followers_v1(cl.user_id, amount=1000, page_size=100, order="date_followed_latest"):
+    print(follower.pk, follower.username)
+
+async for user in cl.iter_user_following_v1(cl.user_id, amount=1000, page_size=100):
+    print(user.pk, user.username)
 ```
 
 Example: Suggested profiles ("Suggested for you") for a target user:

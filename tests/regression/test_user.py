@@ -364,6 +364,60 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.private_request.assert_awaited_once()
         self.assertEqual(client.private_request.call_args.kwargs["params"]["count"], MAX_USER_COUNT)
 
+    async def test_iter_user_followers_v1_streams_chunks_and_respects_amount(self):
+        client = self._build_private_client()
+        users = [
+            UserShort(pk="1", username="one"),
+            UserShort(pk="2", username="two"),
+            UserShort(pk="3", username="three"),
+            UserShort(pk="4", username="four"),
+        ]
+        client.user_followers_v1_chunk = AsyncMock(side_effect=[(users[:2], "cursor-1"), (users[2:], "cursor-2")])
+
+        result = []
+        async for user in client.iter_user_followers_v1(
+            "123",
+            amount=3,
+            page_size=2,
+            order="date_followed_latest",
+        ):
+            result.append(user)
+
+        self.assertEqual([user.pk for user in result], ["1", "2", "3"])
+        self.assertEqual(
+            client.user_followers_v1_chunk.await_args_list[0].kwargs,
+            {"max_amount": 2, "max_id": "", "order": "date_followed_latest"},
+        )
+        self.assertEqual(
+            client.user_followers_v1_chunk.await_args_list[1].kwargs,
+            {"max_amount": 1, "max_id": "cursor-1", "order": "date_followed_latest"},
+        )
+        self.assertEqual(client.user_followers_v1_chunk.await_count, 2)
+
+    async def test_iter_user_following_v1_streams_chunks_and_respects_amount(self):
+        client = self._build_private_client()
+        users = [
+            UserShort(pk="1", username="one"),
+            UserShort(pk="2", username="two"),
+            UserShort(pk="3", username="three"),
+        ]
+        client.user_following_v1_chunk = AsyncMock(side_effect=[(users[:2], "cursor-1"), (users[2:], "")])
+
+        result = []
+        async for user in client.iter_user_following_v1("123", amount=3, page_size=2):
+            result.append(user)
+
+        self.assertEqual([user.pk for user in result], ["1", "2", "3"])
+        self.assertEqual(
+            client.user_following_v1_chunk.await_args_list[0].kwargs,
+            {"max_amount": 2, "max_id": ""},
+        )
+        self.assertEqual(
+            client.user_following_v1_chunk.await_args_list[1].kwargs,
+            {"max_amount": 1, "max_id": "cursor-1"},
+        )
+        self.assertEqual(client.user_following_v1_chunk.await_count, 2)
+
     async def test_user_followers_falls_back_when_private_list_is_limited(self):
         client = Client()
         client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}

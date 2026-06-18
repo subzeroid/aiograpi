@@ -2,7 +2,7 @@ import base64
 import json
 import logging
 import warnings
-from typing import List, Optional, Tuple
+from typing import AsyncIterator, List, Optional, Tuple
 
 from aiograpi.exceptions import (
     ClientError,
@@ -20,6 +20,7 @@ from aiograpi.extractors import (
 )
 from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Hashtag, Media
+from aiograpi.utils.iterators import iter_paginated
 from aiograpi.utils.serialization import dumps
 
 logger = logging.getLogger(__name__)
@@ -335,6 +336,44 @@ class HashtagMixin(ClientMixin):
             if not isinstance(e, ClientError):
                 logger.exception(e)
             return await private_lookup()
+
+    def iter_hashtag_medias(
+        self,
+        name: str,
+        amount: int = 0,
+        page_size: int = 27,
+        tab_key: str = "recent",
+    ) -> AsyncIterator[Media]:
+        """
+        Iterate over medias for a hashtag.
+
+        Parameters
+        ----------
+        name: str
+            Name of the hashtag
+        amount: int, optional
+            Maximum number of media to yield, default is 0 (all medias)
+        page_size: int, optional
+            Maximum number of media to fetch per page, default is 27
+        tab_key: str, optional
+            Tab key: "top", "recent" or "clips", default is "recent". Public GraphQL only supports "recent".
+
+        Returns
+        -------
+        AsyncIterator[Media]
+            Async iterator of Media objects
+        """
+        name = self._normalize_hashtag_name(name)
+
+        async def fetch_page(end_cursor: Optional[str], page_amount: int) -> Tuple[List[Media], Optional[str]]:
+            return await self.hashtag_medias_paginated(
+                name,
+                amount=page_amount,
+                tab_key=tab_key,
+                end_cursor=end_cursor,
+            )
+
+        return iter_paginated(fetch_page, amount=amount, page_size=page_size, initial_cursor=None)
 
     async def hashtag_medias_v1(self, name: str, amount: int = 27, tab_key: str = "") -> List[Media]:
         """

@@ -4,6 +4,7 @@ import unittest
 from aiograpi import Client
 from aiograpi import types as ig_types
 from aiograpi.extractors import extract_user_short
+from aiograpi.types import Media, UserShort
 from tests.live.smoke import _fetch_accounts
 
 
@@ -99,3 +100,47 @@ class ClientPrivateGraphQLV2UserFieldsLiveTestCase(unittest.IsolatedAsyncioTestC
             raw_value = raw_user.get(field)
             if raw_value is not None:
                 self.assertEqual(getattr(rich_user, field), str(raw_value))
+
+
+class ClientIteratorLiveTestCase(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.test_accounts_url = os.getenv("TEST_ACCOUNTS_URL")
+        if not self.test_accounts_url:
+            self.skipTest("TEST_ACCOUNTS_URL is required for iterator live tests")
+        clients = await _fresh_reusable_user_clients(self.test_accounts_url, count=10)
+        if not clients:
+            self.skipTest("At least one reusable TEST_ACCOUNTS_URL session is required")
+        self.cl = clients[0]
+
+    async def test_iter_user_followers_v1_live(self):
+        user_id = await self.cl.user_id_from_username("instagram")
+        followers = []
+
+        async for follower in self.cl.iter_user_followers_v1(user_id, amount=5, page_size=2):
+            followers.append(follower)
+
+        self.assertEqual(len(followers), 5)
+        self.assertIsInstance(followers[0], UserShort)
+        self.assertEqual(len({user.pk for user in followers}), len(followers))
+
+    async def test_iter_user_following_v1_live(self):
+        user_id = await self.cl.user_id_from_username("instagram")
+        following = []
+
+        async for user in self.cl.iter_user_following_v1(user_id, amount=5, page_size=2):
+            following.append(user)
+
+        self.assertEqual(len(following), 5)
+        self.assertIsInstance(following[0], UserShort)
+        self.assertEqual(len({user.pk for user in following}), len(following))
+
+    async def test_iter_user_medias_live(self):
+        user_id = await self.cl.user_id_from_username("instagram")
+        medias = []
+
+        async for media in self.cl.iter_user_medias(user_id, amount=4, page_size=2):
+            medias.append(media)
+
+        self.assertEqual(len(medias), 4)
+        self.assertIsInstance(medias[0], Media)
+        self.assertEqual(len({media.pk for media in medias}), len(medias))

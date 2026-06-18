@@ -28,6 +28,7 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | media_pk_from_code(code: str)                                   | int                | Return media_pk
 | media_pk_from_url(url: str)                                     | int                | Return media_pk
 | user_medias(user_id: str, amount: int = 20)                     | List\[Media]       | Get list of medias by user_id
+| iter_user_medias(user_id: str, amount: int = 0, page_size: int = 0) | AsyncIterator\[Media] | Stream user feed media page by page without building a full list
 | user_medias_chunk(user_id: str, end_cursor: str = "")           | Tuple\[List\[Media], str] | Get one page of medias by user_id
 | user_medias_paginated(user_id: str, amount: int = 0, end_cursor: str = "") | Tuple\[List\[Media], str] | Get one page of medias by user_id; compatibility alias for `instagrapi`
 | user_clips(user_id: str, amount: int = 50)                      | List\[Media]       | Get list of clips (reels) by user_id
@@ -212,13 +213,19 @@ True
 
 >>> end_cursor = None
 ... for page in range(3):
-...     medias, end_cursor = client.user_medias_chunk_v1(1903424587, 5, end_cursor=end_cursor)
+...     medias, end_cursor = await client.user_medias_paginated(1903424587, 5, end_cursor=end_cursor)
 ...     print([ m.taken_at.date().isoformat() for m in medias ])
 ...
 
 ['2021-06-09', '2019-10-16', '2019-10-14', '2019-06-13', '2019-06-06']
 ['2019-06-05', '2019-03-23', '2019-03-23', '2018-11-15', '2018-10-16']
 ['2018-10-16', '2018-10-11', '2018-10-09', '2018-10-09', '2018-08-02']
+
+# Stream user media without storing every fetched page
+
+>>> async for media in client.iter_user_medias(1903424587, amount=100, page_size=25):
+...     print(media.pk, media.code)
+...
 
 ```
 
