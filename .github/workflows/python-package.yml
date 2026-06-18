@@ -76,6 +76,33 @@ jobs:
           ruff check --output-format=github .
           ruff format --check .
 
+  minimum-runtime-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install package with minimum runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            "httpx==0.28.1" \
+            "orjson==3.11.8" \
+            "PySocks==1.7.1" \
+            "pydantic==2.12.5" \
+            "Pillow==12.2.0" \
+            "pycryptodomex==3.23.0" \
+            "zstandard==0.25.0"
+          python -m pip install .
+          python -m pip check
+          python - <<'PY'
+          from aiograpi import Client
+
+          Client()
+          PY
+
   mypy:
     # Mypy regression gate. Counts errors against .mypy-baseline and fails
     # if the count goes up. Strict-pass is years away (legacy upstream port
