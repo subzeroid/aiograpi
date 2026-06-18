@@ -390,7 +390,29 @@ In `extra_data`, you can pass additional media settings, for example:
 
 Accepted Instagram Collabs/coauthor users from private media payloads are available as `media.coauthor_producers`. This is separate from upload-time `coauthor_user_ids`, which only sends collaborator invitations.
 
-Extended media metadata from Instagram payloads is available on `Media` when returned by the source API, including caption edit state, dimensions, audio presence, hidden count state, viewer save/reshare state, paid partnership/affiliate flags, DASH video info, and clips music attribution.
+Extended media metadata from Instagram payloads is available on `Media` when returned by the source API, including caption edit state, dimensions, audio presence, hidden count state, viewer save/reshare state, paid partnership/affiliate flags, DASH video info, clips music attribution, and inline comment previews.
+
+Extended `Media` metadata fields:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `comments_preview` | `MediaCommentsPreview` or `None` | Inline public/web comment preview when Instagram includes `edge_media_to_parent_comment` or preview comment edges. Use full comments helpers for complete pagination. |
+| `hoisted_comments` | `List[MediaInlineComment]` | Comments Instagram hoists separately from the regular preview list. Usually empty. |
+| `comments_preview.count` | `int` | Total count reported for the inline preview edge. |
+| `comments_preview.has_next_page` | `bool` | Whether the inline preview edge has more comments after `end_cursor`. |
+| `comments_preview.end_cursor` | `str` or `None` | Cursor reported by the inline preview edge. |
+| `comments_preview.comments` | `List[MediaInlineComment]` | Inline parent comments already present in the media payload. |
+| `MediaInlineComment.pk` | `str` | Comment id. |
+| `MediaInlineComment.text` | `str` | Comment text. |
+| `MediaInlineComment.user` | `UserShort` | Comment author. |
+| `MediaInlineComment.created_at_utc` | `datetime` | Comment creation time. |
+| `MediaInlineComment.has_liked` | `bool` or `None` | Current viewer like state when Instagram sends it. |
+| `MediaInlineComment.like_count` | `int` or `None` | Inline like count from the comment edge. |
+| `MediaInlineComment.replied_to_comment_id` | `str` or `None` | Parent comment id for inline replies. |
+| `MediaInlineComment.did_report_as_spam` | `bool` or `None` | Viewer report state when Instagram sends it. |
+| `MediaInlineComment.is_restricted_pending` | `bool` or `None` | Restricted/pending state when Instagram sends it. |
+| `MediaInlineComment.replies_count` | `int` | Number of threaded replies reported inline. |
+| `MediaInlineComment.replies` | `List[MediaInlineComment]` | Inline threaded replies already present in the media payload. |
 
 ### Example:
 
