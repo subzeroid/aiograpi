@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
 from aiograpi.exceptions import DirectMessageNotFound, DirectThreadNotFound
+from aiograpi.extractors import extract_direct_thread
 from aiograpi.types import DirectMessage, DirectThread
 
 
@@ -29,6 +30,55 @@ def _direct_payload():
             "user_id": "1",
         },
         "status": "ok",
+    }
+
+
+def _direct_thread_with_left_user_payload():
+    return {
+        "thread_v2_id": "17898572618026348",
+        "thread_id": "340282366841510300949128268610842297468",
+        "items": [],
+        "users": [
+            {
+                "pk": "123",
+                "username": "member",
+                "full_name": "Member",
+                "profile_pic_url": "https://example.com/member.jpg",
+                "is_private": False,
+                "is_verified": False,
+            }
+        ],
+        "left_users": [
+            {
+                "pk": "456",
+                "username": "left_user",
+                "full_name": "Left User",
+                "profile_pic_url": "https://example.com/left.jpg",
+                "is_private": False,
+                "is_verified": False,
+                "friendship_status": {
+                    "following": False,
+                    "followed_by": False,
+                    "is_private": False,
+                },
+            }
+        ],
+        "admin_user_ids": [],
+        "last_activity_at": 1761953663000000,
+        "muted": False,
+        "named": False,
+        "canonical": True,
+        "pending": False,
+        "archived": False,
+        "thread_type": "private",
+        "thread_title": "Thread",
+        "folder": 0,
+        "vc_muted": False,
+        "is_group": False,
+        "mentions_muted": False,
+        "approval_required_for_new_members": False,
+        "input_mode": 0,
+        "last_seen_at": {},
     }
 
 
@@ -94,6 +144,16 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         result = await client.direct_thread_create([42, 43])
 
         assert result == "3402823668417104"
+
+    async def test_extract_direct_thread_normalizes_left_user_friendship_status(self):
+        thread = extract_direct_thread(_direct_thread_with_left_user_payload())
+
+        assert len(thread.left_users) == 1
+        left_user = thread.left_users[0]
+        assert left_user.pk == "456"
+        assert left_user.friendship_status.user_id == "456"
+        assert left_user.friendship_status.incoming_request is False
+        assert left_user.friendship_status.outgoing_request is False
 
     async def test_direct_message_returns_matching_message_by_id(self):
         client = _build_client()
