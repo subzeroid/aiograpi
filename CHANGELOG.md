@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.10.4] - 2026-06-18
+
+### Changed
+
+- Mirrored `instagrapi` 2.16.4 media extraction so extended metadata fields are exposed on `Media`: caption edit state, dimensions, audio/count/viewer flags, partnership flags, DASH info, and clips music attribution.
+- Synced the recorded upstream baseline to `instagrapi` 2.16.4.
+
 ## [1.10.3] - 2026-06-18
 
 ### Changed
