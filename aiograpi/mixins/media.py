@@ -5,7 +5,7 @@ import tempfile
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import AsyncIterator, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 from aiograpi import httpx_ext
@@ -33,6 +33,7 @@ from aiograpi.mixins.graphql import GQL_STUFF
 from aiograpi.types import Location, Media, Story, StoryMedia, UserShort, Usertag
 from aiograpi.utils.auth import generate_jazoest
 from aiograpi.utils.ids import InstagramIdCodec
+from aiograpi.utils.iterators import iter_paginated
 from aiograpi.utils.serialization import dumps, json_value
 
 IG_PROFILE_TIMELINE_DOC_ID = "56030350814417327502004290437"
@@ -1248,6 +1249,35 @@ class MediaMixin(ClientMixin):
                     self.logger.exception(e)
                 medias, end_cursor = await self.user_medias_paginated_v1(user_id, amount, end_cursor=end_cursor)
         return medias, end_cursor
+
+    def iter_user_medias(
+        self,
+        user_id: Union[str, int],
+        amount: int = 0,
+        page_size: int = 0,
+    ) -> AsyncIterator[Media]:
+        """
+        Iterate over a user's media.
+
+        Parameters
+        ----------
+        user_id: str
+        amount: int, optional
+            Maximum number of media to yield, default is 0 (all medias)
+        page_size: int, optional
+            Maximum number of media to fetch per page. Default value 0 keeps the endpoint default.
+
+        Returns
+        -------
+        AsyncIterator[Media]
+            Async iterator of Media objects
+        """
+        user_id = str(user_id)
+
+        async def fetch_page(end_cursor: Optional[str], page_amount: int) -> Tuple[List[Media], Optional[str]]:
+            return await self.user_medias_paginated(user_id, amount=page_amount, end_cursor=end_cursor or "")
+
+        return iter_paginated(fetch_page, amount=amount, page_size=page_size, initial_cursor="")
 
     async def user_pinned_medias(self, user_id) -> List[Media]:
         """

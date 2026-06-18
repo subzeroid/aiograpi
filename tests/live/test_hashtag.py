@@ -43,3 +43,14 @@ class ClientHashtagLiveTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(len(next_medias), 0)
         self.assertNotEqual(max_id, next_max_id)
         self.assertTrue({media.pk for media in medias}.isdisjoint({media.pk for media in next_medias}))
+
+    async def test_iter_hashtag_medias_recent_live(self):
+        cl = await self.live_client()
+        medias = []
+
+        async for media in cl.iter_hashtag_medias("instagram", amount=5, page_size=2, tab_key="recent"):
+            medias.append(media)
+
+        self.assertEqual(len(medias), 5)
+        self.assertIsInstance(medias[0], Media)
+        self.assertEqual(len({media.pk for media in medias}), len(medias))

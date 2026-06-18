@@ -461,6 +461,24 @@ class MediaActionPayloadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.user_medias_paginated_v1.assert_awaited_once_with("123", 1, end_cursor="")
         client.user_medias_paginated_gql.assert_not_awaited()
 
+    async def test_iter_user_medias_streams_paginated_pages_and_respects_amount(self):
+        client = self._build_logged_in_client()
+        medias = [Mock(pk=str(i)) for i in range(1, 5)]
+        client.user_medias_paginated = AsyncMock(side_effect=[(medias[:2], "cursor-1"), (medias[2:], "cursor-2")])
+
+        result = []
+        async for media in client.iter_user_medias("456", amount=3, page_size=2):
+            result.append(media)
+
+        self.assertEqual([media.pk for media in result], ["1", "2", "3"])
+        client.user_medias_paginated.assert_has_awaits(
+            [
+                unittest.mock.call("456", amount=2, end_cursor=""),
+                unittest.mock.call("456", amount=1, end_cursor="cursor-1"),
+            ]
+        )
+        self.assertEqual(client.user_medias_paginated.await_count, 2)
+
     async def test_usertag_medias_uses_private_first_when_authorized(self):
         client = self._build_logged_in_client()
         client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}

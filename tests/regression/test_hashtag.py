@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
 from aiograpi.exceptions import ClientError
@@ -220,6 +220,24 @@ class HashtagRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(medias, ["m1"])
         self.assertEqual(end_cursor, "next-page")
+
+    async def test_iter_hashtag_medias_streams_paginated_pages_and_respects_amount(self):
+        client = Client()
+        medias = [Mock(pk=str(i)) for i in range(1, 5)]
+        client.hashtag_medias_paginated = AsyncMock(side_effect=[(medias[:2], "cursor-1"), (medias[2:], "cursor-2")])
+
+        result = []
+        async for media in client.iter_hashtag_medias("python", amount=3, page_size=2, tab_key="recent"):
+            result.append(media)
+
+        self.assertEqual([media.pk for media in result], ["1", "2", "3"])
+        client.hashtag_medias_paginated.assert_has_awaits(
+            [
+                unittest.mock.call("python", amount=2, tab_key="recent", end_cursor=None),
+                unittest.mock.call("python", amount=1, tab_key="recent", end_cursor="cursor-1"),
+            ]
+        )
+        self.assertEqual(client.hashtag_medias_paginated.await_count, 2)
 
     async def test_hashtag_following_fetches_current_account_hashtags(self):
         client = Client()
