@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock
 from PIL import Image
 
 from aiograpi import Client
-from aiograpi.types import Media, StoryBuild, UserShort
+from aiograpi.types import Media, StoryBuild, UserShort, Usertag
 
 
 class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -46,6 +46,40 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             thumbnail_url="https://example.com/photo.jpg",
         )
 
+    def build_media_payload(self, media_type=1):
+        payload = {
+            "pk": "1",
+            "id": "1_1",
+            "code": "abc",
+            "taken_at": 1710000000,
+            "media_type": media_type,
+            "caption": {"text": "caption"},
+            "user": {
+                "pk": "1",
+                "username": "example",
+                "profile_pic_url": "https://example.com/profile.jpg",
+            },
+            "like_count": 0,
+            "image_versions2": {
+                "candidates": [
+                    {
+                        "url": "https://example.com/photo.jpg",
+                        "width": 720,
+                        "height": 720,
+                    }
+                ]
+            },
+        }
+        if media_type == 2:
+            payload["video_versions"] = [
+                {
+                    "url": "https://example.com/video.mp4",
+                    "width": 720,
+                    "height": 1280,
+                }
+            ]
+        return payload
+
     async def test_photo_upload_sends_scheduled_publish_metadata(self):
         client = self.build_client()
         schedule_at = 1779808917
@@ -71,6 +105,44 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         extra_data = client.photo_configure.call_args.kwargs["extra_data"]
         self.assertEqual(json.loads(extra_data["content_scheduling_metadata"]), {"scheduled_publish_time": 1779808917})
+
+    async def test_photo_upload_applies_usertags_with_media_edit_when_configure_ignores_them(self):
+        client = self.build_client()
+        tagged_payload = self.build_media_payload(media_type=1)
+        tagged_payload["usertags"] = {
+            "in": [
+                {
+                    "user": {
+                        "pk": "25025320",
+                        "username": "instagram",
+                        "profile_pic_url": "https://example.com/instagram.jpg",
+                    },
+                    "position": [0.5, 0.5],
+                }
+            ]
+        }
+        usertag = Usertag(
+            user=UserShort(
+                pk="25025320",
+                username="instagram",
+                profile_pic_url="https://example.com/instagram.jpg",
+            ),
+            x=0.5,
+            y=0.5,
+        )
+        client.photo_rupload = AsyncMock(return_value=("1", 720, 720))
+        client.photo_configure = AsyncMock(return_value={"status": "ok"})
+        client._extract_configured_media_or_recent = AsyncMock(return_value=self.build_media(media_type=1))
+        client.media_edit = AsyncMock(return_value={"status": "ok", "media": tagged_payload})
+
+        with unittest.mock.patch("asyncio.sleep", new=AsyncMock()):
+            media = await client.photo_upload(Path("example.jpg"), "caption", usertags=[usertag])
+
+        client.media_edit.assert_awaited_once_with("1_1", "caption", usertags=[usertag], location=None)
+        self.assertEqual(len(media.usertags), 1)
+        self.assertEqual(media.usertags[0].user.pk, "25025320")
+        self.assertEqual(media.usertags[0].x, 0.5)
+        self.assertEqual(media.usertags[0].y, 0.5)
 
     async def test_video_upload_sends_scheduled_publish_metadata(self):
         client = self.build_client()
