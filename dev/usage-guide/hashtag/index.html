@@ -1334,6 +1334,11 @@
 <td>Return one hashtag media page plus the next cursor; authenticated sessions use private/mobile pagination first</td>
 </tr>
 <tr>
+<td>iter_hashtag_medias(name: str, amount: int = 0, page_size: int = 27, tab_key: str = "recent")</td>
+<td>AsyncIterator[Media]</td>
+<td>Stream hashtag media page by page without building a full list</td>
+</tr>
+<tr>
 <td>hashtag_following(amount: int = 0)</td>
 <td>List[Hashtag]</td>
 <td>Return hashtags followed by the authenticated account</td>
@@ -1442,6 +1447,10 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="p">[</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">hashtags</span><span class="p">]</span>
 <span class="p">[</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="s1">&#39;instagramapi&#39;</span><span class="p">]</span>
 </code></pre></div>
+<p>Stream hashtag media without storing every fetched page:</p>
+<div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">for</span> <span class="n">media</span> <span class="ow">in</span> <span class="n">cl</span><span class="o">.</span><span class="n">iter_hashtag_medias</span><span class="p">(</span><span class="s2">&quot;downhill&quot;</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">page_size</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">tab_key</span><span class="o">=</span><span class="s2">&quot;recent&quot;</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">media</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">media</span><span class="o">.</span><span class="n">code</span><span class="p">)</span>
+</code></pre></div>
 <p>Low level methods:</p>
 <table>
 <thead>
@@ -1471,6 +1480,11 @@
 <td>hashtag_medias_paginated_v1(name: str, amount: int = 27, tab_key: str = "top|recent|clips", end_cursor: str = None)</td>
 <td>Tuple[List[Media], str]</td>
 <td>Get one hashtag media page by Private Mobile API</td>
+</tr>
+<tr>
+<td>iter_hashtag_medias(name: str, amount: int = 0, page_size: int = 27, tab_key: str = "recent")</td>
+<td>AsyncIterator[Media]</td>
+<td>Stream hashtag medias page by page through <code>hashtag_medias_paginated()</code></td>
 </tr>
 <tr>
 <td>hashtag_medias_v1_chunk(name: str, max_amount: int = 27, tab_key: str = "top|recent", max_id: str = None)</td>
@@ -1522,6 +1536,7 @@
 <li>Instagram's old public hashtag web page JSON (<code>?__a=1</code>) is no longer reliable and the <code>_a1</code> helpers were removed. Use the high-level hashtag methods or the authenticated private/mobile <code>_v1</code> helpers.</li>
 <li>High-level <code>hashtag_info()</code>, <code>hashtag_medias_top()</code>, and <code>hashtag_medias_recent()</code> use the private/mobile helpers.</li>
 <li>For resumable pagination, prefer <code>hashtag_medias_paginated()</code> and persist the returned cursor. Use <code>hashtag_medias_v1_chunk()</code> only when you need the low-level private/mobile helper.</li>
+<li>Use <code>iter_hashtag_medias()</code> when you want to process large hashtag result sets incrementally. It uses the same pagination path as <code>hashtag_medias_paginated()</code>.</li>
 </ul>
 
 

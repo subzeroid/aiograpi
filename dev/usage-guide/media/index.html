@@ -1612,6 +1612,11 @@
 <td>Get list of medias by user_id</td>
 </tr>
 <tr>
+<td>iter_user_medias(user_id: str, amount: int = 0, page_size: int = 0)</td>
+<td>AsyncIterator[Media]</td>
+<td>Stream user feed media page by page without building a full list</td>
+</tr>
+<tr>
 <td>user_medias_chunk(user_id: str, end_cursor: str = "")</td>
 <td>Tuple[List[Media], str]</td>
 <td>Get one page of medias by user_id</td>
@@ -1966,13 +1971,19 @@ background image, or omit <code>background</code> to generate a temporary black 
 
 <span class="o">&gt;&gt;&gt;</span> <span class="n">end_cursor</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="o">...</span> <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
-<span class="o">...</span>     <span class="n">medias</span><span class="p">,</span> <span class="n">end_cursor</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">user_medias_chunk_v1</span><span class="p">(</span><span class="mi">1903424587</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">end_cursor</span><span class="o">=</span><span class="n">end_cursor</span><span class="p">)</span>
+<span class="o">...</span>     <span class="n">medias</span><span class="p">,</span> <span class="n">end_cursor</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_medias_paginated</span><span class="p">(</span><span class="mi">1903424587</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">end_cursor</span><span class="o">=</span><span class="n">end_cursor</span><span class="p">)</span>
 <span class="o">...</span>     <span class="nb">print</span><span class="p">([</span> <span class="n">m</span><span class="o">.</span><span class="n">taken_at</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">medias</span> <span class="p">])</span>
 <span class="o">...</span>
 
 <span class="p">[</span><span class="s1">&#39;2021-06-09&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-10-16&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-10-14&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-06-13&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-06-06&#39;</span><span class="p">]</span>
 <span class="p">[</span><span class="s1">&#39;2019-06-05&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-03-23&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-03-23&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-11-15&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-10-16&#39;</span><span class="p">]</span>
 <span class="p">[</span><span class="s1">&#39;2018-10-16&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-10-11&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-10-09&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-10-09&#39;</span><span class="p">,</span> <span class="s1">&#39;2018-08-02&#39;</span><span class="p">]</span>
+
+<span class="c1"># Stream user media without storing every fetched page</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="k">async</span> <span class="k">for</span> <span class="n">media</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">iter_user_medias</span><span class="p">(</span><span class="mi">1903424587</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">page_size</span><span class="o">=</span><span class="mi">25</span><span class="p">):</span>
+<span class="o">...</span>     <span class="nb">print</span><span class="p">(</span><span class="n">media</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">media</span><span class="o">.</span><span class="n">code</span><span class="p">)</span>
+<span class="o">...</span>
 </code></pre></div>
 <h2 id="download-media">Download media</h2>
 <table>

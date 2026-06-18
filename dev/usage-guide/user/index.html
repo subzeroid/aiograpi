@@ -1326,6 +1326,16 @@
 <td>Get dict of following users (amount=0 - fetch all)</td>
 </tr>
 <tr>
+<td>iter_user_followers_v1(user_id: str, amount: int = 0, page_size: int = 200, order: str = None)</td>
+<td>AsyncIterator[UserShort]</td>
+<td>Stream followers from the private/mobile API without building a full dict</td>
+</tr>
+<tr>
+<td>iter_user_following_v1(user_id: str, amount: int = 0, page_size: int = 200)</td>
+<td>AsyncIterator[UserShort]</td>
+<td>Stream following users from the private/mobile API without building a full dict</td>
+</tr>
+<tr>
 <td>search_followers(user_id: str, query: str)</td>
 <td>List[UserShort]</td>
 <td>Search by followers</td>
@@ -1508,6 +1518,11 @@
 <td>Get user's followers information by Private Mobile API</td>
 </tr>
 <tr>
+<td>iter_user_followers_v1(user_id: str, amount: int = 0, page_size: int = 200, order: str = None)</td>
+<td>AsyncIterator[UserShort]</td>
+<td>Stream followers page by page through <code>user_followers_v1_chunk()</code></td>
+</tr>
+<tr>
 <td>user_followers_private_gql_chunk(user_id: str, max_amount: int = 0, max_id: str = None, rank_token: str = None, order: str = None)</td>
 <td>Tuple[List[UserShort], str]</td>
 <td>Get user's followers information by Private GraphQL API and max_id</td>
@@ -1521,6 +1536,11 @@
 <td>user_following_v1(user_id: str, amount: int = 0)</td>
 <td>List[UserShort]</td>
 <td>Get user's following users information by Private Mobile API</td>
+</tr>
+<tr>
+<td>iter_user_following_v1(user_id: str, amount: int = 0, page_size: int = 200)</td>
+<td>AsyncIterator[UserShort]</td>
+<td>Stream following users page by page through <code>user_following_v1_chunk()</code></td>
 </tr>
 <tr>
 <td>user_following_gql(user_id: str, amount: int = 0)</td>
@@ -1599,6 +1619,13 @@
 <span class="n">followers</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_followers</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">follower</span> <span class="ow">in</span> <span class="n">followers</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
     <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_unfollow</span><span class="p">(</span><span class="n">follower</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+</code></pre></div>
+<p>Example: Stream large follow lists without storing the full result:</p>
+<div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">for</span> <span class="n">follower</span> <span class="ow">in</span> <span class="n">cl</span><span class="o">.</span><span class="n">iter_user_followers_v1</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">page_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;date_followed_latest&quot;</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">follower</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">follower</span><span class="o">.</span><span class="n">username</span><span class="p">)</span>
+
+<span class="k">async</span> <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">cl</span><span class="o">.</span><span class="n">iter_user_following_v1</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">page_size</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">)</span>
 </code></pre></div>
 <p>Example: Suggested profiles ("Suggested for you") for a target user:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
