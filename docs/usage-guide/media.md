@@ -388,6 +388,8 @@ In `extra_data`, you can pass additional media settings, for example:
 | disable_comments              | Int    | Disable comments `{"disable_comments": 1}`
 | invite_coauthor_user_ids      | List   | Low-level coauthor invite field. Prefer `coauthor_user_ids=[...]` on `photo_upload`, `video_upload`, or `album_upload`
 
+Accepted Instagram Collabs/coauthor users from private media payloads are available as `media.coauthor_producers`. This is separate from upload-time `coauthor_user_ids`, which only sends collaborator invitations.
+
 ### Example:
 
 ``` python

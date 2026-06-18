@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
 from aiograpi.extractors import extract_media_gql, extract_media_v1
-from aiograpi.types import StoryMedia
+from aiograpi.types import StoryMedia, UserShort
 
 
 class MediaClipsMetadataRegressionTestCase(unittest.TestCase):
@@ -78,6 +78,28 @@ class MediaClipsMetadataRegressionTestCase(unittest.TestCase):
 
         self.assertEqual(media.view_count, 1234)
         self.assertEqual(media.play_count, 5678)
+
+    def test_extract_media_v1_preserves_coauthor_producers(self):
+        payload = self._media_payload()
+        payload["coauthor_producers"] = [
+            {
+                "id": "100",
+                "username": "collab_user",
+                "full_name": "Collab User",
+                "profile_pic_url": "https://example.com/collab.jpg",
+                "is_private": False,
+                "is_verified": True,
+            }
+        ]
+
+        media = extract_media_v1(payload)
+
+        self.assertEqual(len(media.coauthor_producers), 1)
+        coauthor = media.coauthor_producers[0]
+        self.assertIsInstance(coauthor, UserShort)
+        self.assertEqual(coauthor.pk, "100")
+        self.assertEqual(coauthor.username, "collab_user")
+        self.assertTrue(coauthor.is_verified)
 
     def test_extract_media_gql_normalizes_video_counts(self):
         payload = {
