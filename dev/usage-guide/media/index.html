@@ -2264,7 +2264,104 @@ Story, Direct, and cutout sticker upload helpers do not use this scheduled publi
 </tbody>
 </table>
 <p>Accepted Instagram Collabs/coauthor users from private media payloads are available as <code>media.coauthor_producers</code>. This is separate from upload-time <code>coauthor_user_ids</code>, which only sends collaborator invitations.</p>
-<p>Extended media metadata from Instagram payloads is available on <code>Media</code> when returned by the source API, including caption edit state, dimensions, audio presence, hidden count state, viewer save/reshare state, paid partnership/affiliate flags, DASH video info, and clips music attribution.</p>
+<p>Extended media metadata from Instagram payloads is available on <code>Media</code> when returned by the source API, including caption edit state, dimensions, audio presence, hidden count state, viewer save/reshare state, paid partnership/affiliate flags, DASH video info, clips music attribution, and inline comment previews.</p>
+<p>Extended <code>Media</code> metadata fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>comments_preview</code></td>
+<td><code>MediaCommentsPreview</code> or <code>None</code></td>
+<td>Inline public/web comment preview when Instagram includes <code>edge_media_to_parent_comment</code> or preview comment edges. Use full comments helpers for complete pagination.</td>
+</tr>
+<tr>
+<td><code>hoisted_comments</code></td>
+<td><code>List[MediaInlineComment]</code></td>
+<td>Comments Instagram hoists separately from the regular preview list. Usually empty.</td>
+</tr>
+<tr>
+<td><code>comments_preview.count</code></td>
+<td><code>int</code></td>
+<td>Total count reported for the inline preview edge.</td>
+</tr>
+<tr>
+<td><code>comments_preview.has_next_page</code></td>
+<td><code>bool</code></td>
+<td>Whether the inline preview edge has more comments after <code>end_cursor</code>.</td>
+</tr>
+<tr>
+<td><code>comments_preview.end_cursor</code></td>
+<td><code>str</code> or <code>None</code></td>
+<td>Cursor reported by the inline preview edge.</td>
+</tr>
+<tr>
+<td><code>comments_preview.comments</code></td>
+<td><code>List[MediaInlineComment]</code></td>
+<td>Inline parent comments already present in the media payload.</td>
+</tr>
+<tr>
+<td><code>MediaInlineComment.pk</code></td>
+<td><code>str</code></td>
+<td>Comment id.</td>
+</tr>
+<tr>
+<td><code>MediaInlineComment.text</code></td>
+<td><code>str</code></td>
+<td>Comment text.</td>
+</tr>
+<tr>
+<td><code>MediaInlineComment.user</code></td>
+<td><code>UserShort</code></td>
+<td>Comment author.</td>
+</tr>
+<tr>
+<td><code>MediaInlineComment.created_at_utc</code></td>
+<td><code>datetime</code></td>
+<td>Comment creation time.</td>
+</tr>
+<tr>
+<td><code>MediaInlineComment.has_liked</code></td>
+<td><code>bool</code> or <code>None</code></td>
+<td>Current viewer like state when Instagram sends it.</td>
+</tr>
+<tr>
+<td><code>MediaInlineComment.like_count</code></td>
+<td><code>int</code> or <code>None</code></td>
+<td>Inline like count from the comment edge.</td>
+</tr>
+<tr>
+<td><code>MediaInlineComment.replied_to_comment_id</code></td>
+<td><code>str</code> or <code>None</code></td>
+<td>Parent comment id for inline replies.</td>
+</tr>
+<tr>
+<td><code>MediaInlineComment.did_report_as_spam</code></td>
+<td><code>bool</code> or <code>None</code></td>
+<td>Viewer report state when Instagram sends it.</td>
+</tr>
+<tr>
+<td><code>MediaInlineComment.is_restricted_pending</code></td>
+<td><code>bool</code> or <code>None</code></td>
+<td>Restricted/pending state when Instagram sends it.</td>
+</tr>
+<tr>
+<td><code>MediaInlineComment.replies_count</code></td>
+<td><code>int</code></td>
+<td>Number of threaded replies reported inline.</td>
+</tr>
+<tr>
+<td><code>MediaInlineComment.replies</code></td>
+<td><code>List[MediaInlineComment]</code></td>
+<td>Inline threaded replies already present in the media payload.</td>
+</tr>
+</tbody>
+</table>
 <h3 id="example_2">Example:</h3>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 
