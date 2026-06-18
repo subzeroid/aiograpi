@@ -788,6 +788,26 @@ class ChallengeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("UFAC web bloks checkpoint", str(cm.exception))
 
+    async def test_challenge_resolve_simple_delta_acknowledge_approved_posts_ack_choice(
+        self,
+    ):
+        client = Client()
+        client.username = "example"
+        client.last_json = {
+            "step_name": "delta_acknowledge_approved",
+            "flow_render_type": 3,
+            "bloks_action": "com.instagram.challenge.navigation.take_challenge",
+            "challenge_context": ('{"step_name":"delta_acknowledge_approved","challenge_type_enum":"GENERIC_PHISHED"}'),
+            "challenge_type_enum_str": "GENERIC_PHISHED",
+            "status": "ok",
+        }
+        client._send_private_request = AsyncMock()
+
+        result = await client.challenge_resolve_simple("/challenge/test/")
+
+        self.assertTrue(result)
+        client._send_private_request.assert_awaited_once_with("/challenge/test/", {"choice": "0"})
+
     async def test_challenge_resolve_uses_default_context_when_missing(self):
         client = Client()
         client.uuid = "uuid-1"
