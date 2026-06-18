@@ -2264,6 +2264,7 @@ Story, Direct, and cutout sticker upload helpers do not use this scheduled publi
 </tbody>
 </table>
 <p>Accepted Instagram Collabs/coauthor users from private media payloads are available as <code>media.coauthor_producers</code>. This is separate from upload-time <code>coauthor_user_ids</code>, which only sends collaborator invitations.</p>
+<p>Extended media metadata from Instagram payloads is available on <code>Media</code> when returned by the source API, including caption edit state, dimensions, audio presence, hidden count state, viewer save/reshare state, paid partnership/affiliate flags, DASH video info, and clips music attribution.</p>
 <h3 id="example_2">Example:</h3>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 
