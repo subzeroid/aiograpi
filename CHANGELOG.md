@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.10.3] - 2026-06-18
+
+### Changed
+
+- Mirrored `instagrapi` 2.16.3 media extraction so accepted Instagram Collabs/coauthor users returned by private media payloads are exposed as `Media.coauthor_producers`.
+- Synced the recorded upstream baseline to `instagrapi` 2.16.3.
+
 ## [1.10.2] - 2026-06-18
 
 ### Changed
