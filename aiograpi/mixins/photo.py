@@ -337,13 +337,18 @@ class UploadPhotoMixin(ClientMixin):
         media: Media,
         caption: str,
         usertags: List[Usertag],
-        location: Location = None,
+        location: Optional[Location] = None,
         can_edit: bool = True,
     ) -> Media:
         if not can_edit or self._media_contains_usertags(media, usertags):
             return media
         try:
-            edited = await self.media_edit(media.id, caption, usertags=usertags, location=location)
+            edited = await self.media_edit(  # type: ignore[attr-defined]
+                media.id,
+                caption,
+                usertags=usertags,
+                location=location,
+            )
         except Exception as e:
             self.logger.debug("Unable to apply photo usertags with media_edit: %s", e)
             return media
