@@ -9,7 +9,7 @@ from pathlib import Path
 
 from aiograpi import Client
 from aiograpi.exceptions import PhotoConfigureError, PhotoNotUpload
-from aiograpi.types import Media
+from aiograpi.types import Media, UserShort, Usertag
 from tests.live.auth_helpers import login_with_timeout
 from tests.live.smoke import _fetch_accounts
 
@@ -73,6 +73,26 @@ class ClientUploadCoauthorLiveTestCase(unittest.IsolatedAsyncioTestCase):
         if caption_text is not None:
             self.assertEqual((payload.get("caption") or {}).get("text", ""), caption_text)
         return payload
+
+    async def assertPhotoUsertagsAccessible(self, client, media, expected_usertags, attempts=8, delay=5):
+        last_tags = []
+        for attempt in range(attempts):
+            if attempt:
+                await asyncio.sleep(delay)
+            info = await client.media_info_v1(media.pk)
+            last_tags = info.usertags
+            if len(last_tags) < len(expected_usertags):
+                continue
+            for actual_tag, expected_tag in zip(last_tags, expected_usertags):
+                if (
+                    str(actual_tag.user.pk) != str(expected_tag.user.pk)
+                    or actual_tag.x != expected_tag.x
+                    or actual_tag.y != expected_tag.y
+                ):
+                    break
+            else:
+                return info
+        self.fail(f"Photo usertags were not visible after {attempts} media_info_v1 attempts: {last_tags}")
 
     def make_clip_mp4(self):
         try:
@@ -157,6 +177,55 @@ class ClientUploadCoauthorLiveTestCase(unittest.IsolatedAsyncioTestCase):
                 self.assertIsInstance(media, Media)
                 self.assertEqual(media.caption_text, caption_text)
                 await self.assertUploadedMediaAccessible(uploader, media, media_type=1, caption_text=caption_text)
+                return
+            except PhotoConfigureError:
+                raise
+            except PhotoNotUpload as exc:
+                upload_failures[exc.__class__.__name__] = upload_failures.get(exc.__class__.__name__, 0) + 1
+                continue
+            finally:
+                if media:
+                    self.assertTrue(await uploader.media_delete(media.id))
+
+        self.skipTest(
+            "No upload-capable test account was available "
+            f"(login_failures={login_failures}, upload_failures={upload_failures})"
+        )
+
+    async def test_photo_upload_with_usertags_visible_after_media_info(self):
+        path = self.copy_media_fixture("examples/kanada.jpg")
+        self.assertIsInstance(path, Path)
+        accounts = await _fetch_accounts(self.test_accounts_url, count=50)
+
+        login_failures = {}
+        upload_failures = {}
+        for account in accounts:
+            try:
+                uploader = await _client_from_test_account(account)
+            except Exception as exc:
+                login_failures[exc.__class__.__name__] = login_failures.get(exc.__class__.__name__, 0) + 1
+                continue
+
+            media = None
+            try:
+                instagram = await uploader.user_info_by_username_v1("instagram")
+                usertag = Usertag(
+                    user=UserShort(
+                        pk=instagram.pk,
+                        username=instagram.username,
+                        full_name=instagram.full_name,
+                        profile_pic_url=instagram.profile_pic_url,
+                        is_private=instagram.is_private,
+                    ),
+                    x=0.5,
+                    y=0.5,
+                )
+                caption_text = f"Test caption for photo usertags {int(time.time())}"
+                media = await uploader.photo_upload(path, caption_text, usertags=[usertag])
+                self.assertIsInstance(media, Media)
+                self.assertEqual(media.caption_text, caption_text)
+                info = await self.assertPhotoUsertagsAccessible(uploader, media, [usertag])
+                self.assertEqual(info.caption_text, caption_text)
                 return
             except PhotoConfigureError:
                 raise
