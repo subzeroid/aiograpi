@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.10.9] - 2026-06-18
+
+### Fixed
+
+- Normalized `DirectThread.left_users` through the same user-short extractor used for active thread users, preventing Pydantic validation errors when Instagram returns incomplete `friendship_status` fields for users who left a direct thread.
+- Synced the recorded upstream baseline to `instagrapi` 2.16.9.
+
 ## [1.10.8] - 2026-06-18
 
 ### Added
