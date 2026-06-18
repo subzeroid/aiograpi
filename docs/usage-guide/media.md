@@ -390,6 +390,8 @@ In `extra_data`, you can pass additional media settings, for example:
 
 Accepted Instagram Collabs/coauthor users from private media payloads are available as `media.coauthor_producers`. This is separate from upload-time `coauthor_user_ids`, which only sends collaborator invitations.
 
+Extended media metadata from Instagram payloads is available on `Media` when returned by the source API, including caption edit state, dimensions, audio presence, hidden count state, viewer save/reshare state, paid partnership/affiliate flags, DASH video info, and clips music attribution.
+
 ### Example:
 
 ``` python
