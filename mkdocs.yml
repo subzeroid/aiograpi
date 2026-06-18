@@ -15,6 +15,7 @@ nav:
     - Examples: usage-guide/examples.md
     - Fundamentals: usage-guide/fundamentals.md
     - Interactions: usage-guide/interactions.md
+    - Types: usage-guide/types.md
     - Handle Exceptions: usage-guide/handle_exception.md
     - Challenge Resolver: usage-guide/challenge_resolver.md
     - Captcha: usage-guide/captcha.md

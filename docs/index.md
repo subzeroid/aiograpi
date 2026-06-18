@@ -133,6 +133,7 @@ To learn more about the various ways `aiograpi` can be used, read the [Usage Gui
 * [Runnable Examples](usage-guide/examples.md)
 * [Usage Guide](usage-guide/fundamentals.md)
 * [Interactions](usage-guide/interactions.md)
+  * [Types](usage-guide/types.md) - Field reference for public `aiograpi.types` models
   * [`Media`](usage-guide/media.md) - Publication (also called post): Photo, Video, Album, IGTV and Reels
   * [`Resource`](usage-guide/media.md) - Part of Media (for albums)
   * [`MediaOembed`](usage-guide/media.md) - Short version of Media
