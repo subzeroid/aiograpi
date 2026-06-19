@@ -12,7 +12,9 @@
 | direct_channels(user_id: Optional[int] = None, thread_subtypes: Optional[List[int]] = None) | List[Dict] | Get Direct channels for a user
 | direct_set_e2ee_eligibility(e2ee_eligibility: int = 4)                    | bool                    | Set Direct E2EE eligibility state
 | direct_thread(thread_id: int, amount: int = 20)                           | DirectThread            | Get Thread with Messages
+| direct_thread_chunk(thread_id: int, amount: int = 20, cursor: str = None) | Tuple[DirectThread, str] | Get one page of Thread with Messages and older-page cursor
 | direct_messages(thread_id: int, amount: int = 20)                         | List[DirectMessage]     | Get only Messages in Thread
+| direct_messages_chunk(thread_id: int, amount: int = 20, cursor: str = None) | Tuple[List[DirectMessage], str] | Get one page of Messages in Thread and older-page cursor
 | direct_message(thread_id: int, message_id: int, amount: int = 20)         | DirectMessage           | Get one Message from Thread by id
 | direct_answer(thread_id: int, text: str)                                  | DirectMessage           | Add Message to exist Thread
 | direct_send(text: str, user_ids: List[int] = [], thread_ids: List[int] = []) | DirectMessage        | Send Message to Users or Threads
@@ -49,6 +51,7 @@ Notes:
 * Direct message requests / invitations are exposed as `direct_requests()`; `direct_pending_inbox()` remains as the older name.
 * `direct_pending_requests_preview()` is the lightweight Android-app preview for request counters; use `direct_requests()` when you need the actual threads.
 * `direct_channels()` and `direct_search_gen_ai_bots()` expose raw app surfaces whose response shape may vary by rollout.
+* `direct_thread_chunk()` and `direct_messages_chunk()` expose Instagram's `oldest_cursor` for message history pagination.
 * `direct_message()` scans the latest `amount` messages in a thread and raises `DirectMessageNotFound` if the id is not present in that window.
 * Shared XMA items such as `xma_clip`, `xma_media_share`, `xma_story_share`, and `xma_profile` keep their original payload in `message.raw_xma`. When Instagram includes `target_url`, the normalized link is also available through `message.xma_share`.
 * Disappearing direct photos and videos with `item_type == "raven_media"` are exposed through `message.visual_media`.
