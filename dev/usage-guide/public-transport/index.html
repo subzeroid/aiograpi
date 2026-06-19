@@ -1426,6 +1426,7 @@
 </ul>
 <p>The default public web transport is <code>public_transport="requests"</code>: a requests-compatible async HTTP transport based on
 <code>httpx</code>. It has the smallest dependency footprint and keeps the existing async public request behavior.</p>
+<p>The public transport option is exposed as <code>PublicTransport = Literal["requests", "curl"]</code>.</p>
 <p>For public web endpoints that are sensitive to browser TLS fingerprints, you can install the optional curl transport:</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;aiograpi[curl]&quot;</span>
 </code></pre></div>
