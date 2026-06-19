@@ -47,7 +47,7 @@ Features:
 * Managing messages, reactions and threads for Direct and attach files
 * Experimental Realtime MQTT/MQTToT for Direct message sync, lightweight Direct actions, and FBNS push callbacks
 * Download and upload a Photo, Video, IGTV, Reels, Albums, Stories and Trial Reels
-* Work with Users, Posts, Comments, Insights, Collections, Location and Hashtag
+* Work with Users, Posts, Comments, Insights, Collections, Location, Hashtag and account notification settings
 * Insights by account, posts and stories
 * Like, following, commenting, editing account (Bio) and much more else
 
