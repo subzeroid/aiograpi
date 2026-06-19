@@ -369,6 +369,47 @@ class DirectMixin(ClientMixin):
         cursor = inbox.get("oldest_cursor")
         return threads, cursor
 
+    async def direct_thread_chunk(
+        self, thread_id: int, amount: int = 20, cursor: Optional[str] = None
+    ) -> Tuple[DirectThread, Optional[str]]:
+        """
+        Get one page of a Direct Message thread by cursor
+
+        Parameters
+        ----------
+        thread_id: int
+            Unique identifier of a Direct Message thread
+
+        amount: int, optional
+            Maximum number of media to return in this page, default is 20
+
+        cursor: str, optional
+            Cursor from the previous page request
+
+        Returns
+        -------
+        Tuple[DirectThread, str]
+            A tuple of DirectThread and str (cursor)
+        """
+        assert self.user_id, "Login required"
+        params = {
+            "visual_message_return_type": "unseen",
+            "direction": "older",
+            "seq_id": "40065",  # 59663
+            "limit": str(amount or 20),
+        }
+        if cursor:
+            params["cursor"] = cursor
+
+        try:
+            result = await self.private_request(f"direct_v2/threads/{thread_id}/", params=params)
+        except ClientNotFoundError as e:
+            raise DirectThreadNotFound(e, thread_id=thread_id, **self.last_json)
+        thread = result["thread"]
+        if amount:
+            thread["items"] = thread.get("items", [])[:amount]
+        return extract_direct_thread(thread), thread.get("oldest_cursor")
+
     async def direct_thread(self, thread_id: int, amount: int = 20) -> DirectThread:
         """
         Get all the information about a Direct Message thread
@@ -387,31 +428,19 @@ class DirectMixin(ClientMixin):
             An object of DirectThread
         """
         assert self.user_id, "Login required"
-        params = {
-            "visual_message_return_type": "unseen",
-            "direction": "older",
-            "seq_id": "40065",  # 59663
-            "limit": "20",
-        }
         cursor = None
-        items = []
+        messages: List[DirectMessage] = []
+        thread = None
         while True:
-            if cursor:
-                params["cursor"] = cursor
-            try:
-                result = await self.private_request(f"direct_v2/threads/{thread_id}/", params=params)
-            except ClientNotFoundError as e:
-                raise DirectThreadNotFound(e, thread_id=thread_id, **self.last_json)
-            thread = result["thread"]
-            for item in thread["items"]:
-                items.append(item)
-            cursor = thread.get("oldest_cursor")
-            if not cursor or (amount and len(items) >= amount):
+            limit = min(amount - len(messages), 20) if amount else 20
+            thread, cursor = await self.direct_thread_chunk(thread_id, limit, cursor=cursor)
+            messages.extend(thread.messages)
+            if not cursor or (amount and len(messages) >= amount):
                 break
         if amount:
-            items = items[:amount]
-        thread["items"] = items
-        return extract_direct_thread(thread)
+            messages = messages[:amount]
+        thread.messages = messages
+        return thread
 
     async def direct_messages(self, thread_id: int, amount: int = 20) -> List[DirectMessage]:
         """
@@ -432,6 +461,31 @@ class DirectMixin(ClientMixin):
         """
         assert self.user_id, "Login required"
         return (await self.direct_thread(thread_id, amount)).messages
+
+    async def direct_messages_chunk(
+        self, thread_id: int, amount: int = 20, cursor: Optional[str] = None
+    ) -> Tuple[List[DirectMessage], Optional[str]]:
+        """
+        Get one page of messages from a Direct Message thread by cursor
+
+        Parameters
+        ----------
+        thread_id: int
+            Unique identifier of a Direct Message thread
+
+        amount: int, optional
+            Maximum number of media to return in this page, default is 20
+
+        cursor: str, optional
+            Cursor from the previous page request
+
+        Returns
+        -------
+        Tuple[List[DirectMessage], str]
+            A tuple of list of objects of DirectMessage and str (cursor)
+        """
+        thread, cursor = await self.direct_thread_chunk(thread_id, amount, cursor=cursor)
+        return thread.messages, cursor
 
     async def direct_message(self, thread_id: int, message_id: int, amount: int = 20) -> DirectMessage:
         """

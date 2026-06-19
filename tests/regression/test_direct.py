@@ -82,6 +82,23 @@ def _direct_thread_with_left_user_payload():
     }
 
 
+def _direct_thread_page_payload(item_ids, oldest_cursor=None):
+    thread = _direct_thread_with_left_user_payload()
+    thread["items"] = [
+        {
+            "item_id": item_id,
+            "user_id": "1",
+            "timestamp": 1761953663000000 + index,
+            "item_type": "text",
+            "text": f"message {item_id}",
+        }
+        for index, item_id in enumerate(item_ids)
+    ]
+    if oldest_cursor is not None:
+        thread["oldest_cursor"] = oldest_cursor
+    return thread
+
+
 def _temp_file(suffix, data):
     tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
     tmp.write(data)
@@ -175,6 +192,52 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             await client.direct_message(123, 222, amount=1)
 
         assert "222" in str(ctx.exception)
+
+    async def test_direct_thread_chunk_returns_page_and_cursor(self):
+        client = _build_client()
+        client.private_request = AsyncMock(
+            return_value={"thread": _direct_thread_page_payload(["m1", "m2"], oldest_cursor="cursor-2")}
+        )
+
+        thread, cursor = await client.direct_thread_chunk(123, amount=2, cursor="cursor-1")
+
+        assert [message.id for message in thread.messages] == ["m1", "m2"]
+        assert cursor == "cursor-2"
+        client.private_request.assert_awaited_once_with(
+            "direct_v2/threads/123/",
+            params={
+                "visual_message_return_type": "unseen",
+                "direction": "older",
+                "seq_id": "40065",
+                "limit": "2",
+                "cursor": "cursor-1",
+            },
+        )
+
+    async def test_direct_messages_chunk_returns_messages_and_cursor(self):
+        client = _build_client()
+        thread = extract_direct_thread(_direct_thread_page_payload(["m1"], oldest_cursor="cursor-2"))
+        client.direct_thread_chunk = AsyncMock(return_value=(thread, "cursor-2"))
+
+        messages, cursor = await client.direct_messages_chunk(123, amount=1, cursor="cursor-1")
+
+        assert [message.id for message in messages] == ["m1"]
+        assert cursor == "cursor-2"
+        client.direct_thread_chunk.assert_awaited_once_with(123, 1, cursor="cursor-1")
+
+    async def test_direct_thread_uses_chunk_pagination_until_amount_is_reached(self):
+        client = _build_client()
+        first = extract_direct_thread(_direct_thread_page_payload(["m1", "m2"], oldest_cursor="cursor-1"))
+        second = extract_direct_thread(_direct_thread_page_payload(["m3"], oldest_cursor=None))
+        client.direct_thread_chunk = AsyncMock(side_effect=[(first, "cursor-1"), (second, None)])
+
+        thread = await client.direct_thread(123, amount=3)
+
+        assert [message.id for message in thread.messages] == ["m1", "m2", "m3"]
+        assert client.direct_thread_chunk.await_args_list == [
+            mock.call(123, 3, cursor=None),
+            mock.call(123, 1, cursor="cursor-1"),
+        ]
 
     async def test_direct_message_unsend_delegates_to_delete_endpoint(self):
         client = _build_client()
