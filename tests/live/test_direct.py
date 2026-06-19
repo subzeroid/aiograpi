@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from contextlib import asynccontextmanager
 
 from aiograpi.exceptions import DirectMessageNotFound
 from aiograpi.types import DirectMessage
@@ -11,8 +12,8 @@ logger = logging.getLogger("aiograpi.tests")
 
 
 class ClientDirectLiveTestCase(RealtimeLiveHelpers, _legacy.ClientPrivateTestCase):
-    async def test_direct_messages_chunk_paginates_thread_history_live(self):
-        sender = self.cl
+    @asynccontextmanager
+    async def direct_pagination_thread(self, sender, test_name):
         try:
             first_recipient = await self.fresh_account_excluding({sender.user_id})
             second_recipient = await self.fresh_account_excluding({sender.user_id, first_recipient.user_id})
@@ -21,8 +22,8 @@ class ClientDirectLiveTestCase(RealtimeLiveHelpers, _legacy.ClientPrivateTestCas
 
         thread_id = None
         sent_messages = []
-        title = f"aiograpi-pagination-{int(time.time())}"
-        text_prefix = f"aiograpi pagination live {int(time.time())}"
+        title = f"aiograpi-{test_name}-{int(time.time())}"
+        text_prefix = f"aiograpi {test_name} live {int(time.time())}"
 
         try:
             thread_id = await sender.direct_thread_create(
@@ -37,7 +38,24 @@ class ClientDirectLiveTestCase(RealtimeLiveHelpers, _legacy.ClientPrivateTestCas
                 self.assertTrue(message.id)
                 sent_messages.append(message)
                 await asyncio.sleep(1)
+            yield thread_id
 
+        finally:
+            if thread_id:
+                for message in reversed(sent_messages):
+                    try:
+                        await sender.direct_message_unsend(thread_id, message.id)
+                    except Exception as exc:
+                        logger.warning("Direct pagination message cleanup failed: %s", exc)
+                for client in (sender, first_recipient, second_recipient):
+                    try:
+                        await client.direct_thread_hide(thread_id)
+                    except Exception as exc:
+                        logger.warning("Direct pagination thread cleanup failed: %s", exc)
+
+    async def test_direct_messages_chunk_paginates_thread_history_live(self):
+        sender = self.cl
+        async with self.direct_pagination_thread(sender, "chunk-pagination") as thread_id:
             first_page = []
             cursor = None
             deadline = time.time() + 30
@@ -57,18 +75,39 @@ class ClientDirectLiveTestCase(RealtimeLiveHelpers, _legacy.ClientPrivateTestCas
             self.assertIsInstance(second_page[0], DirectMessage)
             self.assertNotEqual(first_page[0].id, second_page[0].id)
             self.assertTrue(next_cursor is None or isinstance(next_cursor, str))
-        finally:
-            if thread_id:
-                for message in reversed(sent_messages):
-                    try:
-                        await sender.direct_message_unsend(thread_id, message.id)
-                    except Exception as exc:
-                        logger.warning("Direct pagination message cleanup failed: %s", exc)
-                for client in (sender, first_recipient, second_recipient):
-                    try:
-                        await client.direct_thread_hide(thread_id)
-                    except Exception as exc:
-                        logger.warning("Direct pagination thread cleanup failed: %s", exc)
+
+    async def test_direct_messages_auto_paginates_thread_history_live(self):
+        sender = self.cl
+        async with self.direct_pagination_thread(sender, "messages-pagination") as thread_id:
+            original_direct_messages_chunk = sender.direct_messages_chunk
+            requested_cursors = []
+
+            async def one_message_chunk(thread_id, amount=20, cursor=None):
+                requested_cursors.append(cursor)
+                return await original_direct_messages_chunk(thread_id, amount=1, cursor=cursor)
+
+            sender.direct_messages_chunk = one_message_chunk
+            messages = []
+            try:
+                deadline = time.time() + 30
+                while time.time() < deadline:
+                    requested_cursors.clear()
+                    messages = await sender.direct_messages(thread_id, amount=2)
+                    if len(messages) == 2:
+                        break
+                    await asyncio.sleep(2)
+            finally:
+                sender.direct_messages_chunk = original_direct_messages_chunk
+
+            if len(messages) < 2 and len(requested_cursors) < 2:
+                self.skipTest("Instagram did not return oldest_cursor for the live thread")
+
+            self.assertEqual(len(messages), 2)
+            self.assertTrue(all(isinstance(message, DirectMessage) for message in messages))
+            self.assertEqual(len({message.id for message in messages}), 2)
+            self.assertGreaterEqual(len(requested_cursors), 2)
+            self.assertIsNone(requested_cursors[0])
+            self.assertIsInstance(requested_cursors[1], str)
 
     async def test_direct_media_share_to_group_thread_live(self):
         sender = self.cl

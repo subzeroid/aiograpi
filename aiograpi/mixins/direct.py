@@ -460,7 +460,17 @@ class DirectMixin(ClientMixin):
             A list of objects of DirectMessage
         """
         assert self.user_id, "Login required"
-        return (await self.direct_thread(thread_id, amount)).messages
+        cursor = None
+        messages: List[DirectMessage] = []
+        while True:
+            limit = min(amount - len(messages), 20) if amount else 20
+            new_messages, cursor = await self.direct_messages_chunk(thread_id, limit, cursor=cursor)
+            messages.extend(new_messages)
+            if not cursor or (amount and len(messages) >= amount):
+                break
+        if amount:
+            messages = messages[:amount]
+        return messages
 
     async def direct_messages_chunk(
         self, thread_id: int, amount: int = 20, cursor: Optional[str] = None
