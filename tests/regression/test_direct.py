@@ -225,6 +225,25 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert cursor == "cursor-2"
         client.direct_thread_chunk.assert_awaited_once_with(123, 1, cursor="cursor-1")
 
+    async def test_direct_messages_uses_chunk_pagination_until_amount_is_reached(self):
+        client = _build_client()
+        first = [
+            DirectMessage(id="m1", user_id="1", timestamp=1),
+            DirectMessage(id="m2", user_id="1", timestamp=2),
+        ]
+        second = [DirectMessage(id="m3", user_id="1", timestamp=3)]
+        client.direct_messages_chunk = AsyncMock(side_effect=[(first, "cursor-1"), (second, None)])
+        client.direct_thread = AsyncMock(return_value=mock.Mock(messages=first + second))
+
+        messages = await client.direct_messages(123, amount=3)
+
+        assert [message.id for message in messages] == ["m1", "m2", "m3"]
+        assert client.direct_messages_chunk.await_args_list == [
+            mock.call(123, 3, cursor=None),
+            mock.call(123, 1, cursor="cursor-1"),
+        ]
+        client.direct_thread.assert_not_called()
+
     async def test_direct_thread_uses_chunk_pagination_until_amount_is_reached(self):
         client = _build_client()
         first = extract_direct_thread(_direct_thread_page_payload(["m1", "m2"], oldest_cursor="cursor-1"))
