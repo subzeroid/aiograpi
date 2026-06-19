@@ -279,3 +279,42 @@ class ClientUploadCoauthorLiveTestCase(unittest.IsolatedAsyncioTestCase):
         finally:
             if media:
                 self.assertTrue(await uploader.media_delete(media.id))
+
+    async def test_clip_upload_show_preview_in_feed_false_live(self):
+        path = self.make_clip_mp4()
+        thumbnail = self.make_cover_fixture((30, 30, 30))
+        self.assertIsInstance(path, Path)
+        accounts = await _fetch_accounts(self.test_accounts_url, count=5)
+        login_failures = {}
+        uploader = None
+        for account in accounts:
+            try:
+                uploader = await _client_from_test_account(account)
+                break
+            except Exception as exc:
+                login_failures[exc.__class__.__name__] = login_failures.get(exc.__class__.__name__, 0) + 1
+        if uploader is None:
+            self.skipTest(f"No usable test account was available (login_failures={login_failures})")
+
+        media = None
+        try:
+            caption_text = f"Upload clip hidden preview {int(time.time())}"
+            media = await uploader.clip_upload(
+                path,
+                caption_text,
+                thumbnail=thumbnail,
+                show_preview_in_feed=False,
+            )
+            self.assertIsInstance(media, Media)
+            self.assertEqual(media.caption_text, caption_text)
+            payload = await self.assertUploadedMediaAccessible(
+                uploader,
+                media,
+                media_type=2,
+                product_type="clips",
+                caption_text=caption_text,
+            )
+            self.assertTrue(payload.get("video_versions"))
+        finally:
+            if media:
+                self.assertTrue(await uploader.media_delete(media.id))

@@ -5,6 +5,7 @@ import types
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal, Union, get_args, get_origin, get_type_hints
 from unittest.mock import AsyncMock
 
 from PIL import Image
@@ -79,6 +80,20 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 }
             ]
         return payload
+
+    def assert_fb_destination_type_literal(self, method_name, parameter_name):
+        hints = get_type_hints(getattr(Client, method_name))
+        annotation = hints[parameter_name]
+        self.assertIs(get_origin(annotation), Union)
+        self.assertIn(type(None), get_args(annotation))
+        literal_args = [arg for arg in get_args(annotation) if get_origin(arg) is Literal]
+        self.assertEqual(1, len(literal_args))
+        self.assertEqual(("USER", "PAGE"), get_args(literal_args[0]))
+
+    async def test_clip_share_to_fb_destination_type_annotations_are_literal(self):
+        self.assert_fb_destination_type_literal("clip_share_to_fb_destination", "destination_type")
+        self.assert_fb_destination_type_literal("clip_share_to_fb_extra_data", "destination_type")
+        self.assert_fb_destination_type_literal("clip_upload", "fb_destination_type")
 
     async def test_photo_upload_sends_scheduled_publish_metadata(self):
         client = self.build_client()

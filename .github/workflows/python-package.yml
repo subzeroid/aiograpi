@@ -17,6 +17,7 @@ on:
         options:
           - smoke
           - comment
+          - upload
           - fbsearch
           - realtime
           - signup
@@ -221,6 +222,14 @@ jobs:
             exit 0
           fi
           PYTHONPATH=. pytest -sv tests/legacy.py::ClientCommentExtendTestCase::test_media_comment
+      - name: Run upload live tests
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.test_target == 'upload' || github.event.inputs.test_target == 'all')
+        run: |
+          if [ -z "${TEST_ACCOUNTS_URL}" ]; then
+            echo "SKIP: TEST_ACCOUNTS_URL secret is not configured"
+            exit 0
+          fi
+          PYTHONPATH=. pytest -sv tests/live/test_upload.py::ClientUploadCoauthorLiveTestCase::test_clip_upload_show_preview_in_feed_false_live
       - name: Run fbsearch live test
         if: github.event_name == 'workflow_dispatch' && (github.event.inputs.test_target == 'fbsearch' || github.event.inputs.test_target == 'all')
         run: |
