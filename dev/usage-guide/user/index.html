@@ -1429,6 +1429,11 @@
 <td>Get username by user_id</td>
 </tr>
 <tr>
+<td>user_report(user_id: str, reason: str = "spam")</td>
+<td>bool</td>
+<td>Report a user account. Currently supports the live-verified spam report flow</td>
+</tr>
+<tr>
 <td>user_remove_follower(user_id: str)</td>
 <td>bool</td>
 <td>Remove your follower</td>
@@ -1515,6 +1520,7 @@
 </tr>
 </tbody>
 </table>
+<p><code>user_report(user_id, reason="spam")</code> follows Instagram's current mobile FRX report flow for account spam reports and submits the report. This is a real account action; use it only for accounts you actually intend to report. Unsupported reasons raise <code>ValueError</code> until their FRX tag paths are captured and tested.</p>
 <p>Low level methods:</p>
 <table>
 <thead>
