@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.10.14] - 2026-06-20
+
+### Added
+
+- Added `show_preview_in_feed` to Reel uploads so callers can use a boolean API while the Instagram payload continues to send `"1"` / `"0"`.
+- Typed `fb_destination_type` as uppercase `"USER"` / `"PAGE"` and documented the wire values Instagram expects.
+- Added live smoke coverage for uploading a Reel without showing its preview in feed.
+- Synced the recorded upstream baseline to `instagrapi` 2.16.13.
+
 ## [1.10.9] - 2026-06-18
 
 ### Fixed
