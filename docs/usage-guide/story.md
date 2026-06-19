@@ -52,12 +52,12 @@ Common arguments:
 * `links` - "Swipe Up" links (now use first)
 * `hashtags` - Add hashtags to story
 * `stickers` - Add stickers to story
-* `resize_mode` - Story media sizing mode: `"fill"` keeps the current crop/fill behavior, `"fit"` renders the full source media on a Story canvas without cropping
+* `resize_mode` - Story media sizing mode. Exposed as `StoryResizeMode = Literal["fill", "fit"]`; `"fill"` keeps the current crop/fill behavior, `"fit"` renders the full source media on a Story canvas without cropping
 
 | Method                               | Return   | Description
 | ------------------------------------ | -------- | -------------
-| photo_upload_to_story(path: Path, caption: str = "", upload_id: str = "", mentions: List[StoryMention] = [], locations: List[StoryLocation] = [], links: List[StoryLink] = [], hashtags: List[StoryHashtag] = [], stickers: List[StorySticker] = [], medias: List[StoryMedia] = [], polls: List[StoryPoll] = [], extra_data: Dict[str, str] = {}, resize_mode: str = "fill")  | Story  | Upload photo to story
-| video_upload_to_story(path: Path, caption: str = "", thumbnail: Path = None, mentions: List[StoryMention] = [], locations: List[StoryLocation] = [], links: List[StoryLink] = [], hashtags: List[StoryHashtag] = [], stickers: List[StorySticker] = [], medias: List[StoryMedia] = [], polls: List[StoryPoll] = [], extra_data: Dict[str, str] = {}, resize_mode: str = "fill") | Story  | Upload video to story
+| photo_upload_to_story(path: Path, caption: str = "", upload_id: str = "", mentions: List[StoryMention] = [], locations: List[StoryLocation] = [], links: List[StoryLink] = [], hashtags: List[StoryHashtag] = [], stickers: List[StorySticker] = [], medias: List[StoryMedia] = [], polls: List[StoryPoll] = [], extra_data: Dict[str, str] = {}, resize_mode: StoryResizeMode = "fill")  | Story  | Upload photo to story
+| video_upload_to_story(path: Path, caption: str = "", thumbnail: Path = None, mentions: List[StoryMention] = [], locations: List[StoryLocation] = [], links: List[StoryLink] = [], hashtags: List[StoryHashtag] = [], stickers: List[StorySticker] = [], medias: List[StoryMedia] = [], polls: List[StoryPoll] = [], extra_data: Dict[str, str] = {}, resize_mode: StoryResizeMode = "fill") | Story  | Upload video to story
 | photo_upload_to_story_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, duration: float = 15.0, extra_data: Dict = {}) | Story | Upload photo to story as a short video with the selected music track muxed into it
 | video_upload_to_story_with_music(path: Path, caption: str, track: Track or dict, thumbnail: Path = None, extra_data: Dict = {}) | Story | Upload video to story with the selected music track muxed into it
 | story_music_extra_data(track: Track or dict, extra_data: Dict = {}) | dict | Build Story music configure fields for manual story upload `extra_data`

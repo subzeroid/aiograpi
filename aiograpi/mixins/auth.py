@@ -1027,7 +1027,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         session_retry_total: int = None,
         session_retry_backoff_factor: Union[int, float] = None,
         session_retry_statuses: list = None,
-        public_transport: Optional[str] = None,
+        public_transport: Optional[Literal["requests", "curl"]] = None,
         public_transport_impersonate: Optional[str] = None,
     ) -> bool:
         if request_timeout is not None:
