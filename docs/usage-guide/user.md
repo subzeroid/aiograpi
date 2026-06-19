@@ -23,6 +23,7 @@ View a list of a user's medias, following and followers
 | user_follow_requests_decline(user_ids: List[str]) | Dict[str, bool]  | Decline pending incoming follow requests                     |
 | user_id_from_username(username: str)          | int                   | Get user_id by username                                      |
 | username_from_user_id(user_id: str)           | str                   | Get username by user_id                                      |
+| user_report(user_id: str, reason: str = "spam") | bool                | Report a user account. Currently supports the live-verified spam report flow |
 | user_remove_follower(user_id: str)            | bool                  | Remove your follower                                         |
 | mute_posts_from_follow(user_id: str)          | bool                  | Mute posts from following user                               |
 | unmute_posts_from_follow(user_id: str)        | bool                  | Unmute posts from following user                             |
@@ -40,6 +41,8 @@ View a list of a user's medias, following and followers
 | user_suggested_profiles(user_id: str, expand_suggestion: bool = False) | dict | Suggested profiles ("Suggested for you") for a profile. Wraps `chaining` and, with `expand_suggestion=True`, returns the raw `fetch_suggestion_details` payload (`items` in current app responses) |
 | address_book_link(contacts: List[AddressBookContact \| dict], include: Sequence[str] \| str = ("extra_display_name", "thumbnails")) | dict | Upload/link address book contacts and return Instagram's raw contact-based suggestions response |
 | address_book_unlink()                         | dict                  | Disconnect the uploaded address book from the current account |
+
+`user_report(user_id, reason="spam")` follows Instagram's current mobile FRX report flow for account spam reports and submits the report. This is a real account action; use it only for accounts you actually intend to report. Unsupported reasons raise `ValueError` until their FRX tag paths are captured and tested.
 
 Low level methods:
 

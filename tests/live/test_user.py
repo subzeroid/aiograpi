@@ -102,6 +102,25 @@ class ClientPrivateGraphQLV2UserFieldsLiveTestCase(unittest.IsolatedAsyncioTestC
                 self.assertEqual(getattr(rich_user, field), str(raw_value))
 
 
+class ClientUserReportLiveTestCase(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        if os.getenv("IG_USER_REPORT_LIVE") != "1":
+            self.skipTest("Set IG_USER_REPORT_LIVE=1 to run the destructive user report live test")
+        self.target_user_id = os.getenv("IG_USER_REPORT_TARGET_ID")
+        if not self.target_user_id:
+            self.skipTest("IG_USER_REPORT_TARGET_ID is required for the user report live test")
+        self.test_accounts_url = os.getenv("TEST_ACCOUNTS_URL")
+        if not self.test_accounts_url:
+            self.skipTest("TEST_ACCOUNTS_URL is required for user report live tests")
+
+    async def test_user_report_spam_live(self):
+        clients = await _fresh_reusable_user_clients(self.test_accounts_url, count=10)
+        if not clients:
+            self.skipTest("At least one reusable TEST_ACCOUNTS_URL session is required")
+
+        self.assertTrue(await clients[0].user_report(self.target_user_id))
+
+
 class ClientIteratorLiveTestCase(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.test_accounts_url = os.getenv("TEST_ACCOUNTS_URL")
