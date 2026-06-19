@@ -1390,9 +1390,19 @@
 <td>Get Thread with Messages</td>
 </tr>
 <tr>
+<td>direct_thread_chunk(thread_id: int, amount: int = 20, cursor: Optional[str] = None)</td>
+<td>Tuple[DirectThread, Optional[str]]</td>
+<td>Get one page of Thread with Messages and older-page cursor</td>
+</tr>
+<tr>
 <td>direct_messages(thread_id: int, amount: int = 20)</td>
 <td>List[DirectMessage]</td>
 <td>Get only Messages in Thread</td>
+</tr>
+<tr>
+<td>direct_messages_chunk(thread_id: int, amount: int = 20, cursor: Optional[str] = None)</td>
+<td>Tuple[List[DirectMessage], Optional[str]]</td>
+<td>Get one page of Messages in Thread and older-page cursor</td>
 </tr>
 <tr>
 <td>direct_message(thread_id: int, message_id: int, amount: int = 20)</td>
@@ -1539,6 +1549,7 @@
 <li>Direct message requests / invitations are exposed as <code>direct_requests()</code>; <code>direct_pending_inbox()</code> remains as the older name.</li>
 <li><code>direct_pending_requests_preview()</code> is the lightweight Android-app preview for request counters; use <code>direct_requests()</code> when you need the actual threads.</li>
 <li><code>direct_channels()</code> and <code>direct_search_gen_ai_bots()</code> expose raw app surfaces whose response shape may vary by rollout.</li>
+<li><code>direct_thread_chunk()</code> and <code>direct_messages_chunk()</code> expose Instagram's <code>oldest_cursor</code> for message history pagination.</li>
 <li><code>direct_message()</code> scans the latest <code>amount</code> messages in a thread and raises <code>DirectMessageNotFound</code> if the id is not present in that window.</li>
 <li>Shared XMA items such as <code>xma_clip</code>, <code>xma_media_share</code>, <code>xma_story_share</code>, and <code>xma_profile</code> keep their original payload in <code>message.raw_xma</code>. When Instagram includes <code>target_url</code>, the normalized link is also available through <code>message.xma_share</code>.</li>
 <li>Disappearing direct photos and videos with <code>item_type == "raven_media"</code> are exposed through <code>message.visual_media</code>.</li>
