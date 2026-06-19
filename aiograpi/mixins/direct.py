@@ -370,8 +370,8 @@ class DirectMixin(ClientMixin):
         return threads, cursor
 
     async def direct_thread_chunk(
-        self, thread_id: int, amount: int = 20, cursor: str = None
-    ) -> Tuple[DirectThread, str]:
+        self, thread_id: int, amount: int = 20, cursor: Optional[str] = None
+    ) -> Tuple[DirectThread, Optional[str]]:
         """
         Get one page of a Direct Message thread by cursor
 
@@ -429,7 +429,7 @@ class DirectMixin(ClientMixin):
         """
         assert self.user_id, "Login required"
         cursor = None
-        messages = []
+        messages: List[DirectMessage] = []
         thread = None
         while True:
             limit = min(amount - len(messages), 20) if amount else 20
@@ -463,8 +463,8 @@ class DirectMixin(ClientMixin):
         return (await self.direct_thread(thread_id, amount)).messages
 
     async def direct_messages_chunk(
-        self, thread_id: int, amount: int = 20, cursor: str = None
-    ) -> Tuple[List[DirectMessage], str]:
+        self, thread_id: int, amount: int = 20, cursor: Optional[str] = None
+    ) -> Tuple[List[DirectMessage], Optional[str]]:
         """
         Get one page of messages from a Direct Message thread by cursor
 
