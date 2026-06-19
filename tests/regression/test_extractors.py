@@ -85,6 +85,27 @@ def test_xma_clip_without_target_url_keeps_raw_payload():
     assert message.raw_xma["xma_clip"][0]["preview_media_fbid"] == "123456789"
 
 
+def test_generic_xma_accepts_instagram_deep_link_target_url():
+    message = extract_direct_message(
+        {
+            "item_id": "1",
+            "user_id": "2",
+            "timestamp": 1761953663000000,
+            "item_type": "generic_xma",
+            "text": "",
+            "generic_xma": [
+                {
+                    "target_url": "instagram://direct-notes?user_id=123456789&is_self_note=0",
+                    "title_text": "Direct note",
+                },
+            ],
+        }
+    )
+
+    assert message.generic_xma is not None
+    assert message.generic_xma[0].video_url == "instagram://direct-notes?user_id=123456789&is_self_note=0"
+
+
 def test_xma_media_share_keeps_raw_payload_when_normalized():
     message = extract_direct_message(
         {
