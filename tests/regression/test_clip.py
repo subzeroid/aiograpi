@@ -676,6 +676,47 @@ class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert configure_extra["share_to_facebook_reels"] is True
         assert configure_extra["xpost_surface"] == "IG_REELS_COMPOSER"
 
+    async def test_clip_upload_show_preview_in_feed_false_sends_feed_show_zero(self):
+        client = _build_client()
+        client.last_json = {"media": _build_media_payload()}
+        ok_response = Mock(status_code=200)
+        client.private.get = AsyncMock(return_value=ok_response)
+        client.private.post = AsyncMock(side_effect=[ok_response, ok_response])
+        client.clip_configure = AsyncMock(return_value={"status": "ok", "media": _build_media_payload()})
+
+        with mock.patch(
+            "aiograpi.mixins.clip.analyze_video",
+            return_value=(Path("/tmp/thumb.jpg"), 720, 1280, 6.023),
+        ):
+            with mock.patch("builtins.open", mock.mock_open(read_data=b"video-bytes")):
+                with mock.patch("aiograpi.mixins.clip.asyncio.sleep", new=AsyncMock()):
+                    await client.clip_upload(
+                        Path("example.mp4"),
+                        "caption",
+                        show_preview_in_feed=False,
+                    )
+
+        assert client.clip_configure.call_args.args[8] == "0"
+
+    async def test_clip_configure_show_preview_in_feed_false_sends_feed_show_zero(self):
+        client = _build_client()
+        client.photo_rupload = AsyncMock(return_value=None)
+        client.location_build = AsyncMock(return_value=None)
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        await client.clip_configure(
+            "upload-id",
+            Path("/tmp/thumb.jpg"),
+            720,
+            1280,
+            6023,
+            "caption",
+            show_preview_in_feed=False,
+        )
+
+        payload = client.private_request.call_args.args[1]
+        assert payload["clips_share_preview_to_feed"] == "0"
+
     async def test_clip_music_extra_data_builds_reels_music_payload_from_dict(self):
         client = _build_client()
         track = {
