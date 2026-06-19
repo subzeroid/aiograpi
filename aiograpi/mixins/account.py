@@ -1,12 +1,14 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Literal, Optional, Union
 
 from aiograpi.extractors import extract_account, extract_user_short
 from aiograpi.mixins.base import ClientMixin
 from aiograpi.types import Account, UserShort
 from aiograpi.utils.auth import gen_token, generate_signature
 from aiograpi.utils.serialization import dumps
+
+ProfessionalAccountType = Literal[2, 3]
 
 
 class AccountMixin(ClientMixin):
@@ -65,7 +67,7 @@ class AccountMixin(ClientMixin):
 
     async def account_convert_to_professional(
         self,
-        to_account_type: int = 3,
+        to_account_type: ProfessionalAccountType = 3,
         category_id: Union[str, int] = "2347428775505624",
         should_show_category: bool = True,
         should_show_public_contacts: bool = False,
@@ -78,7 +80,7 @@ class AccountMixin(ClientMixin):
 
         Parameters
         ----------
-        to_account_type: int, default 3
+        to_account_type: Literal[2, 3], default 3
             Instagram professional account type. ``2`` is business and ``3`` is creator.
         category_id: str or int, default "2347428775505624"
             Professional category id selected during conversion.

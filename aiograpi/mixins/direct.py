@@ -79,8 +79,8 @@ class DirectMixin(ClientMixin):
     async def direct_threads(
         self,
         amount: int = 20,
-        selected_filter: SELECTED_FILTER = "",
-        box: BOX = "",
+        selected_filter: Optional[SELECTED_FILTER] = None,
+        box: Optional[BOX] = None,
         thread_message_limit: Optional[int] = None,
     ) -> List[DirectThread]:
         """
@@ -91,9 +91,9 @@ class DirectMixin(ClientMixin):
         amount: int, optional
             Maximum number of media to return, default is 20
         selected_filter: str, optional
-            Filter to apply to threads (flagged or unread)
+            Filter to apply to threads ("flagged" or "unread")
         box: str, optional
-            Box to gather threads from (primary or general) (business accounts only)
+            Box to gather threads from ("primary" or "general") (business accounts only)
         thread_message_limit: int, optional
             Thread message limit, deafult is 10
 
@@ -118,8 +118,8 @@ class DirectMixin(ClientMixin):
 
     async def direct_threads_chunk(
         self,
-        selected_filter: SELECTED_FILTER = "",
-        box: BOX = "",
+        selected_filter: Optional[SELECTED_FILTER] = None,
+        box: Optional[BOX] = None,
         thread_message_limit: Optional[int] = None,
         cursor: str = None,
     ) -> Tuple[List[DirectThread], str]:
@@ -129,11 +129,11 @@ class DirectMixin(ClientMixin):
         Parameters
         ----------
         selected_filter: str, optional
-            Filter to apply to threads (flagged or unread)
+            Filter to apply to threads ("flagged" or "unread")
         thread_message_limit: int, optional
             Thread message limit, deafult is 10
         box: str, optional
-            Box to gather threads from (primary or general) (business accounts only)
+            Box to gather threads from ("primary" or "general") (business accounts only)
         cursor: str, optional
             Cursor from the previous chunk request
 

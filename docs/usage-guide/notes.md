@@ -3,9 +3,9 @@
 | Method                      | Return            | Description                     |
 | --------------------------- | ----------------- | ------------------------------- |
 | get_notes()                 | List[Note]        | Retrieve direct Notes           |
-| create_note(text: str, audience: int = 0) | Note | Post a new Note                 |
+| create_note(text: str, audience: Literal[0, 1] = 0) | Note | Post a new Note                 |
 | notes_music_browser()       | Dict              | Retrieve music candidates for Notes |
-| create_music_note(track, text: str = "", audience: int = 0) | Note | Post a new music Note |
+| create_music_note(track, text: str = "", audience: Literal[0, 1] = 0) | Note | Post a new music Note |
 | delete_note(note_id: int)   | bool              | Delete a posted Note            |
 | last_seen_update_note()     | bool              | Update the last seen time |
 
@@ -64,4 +64,4 @@ Common arguments:
 
 * `note_id` - ID of the Note object
 * `text` - Content of the Note
-* `audience` - Who can see the note **(0 = Followers you follow back, 1 = Close Friends only)**
+* `audience` - Who can see the note. Exposed as `NoteAudience = Literal[0, 1]` **(0 = Followers you follow back, 1 = Close Friends only)**

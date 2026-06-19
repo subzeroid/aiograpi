@@ -8,6 +8,8 @@
 The default public web transport is `public_transport="requests"`: a requests-compatible async HTTP transport based on
 `httpx`. It has the smallest dependency footprint and keeps the existing async public request behavior.
 
+The public transport option is exposed as `PublicTransport = Literal["requests", "curl"]`.
+
 For public web endpoints that are sensitive to browser TLS fingerprints, you can install the optional curl transport:
 
 ```bash

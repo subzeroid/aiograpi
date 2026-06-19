@@ -2,7 +2,7 @@ import base64
 import json
 import logging
 import warnings
-from typing import AsyncIterator, List, Optional, Tuple
+from typing import AsyncIterator, List, Literal, Optional, Tuple
 
 from aiograpi.exceptions import (
     ClientError,
@@ -24,6 +24,8 @@ from aiograpi.utils.iterators import iter_paginated
 from aiograpi.utils.serialization import dumps
 
 logger = logging.getLogger(__name__)
+
+HashtagTab = Literal["top", "recent", "clips"]
 
 
 class HashtagMixin(ClientMixin):
@@ -126,7 +128,7 @@ class HashtagMixin(ClientMixin):
         self,
         name: str,
         max_amount: int = 27,
-        tab_key: str = "",
+        tab_key: HashtagTab = "top",
         max_id: Optional[str] = None,
     ) -> Tuple[List[Media], Optional[str]]:
         """
@@ -139,7 +141,7 @@ class HashtagMixin(ClientMixin):
         max_amount: int, optional
             Maximum number of media to return, default is 27
         tab_key: str, optional
-            Tab Key, default value is ""
+            Tab key: "top", "recent" or "clips", default is "top"
         max_id: str
             Max ID, default value is None
 
@@ -254,7 +256,7 @@ class HashtagMixin(ClientMixin):
         return medias, next_cursor
 
     async def hashtag_medias_paginated_v1(
-        self, name: str, amount: int = 27, tab_key: str = "recent", end_cursor: Optional[str] = None
+        self, name: str, amount: int = 27, tab_key: HashtagTab = "recent", end_cursor: Optional[str] = None
     ) -> Tuple[List[Media], Optional[str]]:
         """
         Get a page of medias for a hashtag by Private Mobile API
@@ -280,7 +282,7 @@ class HashtagMixin(ClientMixin):
         return await self.hashtag_medias_v1_chunk(name, max_amount=amount, tab_key=tab_key, max_id=end_cursor)
 
     async def hashtag_medias_paginated(
-        self, name: str, amount: int = 27, tab_key: str = "recent", end_cursor: Optional[str] = None
+        self, name: str, amount: int = 27, tab_key: HashtagTab = "recent", end_cursor: Optional[str] = None
     ) -> Tuple[List[Media], Optional[str]]:
         """
         Get a page of medias for a hashtag
@@ -342,7 +344,7 @@ class HashtagMixin(ClientMixin):
         name: str,
         amount: int = 0,
         page_size: int = 27,
-        tab_key: str = "recent",
+        tab_key: HashtagTab = "recent",
     ) -> AsyncIterator[Media]:
         """
         Iterate over medias for a hashtag.
@@ -375,7 +377,7 @@ class HashtagMixin(ClientMixin):
 
         return iter_paginated(fetch_page, amount=amount, page_size=page_size, initial_cursor=None)
 
-    async def hashtag_medias_v1(self, name: str, amount: int = 27, tab_key: str = "") -> List[Media]:
+    async def hashtag_medias_v1(self, name: str, amount: int = 27, tab_key: HashtagTab = "top") -> List[Media]:
         """
         Get medias for a hashtag by Private Mobile API
 
@@ -386,7 +388,7 @@ class HashtagMixin(ClientMixin):
         amount: int, optional
             Maximum number of media to return, default is 27
         tab_key: str, optional
-            Tab Key, default value is ""
+            Tab key: "top", "recent" or "clips", default is "top"
 
         Returns
         -------
