@@ -757,6 +757,68 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             data={"_uuid": "uuid"},
         )
 
+    async def test_user_report_spam_replays_live_frx_prompt_sequence(self):
+        client = Client()
+        client.uuid = "uuid"
+        responses = [
+            {"response": {"context": "context-0"}},
+            {"response": {"context": "context-1"}},
+            {"response": {"context": "context-2"}},
+            {"response": {"context": "context-3", "follow_up_actions": [{"action_type": "block"}]}},
+        ]
+        client.private_request = AsyncMock(side_effect=responses)
+
+        self.assertTrue(await client.user_report("123"))
+
+        self.assertEqual(client.private_request.await_count, 4)
+        calls = client.private_request.await_args_list
+        self.assertEqual(calls[0].args, ("reports/get_frx_prompt/",))
+        self.assertEqual(
+            calls[0].kwargs,
+            {
+                "data": {
+                    "_uuid": "uuid",
+                    "container_module": "profile",
+                    "entry_point": "1",
+                    "frx_prompt_request_type": "1",
+                    "is_dark_mode": "false",
+                    "location": "2",
+                    "nua_action": "",
+                    "object_id": "123",
+                    "object_type": "5",
+                },
+                "with_signature": False,
+            },
+        )
+        expected_tags = ["ig_report_account", "ig_its_inappropriate", "ig_spam_v3"]
+        for call, expected_context, expected_tag in zip(
+            calls[1:], ["context-0", "context-1", "context-2"], expected_tags
+        ):
+            self.assertEqual(call.args, ("reports/get_frx_prompt/",))
+            self.assertEqual(
+                call.kwargs,
+                {
+                    "data": {
+                        "_uuid": "uuid",
+                        "context": expected_context,
+                        "frx_prompt_request_type": "2",
+                        "is_dark_mode": "false",
+                        "nua_action": "",
+                        "selected_tag_types": json.dumps([expected_tag]),
+                    },
+                    "with_signature": False,
+                },
+            )
+
+    async def test_user_report_rejects_unknown_reason_before_request(self):
+        client = Client()
+        client.private_request = AsyncMock(side_effect=AssertionError("unsupported reason should not request"))
+
+        with self.assertRaisesRegex(ValueError, "Unsupported user report reason"):
+            await client.user_report("123", reason="harassment")
+
+        client.private_request.assert_not_awaited()
+
     async def test_user_stream_by_id_v1_parses_first_json_line_from_stream_response(self):
         client = Client()
         client.last_json = {}
