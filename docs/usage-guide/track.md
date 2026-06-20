@@ -8,11 +8,11 @@ Viewing and downloading tracks
 | track_download_by_url(url: str, filename: str = "", folder: Path = "") | Path        | Download track by URL
 | search_music(query: str)                                               | List[Track] | Return list of tracks
 | music_in_feed_audio_browser(browse_session_id: str = None)             | Dict        | Retrieve music candidates for feed photo/carousel posts
-| music_trending(product: str = "feed_post")                             | Dict        | Retrieve trending music candidates
-| music_top_trends(product: str = "music_in_feed", page_size: int = 15)  | Dict        | Retrieve top trending music candidates
-| music_search_v2(query: str, product: str = "music_in_feed", from_typeahead: bool = False, search_session_id: str = None, browse_session_id: str = None) | Dict | Search music through the current app endpoint
-| music_keyword_search(query: str, product: str = "music_in_feed", num_keywords: int = 3, search_session_id: str = "", browse_session_id: str = None) | Dict | Search music keyword suggestions
-| music_clips_audio_browser(product: str = "story_camera_clips_v2", browse_session_id: str = None) | Dict | Retrieve music candidates for the Reels/Clips camera
+| music_trending(product: MUSIC_PRODUCT = "feed_post")                             | Dict        | Retrieve trending music candidates
+| music_top_trends(product: MUSIC_PRODUCT = "music_in_feed", page_size: int = 15)  | Dict        | Retrieve top trending music candidates
+| music_search_v2(query: str, product: MUSIC_PRODUCT = "music_in_feed", from_typeahead: bool = False, search_session_id: str = None, browse_session_id: str = None) | Dict | Search music through the current app endpoint
+| music_keyword_search(query: str, product: MUSIC_PRODUCT = "music_in_feed", num_keywords: int = 3, search_session_id: str = "", browse_session_id: str = None) | Dict | Search music keyword suggestions
+| music_clips_audio_browser(product: MUSIC_PRODUCT = "story_camera_clips_v2", browse_session_id: str = None) | Dict | Retrieve music candidates for the Reels/Clips camera
 | music_verify_original_audio_title(original_audio_name: str)             | bool        | Validate an original audio title for Reels publishing
 | music_bookmark(original_audio_id: str, surface_requested_from: str = "audio_aggregation_page") | bool | Bookmark an original audio track
 | music_bookmarked(max_id: str = "")                                      | Dict        | Retrieve bookmarked music tracks
