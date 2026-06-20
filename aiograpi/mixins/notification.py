@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Union
 
 from aiograpi.exceptions import UnsupportedSettingValue
 from aiograpi.mixins.base import ClientMixin
@@ -8,6 +8,7 @@ SETTING_VALUE_ITEMS = ("off", "following_only", "everyone")
 
 MUTE_ALL = Literal["cancel", "15_minutes", "1_hour", "2_hour", "4_hour", "8_hour"]
 SETTING_VALUE = Literal["off", "following_only", "everyone"]
+NotificationSettingValue = Union[SETTING_VALUE, MUTE_ALL]
 NotificationContentType = Literal[
     "mute_all",
     "likes",
@@ -42,7 +43,9 @@ class NotificationMixin(ClientMixin):
     Helpers for notification settings
     """
 
-    async def notification_settings(self, content_type: NotificationContentType, setting_value: str) -> bool:
+    async def notification_settings(
+        self, content_type: NotificationContentType, setting_value: NotificationSettingValue
+    ) -> bool:
         data = {
             "content_type": content_type,
             "setting_value": setting_value,
