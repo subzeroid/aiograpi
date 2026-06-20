@@ -1534,7 +1534,7 @@
 <td>Get username by user_id</td>
 </tr>
 <tr>
-<td>user_report(user_id: str, reason: str = "spam")</td>
+<td>user_report(user_id: str, reason: USER_REPORT_REASON = "spam")</td>
 <td>bool</td>
 <td>Report a user account. Currently supports the live-verified spam report flow</td>
 </tr>
@@ -1629,6 +1629,7 @@
 <p>Follower sort orders are exposed as <code>FOLLOWERS_ORDER = Literal["date_followed_latest", "date_followed_earliest"]</code>.
 Pass <code>None</code> to keep Instagram's default follower order.</p>
 <p>User block surfaces are exposed as <code>UserBlockSurface = Literal["profile", "direct_thread_info"]</code>.</p>
+<p>User report reasons are exposed as <code>USER_REPORT_REASON = Literal["spam"]</code>.</p>
 <table>
 <thead>
 <tr>
@@ -1648,9 +1649,14 @@ Pass <code>None</code> to keep Instagram's default follower order.</p>
 <td><code>"profile"</code>, <code>"direct_thread_info"</code></td>
 <td><code>user_block(surface=...)</code>, <code>user_unblock(surface=...)</code></td>
 </tr>
+<tr>
+<td><code>USER_REPORT_REASON</code></td>
+<td><code>"spam"</code></td>
+<td><code>user_report(reason=...)</code></td>
+</tr>
 </tbody>
 </table>
-<p><code>user_report(user_id, reason="spam")</code> follows Instagram's current mobile FRX report flow for account spam reports and submits the report. This is a real account action; use it only for accounts you actually intend to report. Unsupported reasons raise <code>ValueError</code> until their FRX tag paths are captured and tested.</p>
+<p><code>user_report(user_id, reason="spam")</code> follows Instagram's current mobile FRX report flow for account spam reports and submits the report. <code>reason</code> uses <code>USER_REPORT_REASON</code> and currently supports <code>"spam"</code>. This is a real account action; use it only for accounts you actually intend to report. Unsupported reasons raise <code>ValueError</code> until their FRX tag paths are captured and tested.</p>
 <p>Low level methods:</p>
 <table>
 <thead>
