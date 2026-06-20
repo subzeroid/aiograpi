@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.10.22] - 2026-06-20
+
+### Fixed
+
+- Documented the shared `FOLLOWERS_ORDER` Literal alias for follower ordering helpers, including supported values and regression coverage for signatures and usage guides.
+- Synced the recorded upstream baseline to `instagrapi` 2.16.21.
+
 ## [1.10.21] - 2026-06-20
 
 ### Fixed
