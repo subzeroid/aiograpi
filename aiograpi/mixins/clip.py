@@ -11,6 +11,7 @@ from uuid import uuid4
 from aiograpi import config
 from aiograpi.exceptions import ClientError, ClipConfigureError, ClipNotUpload
 from aiograpi.mixins.base import ClientMixin
+from aiograpi.mixins.track import MUSIC_PRODUCT
 from aiograpi.types import Location, Media, Track, Usertag
 from aiograpi.utils.timing import date_time_original
 from aiograpi.utils.video import MOVIEPY_2_INSTALL_MESSAGE, analyze_video_for_upload
@@ -1015,7 +1016,7 @@ class UploadClipMixin(ClientMixin):
         overlap_duration: int = 30000,
         original_volume: float = 1.0,
         music_volume: float = 1.0,
-        product: str = "story_camera_clips_v2",
+        product: MUSIC_PRODUCT = "story_camera_clips_v2",
         alacorn_session_id: str = "null",
     ) -> Dict[str, object]:
         """
@@ -1076,7 +1077,7 @@ class UploadClipMixin(ClientMixin):
         overlap_duration: int = 30000,
         original_volume: float = 1.0,
         music_volume: float = 1.0,
-        product: str = "story_camera_clips_v2",
+        product: MUSIC_PRODUCT = "story_camera_clips_v2",
         alacorn_session_id: str = "null",
         **kwargs,
     ) -> Media:
