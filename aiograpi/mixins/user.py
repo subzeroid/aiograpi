@@ -1184,7 +1184,7 @@ class UserMixin(ClientMixin):
         max_amount: int = 0,
         max_id: Optional[Union[str, int]] = None,
         rank_token: Optional[str] = None,
-        order: FOLLOWERS_ORDER = None,
+        order: Optional[FOLLOWERS_ORDER] = None,
         priority: str = "u=3, i",
     ) -> Tuple[List[UserShort], Optional[str]]:
         """
@@ -1200,7 +1200,7 @@ class UserMixin(ClientMixin):
             The cursor from which it is worth continuing to receive the list of followers
         rank_token: str, optional
             Rank token for the follow list request. Defaults to client rank_token
-        order: str, optional
+        order: FOLLOWERS_ORDER, optional
             Followers sort order: date_followed_latest or date_followed_earliest
         priority: str, optional
             GraphQL request priority header captured from the Android app
@@ -1233,7 +1233,7 @@ class UserMixin(ClientMixin):
         user_id: str,
         amount: int = 0,
         rank_token: Optional[str] = None,
-        order: FOLLOWERS_ORDER = None,
+        order: Optional[FOLLOWERS_ORDER] = None,
         priority: str = "u=3, i",
     ) -> List[UserShort]:
         """
@@ -1247,7 +1247,7 @@ class UserMixin(ClientMixin):
             Maximum number of users to return, default is 0 - Inf
         rank_token: str, optional
             Rank token for the follow list request. Defaults to client rank_token
-        order: str, optional
+        order: FOLLOWERS_ORDER, optional
             Followers sort order: date_followed_latest or date_followed_earliest
         priority: str, optional
             GraphQL request priority header captured from the Android app
@@ -1282,7 +1282,7 @@ class UserMixin(ClientMixin):
         self,
         user_id: str,
         amount: int = 0,
-        order: FOLLOWERS_ORDER = None,
+        order: Optional[FOLLOWERS_ORDER] = None,
         use_cache: bool = True,
     ) -> Dict[str, UserShort]:
         """
@@ -1294,7 +1294,7 @@ class UserMixin(ClientMixin):
             User id of an instagram account
         amount: int, optional
             Maximum number of media to return, default is 0 - Inf
-        order: str, optional
+        order: FOLLOWERS_ORDER, optional
             Followers sort order: date_followed_latest or date_followed_earliest.
             Sorted requests use the private mobile endpoint.
         use_cache: bool, optional
@@ -2252,7 +2252,7 @@ class UserMixin(ClientMixin):
         client_doc_id: str = "28479704797510738576165798526",
         max_id: Optional[Union[str, int]] = None,
         priority: Optional[str] = None,
-        order: Union[str, None] = None,
+        order: Optional[FOLLOWERS_ORDER] = None,
         exclude_field_is_favorite: Optional[bool] = None,
         exclude_unused_fields: Optional[bool] = None,
         skip_preview_hashtags: bool = True,
@@ -2331,7 +2331,7 @@ class UserMixin(ClientMixin):
         client_doc_id: str = "161046392817718486717479294775",
         max_id: Optional[Union[str, int]] = None,
         priority: Optional[str] = None,
-        order: Union[str, None] = None,
+        order: Optional[FOLLOWERS_ORDER] = None,
         exclude_field_is_favorite: Optional[bool] = None,
         exclude_unused_fields: Optional[bool] = None,
         skip_preview_hashtags: bool = True,

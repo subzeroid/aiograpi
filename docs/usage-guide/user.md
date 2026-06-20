@@ -6,9 +6,9 @@ View a list of a user's medias, following and followers
 
 | Method                                        | Return                | Description                                                  |
 |-----------------------------------------------|-----------------------|--------------------------------------------------------------|
-| user_followers(user_id: str, amount: int = 0, order: str = None) | Dict\[str, UserShort] | Get dict of follower users (amount=0 - fetch all followers); `order` uses the private mobile followers endpoint |
+| user_followers(user_id: str, amount: int = 0, order: Optional[FOLLOWERS_ORDER] = None) | Dict\[str, UserShort] | Get dict of follower users (amount=0 - fetch all followers); `order` uses the private mobile followers endpoint |
 | user_following(user_id: str, amount: int = 0) | Dict\[str, UserShort] | Get dict of following users (amount=0 - fetch all)           |
-| iter_user_followers_v1(user_id: str, amount: int = 0, page_size: int = 200, order: str = None) | AsyncIterator[UserShort] | Stream followers from the private/mobile API without building a full dict |
+| iter_user_followers_v1(user_id: str, amount: int = 0, page_size: int = 200, order: Optional[FOLLOWERS_ORDER] = None) | AsyncIterator[UserShort] | Stream followers from the private/mobile API without building a full dict |
 | iter_user_following_v1(user_id: str, amount: int = 0, page_size: int = 200) | AsyncIterator[UserShort] | Stream following users from the private/mobile API without building a full dict |
 | search_followers(user_id: str, query: str)    | List[UserShort]       | Search by followers                                          |
 | search_following(user_id: str, query: str)    | List[UserShort]       | Search by following                                          |
@@ -46,10 +46,14 @@ View a list of a user's medias, following and followers
 
 ### Option types
 
+Follower sort orders are exposed as `FOLLOWERS_ORDER = Literal["date_followed_latest", "date_followed_earliest"]`.
+Pass `None` to keep Instagram's default follower order.
+
 User block surfaces are exposed as `UserBlockSurface = Literal["profile", "direct_thread_info"]`.
 
 | Type | Values | Used by |
 |------|--------|---------|
+| `FOLLOWERS_ORDER` | `"date_followed_latest"`, `"date_followed_earliest"` | `user_followers(order=...)`, `user_followers_v1(order=...)`, `iter_user_followers_v1(order=...)` |
 | `UserBlockSurface` | `"profile"`, `"direct_thread_info"` | `user_block(surface=...)`, `user_unblock(surface=...)` |
 
 `user_report(user_id, reason="spam")` follows Instagram's current mobile FRX report flow for account spam reports and submits the report. This is a real account action; use it only for accounts you actually intend to report. Unsupported reasons raise `ValueError` until their FRX tag paths are captured and tested.
@@ -60,17 +64,19 @@ Low level methods:
 |-------------------------------------------------------------------------------------|-----------------------------|----------------------------------------------------------------------------|
 | user_followers_gql_chunk(user_id: str, max_amount: int = 0, end_cursor: str = None) | Tuple[List[UserShort], str] | Get user's followers information by Public Graphql API and end_cursor      |
 | user_followers_gql(user_id: str, amount: int = 0)                                   | List[UserShort]             | Get user's followers information by Public Graphql API                     |
-| user_followers_v1_chunk(user_id: str, max_amount: int = 0, max_id: str = "", order: str = None) | Tuple[List[UserShort], str] | Get user's followers information by Private Mobile API and max_id (cursor) |
-| user_followers_v1(user_id: str, amount: int = 0, order: str = None)                 | List[UserShort]             | Get user's followers information by Private Mobile API                     |
-| iter_user_followers_v1(user_id: str, amount: int = 0, page_size: int = 200, order: str = None) | AsyncIterator[UserShort] | Stream followers page by page through `user_followers_v1_chunk()` |
-| user_followers_private_gql_chunk(user_id: str, max_amount: int = 0, max_id: str = None, rank_token: str = None, order: str = None) | Tuple[List[UserShort], str] | Get user's followers information by Private GraphQL API and max_id         |
-| user_followers_private_gql(user_id: str, amount: int = 0, rank_token: str = None, order: str = None) | List[UserShort] | Get user's followers information by Private GraphQL API                    |
+| user_followers_v1_chunk(user_id: str, max_amount: int = 0, max_id: str = "", order: Optional[FOLLOWERS_ORDER] = None) | Tuple[List[UserShort], str] | Get user's followers information by Private Mobile API and max_id (cursor) |
+| user_followers_v1(user_id: str, amount: int = 0, order: Optional[FOLLOWERS_ORDER] = None) | List[UserShort] | Get user's followers information by Private Mobile API                     |
+| iter_user_followers_v1(user_id: str, amount: int = 0, page_size: int = 200, order: Optional[FOLLOWERS_ORDER] = None) | AsyncIterator[UserShort] | Stream followers page by page through `user_followers_v1_chunk()` |
+| user_followers_private_gql_chunk(user_id: str, max_amount: int = 0, max_id: str = None, rank_token: str = None, order: Optional[FOLLOWERS_ORDER] = None) | Tuple[List[UserShort], str] | Get user's followers information by Private GraphQL API and max_id         |
+| user_followers_private_gql(user_id: str, amount: int = 0, rank_token: str = None, order: Optional[FOLLOWERS_ORDER] = None) | List[UserShort] | Get user's followers information by Private GraphQL API                    |
 | user_following_v1(user_id: str, amount: int = 0)                                    | List[UserShort]             | Get user's following users information by Private Mobile API               |
 | iter_user_following_v1(user_id: str, amount: int = 0, page_size: int = 200)         | AsyncIterator[UserShort]     | Stream following users page by page through `user_following_v1_chunk()` |
 | user_following_gql(user_id: str, amount: int = 0)                                   | List[UserShort]             | Get user's following information by Public Graphql API                     |
 | user_follow_requests_chunk(max_amount: int = 0, max_id: str = "")                   | Tuple[List[UserShort], str] | Get pending incoming follow requests by Private Mobile API and max_id      |
 | search_followers_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by followers by Private Mobile API                                  |
 | search_following_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by following by Private Mobile API                                  |
+| private_graphql_followers_list(user_id: str, rank_token: str, ..., order: Optional[FOLLOWERS_ORDER] = None) | dict | Raw private mobile GraphQL followers list. Supports `date_followed_latest` and `date_followed_earliest` |
+| private_graphql_following_list(user_id: str, rank_token: str, ..., order: Optional[FOLLOWERS_ORDER] = None) | dict | Raw private mobile GraphQL following list. Supports mobile `order` when accepted by Instagram |
 
 `user_follow()` returns `True` only when it sends a new follow action and Instagram reports either an immediate follow or a new outgoing follow request for a private account. It returns `False` when the current account already follows the target or already has a pending outgoing follow request. Use `user_friendship_v1()` when you need to distinguish `following` from `outgoing_request`.
 
