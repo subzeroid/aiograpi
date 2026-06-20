@@ -3,19 +3,20 @@
 | Method                      | Return            | Description                     |
 | --------------------------- | ----------------- | ------------------------------- |
 | get_notes()                 | List[Note]        | Retrieve direct Notes           |
-| create_note(text: str, audience: Literal[0, 1] = 0) | Note | Post a new Note                 |
+| create_note(text: str, audience: NoteAudience = NoteAudience.MUTUAL_FOLLOWERS) | Note | Post a new Note                 |
 | notes_music_browser()       | Dict              | Retrieve music candidates for Notes |
-| create_music_note(track, text: str = "", audience: Literal[0, 1] = 0) | Note | Post a new music Note |
+| create_music_note(track, text: str = "", audience: NoteAudience = NoteAudience.MUTUAL_FOLLOWERS) | Note | Post a new music Note |
 | delete_note(note_id: int)   | bool              | Delete a posted Note            |
 | last_seen_update_note()     | bool              | Update the last seen time |
 
 Example:
 
 ``` python
->>> note = await cl.create_note("Hello from Instagrapi, everyone can see it!", 0)
+>>> from aiograpi.mixins.note import NoteAudience
+>>> note = await cl.create_note("Hello from Instagrapi!", audience=NoteAudience.MUTUAL_FOLLOWERS)
 >>> print(note.dict())
 {'id': '17849203563031468',
-'text': 'Hello from Instagrapi, everyone can see it!',
+'text': 'Hello from Instagrapi!',
 'user_id': 12312312312,
 'user': {
   'pk': '12312312312',
@@ -48,6 +49,7 @@ track = browser["items"][0]["track"]
 note = await cl.create_music_note(
     track,
     text="Now playing",
+    audience=NoteAudience.CLOSE_FRIENDS,
     alacorn_session_id=browser["alacorn_session_id"],
 )
 ```
@@ -64,4 +66,4 @@ Common arguments:
 
 * `note_id` - ID of the Note object
 * `text` - Content of the Note
-* `audience` - Who can see the note. Exposed as `NoteAudience = Literal[0, 1]` **(0 = Followers you follow back, 1 = Close Friends only)**
+* `audience` - Who can see the note. Use `NoteAudience.MUTUAL_FOLLOWERS` for followers you follow back or `NoteAudience.CLOSE_FRIENDS` for Close Friends only. Instagram still receives the numeric wire value internally.
