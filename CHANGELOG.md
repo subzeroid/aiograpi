@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.10.18] - 2026-06-20
+
+### Fixed
+
+- Documented `insights_media_feed_all(...)` with the public `POST_TYPE`, `TIME_FRAME`, and `DATA_ORDERING` Literal aliases and added regression coverage for the signature and usage guide.
+- Synced the recorded upstream baseline to `instagrapi` 2.16.17.
+
 ## [1.10.17] - 2026-06-20
 
 ### Fixed
