@@ -16,6 +16,8 @@ View a list of a user's medias, following and followers
 | user_info_by_username(username: str)          | User                  | Get user info by username                                    |
 | user_follow(user_id: str)                     | bool                  | Follow user, or request to follow a private user             |
 | user_unfollow(user_id: str)                   | bool                  | Unfollow user                                                |
+| user_block(user_id: str, surface: UserBlockSurface = "profile") | bool | Block a user from a profile or Direct thread surface |
+| user_unblock(user_id: str, surface: UserBlockSurface = "profile") | bool | Unblock a user from a profile or Direct thread surface |
 | user_follow_requests(amount: int = 0)         | List[UserShort]       | Get pending incoming follow requests                         |
 | user_follow_request_approve(user_id: str)     | bool                  | Approve a pending incoming follow request                    |
 | user_follow_request_decline(user_id: str)     | bool                  | Decline a pending incoming follow request                    |
@@ -41,6 +43,14 @@ View a list of a user's medias, following and followers
 | user_suggested_profiles(user_id: str, expand_suggestion: bool = False) | dict | Suggested profiles ("Suggested for you") for a profile. Wraps `chaining` and, with `expand_suggestion=True`, returns the raw `fetch_suggestion_details` payload (`items` in current app responses) |
 | address_book_link(contacts: List[AddressBookContact \| dict], include: Sequence[str] \| str = ("extra_display_name", "thumbnails")) | dict | Upload/link address book contacts and return Instagram's raw contact-based suggestions response |
 | address_book_unlink()                         | dict                  | Disconnect the uploaded address book from the current account |
+
+### Option types
+
+User block surfaces are exposed as `UserBlockSurface = Literal["profile", "direct_thread_info"]`.
+
+| Type | Values | Used by |
+|------|--------|---------|
+| `UserBlockSurface` | `"profile"`, `"direct_thread_info"` | `user_block(surface=...)`, `user_unblock(surface=...)` |
 
 `user_report(user_id, reason="spam")` follows Instagram's current mobile FRX report flow for account spam reports and submits the report. This is a real account action; use it only for accounts you actually intend to report. Unsupported reasons raise `ValueError` until their FRX tag paths are captured and tested.
 
