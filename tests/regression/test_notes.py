@@ -4,10 +4,32 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock
 
 from aiograpi import Client
+from aiograpi.mixins.note import NoteAudience
 from aiograpi.types import Note, UserShort
 
 
 class NoteMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    def _note_response(self, text="hello", audience=0):
+        return {
+            "status": "ok",
+            "id": "18072502430410984",
+            "text": text,
+            "user_id": "123",
+            "user": {
+                "pk": "123",
+                "username": "example",
+                "full_name": "",
+                "profile_pic_url": None,
+                "is_private": False,
+            },
+            "audience": audience,
+            "created_at": datetime(2024, 3, 9, 16, 0, tzinfo=timezone.utc),
+            "expires_at": datetime(2024, 3, 10, 16, 0, tzinfo=timezone.utc),
+            "is_emoji_only": False,
+            "has_translation": False,
+            "note_style": 0,
+        }
+
     async def test_get_note_helpers_by_user(self):
         client = Client()
         notes = [
@@ -51,6 +73,29 @@ class NoteMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             with_signature=False,
         )
         assert result == expected
+
+    async def test_create_note_posts_note_audience_enum_wire_value(self):
+        client = Client()
+        client.uuid = "uuid-1"
+        client._user_id = "123"
+        client.private_request = AsyncMock(return_value=self._note_response(audience=1))
+
+        note = await client.create_note("hello", audience=NoteAudience.CLOSE_FRIENDS)
+
+        client.private_request.assert_awaited_once_with(
+            "notes/create_note",
+            data={"note_style": 0, "text": "hello", "_uuid": "uuid-1", "audience": 1},
+        )
+        assert note.audience == 1
+
+    async def test_create_note_rejects_raw_int_audience(self):
+        client = Client()
+        client.uuid = "uuid-1"
+        client._user_id = "123"
+        client.private_request = AsyncMock(return_value=self._note_response(audience=1))
+
+        with self.assertRaisesRegex(AssertionError, "NoteAudience"):
+            await client.create_note("hello", audience=1)  # type: ignore[arg-type]
 
     async def test_get_notes_uses_inbox_tray_graphql_items(self):
         client = Client()
@@ -160,7 +205,7 @@ class NoteMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         note = await client.create_music_note(
             track=track,
             text="Now playing",
-            audience=1,
+            audience=NoteAudience.CLOSE_FRIENDS,
             start_time=66000,
             duration=30000,
             browse_session_id="browse-1",
