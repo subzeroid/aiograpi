@@ -68,6 +68,8 @@ class User(TypesBaseModel):
     account_type: Optional[int] = None
     is_business: bool
 
+    text_post_app_badge_label: Optional[str] = None
+
     broadcast_channel: List[Broadcast] = []
 
     public_email: Optional[str] = None
