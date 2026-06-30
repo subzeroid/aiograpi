@@ -36,6 +36,7 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | media_info(media_pk: int)                                       | Media              | Return media info
 | media_delete(media_pk: int)                                     | bool               | Delete media
 | media_edit(media_pk: int, caption: str, title: str, usertags: List[Usertag], location: Location) | dict | Change caption for media
+| media_link_reel(media_id: str, target_media_id: str, link_name: str = "Watch Next") | bool | Link one Reel to another Reel so Instagram can show a navigation button
 | media_user(media_pk: int)                                       | User | Get user info for media
 | media_oembed(url: str)                                          | MediaOembed        | Return short media info by media URL
 | media_like(media_id: str)                                       | bool               | Like media
@@ -56,6 +57,8 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | clip_unpin(media_pk: str)                                       | bool               | Unpin a Reel from the Reels tab/profile Reels grid
 
 Media notes are separate from Direct inbox Notes. Use `media_note_create()` and `media_note_delete()` for the note surface attached to a post or Reel; use the [Notes guide](notes.md) for Direct inbox Notes.
+
+`media_link_reel()` uses Instagram's private `media/{media_id}/edit_media/` endpoint. Pass full media IDs when you have them; plain media PKs are normalized with `media_id()` before the request.
 
 Use `clip_seen()` for Reels/Clips. `media_seen()` keeps the older story/reel-tray seen payload. Instagram still decides whether a seen-state event is counted in view analytics.
 

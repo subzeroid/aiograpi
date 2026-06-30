@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.11.0] - 2026-06-30
+
+### Added
+
+- Added async `Client.media_link_reel(media_id, target_media_id, link_name="Watch Next")` to link one Reel to another using Instagram's verified `linked_media_info` edit-media payload.
+- Synced the recorded upstream baseline to `instagrapi` 2.17.0.
+
 ## [1.10.26] - 2026-06-23
 
 ### Fixed

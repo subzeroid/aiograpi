@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock
@@ -405,6 +406,42 @@ class MediaActionPayloadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             },
             with_signature=False,
         )
+
+    async def test_media_link_reel_posts_linked_media_info(self):
+        client = self._build_logged_in_client()
+        client._medias_cache = {"111": object()}
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        result = await client.media_link_reel("111_222", "333_444", link_name="Watch Part 1")
+
+        self.assertTrue(result)
+        endpoint, data = client.private_request.call_args.args
+        self.assertEqual(endpoint, "media/111_222/edit_media/")
+        self.assertEqual(data["_uid"], "1")
+        self.assertEqual(data["_uuid"], "uuid")
+        self.assertEqual(data["device_id"], "android-device")
+        self.assertEqual(data["radio_type"], "wifi-none")
+        self.assertEqual(
+            json.loads(data["linked_media_info"]),
+            {"media_id": "333_444", "link_name": "Watch Part 1"},
+        )
+        self.assertNotIn("111", client._medias_cache)
+
+    async def test_media_link_reel_normalizes_origin_and_target_media_ids(self):
+        client = self._build_logged_in_client()
+        client.media_user = AsyncMock(
+            side_effect=[
+                UserShort(pk="222", username="origin", profile_pic_url="https://example.com/origin.jpg"),
+                UserShort(pk="444", username="target", profile_pic_url="https://example.com/target.jpg"),
+            ]
+        )
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        self.assertTrue(await client.media_link_reel("111", "333"))
+
+        endpoint, data = client.private_request.call_args.args
+        self.assertEqual(endpoint, "media/111_222/edit_media/")
+        self.assertEqual(json.loads(data["linked_media_info"])["media_id"], "333_444")
 
     async def test_media_share_to_story_uses_existing_media_as_story_sticker(self):
         client = self._build_logged_in_client()
