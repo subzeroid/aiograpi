@@ -46,7 +46,7 @@ from aiograpi.mixins.video import DownloadVideoMixin, UploadVideoMixin
 # Used as fallback logger if another is not provided.
 DEFAULT_LOGGER = logging.getLogger("aiograpi")
 
-__upstream_instagrapi_version__ = "2.17.0"
+__upstream_instagrapi_version__ = "2.17.1"
 
 
 class Client(
