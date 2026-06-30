@@ -1708,6 +1708,11 @@
 <td>Change caption for media</td>
 </tr>
 <tr>
+<td>media_link_reel(media_id: str, target_media_id: str, link_name: str = "Watch Next")</td>
+<td>bool</td>
+<td>Link one Reel to another Reel so Instagram can show a navigation button</td>
+</tr>
+<tr>
 <td>media_user(media_pk: int)</td>
 <td>User</td>
 <td>Get user info for media</td>
@@ -1800,6 +1805,7 @@
 </tbody>
 </table>
 <p>Media notes are separate from Direct inbox Notes. Use <code>media_note_create()</code> and <code>media_note_delete()</code> for the note surface attached to a post or Reel; use the <a href="../notes/">Notes guide</a> for Direct inbox Notes.</p>
+<p><code>media_link_reel()</code> uses Instagram's private <code>media/{media_id}/edit_media/</code> endpoint. Pass full media IDs when you have them; plain media PKs are normalized with <code>media_id()</code> before the request.</p>
 <p>Use <code>clip_seen()</code> for Reels/Clips. <code>media_seen()</code> keeps the older story/reel-tray seen payload. Instagram still decides whether a seen-state event is counted in view analytics.</p>
 <p><code>media_share_to_story()</code> uploads a story background and attaches the feed media as a story sticker. Pass a 9:16
 background image, or omit <code>background</code> to generate a temporary black 720x1280 image.</p>
