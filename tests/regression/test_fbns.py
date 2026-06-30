@@ -237,6 +237,32 @@ class FbnsClientRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         await client.fbns_disconnect()
         transport.disconnect.assert_called_once()
 
+    async def test_fbns_read_once_marks_client_disconnected_when_socket_closes(self):
+        client = _build_logged_in_client()
+        transport = mock.Mock()
+        transport.recv_packet.side_effect = ConnectionError("Socket closed while reading MQTT packet")
+        fbns = FbnsClient(client, transport=transport)
+        fbns.connected = True
+
+        with self.assertRaises(ConnectionError):
+            await fbns.read_once()
+
+        self.assertFalse(fbns.connected)
+
+    async def test_fbns_disconnect_clears_client_state_after_broken_socket(self):
+        client = _build_logged_in_client()
+        transport = mock.Mock()
+        transport.send.side_effect = ConnectionError("Socket is already closed")
+        fbns = FbnsClient(client, transport=transport)
+        fbns.connected = True
+        client.fbns = fbns
+
+        await client.fbns_disconnect()
+
+        transport.disconnect.assert_called_once()
+        self.assertFalse(fbns.connected)
+        self.assertIsNone(client.fbns)
+
     def test_fbns_default_transport_uses_mqtt_mini_and_client_proxy(self):
         client = _build_logged_in_client()
         client.proxy = "socks5://127.0.0.1:8888"
