@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock
 from aiograpi import Client
 from aiograpi import types as ig_types
 from aiograpi.exceptions import ClientError, ClientGraphqlError, ClientJSONDecodeError, UserNotFound
-from aiograpi.extractors import extract_user_short, extract_user_v1
+from aiograpi.extractors import extract_user_gql, extract_user_short, extract_user_v1
 from aiograpi.mixins.user import MAX_USER_COUNT, USER_INFO_BY_USERNAME_V2_DOC_ID, USER_INFO_V2_DOC_ID, UserMixin
 from aiograpi.types import UserShort
 
@@ -272,6 +272,58 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(user.public_email, "public@example.com")
         self.assertEqual(user.contact_phone_number, "+15551234567")
+
+    async def test_extract_user_v1_preserves_threads_badge_fields(self):
+        user = extract_user_v1(
+            {
+                "pk": "123",
+                "username": "creator",
+                "full_name": "Creator",
+                "is_private": False,
+                "profile_pic_url": "https://example.com/pic.jpg",
+                "is_verified": False,
+                "media_count": 0,
+                "follower_count": 0,
+                "following_count": 0,
+                "is_business": False,
+                "show_text_post_app_badge": True,
+                "text_post_app_badge_label": "creator_threads",
+            }
+        )
+
+        self.assertTrue(user.show_text_post_app_badge)
+        self.assertEqual(user.text_post_app_badge_label, "creator_threads")
+
+    async def test_extract_user_gql_preserves_threads_badge_fields(self):
+        user = extract_user_gql(
+            {
+                "id": "123",
+                "username": "creator",
+                "full_name": "Creator",
+                "is_private": False,
+                "profile_pic_url": "https://example.com/pic.jpg",
+                "profile_pic_url_hd": None,
+                "is_verified": False,
+                "edge_owner_to_timeline_media": {"count": 0},
+                "edge_followed_by": {"count": 0},
+                "edge_follow": {"count": 0},
+                "is_business_account": False,
+                "business_email": None,
+                "business_phone_number": None,
+                "biography": "",
+                "bio_links": [],
+                "external_url": None,
+                "business_category_name": None,
+                "category_name": None,
+                "fbid": "123",
+                "pinned_channels_info": {"pinned_channels_list": []},
+                "show_text_post_app_badge": True,
+                "text_post_app_badge_label": "creator_threads",
+            }
+        )
+
+        self.assertTrue(user.show_text_post_app_badge)
+        self.assertEqual(user.text_post_app_badge_label, "creator_threads")
 
     async def test_user_info_by_username_v2_gql_normalizes_search_query(self):
         client = Client()
