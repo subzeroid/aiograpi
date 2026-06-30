@@ -259,11 +259,152 @@ class MediaInfoGraphQLRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         media = await client.media_info_gql("1")
 
         client.public_doc_id_graphql_request.assert_awaited_once_with(
-            "8845758582119845",
-            {"shortcode": "B"},
+            "27128499623469141",
+            {
+                "shortcode": "B",
+                "__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider": False,
+            },
             referer="https://www.instagram.com/p/B/",
+            url=client.GRAPHQL_PUBLIC_WEB_API_URL,
+            include_lsd=True,
+            headers={"X-FB-Friendly-Name": "PolarisPostRootQuery"},
         )
         assert media.pk == "1"
+
+    async def test_media_info_gql_extracts_current_web_info_payload(self):
+        client = Client()
+        media_payload = {
+            "pk": "3929128837042014584",
+            "id": "3929128837042014584_1713591624",
+            "code": "DaHEdwgogl4",
+            "taken_at": 1782608696,
+            "media_type": 2,
+            "product_type": "clips",
+            "user": {
+                "id": "1713591624",
+                "username": "example",
+                "profile_pic_url": "https://example.com/profile.jpg",
+                "is_private": False,
+            },
+            "image_versions2": {
+                "candidates": [
+                    {
+                        "url": "https://example.com/thumbnail.jpg",
+                        "width": 720,
+                        "height": 1280,
+                    }
+                ]
+            },
+            "video_versions": [
+                {
+                    "url": "https://example.com/video.mp4",
+                    "width": 720,
+                    "height": 1280,
+                    "type": 101,
+                }
+            ],
+            "caption": {"text": "#suomi"},
+            "comment_count": 1114,
+            "like_count": 113000,
+            "view_count": 200000,
+            "play_count": 210000,
+            "has_liked": False,
+        }
+        client.public_graphql_request = AsyncMock(side_effect=ClientForbiddenError("blocked"))
+        client.public_doc_id_graphql_request = AsyncMock(
+            return_value={"xdt_api__v1__media__shortcode__web_info": {"items": [media_payload]}}
+        )
+
+        media = await client.media_info_gql("3929128837042014584")
+
+        client.public_doc_id_graphql_request.assert_awaited_once_with(
+            "27128499623469141",
+            {
+                "shortcode": "DaHEdwgogl4",
+                "__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider": False,
+            },
+            referer="https://www.instagram.com/p/DaHEdwgogl4/",
+            url=client.GRAPHQL_PUBLIC_WEB_API_URL,
+            include_lsd=True,
+            headers={"X-FB-Friendly-Name": "PolarisPostRootQuery"},
+        )
+        assert media.pk == "3929128837042014584"
+        assert media.id == "3929128837042014584_1713591624"
+        assert media.code == "DaHEdwgogl4"
+        assert media.media_type == 2
+        assert media.product_type == "clips"
+        assert media.user.pk == "1713591624"
+        assert str(media.thumbnail_url) == "https://example.com/thumbnail.jpg"
+        assert str(media.video_url) == "https://example.com/video.mp4"
+        assert media.caption_text == "#suomi"
+        assert media.comment_count == 1114
+        assert media.like_count == 113000
+        assert media.view_count == 200000
+        assert media.play_count == 210000
+        assert media.has_liked is False
+
+    async def test_media_info_handles_web_info_payload_with_null_video_versions(self):
+        client = Client()
+        user = {
+            "id": "1713591624",
+            "username": "example",
+            "profile_pic_url": "https://example.com/profile.jpg",
+            "is_private": False,
+        }
+        media_payload = {
+            "pk": "3908029358833535861",
+            "id": "3908029358833535861_1713591624",
+            "code": "DY8G_8JEgt1",
+            "taken_at": 1782608696,
+            "media_type": 8,
+            "user": user,
+            "image_versions2": {
+                "candidates": [
+                    {
+                        "url": "https://example.com/thumbnail.jpg",
+                        "width": 720,
+                        "height": 1280,
+                    }
+                ]
+            },
+            "video_versions": None,
+            "carousel_media": [
+                {
+                    "pk": "3908029358833535862",
+                    "id": "3908029358833535862_1713591624",
+                    "media_type": 1,
+                    "image_versions2": {
+                        "candidates": [
+                            {
+                                "url": "https://example.com/child.jpg",
+                                "width": 720,
+                                "height": 1280,
+                            }
+                        ]
+                    },
+                    "video_versions": None,
+                }
+            ],
+            "caption": {"text": "sidecar"},
+            "comment_count": 0,
+            "like_count": -1,
+            "has_liked": False,
+        }
+        client.public_graphql_request = AsyncMock(side_effect=ClientForbiddenError("blocked"))
+        client.public_doc_id_graphql_request = AsyncMock(
+            return_value={"xdt_api__v1__media__shortcode__web_info": {"items": [media_payload]}}
+        )
+        client.media_info_v1 = AsyncMock(side_effect=AssertionError("private fallback"))
+
+        media = await client.media_info("3908029358833535861")
+
+        assert media.pk == "3908029358833535861"
+        assert media.code == "DY8G_8JEgt1"
+        assert media.media_type == 8
+        assert media.video_url is None
+        assert len(media.resources) == 1
+        assert media.resources[0].media_type == 1
+        assert media.resources[0].video_url is None
 
     async def test_media_info_gql_normalizes_xdt_sidecar_children(self):
         client = Client()

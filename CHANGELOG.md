@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.11.1] - 2026-06-30
+
+### Fixed
+
+- Mirrored the `instagrapi` 2.17.1 public media info fallback: current web `doc_id` payloads are posted to `/api/graphql` with LSD web headers and normalized from `xdt_api__v1__media__shortcode__web_info.items`.
+- Handled Instagram media payloads where `video_versions` is present but `null`, including sidecar children, without falling back to private media info.
+- Synced the recorded upstream baseline to `instagrapi` 2.17.1.
+
 ## [1.11.0] - 2026-06-30
 
 ### Added

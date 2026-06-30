@@ -34,3 +34,35 @@ class PublicRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client.public.cookies_dict()["sessionid"], "123:session")
         headers = client.public_request.await_args.kwargs["headers"]
         self.assertEqual(headers["X-CSRFToken"], "csrf-token")
+
+    async def test_public_doc_id_graphql_request_posts_web_api_with_lsd(self):
+        client = Client()
+        client.public.set_cookies({"csrftoken": "csrf-token"})
+        html = '<html><script>["LSD",[],{"token":"lsd-token"}]</script></html>'
+        client.public_request = AsyncMock(side_effect=[html, {"data": {"ok": True}}])
+
+        result = await client.public_doc_id_graphql_request(
+            "27128499623469141",
+            {"shortcode": "DaHEdwgogl4"},
+            referer="https://www.instagram.com/p/DaHEdwgogl4/",
+            url=client.GRAPHQL_PUBLIC_WEB_API_URL,
+            include_lsd=True,
+            headers={"X-FB-Friendly-Name": "PolarisPostRootQuery"},
+        )
+
+        self.assertEqual(result, {"ok": True})
+        bootstrap_call, query_call = client.public_request.await_args_list
+        self.assertEqual(bootstrap_call.args[0], "https://www.instagram.com/p/DaHEdwgogl4/")
+        self.assertFalse(bootstrap_call.kwargs["return_json"])
+        self.assertEqual(query_call.args[0], client.GRAPHQL_PUBLIC_WEB_API_URL)
+        kwargs = query_call.kwargs
+        self.assertEqual(kwargs["data"]["doc_id"], "27128499623469141")
+        self.assertEqual(kwargs["data"]["variables"], '{"shortcode":"DaHEdwgogl4"}')
+        self.assertEqual(kwargs["data"]["lsd"], "lsd-token")
+        self.assertEqual(kwargs["headers"]["X-FB-LSD"], "lsd-token")
+        self.assertEqual(kwargs["headers"]["X-CSRFToken"], "csrf-token")
+        self.assertEqual(kwargs["headers"]["X-FB-Friendly-Name"], "PolarisPostRootQuery")
+        self.assertEqual(kwargs["headers"]["X-ASBD-ID"], "129477")
+        self.assertEqual(kwargs["headers"]["X-IG-App-ID"], "936619743392459")
+        self.assertFalse(kwargs["update_headers"])
+        self.assertTrue(kwargs["return_json"])
