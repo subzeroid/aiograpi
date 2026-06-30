@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import json
 import time
 import uuid
@@ -133,10 +134,13 @@ class FbnsClient:
             self.emit("registered", {"token": token, "response": response})
 
     async def disconnect(self) -> None:
-        if self.connected:
-            await self._send(write_disconnect_packet())
-        await asyncio.to_thread(self.transport.disconnect)
-        self.connected = False
+        try:
+            if self.connected:
+                with contextlib.suppress(Exception):
+                    await self._send(write_disconnect_packet())
+            await asyncio.to_thread(self.transport.disconnect)
+        finally:
+            self.connected = False
 
     def build_connection(self) -> MQTToTConnection:
         phone_id = getattr(self.client, "phone_id", "") or ""
@@ -301,10 +305,18 @@ class FbnsClient:
             await self._send(b"\x40\x02" + packet.packet_id.to_bytes(2, "big"))
 
     async def _send(self, packet: bytes) -> None:
-        await asyncio.to_thread(self.transport.send, packet)
+        try:
+            await asyncio.to_thread(self.transport.send, packet)
+        except Exception:
+            self.connected = False
+            raise
 
     async def _recv_packet(self) -> bytes:
-        return await asyncio.to_thread(self.transport.recv_packet)
+        try:
+            return await asyncio.to_thread(self.transport.recv_packet)
+        except Exception:
+            self.connected = False
+            raise
 
     def emit(self, event: str, payload: Any) -> None:
         for handler in self._handlers.get(event, []):

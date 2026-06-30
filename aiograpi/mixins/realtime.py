@@ -54,8 +54,10 @@ class RealtimeMixin:
 
     async def fbns_disconnect(self) -> None:
         if self.fbns:
-            await self.fbns.disconnect()
-            self.fbns = None
+            try:
+                await self.fbns.disconnect()
+            finally:
+                self.fbns = None
 
     def fbns_on(self, event: str, handler) -> None:
         if not self.fbns:
