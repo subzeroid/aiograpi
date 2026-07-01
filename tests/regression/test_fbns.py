@@ -249,6 +249,18 @@ class FbnsClientRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertFalse(fbns.connected)
 
+    async def test_fbns_read_once_keeps_client_connected_on_socket_timeout(self):
+        client = _build_logged_in_client()
+        transport = mock.Mock()
+        transport.recv_packet.side_effect = TimeoutError("timed out")
+        fbns = FbnsClient(client, transport=transport)
+        fbns.connected = True
+
+        with self.assertRaises(TimeoutError):
+            await fbns.read_once()
+
+        self.assertTrue(fbns.connected)
+
     async def test_fbns_disconnect_clears_client_state_after_broken_socket(self):
         client = _build_logged_in_client()
         transport = mock.Mock()

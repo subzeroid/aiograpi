@@ -314,6 +314,8 @@ class FbnsClient:
     async def _recv_packet(self) -> bytes:
         try:
             return await asyncio.to_thread(self.transport.recv_packet)
+        except TimeoutError:
+            raise
         except Exception:
             self.connected = False
             raise
