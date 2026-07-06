@@ -1,4 +1,6 @@
 import json
+import socket
+import threading
 import unittest
 import zlib
 from unittest import mock
@@ -116,6 +118,58 @@ class RealtimeClientRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertIsInstance(realtime.transport, SocketMQTToTTransport)
         self.assertEqual(realtime.transport.proxy, "socks5://127.0.0.1:8888")
+
+    def test_transport_disconnect_shuts_down_socket_to_unblock_active_recv(self):
+        class BlockingRecvSocket:
+            def __init__(self):
+                self.recv_started = threading.Event()
+                self.unblocked = threading.Event()
+                self.shutdown_calls = []
+                self.closed = False
+
+            def recv(self, size):
+                self.recv_started.set()
+                self.unblocked.wait(timeout=1)
+                return b""
+
+            def shutdown(self, how):
+                self.shutdown_calls.append(how)
+                self.unblocked.set()
+
+            def close(self):
+                self.closed = True
+
+        transport = SocketMQTToTTransport("example.com")
+        fake_socket = BlockingRecvSocket()
+        transport.sock = fake_socket
+        read_errors = []
+
+        def read_packet():
+            try:
+                transport.recv_packet()
+            except ConnectionError as exc:
+                read_errors.append(exc)
+
+        read_thread = threading.Thread(
+            target=read_packet,
+            daemon=True,
+        )
+        read_thread.start()
+        self.assertTrue(fake_socket.recv_started.wait(timeout=0.2))
+
+        try:
+            transport.disconnect()
+            read_thread.join(timeout=0.2)
+
+            self.assertFalse(read_thread.is_alive())
+        finally:
+            fake_socket.unblocked.set()
+            read_thread.join(timeout=1)
+
+        self.assertEqual(fake_socket.shutdown_calls, [socket.SHUT_RDWR])
+        self.assertTrue(fake_socket.closed)
+        self.assertIsNone(transport.sock)
+        self.assertEqual(len(read_errors), 1)
 
     async def test_client_exposes_stateful_realtime_helpers(self):
         client = _build_logged_in_client()
