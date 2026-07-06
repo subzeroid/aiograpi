@@ -50,6 +50,8 @@ Phone-only signup is supported with `await cl.signup(username, password, email="
 
 `signup_caa_email(...)` is the experimental modern CAA/Bloks email signup helper. It sends the current Android registration flow and uses `challenge_code_handler(username, ChallengeChoice.EMAIL)` to fetch the email confirmation code.
 
+Native challenge payloads with `challenge.native_flow=true` and an opaque `/challenge/...` `api_path` are manual checkpoints. They do not expose an SMS/email/password step, so `challenge_code_handler` and `change_password_handler` will not be called for them.
+
 Bloks redirect checkpoints such as `bloks_action="com.bloks.www.ig.challenge.redirect.async"` or placeholder `step_name="STEP_NAME"` require manual confirmation in the official Instagram app or web flow on a trusted device; aiograpi raises `ChallengeRequired` with the sanitized challenge context instead of treating this as a legacy step.
 
 For example, you can get the code through the IMAP of Gmail:
