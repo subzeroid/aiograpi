@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.12.3] - 2026-07-07
+
+### Fixed
+
+- Treated opaque Instagram native challenge checkpoints as manual verification flows so `challenge_resolve()` fails fast instead of attempting unsupported legacy SMS/email challenge handling.
+- Synced the recorded upstream baseline to `instagrapi` 2.18.3.
+
 ## [1.12.2] - 2026-07-06
 
 ### Fixed
