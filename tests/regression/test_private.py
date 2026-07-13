@@ -6,6 +6,7 @@ from aiograpi import Client, httpx_ext
 from aiograpi.exceptions import (
     AccountContactPointRequired,
     AccountEditError,
+    AccountSuspended,
     BadPassword,
     ClientNotFoundError,
     DirectMessageRequestsDisabled,
@@ -129,6 +130,21 @@ class PrivateRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIn("device fingerprint", cm.exception.message)
         self.assertNotIn("change your IP", cm.exception.message)
         self.assertNotIn("blacklist", cm.exception.message)
+
+    async def test_send_private_request_promotes_suspended_challenge_to_account_suspended(self):
+        client = self._build_client()
+        payload = {
+            "message": "challenge_required",
+            "status": "fail",
+            "challenge": {"url": "https://i.instagram.com/challenge/action/123/suspended/"},
+        }
+        client.private.post = AsyncMock(return_value=self._response(payload, status_code=400))
+
+        with self.assertRaises(AccountSuspended) as cm:
+            await client._send_private_request("accounts/login/", data={"username": "example"}, login=True)
+
+        self.assertEqual(cm.exception.message, "challenge_required")
+        self.assertEqual(cm.exception.challenge["url"], payload["challenge"]["url"])
 
     async def test_send_private_request_ignores_non_json_body_on_http_error(self):
         client = self._build_client()
