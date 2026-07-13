@@ -6,6 +6,7 @@ from aiograpi import Client, httpx_ext
 from aiograpi.exceptions import (
     AccountContactPointRequired,
     AccountEditError,
+    BadPassword,
     ClientNotFoundError,
     DirectMessageRequestsDisabled,
 )
@@ -108,6 +109,26 @@ class PrivateRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(cm.exception.message, payload["message"])
         self.assertEqual(cm.exception.status, "fail")
+
+    async def test_send_private_request_preserves_bad_password_message_with_login_context_hint(self):
+        client = self._build_client()
+        raw_message = "The password you entered is incorrect. Please try again."
+        payload = {
+            "message": raw_message,
+            "status": "fail",
+            "error_type": "bad_password",
+            "exception_name": "UserInvalidCredentials",
+        }
+        client.private.post = AsyncMock(return_value=self._response(payload, status_code=400))
+
+        with self.assertRaises(BadPassword) as cm:
+            await client._send_private_request("accounts/login/", data={"username": "example"}, login=True)
+
+        self.assertTrue(cm.exception.message.startswith(raw_message))
+        self.assertIn("proxy/IP", cm.exception.message)
+        self.assertIn("device fingerprint", cm.exception.message)
+        self.assertNotIn("change your IP", cm.exception.message)
+        self.assertNotIn("blacklist", cm.exception.message)
 
     async def test_send_private_request_ignores_non_json_body_on_http_error(self):
         client = self._build_client()
