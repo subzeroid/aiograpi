@@ -236,6 +236,45 @@ class SignupHelperRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 day=9,
             )
 
+    async def test_signup_accepts_age_eligibility_to_register_response(self):
+        client = Client()
+        client.wait_seconds = 0
+        client.challenge_code_handler = AsyncMock(return_value="123456")
+        client.get_signup_config = AsyncMock(return_value={"status": "ok"})
+        client.check_email = AsyncMock(return_value={"valid": True, "available": True})
+        client.send_verify_email = AsyncMock(return_value={"email_sent": True})
+        client.check_age_eligibility = AsyncMock(return_value={"eligible_to_register": True})
+        client.check_confirmation_code = AsyncMock(return_value={"signup_code": "signup-code"})
+        client.accounts_create = AsyncMock(
+            return_value={
+                "created_user": {
+                    "pk": "123",
+                    "username": "example",
+                    "full_name": "Example User",
+                    "profile_pic_url": "https://example.com/avatar.jpg",
+                }
+            }
+        )
+        client.parse_authorization = Mock(return_value={})
+        client.last_response = Mock(headers={"ig-set-authorization": ""})
+
+        with self.assertWarnsRegex(RuntimeWarning, "legacy account-create flow"):
+            user = await client.signup(
+                username="example",
+                password="password",
+                email="addr@example.com",
+                full_name="Example User",
+                year=1995,
+                month=6,
+                day=9,
+            )
+
+        self.assertIsInstance(user, UserShort)
+        self.assertEqual(user.pk, "123")
+        self.assertEqual(user.username, "example")
+        client.check_age_eligibility.assert_awaited_once_with(1995, 6, 9)
+        client.accounts_create.assert_awaited_once()
+
     async def test_caa_reg_async_action_allows_prelogin_bloks_request(self):
         client = Client()
         client.uuid = "uuid-1"
