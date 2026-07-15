@@ -1189,6 +1189,23 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         payload = client.private_request.call_args.args[1]
         self.assertEqual(payload["username"], "example")
 
+    async def test_login_strips_outer_username_whitespace(self):
+        client = Client()
+        client.authorization_data = {}
+        client.last_response = Mock(headers={"ig-set-authorization": "Bearer token"})
+        client.parse_authorization = Mock(return_value={"sessionid": "abc"})
+        client.pre_login_flow = AsyncMock(return_value=True)
+        client.private_request = AsyncMock(return_value=True)
+        client.login_flow = AsyncMock()
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+
+        result = await client.login(" example ", "password")
+
+        self.assertTrue(result)
+        payload = client.private_request.call_args.args[1]
+        self.assertEqual(payload["username"], "example")
+        self.assertEqual(client.username, "example")
+
     async def test_login_two_factor_requires_verification_code(self):
         client = Client()
         client.username = "example"
