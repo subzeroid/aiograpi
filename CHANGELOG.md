@@ -6,13 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
-## [1.12.4] - 2026-07-15
+## [1.12.4] - 2026-07-22
 
-### Fixed
+### Added
 
-- Accepted Instagram signup age eligibility payloads that use `eligible_to_register` without the legacy `eligible` field.
-- Raised `AccountSuspended` for private API suspended-account challenges instead of generic challenge handling.
-- Synced the recorded upstream baseline to `instagrapi` 2.18.8.
+- Added async account AI-label visibility controls through Instagram's GraphQL mutation, with regression and opt-in live coverage.
 
 ## [1.12.3] - 2026-07-07
 

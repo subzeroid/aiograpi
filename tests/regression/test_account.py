@@ -5,6 +5,32 @@ from aiograpi import Client
 
 
 class AccountRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_account_set_ai_info_posts_visibility_mutation(self):
+        client = Client()
+        account = object()
+        client.private_graphql_request = AsyncMock()
+        client.account_info = AsyncMock(return_value=account)
+
+        result = await client.account_set_ai_info(True)
+
+        self.assertIs(result, account)
+        client.private_graphql_request.assert_awaited_once_with(
+            {
+                "method": "post",
+                "format": "json",
+                "server_timestamps": "true",
+                "locale": "user",
+                "fb_api_req_friendly_name": "AIGMUpdateAccountLabelVisibilityMutation",
+                "enable_canonical_naming": "true",
+                "enable_canonical_variable_overrides": "true",
+                "enable_canonical_naming_ambiguous_type_prefixing": "true",
+                "client_doc_id": "85502578717429613610069073956",
+                "variables": '{"is_enabled":true}',
+            },
+            headers={"X-Client-Doc-Id": "85502578717429613610069073956"},
+        )
+        client.account_info.assert_awaited_once_with()
+
     async def test_send_password_reset_posts_recovery_payload(self):
         client = Client()
         client.public_request = AsyncMock(return_value={"status": "ok"})

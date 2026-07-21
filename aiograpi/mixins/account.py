@@ -9,6 +9,7 @@ from aiograpi.utils.auth import gen_token, generate_signature
 from aiograpi.utils.serialization import dumps
 
 ProfessionalAccountType = Literal[2, 3]
+AIGM_UPDATE_ACCOUNT_LABEL_VISIBILITY_CLIENT_DOC_ID = "85502578717429613610069073956"
 
 
 class AccountMixin(ClientMixin):
@@ -64,6 +65,26 @@ class AccountMixin(ClientMixin):
         """
         result = await self.private_request("accounts/current_user/?edit=true")
         return extract_account(result["user"])
+
+    async def account_set_ai_info(self, enabled: bool) -> Account:
+        """Enable or disable the account's AI-generated content label."""
+        data = {
+            "method": "post",
+            "format": "json",
+            "server_timestamps": "true",
+            "locale": "user",
+            "fb_api_req_friendly_name": "AIGMUpdateAccountLabelVisibilityMutation",
+            "enable_canonical_naming": "true",
+            "enable_canonical_variable_overrides": "true",
+            "enable_canonical_naming_ambiguous_type_prefixing": "true",
+            "client_doc_id": AIGM_UPDATE_ACCOUNT_LABEL_VISIBILITY_CLIENT_DOC_ID,
+            "variables": json.dumps({"is_enabled": enabled}, separators=(",", ":")),
+        }
+        await self.private_graphql_request(
+            data,
+            headers={"X-Client-Doc-Id": AIGM_UPDATE_ACCOUNT_LABEL_VISIBILITY_CLIENT_DOC_ID},
+        )
+        return await self.account_info()
 
     async def account_convert_to_professional(
         self,
