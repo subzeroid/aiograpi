@@ -11,6 +11,7 @@ from aiograpi.mixins.challenge import ChallengeResolveMixin
 from aiograpi.mixins.clip import ClipMixin, DownloadClipMixin, UploadClipMixin
 from aiograpi.mixins.collection import CollectionMixin
 from aiograpi.mixins.comment import CommentMixin
+from aiograpi.mixins.crossposting import CrossPostingMixin
 from aiograpi.mixins.direct import DirectMixin
 from aiograpi.mixins.explore import ExploreMixin
 from aiograpi.mixins.fbsearch import FbSearchMixin
@@ -53,6 +54,7 @@ class Client(
     MultipleAccountsMixin,
     NoteMixin,
     GraphQLRequestMixin,
+    CrossPostingMixin,
     PublicRequestMixin,
     ChallengeResolveMixin,
     PrivateRequestMixin,
