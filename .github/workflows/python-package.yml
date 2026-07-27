@@ -214,6 +214,9 @@ jobs:
         # by the unit-test job; user_followers and highlight_info are
         # covered by the smoke above.
         run: PYTHONPATH=. python tests/live/smoke.py
+      - name: Run collection pagination live test
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.test_target == 'smoke' || github.event.inputs.test_target == 'all'
+        run: PYTHONPATH=. pytest -q tests/live/test_collection.py::ClientCollectionLiveTestCase::test_collection_medias_by_name_pagination_live
       - name: Run comment write test
         if: github.event_name == 'workflow_dispatch' && (github.event.inputs.test_target == 'comment' || github.event.inputs.test_target == 'all')
         run: |

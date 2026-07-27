@@ -101,3 +101,15 @@ class CollectionRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client.private_request.await_count, 2)
         self.assertNotIn("max_id", client.private_request.call_args_list[0].kwargs["params"])
         self.assertEqual(client.private_request.call_args_list[1].kwargs["params"]["max_id"], "cursor-2")
+
+    async def test_collection_medias_by_name_forwards_pagination_arguments(self):
+        client = Client()
+        expected_medias = [object()]
+        client.collection_pk_by_name = AsyncMock(return_value="123")
+        client.collection_medias = AsyncMock(return_value=expected_medias)
+
+        medias = await client.collection_medias_by_name("Favorites", amount=50, last_media_pk=456)
+
+        self.assertIs(medias, expected_medias)
+        client.collection_pk_by_name.assert_awaited_once_with("Favorites")
+        client.collection_medias.assert_awaited_once_with("123", amount=50, last_media_pk=456)

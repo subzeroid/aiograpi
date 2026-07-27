@@ -62,7 +62,12 @@ class CollectionMixin(ClientMixin):
                 return item.id
         raise CollectionNotFound(name=name)
 
-    async def collection_medias_by_name(self, name: str) -> List[Collection]:
+    async def collection_medias_by_name(
+        self,
+        name: str,
+        amount: int = 21,
+        last_media_pk: int = 0,
+    ) -> List[Media]:
         """
         Get medias by collection name
 
@@ -70,14 +75,23 @@ class CollectionMixin(ClientMixin):
         ----------
         name: str
             Name of the collection
+        amount: int, optional
+            Maximum number of media to return, default is 21
+        last_media_pk: int, optional
+            Last PK user has seen, function will return medias after this pk. Default is 0
 
         Returns
         -------
-        List[Collection]
-            A list of collections
+        List[Media]
+            A list of objects of Media
         """
 
-        return await self.collection_medias(await self.collection_pk_by_name(name))
+        collection_pk = await self.collection_pk_by_name(name)
+        return await self.collection_medias(
+            str(collection_pk),
+            amount=amount,
+            last_media_pk=last_media_pk,
+        )
 
     async def liked_medias(self, amount: int = 21, last_media_pk: int = 0) -> List[Media]:
         """
