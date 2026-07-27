@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiograpi"
-version = "1.12.6"
+version = "1.12.7"
 authors = [
     { name = "Mark Subzeroid", email = "143403577+subzeroid@users.noreply.github.com" },
 ]
@@ -62,7 +62,7 @@ dependencies = [
     "pydantic>=2.12.5,<2.14; sys_platform != 'android'",
     "pycryptodomex>=3.23.0,<4",
     "zstandard>=0.25.0,<0.26",
-    "Pillow>=12.2.0,<13",
+    "Pillow>=12.3.0,<13",
 ]
 
 [project.urls]
@@ -77,7 +77,7 @@ curl = [
     "curl-adapter>=1.2.1",
 ]
 video = [
-    # MoviePy 2.2.1 still declares pillow<12, while aiograpi requires Pillow 12.2.0
+    # MoviePy 2.2.1 still declares pillow<12, while aiograpi requires Pillow 12.3.0
     # for security fixes. Install MoviePy itself with --no-deps after this extra.
     "decorator>=4.0.2,<6.0",
     "imageio>=2.5,<3.0",
@@ -88,7 +88,7 @@ video = [
 ]
 test = [
     "mypy==1.20.2",
-    "Pillow==12.2.0",
+    "Pillow==12.3.0",
     "bandit==1.9.4",
     "decorator>=4.0.2,<6.0",
     "imageio>=2.5,<3.0",
@@ -96,7 +96,7 @@ test = [
     "pip-audit==2.10.0",
     "mike==2.2.0",
     # mike implicitly imports pkg_resources from setuptools.
-    "setuptools==82.0.1",
+    "setuptools==83.0.0",
     "markdown-include==0.8.1",
     "mkdocs-material==9.7.6",
     "mkdocs-minify-plugin==0.8.0",

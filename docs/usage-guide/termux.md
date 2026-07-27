@@ -41,7 +41,7 @@ python -m pip install "aiograpi[video]"
 python -m pip install --no-deps "moviepy==2.2.1"
 ```
 
-MoviePy `2.2.1` currently declares `Pillow<12`, but aiograpi keeps `Pillow>=12.2.0` for security fixes; the `--no-deps` install keeps the safe Pillow version. MoviePy `1.x` is no longer supported by aiograpi's optional video helpers.
+MoviePy `2.2.1` currently declares `Pillow<12`, but aiograpi keeps `Pillow>=12.3.0` for security fixes; the `--no-deps` install keeps the safe Pillow version. MoviePy `1.x` is no longer supported by aiograpi's optional video helpers.
 
 If MoviePy cannot find ffmpeg, point ImageIO at the Termux binary before running the script:
 

@@ -26,7 +26,7 @@ pip install "aiograpi[video]"
 pip install --no-deps "moviepy==2.2.1"
 ```
 
-The extra is intentionally not part of the default install, because it pulls in NumPy and ffmpeg-related packages that can be hard to build on Android. MoviePy `2.2.1` currently declares `Pillow<12`, but aiograpi keeps `Pillow>=12.2.0` for security fixes; the `--no-deps` install keeps the safe Pillow version. MoviePy `1.x` is no longer supported by aiograpi's video helpers.
+The extra is intentionally not part of the default install, because it pulls in NumPy and ffmpeg-related packages that can be hard to build on Android. MoviePy `2.2.1` currently declares `Pillow<12`, but aiograpi keeps `Pillow>=12.3.0` for security fixes; the `--no-deps` install keeps the safe Pillow version. MoviePy `1.x` is no longer supported by aiograpi's video helpers.
 
 * automatic thumbnail generation when `thumbnail` is not provided
 * `StoryBuilder`

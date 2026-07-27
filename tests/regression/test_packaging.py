@@ -17,14 +17,14 @@ def test_runtime_dependencies_use_compatible_ranges():
     assert '"httpx>=0.28.1,<0.29"' in required_dependencies
     assert '"orjson>=3.11.8,<4"' in required_dependencies
     assert '"PySocks>=1.7.1,<2"' in required_dependencies
-    assert '"Pillow>=12.2.0,<13"' in required_dependencies
+    assert '"Pillow>=12.3.0,<13"' in required_dependencies
     assert '"pycryptodomex>=3.23.0,<4"' in required_dependencies
     assert '"zstandard>=0.25.0,<0.26"' in required_dependencies
 
     assert '"httpx==0.28.1"' not in required_dependencies
     assert '"orjson==3.11.8"' not in required_dependencies
     assert '"PySocks==1.7.1"' not in required_dependencies
-    assert '"Pillow>=12.2.0"' not in required_dependencies
+    assert '"Pillow>=12.3.0"' not in required_dependencies
     assert '"pycryptodomex==3.23.0"' not in required_dependencies
     assert '"zstandard==0.25.0"' not in required_dependencies
 

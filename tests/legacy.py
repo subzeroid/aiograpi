@@ -4,6 +4,7 @@ import logging
 import os
 import os.path
 import random
+import socket
 import subprocess
 import tempfile
 import types
@@ -367,8 +368,8 @@ class ImageUtilSafeRemoteFetchTestCase(unittest.TestCase):
     def test_rejects_unresolvable_host(self):
         from aiograpi.image_util import _is_safe_remote_url
 
-        # .invalid is RFC 6761 — guaranteed never to resolve.
-        self.assertFalse(_is_safe_remote_url("http://nonexistent.invalid/"))
+        with mock.patch("aiograpi.image_util.socket.getaddrinfo", side_effect=socket.gaierror):
+            self.assertFalse(_is_safe_remote_url("http://nonexistent.invalid/"))
 
     def test_blocks_dns_rebinding_attempt_via_resolution(self):
         from aiograpi.image_util import _is_safe_remote_url
