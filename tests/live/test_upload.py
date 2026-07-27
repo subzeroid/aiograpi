@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from aiograpi import Client
-from aiograpi.exceptions import PhotoConfigureError, PhotoNotUpload
+from aiograpi.exceptions import ClientError, PhotoConfigureError, PhotoNotUpload
 from aiograpi.types import Media, UserShort, Usertag
 from tests.live.auth_helpers import login_with_timeout
 from tests.live.smoke import _fetch_accounts
@@ -318,3 +318,115 @@ class ClientUploadCoauthorLiveTestCase(unittest.IsolatedAsyncioTestCase):
         finally:
             if media:
                 self.assertTrue(await uploader.media_delete(media.id))
+
+
+class ClientFeedCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
+    photo_path = Path("examples/kanada.jpg")
+
+    async def asyncSetUp(self):
+        self.test_accounts_url = os.getenv("TEST_ACCOUNTS_URL")
+        if not self.test_accounts_url:
+            self.skipTest("TEST_ACCOUNTS_URL is required for feed crosspost live tests")
+        accounts = await _fetch_accounts(self.test_accounts_url, count=20)
+        login_failures = {}
+        for account in accounts:
+            try:
+                self.cl = await _client_from_test_account(account)
+                return
+            except Exception as exc:
+                login_failures[exc.__class__.__name__] = login_failures.get(exc.__class__.__name__, 0) + 1
+        self.skipTest(f"No usable test account was available (login_failures={login_failures})")
+
+    async def uploaded_media_payload(self, media, attempts=5, delay=3):
+        last_error = None
+        for attempt in range(attempts):
+            if attempt:
+                await asyncio.sleep(delay)
+            try:
+                result = await self.cl.private_request(f"media/{media.pk}/info/")
+                items = result.get("items") or []
+                self.assertTrue(items, "media info did not return items")
+                return items[0]
+            except Exception as exc:
+                last_error = exc
+        self.fail(f"Uploaded media {media.id} was not accessible after {attempts} attempts: {last_error}")
+
+    async def test_media_share_to_fb_unified_config_live(self):
+        config = await self.cl.media_share_to_fb_unified_config()
+
+        self.assertIsInstance(config.get("data"), dict)
+
+    async def test_media_share_to_fb_destination_live(self):
+        try:
+            destination = await self.cl.media_share_to_fb_destination()
+        except ClientError as exc:
+            self.skipTest(f"No confirmed Facebook Feed destination available: {exc}")
+
+        self.assertTrue(destination["destination_id"])
+        self.assertIn(destination["destination_type"], {"USER", "PAGE"})
+
+    async def test_media_share_to_threads_config_live(self):
+        config = await self.cl.media_share_to_threads_config()
+
+        data = config.get("data")
+        self.assertIsInstance(data, dict)
+        self.assertIn("xcxp_fetch_linked_threads_profile", data)
+
+    async def test_media_share_to_threads_destination_live(self):
+        try:
+            destination = await self.cl.media_share_to_threads_destination()
+        except ClientError as exc:
+            self.skipTest(f"No linked Threads profile available: {exc}")
+
+        self.assertTrue(destination["destination_id"])
+
+    async def test_photo_upload_share_to_facebook_live(self):
+        try:
+            destination = await self.cl.media_share_to_fb_destination()
+        except ClientError as exc:
+            self.skipTest(f"No confirmed Facebook Feed destination available: {exc}")
+
+        media = None
+        try:
+            caption = f"Facebook Feed crosspost live test {int(time.time())}"
+            media = await self.cl.photo_upload(
+                self.photo_path,
+                caption,
+                share_to_facebook=True,
+                fb_destination_id=destination["destination_id"],
+                fb_destination_type=destination["destination_type"],
+            )
+            payload = await self.uploaded_media_payload(media)
+            self.assertEqual((payload.get("caption") or {}).get("text", ""), caption)
+            self.assertTrue(
+                "FB" in {str(item).upper() for item in media.crosspost} or bool(media.has_shared_to_fb),
+                "Instagram configure response did not confirm Facebook cross-posting",
+            )
+        finally:
+            if media:
+                self.assertTrue(await self.cl.media_delete(media.id))
+
+    async def test_photo_upload_share_to_threads_live(self):
+        try:
+            destination = await self.cl.media_share_to_threads_destination()
+        except ClientError as exc:
+            self.skipTest(f"No linked Threads profile available: {exc}")
+
+        media = None
+        try:
+            caption = f"Threads crosspost live test {int(time.time())}"
+            media = await self.cl.photo_upload(
+                self.photo_path,
+                caption,
+                share_to_threads=True,
+                threads_destination_id=destination["destination_id"],
+            )
+            payload = await self.uploaded_media_payload(media)
+            self.assertEqual((payload.get("caption") or {}).get("text", ""), caption)
+            self.assertTrue(
+                {"THREADS", "BARCELONA"} & {str(item).upper() for item in media.crosspost},
+                "Instagram configure response did not confirm Threads cross-posting",
+            )
+        finally:
+            if media:
+                self.assertTrue(await self.cl.media_delete(media.id))

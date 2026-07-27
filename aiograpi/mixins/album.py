@@ -11,6 +11,7 @@ from aiograpi.exceptions import (
     AlbumUnknownFormat,
 )
 from aiograpi.mixins.base import ClientMixin
+from aiograpi.mixins.crossposting import FbDestinationType
 from aiograpi.types import Location, Media, Track, Usertag
 from aiograpi.utils.serialization import dumps
 from aiograpi.utils.timing import date_time_original
@@ -135,9 +136,16 @@ class UploadAlbumMixin(ClientMixin):
         configure_handler=None,
         configure_exception=None,
         to_story=False,
-        extra_data: Dict[str, str] = {},
+        extra_data: Dict[str, object] = {},
         schedule_at: Optional[Union[int, datetime]] = None,
         coauthor_user_ids: Optional[List[Union[int, str]]] = None,
+        share_to_facebook: bool = False,
+        share_to_threads: bool = False,
+        fb_destination_id: Optional[str] = None,
+        fb_destination_type: Optional[FbDestinationType] = None,
+        fb_validation_bypass: Optional[List[str]] = None,
+        threads_destination_id: Optional[str] = None,
+        threads_validation_bypass: Optional[List[str]] = None,
     ) -> Media:
         """
         Upload album to feed
@@ -167,6 +175,20 @@ class UploadAlbumMixin(ClientMixin):
             Unix timestamp in seconds or datetime when the album should be published.
         coauthor_user_ids: List[int | str], optional
             Instagram user IDs to invite as post coauthors.
+        share_to_facebook: bool, optional
+            Share this album to a linked Facebook account/page.
+        share_to_threads: bool, optional
+            Share this album to the linked Threads profile.
+        fb_destination_id: str, optional
+            Explicit Facebook destination id.
+        fb_destination_type: Literal["USER", "PAGE"], optional
+            Explicit Facebook destination type.
+        fb_validation_bypass: List[str], optional
+            Android Facebook cross-post validation bypass reasons.
+        threads_destination_id: str, optional
+            Explicit Threads profile id.
+        threads_validation_bypass: List[str], optional
+            Android Threads cross-post validation bypass reasons.
 
         Returns
         -------
@@ -176,6 +198,17 @@ class UploadAlbumMixin(ClientMixin):
         if not paths:
             raise AlbumUnknownFormat("Album upload requires at least one media path.")
         extra_data = with_coauthor_user_ids(extra_data, coauthor_user_ids)
+        extra_data = self._scheduled_extra_data(extra_data, schedule_at)
+        extra_data = await self._media_crossposting_extra_data(
+            extra_data,
+            share_to_facebook=share_to_facebook,
+            share_to_threads=share_to_threads,
+            fb_destination_id=fb_destination_id,
+            fb_destination_type=fb_destination_type,
+            fb_validation_bypass=fb_validation_bypass,
+            threads_destination_id=threads_destination_id,
+            threads_validation_bypass=threads_validation_bypass,
+        )
         children = []
         for path in paths:
             path = Path(path)
@@ -221,7 +254,6 @@ class UploadAlbumMixin(ClientMixin):
             else:
                 raise AlbumUnknownFormat(f'Unsupported album media format "{path.suffix}" for "{path.name}".')
 
-        extra_data = self._scheduled_extra_data(extra_data, schedule_at)
         for attempt in range(50):
             self.logger.debug(f"Attempt #{attempt} to configure Album: {paths}")
             await asyncio.sleep(configure_timeout)
@@ -259,12 +291,13 @@ class UploadAlbumMixin(ClientMixin):
         configure_handler=None,
         configure_exception=None,
         to_story=False,
-        extra_data: Dict[str, str] = {},
+        extra_data: Dict[str, object] = {},
         audio_asset_start_time: Optional[int] = None,
         overlap_duration: int = 30000,
         browse_session_id: Optional[str] = None,
         alacorn_session_id: Optional[str] = None,
         schedule_at: Optional[Union[int, datetime]] = None,
+        **kwargs,
     ) -> Media:
         """
         Upload a feed album/carousel with attached music.
@@ -304,6 +337,9 @@ class UploadAlbumMixin(ClientMixin):
             Fetched automatically when omitted.
         schedule_at: int or datetime, optional
             Unix timestamp in seconds or datetime when the album should be published.
+        **kwargs
+            Additional options forwarded to :meth:`album_upload`, including
+            cross-posting options.
 
         Returns
         -------
@@ -329,6 +365,7 @@ class UploadAlbumMixin(ClientMixin):
             to_story=to_story,
             extra_data=data,
             schedule_at=schedule_at,
+            **kwargs,
         )
 
     async def album_configure(
@@ -337,7 +374,7 @@ class UploadAlbumMixin(ClientMixin):
         caption: str,
         usertags: Union[List[Usertag], List[List[Usertag]]] = [],
         location: Location = None,
-        extra_data: Dict[str, str] = {},
+        extra_data: Dict[str, object] = {},
     ) -> Dict:
         """
         Post Configure Album
