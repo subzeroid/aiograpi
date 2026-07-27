@@ -1508,7 +1508,7 @@ pass a thumbnail file, these upload helpers do not need MoviePy/ffmpeg just to a
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;aiograpi[video]&quot;</span>
 pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span><span class="s2">&quot;moviepy==2.2.1&quot;</span>
 </code></pre></div>
-<p>The extra is intentionally not part of the default install, because it pulls in NumPy and ffmpeg-related packages that can be hard to build on Android. MoviePy <code>2.2.1</code> currently declares <code>Pillow&lt;12</code>, but aiograpi keeps <code>Pillow&gt;=12.2.0</code> for security fixes; the <code>--no-deps</code> install keeps the safe Pillow version. MoviePy <code>1.x</code> is no longer supported by aiograpi's video helpers.</p>
+<p>The extra is intentionally not part of the default install, because it pulls in NumPy and ffmpeg-related packages that can be hard to build on Android. MoviePy <code>2.2.1</code> currently declares <code>Pillow&lt;12</code>, but aiograpi keeps <code>Pillow&gt;=12.3.0</code> for security fixes; the <code>--no-deps</code> install keeps the safe Pillow version. MoviePy <code>1.x</code> is no longer supported by aiograpi's video helpers.</p>
 <ul>
 <li>automatic thumbnail generation when <code>thumbnail</code> is not provided</li>
 <li><code>StoryBuilder</code></li>
