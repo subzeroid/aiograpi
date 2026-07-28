@@ -4,11 +4,70 @@ from unittest.mock import AsyncMock, Mock
 from pydantic import ValidationError
 
 from aiograpi import Client
-from aiograpi.exceptions import BadPassword, PrivateError, TwoFactorRequired
+from aiograpi.exceptions import (
+    BadPassword,
+    LoginRequired,
+    PleaseWaitFewMinutes,
+    PrivateError,
+    TwoFactorRequired,
+)
 from aiograpi.types import UserShort
 
 
 class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_login_validates_existing_session_before_returning(self):
+        client = Client()
+        client.authorization_data = {"ds_user_id": "123"}
+        client.account_info = AsyncMock(return_value=object())
+        client.pre_login_flow = AsyncMock()
+        client.private_request = AsyncMock()
+
+        result = await client.login("example", "password")
+
+        self.assertTrue(result)
+        client.account_info.assert_awaited_once_with()
+        client.pre_login_flow.assert_not_awaited()
+        client.private_request.assert_not_awaited()
+
+    async def test_login_refreshes_session_rejected_during_validation(self):
+        client = Client()
+        client.authorization_data = {"ds_user_id": "123", "sessionid": "stale"}
+        client.private.set_cookies({"sessionid": "stale"})
+        client.public.set_cookies({"sessionid": "public-stale"})
+        client.private.headers["Authorization"] = "Bearer stale"
+        client.account_info = AsyncMock(side_effect=LoginRequired())
+        client.last_response = Mock(headers={"ig-set-authorization": "Bearer fresh"})
+        client.parse_authorization = Mock(return_value={"ds_user_id": "123", "sessionid": "fresh"})
+        client.pre_login_flow = AsyncMock(return_value=True)
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+        client.private_request = AsyncMock(return_value=True)
+        client.login_flow = AsyncMock()
+
+        result = await client.login("example", "password")
+
+        self.assertTrue(result)
+        client.account_info.assert_awaited_once_with()
+        client.pre_login_flow.assert_awaited_once_with()
+        self.assertEqual(client.private_request.await_args.args[0], "accounts/login/")
+        self.assertNotIn("Authorization", client.private.headers)
+        self.assertEqual(client.private.cookies_dict(), {})
+        self.assertEqual(client.public.cookies_dict(), {})
+        self.assertEqual(client.authorization_data["sessionid"], "fresh")
+        self.assertEqual(client.relogin_attempt, 0)
+
+    async def test_login_does_not_mask_other_session_validation_errors(self):
+        client = Client()
+        client.authorization_data = {"ds_user_id": "123"}
+        client.account_info = AsyncMock(side_effect=PleaseWaitFewMinutes())
+        client.pre_login_flow = AsyncMock()
+        client.private_request = AsyncMock()
+
+        with self.assertRaises(PleaseWaitFewMinutes):
+            await client.login("example", "password")
+
+        client.pre_login_flow.assert_not_awaited()
+        client.private_request.assert_not_awaited()
+
     async def test_login_by_sessionid_falls_back_to_private_stream_before_public(self):
         client = Client()
         sessionid = "1234567890123456789012345678901%3Atoken"

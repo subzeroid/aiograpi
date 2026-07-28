@@ -218,11 +218,17 @@ cl = Client()
 await cl.login(USERNAME, PASSWORD)
 cl.dump_settings("session.json")
 
-# reload later without entering credentials again
+# reload later; the saved session is validated before reuse
 cl = Client()
 cl.load_settings("session.json")
 await cl.login(USERNAME, PASSWORD)
+cl.dump_settings("session.json")
 ```
+
+`login()` reuses a valid saved session. If Instagram rejects that session with
+`login_required`, aiograpi clears the stale authorization and logs in again
+with the supplied credentials. Dump the settings after login so a refreshed
+session is persisted.
 
 If you want explicit control over the loaded session object:
 
@@ -232,6 +238,7 @@ from aiograpi import Client
 cl = Client()
 cl.set_settings(cl.load_settings("session.json"))
 await cl.login(USERNAME, PASSWORD)
+cl.dump_settings("session.json")
 ```
 
 ### Login by sessionid

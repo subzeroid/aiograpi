@@ -15,6 +15,7 @@ import json
 import os
 import ssl
 import sys
+import tempfile
 import urllib.request
 import uuid
 from pathlib import Path
@@ -116,6 +117,35 @@ async def main():
     if cl is None:
         failures.append(("login", "all pool accounts unusable"))
     else:
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                session_file = Path(tmpdir) / "session.json"
+                cl.dump_settings(session_file)
+
+                restored = Client()
+                proxy = getattr(cl, "proxy", None)
+                if isinstance(proxy, str) and proxy:
+                    restored.set_proxy(proxy)
+                restored.load_settings(session_file)
+                account_info = restored.account_info
+                validation_calls = 0
+
+                async def validating_account_info():
+                    nonlocal validation_calls
+                    validation_calls += 1
+                    return await account_info()
+
+                restored.account_info = validating_account_info
+                logged_in = await restored.login(cl.username, cl.password)
+                restored.dump_settings(session_file)
+
+            assert logged_in
+            assert validation_calls == 1
+            assert str(restored.user_id) == str(cl.user_id)
+            print("REQ saved_session_login: validated/reused")
+        except Exception as e:
+            failures.append(("saved_session_login", f"{type(e).__name__}: {str(e)[:140]}"))
+
         try:
             if not cl.sessionid:
                 raise RuntimeError("logged-in client did not expose sessionid")

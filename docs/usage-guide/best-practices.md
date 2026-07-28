@@ -79,63 +79,30 @@ from aiograpi import Client
 async def main():
     cl = Client()
     cl.load_settings("session.json")
-    await cl.login(USERNAME, PASSWORD) # this doesn't actually login using username/password but uses the session
-    await cl.get_timeline_feed() # check session
+    await cl.login(USERNAME, PASSWORD)
+    cl.dump_settings("session.json")
 ```
 
-You'll notice we do a call to `await cl.get_timeline_feed()` to check if the session is valid. If it's not valid, you'll get an exception.
+`login()` validates the loaded session before reusing it. When Instagram
+returns `login_required`, aiograpi clears the rejected authorization and logs
+in again with the supplied credentials. Other errors still propagate so rate
+limits, challenges, and network failures are not mistaken for an expired
+session. Save the settings again in case the session was refreshed.
 
-Putting this all together, we could write a login function like this
+Putting this all together, you can write a reusable login helper like this:
 
 ``` python
 from aiograpi import Client
-from aiograpi.exceptions import LoginRequired
-import logging
-
-logger = logging.getLogger()
+from pathlib import Path
 
 async def login_user():
-    """
-    Attempts to login to Instagram using either the provided session information
-    or the provided username and password.
-    """
-
+    """Login with a saved session and refresh it only when required."""
+    session_file = Path("session.json")
     cl = Client()
-    session = cl.load_settings("session.json")
+    if session_file.exists():
+        cl.load_settings(session_file)
 
-    login_via_session = False
-    login_via_pw = False
-
-    if session:
-        try:
-            cl.set_settings(session)
-            await cl.login(USERNAME, PASSWORD)
-
-            # check if session is valid
-            try:
-                await cl.get_timeline_feed()
-            except LoginRequired:
-                logger.info("Session is invalid, need to login via username and password")
-
-                old_session = cl.get_settings()
-
-                # use the same device uuids across logins
-                cl.set_settings({})
-                cl.set_uuids(old_session["uuids"])
-
-                await cl.login(USERNAME, PASSWORD)
-            login_via_session = True
-        except Exception as e:
-            logger.info("Couldn't login user using session information: %s" % e)
-
-    if not login_via_session:
-        try:
-            logger.info("Attempting to login via username and password. username: %s" % USERNAME)
-            if await cl.login(USERNAME, PASSWORD):
-                login_via_pw = True
-        except Exception as e:
-            logger.info("Couldn't login user using username and password: %s" % e)
-
-    if not login_via_pw and not login_via_session:
-        raise Exception("Couldn't login user with either password or session")
+    await cl.login(USERNAME, PASSWORD)
+    cl.dump_settings(session_file)
+    return cl
 ```
