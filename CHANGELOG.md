@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.12.8] - 2026-07-29
+
+### Fixed
+
+- Validated loaded sessions before reuse and retried with supplied credentials only when Instagram returns `login_required`, clearing rejected authorization state while preserving other validation errors.
+- Added required live coverage for saving, loading, validating, and reusing sessions, and replaced a removed fixed highlight fixture with a current user-highlights lookup.
+- Synced the recorded upstream baseline to `instagrapi` 2.18.12.
+
 ## [1.12.7] - 2026-07-27
 
 ### Added
