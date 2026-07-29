@@ -356,6 +356,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#reuse-a-saved-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reuse a saved session
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#public-anonymous-calls-no-login" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1481,6 +1492,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#reuse-a-saved-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reuse a saved session
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#public-anonymous-calls-no-login" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1557,6 +1579,15 @@
 <p>If <code>login()</code> raises <code>ChallengeRequired</code> or <code>BadPassword</code>, that's
 Instagram pushing back — see the <a href="../usage-guide/challenge_resolver/">Challenge Resolver</a>
 and <a href="../usage-guide/handle_exception/">Handle Exceptions</a> guides.</p>
+<h2 id="reuse-a-saved-session">Reuse a saved session</h2>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="n">client</span><span class="o">.</span><span class="n">load_settings</span><span class="p">(</span><span class="s2">&quot;session.json&quot;</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s2">&quot;YOUR_USERNAME&quot;</span><span class="p">,</span> <span class="s2">&quot;YOUR_PASSWORD&quot;</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">&quot;session.json&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>The saved session is validated during <code>login()</code>. If Instagram rejects it with
+<code>login_required</code>, aiograpi performs a fresh login with the supplied
+credentials. Saving the settings again persists any refreshed session.</p>
 <h2 id="public-anonymous-calls-no-login">Public, anonymous calls (no login)</h2>
 <p>For some endpoints you can skip login entirely:</p>
 <div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
