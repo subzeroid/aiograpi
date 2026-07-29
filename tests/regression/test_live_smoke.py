@@ -24,6 +24,21 @@ class _FakeLiveClient:
     user_id = "1"
     sessionid = "1%3Asession"
     proxy = None
+    username = "example"
+    password = "password"
+
+    def dump_settings(self, path):
+        Path(path).write_text("{}")
+        return True
+
+    def load_settings(self, path):
+        return {}
+
+    async def login(self, username, password):
+        self.username = username
+        self.password = password
+        await self.account_info()
+        return True
 
     async def login_by_sessionid(self, sessionid):
         self.sessionid = sessionid
@@ -100,8 +115,8 @@ class _FakeLiveClient:
     async def user_stories(self, user_id, amount=0):
         return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
 
-    async def highlight_info(self, highlight_id):
-        return types.SimpleNamespace(pk=str(highlight_id))
+    async def user_highlights(self, user_id, amount=0):
+        return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
 
 
 class _LoginClient:
@@ -240,6 +255,7 @@ print(sys.modules["aiograpi"].__file__)
         self.assertEqual(status, 0, output.getvalue())
         smoke_output = output.getvalue()
         for required_name in [
+            "saved_session_login",
             "user_info_by_username",
             "user_info",
             "username_from_user_id",
@@ -249,6 +265,7 @@ print(sys.modules["aiograpi"].__file__)
             "fbsearch_suggested_profiles",
             "user_following",
             "user_stories",
+            "user_highlights",
         ]:
             self.assertIn(f"REQ {required_name}:", smoke_output)
         for public_name in [

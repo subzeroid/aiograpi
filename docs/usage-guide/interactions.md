@@ -135,7 +135,7 @@ Next time:
 cl = Client()
 cl.load_settings('/tmp/dump.json')
 await cl.login(USERNAME, PASSWORD)
-await cl.get_timeline_feed()  # check session
+cl.dump_settings('/tmp/dump.json')
 ```
 
 ### Manage device, proxy and other account settings

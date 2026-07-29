@@ -43,6 +43,19 @@ If `login()` raises `ChallengeRequired` or `BadPassword`, that's
 Instagram pushing back — see the [Challenge Resolver](usage-guide/challenge_resolver.md)
 and [Handle Exceptions](usage-guide/handle_exception.md) guides.
 
+## Reuse a saved session
+
+```python
+client = Client()
+client.load_settings("session.json")
+await client.login("YOUR_USERNAME", "YOUR_PASSWORD")
+client.dump_settings("session.json")
+```
+
+The saved session is validated during `login()`. If Instagram rejects it with
+`login_required`, aiograpi performs a fresh login with the supplied
+credentials. Saving the settings again persists any refreshed session.
+
 ## Public, anonymous calls (no login)
 
 For some endpoints you can skip login entirely:

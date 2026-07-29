@@ -1160,15 +1160,17 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client.private.cookies_dict(), {})
         self.assertEqual(client.public.cookies_dict(), {})
 
-    async def test_login_returns_early_when_user_is_already_authorized(self):
+    async def test_login_validates_existing_session_before_returning(self):
         client = Client()
         client.authorization_data = {"ds_user_id": "123"}
+        client.account_info = AsyncMock(return_value=object())
         client.pre_login_flow = AsyncMock()
         client.private_request = AsyncMock()
 
         result = await client.login("example", "password")
 
         self.assertTrue(result)
+        client.account_info.assert_awaited_once_with()
         client.pre_login_flow.assert_not_called()
         client.private_request.assert_not_called()
 
