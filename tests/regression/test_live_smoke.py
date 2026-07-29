@@ -115,8 +115,8 @@ class _FakeLiveClient:
     async def user_stories(self, user_id, amount=0):
         return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
 
-    async def highlight_info(self, highlight_id):
-        return types.SimpleNamespace(pk=str(highlight_id))
+    async def user_highlights(self, user_id, amount=0):
+        return [types.SimpleNamespace(pk=str(i)) for i in range(amount)]
 
 
 class _LoginClient:
@@ -265,6 +265,7 @@ print(sys.modules["aiograpi"].__file__)
             "fbsearch_suggested_profiles",
             "user_following",
             "user_stories",
+            "user_highlights",
         ]:
             self.assertIn(f"REQ {required_name}:", smoke_output)
         for public_name in [

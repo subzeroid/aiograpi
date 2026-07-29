@@ -175,7 +175,7 @@ async def main():
             ("user_followers", lambda: cl.user_followers("25025320", amount=10, use_cache=False)),
             ("user_following", lambda: cl.user_following("25025320", amount=10, use_cache=False)),
             ("user_stories", lambda: cl.user_stories("25025320", amount=10)),
-            ("highlight_info", lambda: cl.highlight_info(17983407089364361)),
+            ("user_highlights", lambda: cl.user_highlights("25025320", amount=1)),
         ]:
             try:
                 out = await fn()
