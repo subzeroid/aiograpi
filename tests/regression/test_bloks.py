@@ -214,6 +214,60 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             with_signature=False,
         )
 
+    async def test_bloks_app_can_allow_prelogin_request(self):
+        client = self.build_client()
+        params = {"server_params": {"flow": "example_flow"}}
+        expected = {"status": "ok"}
+        client.private_request = AsyncMock(return_value=expected)
+
+        result = await client.bloks_app("com.example.app", params, login=True)
+
+        self.assertEqual(result, expected)
+        client.private_request.assert_awaited_once_with(
+            "bloks/apps/com.example.app/",
+            data={
+                "params": dumps(params),
+                "_uuid": "uuid-1",
+                "bk_client_context": dumps({"bloks_version": "bloks-version", "styles_id": "instagram"}),
+                "bloks_versioning_id": "bloks-version",
+            },
+            with_signature=False,
+            login=True,
+        )
+
+    async def test_bloks_login_helpers_allow_prelogin_private_requests(self):
+        client = self.build_client()
+        client.username = "example"
+        client.android_device_id = "android-1"
+        client.phone_id = "family-device-1"
+        client.mid = "machine-1"
+        client.password_encrypt = AsyncMock(return_value="#PWD_INSTAGRAM:4:1:encrypted")
+        client._send_private_request = AsyncMock()
+
+        self.assertFalse(client.user_id)
+
+        await client.bloks_caa_login_send_request("password")
+        await client.bloks_two_step_verification_entrypoint("context-1")
+        await client.bloks_two_step_verification_method_picker("context-1")
+        await client.bloks_two_step_verification_select_method("context-1", "totp")
+        await client.bloks_two_step_verification_enter_totp_code("context-1")
+        await client.bloks_two_step_verification_enter_backup_code("context-1")
+        await client.bloks_two_step_verification_verify_code("context-1", "123456")
+
+        self.assertEqual(
+            [call.args[0] for call in client._send_private_request.await_args_list],
+            [
+                "bloks/async_action/com.bloks.www.bloks.caa.login.async.send_login_request/",
+                "bloks/apps/com.bloks.www.two_step_verification.entrypoint/",
+                "bloks/apps/com.bloks.www.two_step_verification.method_picker/",
+                "bloks/async_action/com.bloks.www.two_step_verification.method_picker.navigation.async/",
+                "bloks/apps/com.bloks.www.two_factor_login.enter_totp_code/",
+                "bloks/apps/com.bloks.www.two_factor_login.enter_backup_code/",
+                "bloks/async_action/com.bloks.www.two_step_verification.verify_code.async/",
+            ],
+        )
+        self.assertTrue(all(call.kwargs["login"] is True for call in client._send_private_request.await_args_list))
+
     async def test_bloks_graphql_app_posts_wrapped_bloks_payload(self):
         client = self.build_client()
         params = {
@@ -359,6 +413,7 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 },
             },
             bloks_versioning_id="",
+            login=True,
         )
 
     async def test_bloks_two_step_verification_method_picker_uses_current_payload(self):
@@ -382,6 +437,7 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 },
             },
             bloks_versioning_id="",
+            login=True,
         )
 
     async def test_bloks_two_step_verification_select_method_uses_current_payload(self):
@@ -417,6 +473,7 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 },
             },
             bloks_versioning_id="",
+            login=True,
         )
 
     async def test_bloks_two_step_verification_verify_code_uses_current_payload(self):
@@ -459,6 +516,7 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 },
             },
             bloks_versioning_id="",
+            login=True,
         )
 
     async def test_bloks_two_step_verification_enter_backup_code_uses_current_payload(self):
@@ -484,6 +542,7 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 },
             },
             bloks_versioning_id="",
+            login=True,
         )
 
     async def test_bloks_caa_login_send_request_uses_current_payload(self):
@@ -502,6 +561,10 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result, expected)
         bloks_async_action.assert_awaited_once()
         action, params = bloks_async_action.call_args.args[:2]
+        self.assertEqual(
+            bloks_async_action.call_args.kwargs,
+            {"bloks_versioning_id": "", "login": True},
+        )
         self.assertEqual(action, "com.bloks.www.bloks.caa.login.async.send_login_request")
         self.assertEqual(params["client_input_params"]["contact_point"], "example")
         self.assertEqual(params["client_input_params"]["password"], "#PWD_INSTAGRAM:4:1:encrypted")

@@ -64,7 +64,13 @@ class BloksMixin(ClientMixin):
             kwargs["login"] = True
         return await self.private_request(f"bloks/async_action/{action}/", **kwargs)
 
-    async def bloks_app(self, app: str, params: Dict, bloks_versioning_id: str = "") -> Dict:
+    async def bloks_app(
+        self,
+        app: str,
+        params: Dict,
+        bloks_versioning_id: str = "",
+        login: bool = False,
+    ) -> Dict:
         """
         Perform a raw Bloks app request.
 
@@ -76,6 +82,8 @@ class BloksMixin(ClientMixin):
             Bloks ``params`` payload.
         bloks_versioning_id: str, optional
             Bloks versioning id. Uses ``Client.bloks_versioning_id`` when omitted.
+        login: bool, optional
+            Allow pre-login requests for registration/login flows.
 
         Returns
         -------
@@ -83,7 +91,10 @@ class BloksMixin(ClientMixin):
             Raw Instagram response.
         """
         data = self._bloks_payload(params, bloks_versioning_id=bloks_versioning_id)
-        return await self.private_request(f"bloks/apps/{app}/", data=data, with_signature=False)
+        kwargs: Dict[str, Any] = {"data": data, "with_signature": False}
+        if login:
+            kwargs["login"] = True
+        return await self.private_request(f"bloks/apps/{app}/", **kwargs)
 
     async def bloks_graphql_app(
         self,
@@ -241,6 +252,7 @@ class BloksMixin(ClientMixin):
             "com.bloks.www.two_step_verification.entrypoint",
             params,
             bloks_versioning_id=bloks_versioning_id,
+            login=True,
         )
 
     async def bloks_two_step_verification_method_picker(
@@ -275,6 +287,7 @@ class BloksMixin(ClientMixin):
             "com.bloks.www.two_step_verification.method_picker",
             params,
             bloks_versioning_id=bloks_versioning_id,
+            login=True,
         )
 
     async def bloks_two_step_verification_select_method(
@@ -319,6 +332,7 @@ class BloksMixin(ClientMixin):
             "com.bloks.www.two_step_verification.method_picker.navigation.async",
             params,
             bloks_versioning_id=bloks_versioning_id,
+            login=True,
         )
 
     async def bloks_two_step_verification_enter_totp_code(
@@ -348,6 +362,7 @@ class BloksMixin(ClientMixin):
             "com.bloks.www.two_factor_login.enter_totp_code",
             params,
             bloks_versioning_id=bloks_versioning_id,
+            login=True,
         )
 
     async def bloks_two_step_verification_enter_backup_code(
@@ -377,6 +392,7 @@ class BloksMixin(ClientMixin):
             "com.bloks.www.two_factor_login.enter_backup_code",
             params,
             bloks_versioning_id=bloks_versioning_id,
+            login=True,
         )
 
     async def bloks_two_step_verification_verify_code(
@@ -436,6 +452,7 @@ class BloksMixin(ClientMixin):
             "com.bloks.www.two_step_verification.verify_code.async",
             params,
             bloks_versioning_id=bloks_versioning_id,
+            login=True,
         )
 
     async def bloks_caa_login_send_request(
@@ -580,6 +597,7 @@ class BloksMixin(ClientMixin):
             "com.bloks.www.bloks.caa.login.async.send_login_request",
             params,
             bloks_versioning_id=bloks_versioning_id,
+            login=True,
         )
 
     def _find_bloks_value(self, data: Any, key: str) -> Any:
