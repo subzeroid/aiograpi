@@ -1018,6 +1018,24 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             }
         )
 
+    async def test_video_rupload_uses_active_private_session_proxy_after_clear(self):
+        client = _build_client()
+        client.set_proxy("http://proxy.example:8080")
+        client.set_proxy("")
+
+        offset_response = Mock(status_code=200, text='{"offset":0}')
+        offset_response.json.return_value = {"offset": 0}
+        upload_response = Mock(status_code=200, text='{"media_id":"987654321"}')
+        upload_response.json.return_value = {"media_id": "987654321"}
+        with mock.patch(
+            "aiograpi.mixins.direct.httpx_ext.request",
+            new=AsyncMock(side_effect=[offset_response, upload_response]),
+        ) as request:
+            await client._video_rupload(b"video-bytes", "entity-name", "waterfall-id")
+
+        assert client.private.proxy is None
+        assert [call.kwargs["proxy"] for call in request.await_args_list] == [None, None]
+
     async def test_voice_rupload_delegates_base_headers_to_helper(self):
         client = _build_client()
 
@@ -1044,3 +1062,21 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         assert media_id == 987654321
         headers.assert_called_once_with({"audio_type": "FILE_ATTACHMENT"})
+
+    async def test_voice_rupload_uses_active_private_session_proxy_after_clear(self):
+        client = _build_client()
+        client.set_proxy("http://proxy.example:8080")
+        client.set_proxy("")
+
+        offset_response = Mock(status_code=200, text='{"offset":0}')
+        offset_response.json.return_value = {"offset": 0}
+        upload_response = Mock(status_code=200, text='{"media_id":"987654321"}')
+        upload_response.json.return_value = {"media_id": "987654321"}
+        with mock.patch(
+            "aiograpi.mixins.direct.httpx_ext.request",
+            new=AsyncMock(side_effect=[offset_response, upload_response]),
+        ) as request:
+            await client._voice_rupload(b"voice-bytes", "1234567", -99)
+
+        assert client.private.proxy is None
+        assert [call.kwargs["proxy"] for call in request.await_args_list] == [None, None]

@@ -1074,7 +1074,7 @@ class DirectMixin(ClientMixin):
                 "x_fb_video_waterfall_id": waterfall_id,
             }
         )
-        proxy = getattr(self, "proxy", None)
+        proxy = self.private.proxy
         response = await httpx_ext.request(
             "GET",
             url,
@@ -1170,7 +1170,7 @@ class DirectMixin(ClientMixin):
         entity = f"{upload_id}_0_{rand_key}"
         url = f"https://rupload.facebook.com/messenger_audio/{entity}"
         headers = self._messenger_rupload_headers({"audio_type": "FILE_ATTACHMENT"})
-        proxy = getattr(self, "proxy", None)
+        proxy = self.private.proxy
         response = await httpx_ext.request(
             "GET",
             url,
