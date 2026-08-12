@@ -144,6 +144,32 @@ class _LoginClient:
 
 
 class LiveSmokeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_legacy_live_account_helper_reuses_saved_session_before_relogin(self):
+        from tests import legacy
+
+        client = _LoginClient()
+        account = {
+            "username": "example",
+            "password": "password",
+            "client_settings": {"totp_seed": "seed", "authorization_data": {"ds_user_id": "1"}},
+            "proxy": "",
+            "user_id": "1",
+        }
+
+        with (
+            patch.object(legacy, "Client", return_value=client),
+            patch.object(legacy, "login_with_timeout", new=AsyncMock()) as login,
+        ):
+            result = await legacy.ClientPrivateTestCase.client_from_test_account(None, account)
+
+        self.assertIs(result, client)
+        login.assert_awaited_once_with(
+            client,
+            username="example",
+            password="password",
+            verification_code="123456",
+        )
+
     async def test_fetch_accounts_overrides_existing_default_count(self):
         smoke = _load_live_smoke_module()
         captured = {}

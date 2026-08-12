@@ -198,7 +198,6 @@ class ClientPrivateTestCase(BaseClientMixin, unittest.IsolatedAsyncioTestCase):
         login_kwargs = {
             "username": acc["username"],
             "password": acc["password"],
-            "relogin": True,
         }
         if totp_seed:
             totp_code = cl.totp_generate_code(totp_seed)
