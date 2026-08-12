@@ -564,3 +564,48 @@ class MediaActionPayloadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cursor, "next")
         client.usertag_medias_paginated_v1.assert_awaited_once_with(123, 1, end_cursor="")
         client.usertag_medias_paginated_gql.assert_not_awaited()
+
+
+class UserPinnedMediasRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_user_pinned_medias_filters_by_requested_user_id(self):
+        client = Client()
+        response = {
+            "items": [
+                {"code": "target-int", "timeline_pinned_user_ids": [1349651722]},
+                {"code": "target-str", "timeline_pinned_user_ids": ["1349651722"]},
+                {"code": "other-user", "timeline_pinned_user_ids": [999]},
+                {"code": "ordinary", "timeline_pinned_user_ids": []},
+                {"code": "missing"},
+            ]
+        }
+        client.private_request = AsyncMock(return_value=response)
+
+        with unittest.mock.patch(
+            "aiograpi.mixins.media.extract_media_v1",
+            side_effect=lambda media: media,
+        ):
+            medias = await client.user_pinned_medias("1349651722")
+
+        self.assertEqual(
+            [media["code"] for media in medias],
+            ["target-int", "target-str"],
+        )
+
+    async def test_user_pinned_medias_sends_request_local_profile_nav_chain(self):
+        client = Client()
+        original_nav_chain = client.base_headers["X-IG-Nav-Chain"]
+        client.private_request = AsyncMock(return_value={"items": []})
+
+        await client.user_pinned_medias("1349651722")
+
+        client.private_request.assert_awaited_once_with(
+            "feed/user/1349651722/",
+            params={
+                "exclude_comment": "true",
+                "only_fetch_first_carousel_media": "false",
+            },
+            headers={
+                "X-IG-Nav-Chain": "MainFeedFragment:feed_timeline:12:main_home::,UserDetailFragment:profile:13:button::"
+            },
+        )
+        self.assertEqual(client.base_headers["X-IG-Nav-Chain"], original_nav_chain)

@@ -5,8 +5,10 @@ from pathlib import Path
 from unittest import mock
 from unittest.mock import AsyncMock, Mock
 
+from PIL import Image
+
 from aiograpi import Client
-from aiograpi.exceptions import DirectMessageNotFound, DirectThreadNotFound
+from aiograpi.exceptions import ClientError, DirectMessageNotFound, DirectThreadNotFound
 from aiograpi.extractors import extract_direct_thread
 from aiograpi.types import DirectMessage, DirectThread
 
@@ -104,6 +106,13 @@ def _temp_file(suffix, data):
     tmp.write(data)
     tmp.close()
     return Path(tmp.name)
+
+
+def _temp_image(suffix=".png"):
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        path = Path(tmp.name)
+    Image.new("RGB", (48, 64), (37, 99, 235)).save(path)
+    return path
 
 
 class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -680,6 +689,261 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         client.direct_thread_by_participants.assert_awaited_once_with([42])
         client._voice_rupload.assert_not_called()
+
+    async def test_direct_send_photo_uploads_and_broadcasts_attachment_for_thread_ids(self):
+        client = _build_client()
+        path = _temp_file(".png", b"png-bytes")
+        expected = Mock(spec=DirectMessage)
+
+        try:
+            with (
+                mock.patch("aiograpi.mixins.direct.time.time", return_value=1234.567),
+                mock.patch("aiograpi.mixins.direct.prepare_image", return_value=(b"jpeg-bytes", (64, 48)), create=True),
+                mock.patch.object(
+                    client,
+                    "_photo_rupload",
+                    new=AsyncMock(return_value=987654321),
+                    create=True,
+                ) as rupload,
+                mock.patch.object(
+                    client,
+                    "photo_rupload",
+                    new=AsyncMock(return_value=("legacy-upload", 64, 48)),
+                ),
+                mock.patch.object(client, "generate_mutation_token", return_value="mutation-token"),
+                mock.patch("aiograpi.mixins.direct.extract_direct_message", return_value=expected),
+            ):
+                client.private_request = AsyncMock(return_value=_direct_payload())
+                result = await client.direct_send_photo(path, thread_ids=[123])
+        finally:
+            path.unlink(missing_ok=True)
+
+        assert result is expected
+        rupload.assert_awaited_once_with(b"jpeg-bytes", "fb_uploader_1234567")
+        client.private_request.assert_awaited_once_with(
+            "direct_v2/threads/broadcast/photo_attachment/",
+            data=mock.ANY,
+            with_signature=False,
+        )
+        data = client.private_request.call_args.kwargs["data"]
+        assert json.loads(data["thread_ids"]) == [123]
+        assert data["attachment_fbid"] == "987654321"
+        assert data["action"] == "send_item"
+        assert data["is_x_transport_forward"] == "false"
+        assert data["is_shh_mode"] == "0"
+        assert data["send_attribution"] == "inbox"
+        assert data["client_context"] == "mutation-token"
+        assert data["mutation_token"] == "mutation-token"
+        assert data["offline_threading_id"] == "mutation-token"
+        assert data["device_id"] == "android-device"
+        assert data["_uuid"] == "uuid-1"
+        assert data["allow_full_aspect_ratio"] == "true"
+        assert data["btt_dual_send"] == "false"
+        assert data["is_ae_dual_send"] == "false"
+
+    async def test_direct_send_photo_accepts_jpeg_and_webp_inputs(self):
+        client = _build_client()
+
+        for suffix in (".jpeg", ".webp"):
+            with self.subTest(suffix=suffix):
+                path = _temp_image(suffix)
+                try:
+                    with (
+                        mock.patch.object(
+                            client,
+                            "_photo_rupload",
+                            new=AsyncMock(return_value=123),
+                        ) as rupload,
+                        mock.patch.object(client, "generate_mutation_token", return_value="token"),
+                        mock.patch(
+                            "aiograpi.mixins.direct.extract_direct_message",
+                            return_value=Mock(spec=DirectMessage),
+                        ),
+                    ):
+                        client.private_request = AsyncMock(return_value=_direct_payload())
+                        await client.direct_send_photo(path, thread_ids=[123])
+                finally:
+                    path.unlink(missing_ok=True)
+
+                photo_bytes, _ = rupload.await_args.args
+                assert photo_bytes.startswith(b"\xff\xd8")
+
+    async def test_direct_send_photo_requires_login(self):
+        client = Client()
+
+        with self.assertRaisesRegex(AssertionError, "Login required"):
+            await client.direct_send_photo("missing.png", thread_ids=[123])
+
+    async def test_direct_send_photo_requires_exactly_one_recipient_mode(self):
+        client = _build_client()
+
+        for user_ids, thread_ids in (([], []), ([42], [123])):
+            with self.subTest(user_ids=user_ids, thread_ids=thread_ids):
+                with self.assertRaisesRegex(AssertionError, "Specify user_ids or thread_ids, but not both"):
+                    await client.direct_send_photo(
+                        "missing.png",
+                        user_ids=user_ids,
+                        thread_ids=thread_ids,
+                    )
+
+    async def test_direct_send_photo_resolves_existing_thread_for_user_ids(self):
+        client = _build_client()
+        path = _temp_file(".jpg", b"jpg-bytes")
+        thread_id = "340282366841710300949128149448121770626"
+        client.direct_thread_by_participants = AsyncMock(return_value={"thread_v2_id": thread_id})
+
+        try:
+            with (
+                mock.patch("aiograpi.mixins.direct.prepare_image", return_value=(b"jpeg-bytes", (64, 48)), create=True),
+                mock.patch.object(
+                    client,
+                    "_photo_rupload",
+                    new=AsyncMock(return_value=123),
+                    create=True,
+                ),
+                mock.patch.object(
+                    client,
+                    "photo_rupload",
+                    new=AsyncMock(return_value=("legacy-upload", 64, 48)),
+                ),
+                mock.patch.object(client, "generate_mutation_token", return_value="mutation-token"),
+            ):
+                client.private_request = AsyncMock(return_value=_direct_payload())
+                await client.direct_send_photo(path, user_ids=[42])
+        finally:
+            path.unlink(missing_ok=True)
+
+        client.direct_thread_by_participants.assert_awaited_once_with([42])
+        data = client.private_request.call_args.kwargs["data"]
+        assert json.loads(data["thread_ids"]) == [int(thread_id)]
+        assert "recipient_users" not in data
+
+    async def test_direct_send_photo_raises_before_upload_when_existing_thread_is_missing(self):
+        client = _build_client()
+        client.direct_thread_by_participants = AsyncMock(return_value={})
+
+        with mock.patch.object(
+            client,
+            "_photo_rupload",
+            new=AsyncMock(),
+            create=True,
+        ) as rupload:
+            with self.assertRaises(DirectThreadNotFound):
+                await client.direct_send_photo("missing.png", user_ids=[42])
+
+        client.direct_thread_by_participants.assert_awaited_once_with([42])
+        rupload.assert_not_awaited()
+
+    async def test_direct_send_photo_rejects_unsupported_extension(self):
+        client = _build_client()
+        path = _temp_file(".gif", b"not-an-image")
+
+        try:
+            with self.assertRaisesRegex(ValueError, "JPG/JPEG/PNG/WEBP"):
+                await client.direct_send_photo(path, thread_ids=[123])
+        finally:
+            path.unlink(missing_ok=True)
+
+    async def test_direct_send_file_delegates_to_current_photo_and_video_flows(self):
+        client = _build_client()
+        photo_result = Mock(spec=DirectMessage)
+        video_result = Mock(spec=DirectMessage)
+
+        with (
+            mock.patch.object(client, "direct_send_photo", new=AsyncMock(return_value=photo_result)) as send_photo,
+            mock.patch.object(client, "direct_send_video", new=AsyncMock(return_value=video_result)) as send_video,
+            mock.patch.object(
+                client,
+                "photo_rupload",
+                new=AsyncMock(return_value=("legacy-photo", 1, 1)),
+            ),
+            mock.patch.object(
+                client,
+                "video_rupload",
+                new=AsyncMock(return_value=("legacy-video", 1, 1)),
+            ),
+        ):
+            client.private_request = AsyncMock(return_value=_direct_payload())
+            photo = await client.direct_send_file("photo.jpg", thread_ids=[123], content_type="photo")
+            video = await client.direct_send_file("video.mp4", user_ids=[42], content_type="video")
+
+        assert photo is photo_result
+        assert video is video_result
+        send_photo.assert_awaited_once_with("photo.jpg", [], [123])
+        send_video.assert_awaited_once_with("video.mp4", [42], [])
+
+    async def test_direct_send_file_rejects_unsupported_content_type(self):
+        client = _build_client()
+
+        with self.assertRaisesRegex(ValueError, 'content_type must be "photo" or "video"'):
+            await client.direct_send_file("voice.m4a", thread_ids=[123], content_type="audio")
+
+    async def test_photo_rupload_posts_jpeg_with_messenger_headers(self):
+        client = _build_client()
+        client.proxy = "http://proxy.example:8080"
+
+        class FakeResponse:
+            status_code = 200
+            text = '{"media_id":"987654321"}'
+
+            def json(self):
+                return {"media_id": "987654321"}
+
+        with (
+            mock.patch.object(
+                client,
+                "_messenger_rupload_headers",
+                return_value={"authorization": "Bearer token", "image_type": "FILE_ATTACHMENT"},
+            ) as headers,
+            mock.patch(
+                "aiograpi.mixins.direct.httpx_ext.request",
+                new=AsyncMock(return_value=FakeResponse()),
+            ) as request,
+        ):
+            media_id = await client._photo_rupload(b"photo-bytes", "fb_uploader_123")
+
+        assert media_id == 987654321
+        headers.assert_called_once_with({"image_type": "FILE_ATTACHMENT"})
+        request.assert_awaited_once_with(
+            "POST",
+            "https://rupload.facebook.com/messenger_image/fb_uploader_123",
+            data=b"photo-bytes",
+            headers={
+                "authorization": "Bearer token",
+                "image_type": "FILE_ATTACHMENT",
+                "content-type": "application/octet-stream",
+                "offset": "0",
+                "x-entity-length": "11",
+                "x-entity-name": "fb_uploader_123",
+                "x-entity-type": "image/jpeg",
+            },
+            proxy=client.proxy,
+            verify=client.tls_verify,
+            timeout=120,
+        )
+
+    async def test_photo_rupload_raises_for_failed_upload(self):
+        client = _build_client()
+        response = Mock(status_code=500, text="server error")
+
+        with mock.patch(
+            "aiograpi.mixins.direct.httpx_ext.request",
+            new=AsyncMock(return_value=response),
+        ):
+            with self.assertRaisesRegex(ClientError, "messenger_image upload POST failed: 500"):
+                await client._photo_rupload(b"photo-bytes", "fb_uploader_123")
+
+    async def test_photo_rupload_raises_when_media_id_is_missing(self):
+        client = _build_client()
+        response = Mock(status_code=200, text='{"status":"ok"}')
+        response.json.return_value = {"status": "ok"}
+
+        with mock.patch(
+            "aiograpi.mixins.direct.httpx_ext.request",
+            new=AsyncMock(return_value=response),
+        ):
+            with self.assertRaisesRegex(ClientError, "messenger_image response missing media_id"):
+                await client._photo_rupload(b"photo-bytes", "fb_uploader_123")
 
     async def test_messenger_rupload_headers_merges_common_optional_and_extra_headers(self):
         client = _build_client()

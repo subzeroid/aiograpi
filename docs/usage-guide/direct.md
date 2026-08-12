@@ -38,7 +38,7 @@
 | direct_thread_unmute(thread_id: int)                                      | bool                    | Unmute the thread
 | direct_thread_mute_video_call(thread_id: int, revert: bool = False)       | bool                    | Mute video call for the thread
 | direct_thread_unmute_video_call(thread_id: int)                           | bool                    | Unmute video call for the thread
-| direct_send_photo(path: Path, user_ids: List[int], thread_ids: List[int]) | DirectMessage           | Send a direct photo to list of users or threads
+| direct_send_photo(path: Path, user_ids: List[int], thread_ids: List[int]) | DirectMessage           | Send a direct photo to users in an existing thread or directly to thread ids
 | direct_send_video(path: Path, user_ids: List[int], thread_ids: List[int]) | DirectMessage           | Send a direct video to list of users or threads
 | direct_send_voice(path: Path, user_ids: List[int], thread_ids: List[int], waveform: Optional[List[float]] = None) | DirectMessage | Send an m4a/AAC voice message to list of users or threads
 | video_upload_to_direct(path: Path, caption: str, thumbnail: Path, mentions: List[StoryMention], thread_ids: List[int] = [], extra_data: Dict[str, str] = {}) | DirectMessage | Upload video to direct thread as a story and configure it
@@ -55,6 +55,7 @@ Notes:
 
 * Direct recipient arguments accept either one id (`user_ids=123`) or a list of ids (`user_ids=[123]`).
 * For `direct_send()`, `direct_media_share()`, `direct_send_photo()`, `direct_send_video()`, and `direct_send_voice()`, pass exactly one of `user_ids` or `thread_ids`.
+* Direct photo, video, and voice attachments sent with `user_ids` require an existing Direct thread. Use `direct_send()` to start the conversation first, or prefer `thread_ids` when the thread id is already known.
 * `direct_send_video()` uses the current direct video attachment flow. `video_upload_to_direct()` remains available for the older story-to-direct flow.
 * Direct message requests / invitations are exposed as `direct_requests()`; `direct_pending_inbox()` remains as the older name.
 * `direct_pending_requests_preview()` is the lightweight Android-app preview for request counters; use `direct_requests()` when you need the actual threads.
