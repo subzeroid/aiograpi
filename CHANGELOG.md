@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.12.9] - 2026-08-12
+
+### Added
+
+- Added async Direct photo attachments through Instagram's Messenger upload flow, supporting thread IDs and user IDs for existing conversations with verified live delivery.
+
+### Fixed
+
+- Filtered pinned-media reads by the requested profile and kept navigation headers request-local.
+- Allowed CAA/Bloks two-factor verification requests during pre-login flows.
+- Honored cleared proxies for Direct photo, video, and voice uploads.
+- Reused valid saved sessions in multi-account live tests before credential relogin.
+- Synced the recorded upstream baseline to `instagrapi` 2.18.13.
+
 ## [1.12.8] - 2026-07-29
 
 ### Fixed
