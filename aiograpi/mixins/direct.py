@@ -1050,7 +1050,7 @@ class DirectMixin(ClientMixin):
             url,
             data=photo_bytes,
             headers=headers,
-            proxy=getattr(self, "proxy", None),
+            proxy=self.private.proxy,
             verify=self.tls_verify,
             timeout=120,
         )

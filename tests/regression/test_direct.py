@@ -880,7 +880,7 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_photo_rupload_posts_jpeg_with_messenger_headers(self):
         client = _build_client()
-        client.proxy = "http://proxy.example:8080"
+        client.set_proxy("http://proxy.example:8080")
 
         class FakeResponse:
             status_code = 200
@@ -917,10 +917,26 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 "x-entity-name": "fb_uploader_123",
                 "x-entity-type": "image/jpeg",
             },
-            proxy=client.proxy,
+            proxy=client.private.proxy,
             verify=client.tls_verify,
             timeout=120,
         )
+
+    async def test_photo_rupload_uses_active_private_session_proxy_after_clear(self):
+        client = _build_client()
+        client.set_proxy("http://proxy.example:8080")
+        client.set_proxy("")
+
+        response = Mock(status_code=200, text='{"media_id":"987654321"}')
+        response.json.return_value = {"media_id": "987654321"}
+        with mock.patch(
+            "aiograpi.mixins.direct.httpx_ext.request",
+            new=AsyncMock(return_value=response),
+        ) as request:
+            await client._photo_rupload(b"photo-bytes", "fb_uploader_123")
+
+        assert client.private.proxy is None
+        assert request.await_args.kwargs["proxy"] is None
 
     async def test_photo_rupload_raises_for_failed_upload(self):
         client = _build_client()
