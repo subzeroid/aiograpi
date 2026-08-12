@@ -13,9 +13,11 @@ class RealtimeLiveHelpers:
         return os.getenv("IG_REALTIME_PROXY") or client.proxy
 
     async def fresh_account_excluding(self, exclude_user_ids):
-        data = await self.fetch_test_accounts(count=5 + len(exclude_user_ids))
+        # Multi-account live tests must be able to move past a temporarily
+        # throttled batch instead of repeatedly retrying the same first five.
+        data = await self.fetch_test_accounts(count=max(20, 5 + len(exclude_user_ids)))
         last_exc = None
-        for acc in data[:5]:
+        for acc in data:
             if str(acc.get("user_id")) in {str(user_id) for user_id in exclude_user_ids}:
                 continue
             try:

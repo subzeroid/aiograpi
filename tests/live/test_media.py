@@ -1,6 +1,13 @@
+import asyncio
+import logging
 import os
+import tempfile
+import time
 import unittest
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
+
+from PIL import Image
 
 from aiograpi.exceptions import (
     ClientBadRequestError,
@@ -10,7 +17,11 @@ from aiograpi.exceptions import (
     ClientThrottledError,
     ClientUnauthorizedError,
 )
+from aiograpi.types import Media
+from tests import legacy as _legacy
 from tests.live.smoke import _fetch_accounts, _login_first_usable
+
+logger = logging.getLogger("aiograpi.tests")
 
 PUBLIC_MEDIA_FETCH_ERRORS = (
     ClientBadRequestError,
@@ -20,6 +31,79 @@ PUBLIC_MEDIA_FETCH_ERRORS = (
     ClientThrottledError,
     ClientUnauthorizedError,
 )
+
+
+class ClientPinnedMediaLiveTestCase(_legacy.ClientPrivateTestCase):
+    def make_photo_png(self):
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+            path = Path(tmp.name)
+        Image.new("RGB", (640, 800), (37, 99, 235)).save(path)
+        self.addCleanup(lambda: path.unlink(missing_ok=True))
+        return path
+
+    async def expected_pinned_media_pks(self, client):
+        user_id = str(client.user_id)
+        nav_chain = "MainFeedFragment:feed_timeline:12:main_home::,UserDetailFragment:profile:13:button::"
+        response = await client.private_request(
+            f"feed/user/{user_id}/",
+            params={
+                "exclude_comment": "true",
+                "only_fetch_first_carousel_media": "false",
+            },
+            headers={"X-IG-Nav-Chain": nav_chain},
+        )
+        return [
+            str(item["pk"])
+            for item in response.get("items") or []
+            if user_id in map(str, item.get("timeline_pinned_user_ids") or ())
+        ]
+
+    async def test_user_pinned_medias_upload_pin_readback_unpin_delete_live(self):
+        client = self.cl
+        photo_path = self.make_photo_png()
+        media = None
+        pinned = False
+
+        try:
+            media = await client.photo_upload(
+                photo_path,
+                f"aiograpi pinned media live {int(time.time())}",
+            )
+            self.assertIsInstance(media, Media)
+            self.assertTrue(await client.media_pin(media.pk))
+            pinned = True
+
+            expected_pks = []
+            actual_pks = []
+            for _ in range(8):
+                expected_pks = await self.expected_pinned_media_pks(client)
+                actual_pks = [str(item.pk) for item in await client.user_pinned_medias(client.user_id)]
+                if str(media.pk) in expected_pks and actual_pks == expected_pks:
+                    break
+                await asyncio.sleep(3)
+
+            self.assertIn(str(media.pk), expected_pks)
+            self.assertEqual(actual_pks, expected_pks)
+
+            self.assertTrue(await client.media_unpin(media.pk))
+            pinned = False
+            for _ in range(8):
+                actual_pks = [str(item.pk) for item in await client.user_pinned_medias(client.user_id)]
+                if str(media.pk) not in actual_pks:
+                    break
+                await asyncio.sleep(3)
+            self.assertNotIn(str(media.pk), actual_pks)
+        finally:
+            if media is not None:
+                if pinned:
+                    try:
+                        await client.media_unpin(media.pk)
+                    except Exception as exc:
+                        logger.warning("Pinned media unpin cleanup failed: %s", exc)
+                try:
+                    await client.media_delete(media.id)
+                except Exception as exc:
+                    logger.warning("Pinned media delete cleanup failed: %s", exc)
 
 
 class ClientMediaCountAliasLiveTestCase(unittest.IsolatedAsyncioTestCase):

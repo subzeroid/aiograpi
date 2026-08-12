@@ -1,7 +1,11 @@
 import asyncio
 import logging
+import tempfile
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
+
+from PIL import Image
 
 from aiograpi.exceptions import DirectMessageNotFound
 from aiograpi.types import DirectMessage
@@ -12,6 +16,13 @@ logger = logging.getLogger("aiograpi.tests")
 
 
 class ClientDirectLiveTestCase(RealtimeLiveHelpers, _legacy.ClientPrivateTestCase):
+    def make_photo_png(self):
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+            path = Path(tmp.name)
+        Image.new("RGBA", (64, 48), (37, 99, 235, 128)).save(path)
+        self.addCleanup(lambda: path.unlink(missing_ok=True))
+        return path
+
     @asynccontextmanager
     async def direct_pagination_thread(self, sender, test_name):
         try:
@@ -168,3 +179,99 @@ class ClientDirectLiveTestCase(RealtimeLiveHelpers, _legacy.ClientPrivateTestCas
                         await client.direct_thread_hide(thread_id)
                     except Exception as exc:
                         logger.warning("Direct media share thread cleanup failed: %s", exc)
+
+    async def test_direct_send_photo_with_thread_and_user_ids_live(self):
+        sender = self.cl
+        try:
+            recipient = await self.fresh_account_excluding({sender.user_id})
+        except RuntimeError as exc:
+            self.skipTest(str(exc))
+
+        photo_path = self.make_photo_png()
+        sent_messages = []
+        thread_id = None
+        recipient_follow_added = False
+
+        try:
+            relationship = await recipient.user_friendship_v1(sender.user_id)
+            if not relationship or not relationship.following:
+                followed = await recipient.user_follow(sender.user_id)
+                if not followed:
+                    self.skipTest("Recipient could not follow sender before Direct delivery test")
+                recipient_follow_added = True
+                relationship = await recipient.user_friendship_v1(sender.user_id)
+                if relationship and relationship.outgoing_request:
+                    approved = await sender.user_follow_request_approve(recipient.user_id)
+                    if not approved:
+                        self.skipTest("Sender could not approve recipient follow request")
+
+                for _ in range(6):
+                    relationship = await recipient.user_friendship_v1(sender.user_id)
+                    if relationship and relationship.following:
+                        break
+                    await asyncio.sleep(2)
+                if not relationship or not relationship.following:
+                    self.skipTest("Recipient follow was not active before Direct delivery test")
+
+            seed_message = await sender.direct_send(
+                f"aiograpi direct photo live warm {int(time.time())}",
+                user_ids=[recipient.user_id],
+            )
+            self.assertIsInstance(seed_message, DirectMessage)
+            sent_messages.append((sender, seed_message))
+
+            thread_id = seed_message.thread_id
+            if not thread_id:
+                thread = await sender.direct_thread_by_participants([recipient.user_id])
+                thread_id = thread.get("thread_v2_id") or thread.get("thread_id")
+            self.assertTrue(thread_id)
+
+            reply_message = await recipient.direct_answer(
+                thread_id,
+                f"aiograpi direct photo live reply {int(time.time())}",
+            )
+            self.assertIsInstance(reply_message, DirectMessage)
+            sent_messages.append((recipient, reply_message))
+
+            thread_photo = await sender.direct_send_photo(photo_path, thread_ids=[thread_id])
+            self.assertIsInstance(thread_photo, DirectMessage)
+            self.assertTrue(thread_photo.id)
+            sent_messages.append((sender, thread_photo))
+
+            user_photo = await sender.direct_send_photo(photo_path, user_ids=[recipient.user_id])
+            self.assertIsInstance(user_photo, DirectMessage)
+            self.assertTrue(user_photo.id)
+            sent_messages.append((sender, user_photo))
+
+            for sent_photo in (thread_photo, user_photo):
+                received_photo = None
+                for _ in range(8):
+                    try:
+                        received_photo = await recipient.direct_message(thread_id, sent_photo.id, amount=20)
+                    except DirectMessageNotFound:
+                        await asyncio.sleep(2)
+                        continue
+                    if received_photo.item_type == "media" and received_photo.media:
+                        break
+                    await asyncio.sleep(2)
+
+                self.assertIsNotNone(received_photo)
+                self.assertEqual(received_photo.item_type, "media")
+                self.assertIsNotNone(received_photo.media)
+        finally:
+            if thread_id:
+                for client, message in reversed(sent_messages):
+                    try:
+                        await client.direct_message_unsend(thread_id, message.id)
+                    except Exception as exc:
+                        logger.warning("Direct photo message cleanup failed: %s", exc)
+                for client in (sender, recipient):
+                    try:
+                        await client.direct_thread_hide(thread_id)
+                    except Exception as exc:
+                        logger.warning("Direct photo thread cleanup failed: %s", exc)
+            if recipient_follow_added:
+                try:
+                    await recipient.user_unfollow(sender.user_id)
+                except Exception as exc:
+                    logger.warning("Direct photo follow cleanup failed: %s", exc)
