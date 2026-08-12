@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import tempfile
 import time
@@ -19,6 +20,8 @@ from aiograpi.exceptions import (
 from aiograpi.types import Media
 from tests import legacy as _legacy
 from tests.live.smoke import _fetch_accounts, _login_first_usable
+
+logger = logging.getLogger("aiograpi.tests")
 
 PUBLIC_MEDIA_FETCH_ERRORS = (
     ClientBadRequestError,
@@ -95,12 +98,12 @@ class ClientPinnedMediaLiveTestCase(_legacy.ClientPrivateTestCase):
                 if pinned:
                     try:
                         await client.media_unpin(media.pk)
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.warning("Pinned media unpin cleanup failed: %s", exc)
                 try:
                     await client.media_delete(media.id)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning("Pinned media delete cleanup failed: %s", exc)
 
 
 class ClientMediaCountAliasLiveTestCase(unittest.IsolatedAsyncioTestCase):

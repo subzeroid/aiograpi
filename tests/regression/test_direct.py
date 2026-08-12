@@ -907,7 +907,7 @@ class DirectMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         request.assert_awaited_once_with(
             "POST",
             "https://rupload.facebook.com/messenger_image/fb_uploader_123",
-            data=b"photo-bytes",
+            content=b"photo-bytes",
             headers={
                 "authorization": "Bearer token",
                 "image_type": "FILE_ATTACHMENT",

@@ -1048,7 +1048,7 @@ class DirectMixin(ClientMixin):
         response = await httpx_ext.request(
             "POST",
             url,
-            data=photo_bytes,
+            content=photo_bytes,
             headers=headers,
             proxy=self.private.proxy,
             verify=self.tls_verify,
