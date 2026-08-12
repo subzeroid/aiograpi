@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 
 from aiograpi.mixins.account import AccountMixin
 from aiograpi.mixins.album import DownloadAlbumMixin, UploadAlbumMixin
+from aiograpi.mixins.attestation import DeviceAttestationMixin
 from aiograpi.mixins.auth import LoginMixin
 from aiograpi.mixins.bloks import BloksMixin
 from aiograpi.mixins.challenge import ChallengeResolveMixin
@@ -47,7 +48,7 @@ from aiograpi.mixins.video import DownloadVideoMixin, UploadVideoMixin
 # Used as fallback logger if another is not provided.
 DEFAULT_LOGGER = logging.getLogger("aiograpi")
 
-__upstream_instagrapi_version__ = "2.18.13"
+__upstream_instagrapi_version__ = "2.18.14"
 
 
 class Client(
@@ -91,6 +92,7 @@ class Client(
     UploadClipMixin,
     ReelsMixin,
     ExploreMixin,
+    DeviceAttestationMixin,
     BloksMixin,
     TOTPMixin,
     FundraiserMixin,

@@ -19,6 +19,7 @@ from aiograpi import config
 from aiograpi.exceptions import (
     BadCredentials,
     BadPassword,
+    ChallengeError,
     ClientError,
     ClientThrottledError,
     LoginRequired,
@@ -572,22 +573,31 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
             **self._exception_context(login_json),
         ) from exc
 
-    async def _login_with_caa_bloks_two_factor(self, verification_code: str, password: str, exc: Exception) -> bool:
-        caa_result = await self.bloks_caa_login_send_request(password, login_attempt_count=1)
-        context = self.bloks_extract_two_step_verification_context(caa_result)
-        login_json = deepcopy(self.last_json) if isinstance(self.last_json, dict) else {}
+    async def _try_caa_login(self, exc: Exception, verification_code: str = "") -> bool:
+        """Try current Android CAA login while preserving the legacy error on failure."""
+        try:
+            outcome = await self.bloks_caa_login(verification_code=verification_code)
+        except (ChallengeError, TwoFactorRequired):
+            raise
+        except ClientError as caa_exc:
+            self.logger.warning("CAA login fallback failed: %s", caa_exc)
+            return False
+        if outcome.get("logged_in"):
+            return True
+        context = str(outcome.get("two_step_verification_context") or "")
         if not context:
+            return False
+        if not verification_code.strip():
             raise TwoFactorRequired(
-                "Instagram rejected the legacy login endpoint and may require "
-                "a newer CAA/Bloks login flow, but the CAA response did not "
-                "include two_step_verification_context required for automatic "
-                "Bloks two-factor verification. Complete verification in the "
-                "Instagram app or inspect the current login response.",
+                f"{exc} (Instagram returned a Bloks two-factor context from the CAA login flow; "
+                "provide verification_code for login)",
                 response=getattr(exc, "response", None),
-                **self._exception_context(login_json),
             ) from exc
-        login_json["two_step_verification_context"] = context
-        return await self._login_with_bloks_two_factor(verification_code, login_json, exc)
+        return await self._login_with_bloks_two_factor(
+            verification_code,
+            {"two_step_verification_context": context},
+            exc,
+        )
 
     def init(self) -> bool:
         """
@@ -639,6 +649,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         self.mid = self.settings.get("mid", self.cookie_dict.get("mid"))
         self.set_ig_u_rur(self.settings.get("ig_u_rur"))
         self.set_ig_www_claim(self.settings.get("ig_www_claim"))
+        self.set_usdid_settings(self.settings.get("usdid"))
         # init headers
         headers = self.base_headers
         if self.authorization:
@@ -786,18 +797,18 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         except BadPassword as exc:
             login_json = deepcopy(self.last_json) if isinstance(self.last_json, dict) else {}
             context = self._extract_two_step_verification_context(login_json)
-            if not context and not verification_code.strip():
-                raise
-            if not verification_code.strip():
+            if not context:
+                logged = await self._try_caa_login(exc, verification_code=verification_code)
+                if not logged:
+                    raise
+            elif not verification_code.strip():
                 raise TwoFactorRequired(
                     f"{exc} (Instagram returned a Bloks two-factor context; provide verification_code for login)",
                     response=getattr(exc, "response", None),
                     **self._exception_context(login_json),
                 ) from exc
-            if context:
-                logged = await self._login_with_bloks_two_factor(verification_code, login_json, exc)
             else:
-                logged = await self._login_with_caa_bloks_two_factor(verification_code, self.password, exc)
+                logged = await self._login_with_bloks_two_factor(verification_code, login_json, exc)
         except TwoFactorRequired as e:
             if not verification_code.strip():
                 raise TwoFactorRequired(f"{e} (you did not provide verification_code for login method)")
@@ -929,7 +940,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         Dict
             Current session settings as a Dict
         """
-        return {
+        settings = {
             "uuids": {
                 "phone_id": self.phone_id,
                 "uuid": self.uuid,
@@ -964,6 +975,10 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
             "public_transport_impersonate": self.public_transport_impersonate,
             "tls_verify": self.tls_verify,
         }
+        usdid_settings = self.get_usdid_settings()
+        if usdid_settings:
+            settings["usdid"] = usdid_settings
+        return settings
 
     def set_settings(self, settings: Dict) -> bool:
         """
@@ -1230,6 +1245,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         bool
             A boolean value
         """
+        previous_phone_id = self.phone_id
         self.phone_id = uuids.get("phone_id", self.generate_uuid())
         self.uuid = uuids.get("uuid", self.generate_uuid())
         self.client_session_id = uuids.get("client_session_id", self.generate_uuid())
@@ -1239,6 +1255,8 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         self.tray_session_id = uuids.get("tray_session_id", self.generate_uuid())
         # self.device_id = uuids.get("device_id", self.generate_uuid())
         self.settings["uuids"] = uuids
+        if previous_phone_id and previous_phone_id != self.phone_id:
+            self.set_usdid_settings({})
         return True
 
     def generate_uuid(self, prefix: str = "", suffix: str = "") -> str:

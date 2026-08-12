@@ -6,6 +6,8 @@ from pydantic import ValidationError
 from aiograpi import Client
 from aiograpi.exceptions import (
     BadPassword,
+    ChallengeError,
+    ClientNotFoundError,
     LoginRequired,
     PleaseWaitFewMinutes,
     PrivateError,
@@ -119,7 +121,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.user_short_gql.assert_not_awaited()
         self.assertEqual(client.username, "example")
 
-    async def test_login_bad_password_without_context_tries_caa_bloks_context_when_code_provided(self):
+    async def test_login_bad_password_without_context_tries_current_caa_flow(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -129,26 +131,34 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.password_encrypt = AsyncMock(return_value="enc-password")
         client.login_flow = AsyncMock()
         client.private_request = AsyncMock(side_effect=BadPassword("Bad Password", response=Mock(status_code=400)))
-        caa_result = {"layout": {"bloks_payload": {"action": "action-with-context"}}}
-        client.bloks_caa_login_send_request = AsyncMock(return_value=caa_result)
-        client.bloks_extract_two_step_verification_context = Mock(return_value="context-1")
-        client.bloks_two_step_verification_entrypoint = AsyncMock(return_value={"status": "ok"})
-        client.bloks_two_step_verification_method_picker = AsyncMock(return_value={"status": "ok"})
-        client.bloks_two_step_verification_select_method = AsyncMock(return_value={"status": "ok"})
-        client.bloks_two_step_verification_verify_code = AsyncMock(return_value={"layout": {}})
-        client.bloks_apply_login_response = Mock(return_value=True)
+        client.bloks_caa_login = AsyncMock(return_value={"logged_in": True})
 
         result = await client.login(verification_code="654321")
 
         self.assertTrue(result)
-        client.bloks_caa_login_send_request.assert_awaited_once_with("password", login_attempt_count=1)
-        client.bloks_extract_two_step_verification_context.assert_called_once_with(caa_result)
-        client.bloks_two_step_verification_select_method.assert_awaited_once_with("context-1", selected_method="totp")
-        client.bloks_two_step_verification_verify_code.assert_awaited_once_with(
-            "context-1",
-            "654321",
-            challenge="totp",
-        )
+        client.bloks_caa_login.assert_awaited_once_with(verification_code="654321")
+        client.login_flow.assert_awaited_once_with()
+
+    async def test_login_bad_password_recovery_response_tries_current_caa_flow_without_code(self):
+        client = Client()
+        client.username = "example"
+        client.password = "password"
+        client.authorization_data = {}
+        client.last_json = {
+            "message": "Get back into your account",
+            "error_title": "Forgotten password?",
+            "error_type": "bad_password",
+        }
+        client.pre_login_flow = AsyncMock(return_value=True)
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+        client.login_flow = AsyncMock()
+        client.private_request = AsyncMock(side_effect=BadPassword("Bad Password", response=Mock(status_code=400)))
+        client.bloks_caa_login = AsyncMock(return_value={"logged_in": True})
+
+        result = await client.login()
+
+        self.assertTrue(result)
+        client.bloks_caa_login.assert_awaited_once_with(verification_code="")
         client.login_flow.assert_awaited_once_with()
 
     async def test_login_with_eight_digit_backup_code_selects_backup_code_bloks_challenge(self):
@@ -231,7 +241,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         )
         client.login_flow.assert_awaited_once_with()
 
-    async def test_login_bad_password_without_context_raises_clear_error_when_caa_has_no_context(self):
+    async def test_login_bad_password_without_context_preserves_original_error_when_caa_has_no_session(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -240,13 +250,73 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.pre_login_flow = AsyncMock(return_value=True)
         client.password_encrypt = AsyncMock(return_value="enc-password")
         client.private_request = AsyncMock(side_effect=BadPassword("Bad Password", response=Mock(status_code=400)))
-        client.bloks_caa_login_send_request = AsyncMock(return_value={"layout": {"bloks_payload": {"action": ""}}})
-        client.bloks_extract_two_step_verification_context = Mock(return_value="")
-        client.bloks_two_step_verification_verify_code = AsyncMock()
+        client.bloks_caa_login = AsyncMock(
+            return_value={"logged_in": False, "two_step_verification_context": "", "reason": "no session"}
+        )
 
-        with self.assertRaises(TwoFactorRequired) as cm:
+        with self.assertRaises(BadPassword):
             await client.login(verification_code="654321")
 
-        self.assertIn("CAA response did not include two_step_verification_context", str(cm.exception))
-        client.bloks_caa_login_send_request.assert_awaited_once_with("password", login_attempt_count=1)
-        client.bloks_two_step_verification_verify_code.assert_not_awaited()
+        client.bloks_caa_login.assert_awaited_once_with(verification_code="654321")
+
+    async def test_login_bad_password_without_context_preserves_original_error_when_caa_is_unavailable(self):
+        client = Client()
+        client.username = "example"
+        client.password = "password"
+        client.authorization_data = {}
+        client.last_json = {"message": "Bad Password", "error_type": "bad_password"}
+        client.pre_login_flow = AsyncMock(return_value=True)
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+        client.private_request = AsyncMock(side_effect=BadPassword("Bad Password", response=Mock(status_code=400)))
+        caa_error = ClientNotFoundError(
+            "Payload returned is null",
+            response=Mock(status_code=404),
+            error_type="field_exception",
+            status="fail",
+        )
+        client.bloks_caa_login = AsyncMock(side_effect=caa_error)
+
+        with self.assertRaises(BadPassword):
+            await client.login(verification_code="654321")
+
+        client.bloks_caa_login.assert_awaited_once_with(verification_code="654321")
+
+    async def test_caa_profile_code_error_is_not_replaced_with_legacy_bad_password(self):
+        client = Client()
+        original = BadPassword("Bad Password", response=Mock(status_code=400))
+        rejection = ChallengeError("CAA profile-code submission failed")
+        client.bloks_caa_login = AsyncMock(side_effect=rejection)
+
+        with self.assertRaises(ChallengeError) as raised:
+            await client._try_caa_login(original, verification_code="654321")
+
+        self.assertIs(raised.exception, rejection)
+
+    async def test_caa_legacy_two_step_context_requires_a_verification_code(self):
+        client = Client()
+        original = BadPassword("Bad Password", response=Mock(status_code=400))
+        client.bloks_caa_login = AsyncMock(
+            return_value={"logged_in": False, "two_step_verification_context": "legacy-context"}
+        )
+
+        with self.assertRaises(TwoFactorRequired) as raised:
+            await client._try_caa_login(original)
+
+        self.assertIn("provide verification_code", str(raised.exception))
+
+    async def test_caa_legacy_two_step_context_delegates_supplied_code(self):
+        client = Client()
+        original = BadPassword("Bad Password", response=Mock(status_code=400))
+        client.bloks_caa_login = AsyncMock(
+            return_value={"logged_in": False, "two_step_verification_context": "legacy-context"}
+        )
+        client._login_with_bloks_two_factor = AsyncMock(return_value=True)
+
+        result = await client._try_caa_login(original, verification_code="654321")
+
+        self.assertTrue(result)
+        client._login_with_bloks_two_factor.assert_awaited_once_with(
+            "654321",
+            {"two_step_verification_context": "legacy-context"},
+            original,
+        )
