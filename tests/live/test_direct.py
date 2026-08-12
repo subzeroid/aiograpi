@@ -190,8 +190,29 @@ class ClientDirectLiveTestCase(RealtimeLiveHelpers, _legacy.ClientPrivateTestCas
         photo_path = self.make_photo_png()
         sent_messages = []
         thread_id = None
+        recipient_follow_added = False
 
         try:
+            relationship = await recipient.user_friendship_v1(sender.user_id)
+            if not relationship or not relationship.following:
+                followed = await recipient.user_follow(sender.user_id)
+                if not followed:
+                    self.skipTest("Recipient could not follow sender before Direct delivery test")
+                recipient_follow_added = True
+                relationship = await recipient.user_friendship_v1(sender.user_id)
+                if relationship and relationship.outgoing_request:
+                    approved = await sender.user_follow_request_approve(recipient.user_id)
+                    if not approved:
+                        self.skipTest("Sender could not approve recipient follow request")
+
+                for _ in range(6):
+                    relationship = await recipient.user_friendship_v1(sender.user_id)
+                    if relationship and relationship.following:
+                        break
+                    await asyncio.sleep(2)
+                if not relationship or not relationship.following:
+                    self.skipTest("Recipient follow was not active before Direct delivery test")
+
             seed_message = await sender.direct_send(
                 f"aiograpi direct photo live warm {int(time.time())}",
                 user_ids=[recipient.user_id],
@@ -249,3 +270,8 @@ class ClientDirectLiveTestCase(RealtimeLiveHelpers, _legacy.ClientPrivateTestCas
                         await client.direct_thread_hide(thread_id)
                     except Exception as exc:
                         logger.warning("Direct photo thread cleanup failed: %s", exc)
+            if recipient_follow_added:
+                try:
+                    await recipient.user_unfollow(sender.user_id)
+                except Exception as exc:
+                    logger.warning("Direct photo follow cleanup failed: %s", exc)
