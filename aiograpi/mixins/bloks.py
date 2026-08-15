@@ -1,6 +1,7 @@
 import json
 import re
 import time
+from asyncio import CancelledError
 from http.cookies import SimpleCookie
 from json import JSONDecodeError
 from typing import Any, Dict, List, Optional
@@ -611,16 +612,34 @@ class BloksMixin(ClientMixin):
             login=True,
         )
 
-    async def bloks_caa_login_prepare(self, username: str = "", domain: Optional[str] = None) -> bool:
+    async def bloks_caa_login_prepare(
+        self,
+        username: str = "",
+        domain: Optional[str] = None,
+        waterfall_id: str = "",
+        offline_experiment_group: str = "caa_iteration_v3_perf_ig_4",
+        bloks_versioning_id: str = "",
+    ) -> bool:
         """Run the ordered device and CAA preflight needed before login."""
         if not self.usdid_registered and not (await self.usdid_register()):
             return False
-        await self.bloks_caa_login_process_client_data(domain=domain)
+        await self.bloks_caa_login_process_client_data(
+            waterfall_id=waterfall_id,
+            offline_experiment_group=offline_experiment_group,
+            bloks_versioning_id=bloks_versioning_id,
+            domain=domain,
+        )
         self.attestation_challenge_nonce = ""
         self.attestation_key_nonce = ""
         await self.attestation_create_android_keystore(domain=domain)
         if self.caa_aac:
-            await self.bloks_caa_login_oauth_token_fetch(username=username, domain=domain)
+            await self.bloks_caa_login_oauth_token_fetch(
+                username=username,
+                waterfall_id=waterfall_id,
+                offline_experiment_group=offline_experiment_group,
+                bloks_versioning_id=bloks_versioning_id,
+                domain=domain,
+            )
         return bool(self.caa_aac and self.attestation_challenge_nonce)
 
     async def bloks_caa_login_send_request(
@@ -633,13 +652,14 @@ class BloksMixin(ClientMixin):
         offline_experiment_group: str = "caa_iteration_v3_perf_ig_4",
         bloks_versioning_id: str = "",
         domain: Optional[str] = None,
+        auto_prepare: bool = True,
     ) -> Dict:
         """
         Send the current CAA/Bloks login request used before Bloks 2FA.
 
-        This low-level helper requires the server-issued account access context
-        and uses the attestation state populated by
-        :meth:`bloks_caa_login_prepare`.
+        When needed, this low-level helper obtains the server-issued account
+        access context through :meth:`bloks_caa_login_prepare` before encrypting
+        the password. Set ``auto_prepare=False`` to require pre-existing state.
 
         Returns
         -------
@@ -647,16 +667,39 @@ class BloksMixin(ClientMixin):
             Raw Instagram response.
         """
         contact_point = username or self.username
+        if auto_prepare and not self.caa_aac:
+            preflight_state = (
+                self.caa_aac,
+                self.caa_waterfall_id,
+                self.attestation_challenge_nonce,
+                self.attestation_key_nonce,
+            )
+            try:
+                await self.bloks_caa_login_prepare(
+                    username=contact_point,
+                    domain=domain,
+                    waterfall_id=waterfall_id,
+                    offline_experiment_group=offline_experiment_group,
+                    bloks_versioning_id=bloks_versioning_id,
+                )
+            except (Exception, CancelledError):
+                (
+                    self.caa_aac,
+                    self.caa_waterfall_id,
+                    self.attestation_challenge_nonce,
+                    self.attestation_key_nonce,
+                ) = preflight_state
+                raise
+        if not self.caa_aac:
+            raise ClientError(
+                "CAA login requires a server-issued aac; call bloks_caa_login_prepare() before send_login_request"
+            )
         if password.startswith("#PWD_"):
             encrypted_password = password
         else:
             encrypted_password = await self.password_encrypt(password)
         flow_id = waterfall_id or self.caa_waterfall_id or str(uuid4())
         self.caa_waterfall_id = flow_id
-        if not self.caa_aac:
-            raise ClientError(
-                "CAA login requires a server-issued aac; call bloks_caa_login_prepare() before send_login_request"
-            )
         # Recent CAA login screens emit short base36-like input ids. Hex-only
         # UUID prefixes are accepted by the VM but can return a null-payload 404.
         text_input_id = f"{uuid4().hex[:4]}ig"
@@ -772,7 +815,12 @@ class BloksMixin(ClientMixin):
                 "two_step": {},
                 "reason": "CAA preflight did not return account access and attestation data",
             }
-        result = await self.bloks_caa_login_send_request(password, username=username, domain=domain)
+        result = await self.bloks_caa_login_send_request(
+            password,
+            username=username,
+            domain=domain,
+            auto_prepare=prepare,
+        )
         logged_in = self.bloks_apply_login_response(result)
         two_step = {}
         if not logged_in and self.bloks_caa_login_needs_two_step(result):

@@ -1,6 +1,8 @@
+import asyncio
 import base64
 import json
 import unittest
+from inspect import signature
 from unittest import mock
 from unittest.mock import AsyncMock, Mock
 
@@ -241,6 +243,28 @@ class CaaLoginRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             }
         }
 
+    async def test_caa_login_public_signatures_preserve_positional_prefixes(self):
+        client = self.build_client()
+
+        prepare_params = list(signature(client.bloks_caa_login_prepare).parameters)
+        send_params = list(signature(client.bloks_caa_login_send_request).parameters)
+
+        self.assertEqual(prepare_params[:2], ["username", "domain"])
+        self.assertEqual(
+            send_params,
+            [
+                "password",
+                "username",
+                "login_attempt_count",
+                "try_num",
+                "waterfall_id",
+                "offline_experiment_group",
+                "bloks_versioning_id",
+                "domain",
+                "auto_prepare",
+            ],
+        )
+
     async def test_process_client_data_extracts_server_issued_aac(self):
         client = self.build_client()
         aac = '{"aac_init_timestamp":1,"aacjid":"j","aaccs":"server"}'
@@ -363,14 +387,41 @@ class CaaLoginRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         with (
             mock.patch.object(client, "usdid_register", side_effect=register),
-            mock.patch.object(client, "bloks_caa_login_process_client_data", side_effect=process),
+            mock.patch.object(
+                client,
+                "bloks_caa_login_process_client_data",
+                side_effect=process,
+            ) as process_client_data,
             mock.patch.object(client, "attestation_create_android_keystore", side_effect=attest),
-            mock.patch.object(client, "bloks_caa_login_oauth_token_fetch", side_effect=oauth),
+            mock.patch.object(
+                client,
+                "bloks_caa_login_oauth_token_fetch",
+                side_effect=oauth,
+            ) as oauth_token_fetch,
         ):
-            result = await client.bloks_caa_login_prepare(domain="b.i.instagram.com")
+            result = await client.bloks_caa_login_prepare(
+                username="override_user",
+                domain="b.i.instagram.com",
+                waterfall_id="waterfall-1",
+                offline_experiment_group="experiment-1",
+                bloks_versioning_id="bloks-version-1",
+            )
 
         self.assertTrue(result)
         self.assertEqual(order, ["register", "process", "attestation", "oauth"])
+        process_client_data.assert_awaited_once_with(
+            waterfall_id="waterfall-1",
+            offline_experiment_group="experiment-1",
+            bloks_versioning_id="bloks-version-1",
+            domain="b.i.instagram.com",
+        )
+        oauth_token_fetch.assert_awaited_once_with(
+            username="override_user",
+            waterfall_id="waterfall-1",
+            offline_experiment_group="experiment-1",
+            bloks_versioning_id="bloks-version-1",
+            domain="b.i.instagram.com",
+        )
 
     async def test_prepare_stops_when_usdid_registration_is_rejected(self):
         client = self.build_client()
@@ -428,16 +479,191 @@ class CaaLoginRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             result = await client.bloks_caa_login_prepare(username="override_user")
 
         self.assertFalse(result)
-        oauth.assert_called_once_with(username="override_user", domain=None)
+        oauth.assert_awaited_once_with(
+            username="override_user",
+            waterfall_id="",
+            offline_experiment_group="caa_iteration_v3_perf_ig_4",
+            bloks_versioning_id="",
+            domain=None,
+        )
 
-    async def test_send_login_requires_server_issued_aac(self):
+    async def test_send_login_auto_prepares_before_password_and_flow_selection(self):
+        client = self.build_client()
+        order = []
+
+        async def prepare(**kwargs):
+            order.append("prepare")
+            client.caa_aac = "server-aac"
+            client.caa_waterfall_id = "prepared-waterfall"
+            return True
+
+        async def encrypt(password):
+            order.append("encrypt")
+            return "#PWD_INSTAGRAM:4:1:encrypted"
+
+        async def action(*args, **kwargs):
+            order.append("action")
+            return {"status": "ok"}
+
+        client.password_encrypt = AsyncMock(side_effect=encrypt)
+
+        with (
+            mock.patch.object(client, "bloks_caa_login_prepare", side_effect=prepare) as login_prepare,
+            mock.patch.object(client, "bloks_async_action", side_effect=action) as async_action,
+        ):
+            result = await client.bloks_caa_login_send_request(
+                "dummy_password",
+                domain="b.i.instagram.com",
+                offline_experiment_group="experiment-1",
+                bloks_versioning_id="bloks-version-1",
+            )
+
+        self.assertEqual(result, {"status": "ok"})
+        self.assertEqual(order, ["prepare", "encrypt", "action"])
+        login_prepare.assert_awaited_once_with(
+            username="example_user",
+            domain="b.i.instagram.com",
+            waterfall_id="",
+            offline_experiment_group="experiment-1",
+            bloks_versioning_id="bloks-version-1",
+        )
+        params = async_action.call_args.args[1]
+        self.assertEqual(params["server_params"]["waterfall_id"], "prepared-waterfall")
+
+    async def test_send_login_uses_aac_even_when_prepare_returns_false(self):
         client = self.build_client()
 
-        with mock.patch.object(client, "bloks_async_action") as action, self.assertRaises(ClientError) as cm:
-            await client.bloks_caa_login_send_request("dummy_password")
+        async def prepare(**kwargs):
+            client.caa_aac = "server-aac"
+            return False
+
+        client.password_encrypt = AsyncMock(return_value="#PWD_INSTAGRAM:4:1:encrypted")
+
+        with (
+            mock.patch.object(client, "bloks_caa_login_prepare", side_effect=prepare),
+            mock.patch.object(client, "bloks_async_action", return_value={"status": "ok"}) as action,
+        ):
+            result = await client.bloks_caa_login_send_request("dummy_password")
+
+        self.assertEqual(result, {"status": "ok"})
+        action.assert_awaited_once()
+
+    async def test_send_login_requires_aac_after_auto_prepare(self):
+        client = self.build_client()
+        client.password_encrypt = AsyncMock(return_value="#PWD_INSTAGRAM:4:1:encrypted")
+
+        with (
+            mock.patch.object(client, "bloks_caa_login_prepare", return_value=True) as prepare,
+            mock.patch.object(client, "bloks_async_action") as action,
+            self.assertRaises(ClientError) as cm,
+        ):
+            await client.bloks_caa_login_send_request(
+                "dummy_password",
+                username="override_user",
+                waterfall_id="waterfall-1",
+            )
 
         self.assertIn("server-issued aac", str(cm.exception))
-        action.assert_not_called()
+        prepare.assert_awaited_once_with(
+            username="override_user",
+            domain=None,
+            waterfall_id="waterfall-1",
+            offline_experiment_group="caa_iteration_v3_perf_ig_4",
+            bloks_versioning_id="",
+        )
+        client.password_encrypt.assert_not_awaited()
+        action.assert_not_awaited()
+
+    async def test_send_login_rolls_back_failed_prepare_and_retries(self):
+        client = self.build_client()
+        error = RuntimeError("preflight failed")
+        client.caa_waterfall_id = "previous-waterfall"
+        client.attestation_challenge_nonce = "previous-challenge"
+        client.attestation_key_nonce = "previous-key"
+        client.password_encrypt = AsyncMock(return_value="#PWD_INSTAGRAM:4:1:encrypted")
+
+        async def prepare(**kwargs):
+            client.caa_aac = "partial-aac"
+            client.caa_waterfall_id = "partial-waterfall"
+            client.attestation_challenge_nonce = "partial-challenge"
+            client.attestation_key_nonce = "partial-key"
+            raise error
+
+        with (
+            mock.patch.object(client, "bloks_caa_login_prepare", side_effect=prepare) as login_prepare,
+            mock.patch.object(client, "bloks_async_action") as action,
+        ):
+            for _ in range(2):
+                with self.assertRaises(RuntimeError) as cm:
+                    await client.bloks_caa_login_send_request("dummy_password")
+
+                self.assertIs(cm.exception, error)
+                self.assertEqual(client.caa_aac, "")
+                self.assertEqual(client.caa_waterfall_id, "previous-waterfall")
+                self.assertEqual(client.attestation_challenge_nonce, "previous-challenge")
+                self.assertEqual(client.attestation_key_nonce, "previous-key")
+
+        self.assertEqual(login_prepare.await_count, 2)
+        client.password_encrypt.assert_not_awaited()
+        action.assert_not_awaited()
+
+    async def test_send_login_rolls_back_cancelled_prepare_and_retries(self):
+        client = self.build_client()
+        client.password_encrypt = AsyncMock(return_value="#PWD_INSTAGRAM:4:1:encrypted")
+
+        async def prepare(**kwargs):
+            client.caa_aac = "partial-aac"
+            client.caa_waterfall_id = "partial-waterfall"
+            client.attestation_challenge_nonce = "partial-challenge"
+            client.attestation_key_nonce = "partial-key"
+            raise asyncio.CancelledError
+
+        with mock.patch.object(client, "bloks_caa_login_prepare", side_effect=prepare) as login_prepare:
+            for _ in range(2):
+                with self.assertRaises(asyncio.CancelledError):
+                    await client.bloks_caa_login_send_request("dummy_password")
+
+                self.assertEqual(client.caa_aac, "")
+                self.assertEqual(client.caa_waterfall_id, "")
+                self.assertEqual(client.attestation_challenge_nonce, "")
+                self.assertEqual(client.attestation_key_nonce, "")
+
+        self.assertEqual(login_prepare.await_count, 2)
+        client.password_encrypt.assert_not_awaited()
+
+    async def test_send_login_can_disable_auto_prepare(self):
+        client = self.build_client()
+        client.password_encrypt = AsyncMock(return_value="#PWD_INSTAGRAM:4:1:encrypted")
+
+        with (
+            mock.patch.object(client, "bloks_caa_login_prepare") as prepare,
+            mock.patch.object(client, "bloks_async_action") as action,
+            self.assertRaises(ClientError),
+        ):
+            await client.bloks_caa_login_send_request("dummy_password", auto_prepare=False)
+
+        prepare.assert_not_awaited()
+        client.password_encrypt.assert_not_awaited()
+        action.assert_not_awaited()
+
+    async def test_send_login_prepares_only_once_across_repeated_calls(self):
+        client = self.build_client()
+
+        async def prepare(**kwargs):
+            client.caa_aac = "server-aac"
+            return True
+
+        client.password_encrypt = AsyncMock(return_value="#PWD_INSTAGRAM:4:1:encrypted")
+
+        with (
+            mock.patch.object(client, "bloks_caa_login_prepare", side_effect=prepare) as login_prepare,
+            mock.patch.object(client, "bloks_async_action", return_value={"status": "ok"}) as action,
+        ):
+            await client.bloks_caa_login_send_request("dummy_password")
+            await client.bloks_caa_login_send_request("dummy_password")
+
+        login_prepare.assert_awaited_once()
+        self.assertEqual(action.await_count, 2)
 
     async def test_send_login_uses_server_aac_and_attestation_only_on_final_request(self):
         client = self.build_client()
@@ -445,7 +671,10 @@ class CaaLoginRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.attestation_challenge_nonce = "challenge"
         client.password_encrypt = AsyncMock(return_value="#PWD_INSTAGRAM:4:1:encrypted")
 
-        with mock.patch.object(client, "bloks_async_action", return_value={"status": "ok"}) as action:
+        with (
+            mock.patch.object(client, "bloks_caa_login_prepare") as prepare,
+            mock.patch.object(client, "bloks_async_action", return_value={"status": "ok"}) as action,
+        ):
             await client.bloks_caa_login_send_request("dummy_password", domain="b.i.instagram.com")
 
         called_action, params = action.call_args.args[:2]
@@ -456,6 +685,7 @@ class CaaLoginRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(params["server_params"]["waterfall_id"], client.caa_waterfall_id)
         self.assertEqual(action.call_args.kwargs["domain"], "b.i.instagram.com")
         self.assertTrue(action.call_args.kwargs["login"])
+        prepare.assert_not_awaited()
         attest = json.loads(action.call_args.kwargs["extra_headers"]["X-IG-Attest-Params"])
         self.assertEqual(attest["attestation"][0]["challenge_nonce"], "challenge")
 
@@ -531,6 +761,7 @@ class CaaLoginRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             client.password,
             username=client.username,
             domain="b.i.instagram.com",
+            auto_prepare=False,
         )
 
     async def test_full_caa_login_dispatches_profile_code_challenge(self):
