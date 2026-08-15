@@ -4,7 +4,7 @@ from typing import Literal, Union, get_args, get_origin, get_type_hints
 from unittest.mock import AsyncMock, Mock, mock_open, patch
 
 from aiograpi import Client
-from aiograpi.exceptions import ClientError
+from aiograpi.exceptions import ClientError, ClientGraphqlError, CrosspostingDestinationError
 from aiograpi.extractors import extract_media_v1
 
 
@@ -36,16 +36,17 @@ class CrossPostingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assert_fb_destination_type_literal("media_share_to_fb_destination", "destination_type")
         self.assert_fb_destination_type_literal("media_share_to_fb_extra_data", "destination_type")
 
-    async def test_media_share_to_fb_unified_config_requests_android_query(self):
+    async def test_media_share_to_fb_unified_config_requests_android_graphql_www(self):
         client = self.build_client()
-        expected = {"data": {"xcxp_unified_crossposting_configs_root": {"configs": []}}}
-        client.private_graphql_query_request = AsyncMock(return_value=expected)
+        response = {"data": {"xcxp_unified_crossposting_configs_root": {}}}
+        client.private_graphql_www_request = AsyncMock(return_value=response)
+        client.private_graphql_query_request = AsyncMock()
 
         result = await client.media_share_to_fb_unified_config()
 
-        client.private_graphql_query_request.assert_awaited_once_with(
+        client.private_graphql_query_request.assert_not_awaited()
+        client.private_graphql_www_request.assert_awaited_once_with(
             friendly_name="CrosspostingUnifiedConfigsQuery",
-            root_field_name="xcxp_unified_crossposting_configs_root",
             variables={
                 "configs_request": {
                     "source_app": "IG",
@@ -69,10 +70,106 @@ class CrossPostingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 }
             },
             client_doc_id="216179630714134719310007237117",
-            priority="u=3, i",
-            extra_headers={"X-FB-RMD": "state=URL_ELIGIBLE"},
+            domain="i.instagram.com",
+            extra_headers={
+                "Priority": "u=3, i",
+                "X-FB-RMD": "state=URL_ELIGIBLE",
+                "X-Root-Field-Name": "xcxp_unified_crossposting_configs_root",
+            },
+            purpose=None,
         )
-        self.assertEqual(result, expected)
+        self.assertEqual(
+            result,
+            {
+                "data": {"xcxp_unified_crossposting_configs_root": {}},
+                "status": "ok",
+            },
+        )
+
+    async def test_media_share_to_fb_connected_services_config_requests_android_fx_query(self):
+        client = self.build_client()
+        response = {"data": {"fx_service_cache": {"services": []}}}
+        client.private_graphql_www_request = AsyncMock(return_value=response)
+
+        result = await client.media_share_to_fb_connected_services_config()
+
+        client.private_graphql_www_request.assert_awaited_once_with(
+            friendly_name="FxIgConnectedServicesInfoQuery",
+            variables={
+                "service_names": ["CROSS_POSTING_SETTING"],
+                "custom_partner_params": [
+                    {"value": "FB", "key": "CROSSPOSTING_DESTINATION_APP"},
+                    {"value": "", "key": "CROSSPOSTING_SHARE_TO_SURFACE"},
+                    {
+                        "value": "true",
+                        "key": "OVERRIDE_USER_VALIDATION_WITH_CXP_ELIGIBILITY_RULE",
+                    },
+                ],
+                "client_caller_name": "ig_android_service_cache_crossposting_setting",
+                "caller_name": "fx_product_foundation_client_FXOnline_client_cache",
+            },
+            client_doc_id="21631519911413744205623093060",
+            domain="i.instagram.com",
+            extra_headers={
+                "Priority": "u=3, i",
+                "X-FB-RMD": "state=URL_ELIGIBLE",
+                "X-Root-Field-Name": "fx_service_cache",
+            },
+            purpose=None,
+        )
+        self.assertEqual(
+            result,
+            {
+                "data": {"fx_service_cache": {"services": []}},
+                "status": "ok",
+            },
+        )
+
+    async def test_media_share_to_fb_destination_falls_back_to_connected_services_identity(self):
+        client = self.build_client()
+        unified_config = {
+            "data": {"xcxp_unified_crossposting_configs_root": {"configs": []}},
+            "status": "ok",
+        }
+        connected_services_config = {
+            "data": {
+                "1$fx_service_cache(caller_name:$caller_name)": {
+                    "services": [
+                        {
+                            "identity_mapping": [
+                                {
+                                    "destination_identities": [
+                                        {
+                                            "obfuscated_identity_id": "feed-service-destination",
+                                            "identity_type": "FB_USER",
+                                            "surface_to_xpost_eligibilities": [
+                                                {"surface": "FEED", "is_eligible": True},
+                                                {"surface": "REELS", "is_eligible": False},
+                                            ],
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "status": "ok",
+        }
+        client.media_share_to_fb_unified_config = AsyncMock(return_value=unified_config)
+        client.media_share_to_fb_connected_services_config = AsyncMock(return_value=connected_services_config)
+
+        destination = await client.media_share_to_fb_destination()
+
+        self.assertEqual(client.media_share_to_fb_unified_config.await_count, 2)
+        client.media_share_to_fb_connected_services_config.assert_awaited_once_with()
+        self.assertEqual(
+            destination,
+            {
+                "destination_id": "feed-service-destination",
+                "destination_type": "USER",
+            },
+        )
 
     async def test_media_share_to_fb_destination_selects_feed_and_normalizes_identity_type(self):
         client = self.build_client()
@@ -104,6 +201,39 @@ class CrossPostingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         }
 
         destination = await client.media_share_to_fb_destination(config=config)
+
+        self.assertEqual(
+            destination,
+            {
+                "destination_id": "feed-destination",
+                "destination_type": "PAGE",
+            },
+        )
+
+    async def test_media_share_to_fb_destination_applies_partial_type_override_to_unified_identity(self):
+        client = self.build_client()
+        config = {
+            "data": {
+                "xcxp_unified_crossposting_configs_root": {
+                    "configs": [
+                        {
+                            "source_surface": "FEED",
+                            "destination_app": "FB",
+                            "destination_surface": "FEED",
+                            "destination": {
+                                "destination_id": "feed-destination",
+                                "destination_type": "USER",
+                            },
+                        }
+                    ]
+                }
+            }
+        }
+
+        destination = await client.media_share_to_fb_destination(
+            config=config,
+            destination_type="PAGE",
+        )
 
         self.assertEqual(
             destination,
@@ -185,6 +315,85 @@ class CrossPostingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             },
         )
 
+    async def test_media_share_to_fb_destination_rejects_ineligible_connected_service_identity(self):
+        client = self.build_client()
+        config = {
+            "data": {
+                "fx_service_cache": {
+                    "services": [
+                        {
+                            "custom_service_data": {
+                                "auto_xpost_setting": [
+                                    {
+                                        "is_auto_crosspost_enabled": True,
+                                        "source_surface": "FEED",
+                                    }
+                                ]
+                            },
+                            "identity_mapping": [
+                                {
+                                    "destination_identities": [
+                                        {
+                                            "obfuscated_identity_id": "ineligible-feed-destination",
+                                            "identity_type": "FB_USER",
+                                            "surface_to_xpost_eligibilities": [
+                                                {
+                                                    "surface": "FEED",
+                                                    "is_eligible": False,
+                                                }
+                                            ],
+                                        }
+                                    ]
+                                }
+                            ],
+                        }
+                    ]
+                }
+            }
+        }
+
+        with self.assertRaises(CrosspostingDestinationError):
+            await client.media_share_to_fb_destination(config=config)
+
+    async def test_media_share_to_fb_destination_applies_partial_id_override_to_connected_service_identity(self):
+        client = self.build_client()
+        config = {
+            "data": {
+                "fx_service_cache": {
+                    "services": [
+                        {
+                            "identity_mapping": [
+                                {
+                                    "destination_identities": [
+                                        {
+                                            "obfuscated_identity_id": "service-destination",
+                                            "identity_type": "FB_USER",
+                                            "surface_to_xpost_eligibilities": [
+                                                {"surface": "FEED", "is_eligible": True}
+                                            ],
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+
+        destination = await client.media_share_to_fb_destination(
+            config=config,
+            destination_id="override-destination",
+        )
+
+        self.assertEqual(
+            destination,
+            {
+                "destination_id": "override-destination",
+                "destination_type": "USER",
+            },
+        )
+
     async def test_media_share_to_fb_extra_data_builds_feed_crosspost_payload(self):
         client = self.build_client()
 
@@ -209,7 +418,7 @@ class CrossPostingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_share_to_threads_config_requests_linked_profile_query(self):
         client = self.build_client()
-        expected = {
+        response = {
             "data": {
                 "xcxp_fetch_linked_threads_profile": {
                     "id": "threads-destination",
@@ -217,10 +426,48 @@ class CrossPostingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 }
             }
         }
-        client.private_graphql_query_request = AsyncMock(return_value=expected)
+        client.private_graphql_www_request = AsyncMock(return_value=response)
+        client.private_graphql_query_request = AsyncMock()
 
         result = await client.media_share_to_threads_config()
 
+        client.private_graphql_query_request.assert_not_awaited()
+        client.private_graphql_www_request.assert_awaited_once_with(
+            friendly_name="LinkedBarcelonaProfileQuery",
+            variables={},
+            client_doc_id="1294688273527445410149299611",
+            domain="i.instagram.com",
+            extra_headers={
+                "Priority": "u=3, i",
+                "X-FB-RMD": "state=URL_ELIGIBLE",
+                "X-Root-Field-Name": "xcxp_fetch_linked_threads_profile",
+            },
+            purpose=None,
+        )
+        self.assertEqual(
+            result,
+            {
+                "data": {
+                    "xcxp_fetch_linked_threads_profile": {
+                        "id": "threads-destination",
+                        "username": "threads-user",
+                    }
+                },
+                "status": "ok",
+            },
+        )
+
+    async def test_media_share_to_threads_config_falls_back_when_graphql_www_rejects_unlinked_account(self):
+        client = self.build_client()
+        response = {"data": {"xcxp_fetch_linked_threads_profile": None}, "status": "ok"}
+        client.private_graphql_www_request = AsyncMock(
+            side_effect=ClientGraphqlError("GraphQL rejected the unlinked profile query")
+        )
+        client.private_graphql_query_request = AsyncMock(return_value=response)
+
+        result = await client.media_share_to_threads_config()
+
+        client.private_graphql_www_request.assert_awaited_once()
         client.private_graphql_query_request.assert_awaited_once_with(
             friendly_name="LinkedBarcelonaProfileQuery",
             root_field_name="xcxp_fetch_linked_threads_profile",
@@ -229,7 +476,7 @@ class CrossPostingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             priority="u=3, i",
             extra_headers={"X-FB-RMD": "state=URL_ELIGIBLE"},
         )
-        self.assertEqual(result, expected)
+        self.assertEqual(result, response)
 
     async def test_media_share_to_threads_destination_extracts_linked_profile_id(self):
         client = self.build_client()
@@ -258,7 +505,7 @@ class CrossPostingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_media_share_to_threads_destination_rejects_unlinked_profile(self):
         client = self.build_client()
 
-        with self.assertRaises(ClientError) as ctx:
+        with self.assertRaises(CrosspostingDestinationError) as ctx:
             await client.media_share_to_threads_destination(
                 config={"data": {"xcxp_fetch_linked_threads_profile": None}}
             )

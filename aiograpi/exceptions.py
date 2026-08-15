@@ -22,6 +22,10 @@ class ClientError(Exception):
             self.code = self.response.status_code
 
 
+class CrosspostingDestinationError(ClientError):
+    """No confirmed linked destination is available for cross-posting."""
+
+
 class ClientUnknownError(ClientError):
     pass
 

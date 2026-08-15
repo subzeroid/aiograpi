@@ -388,6 +388,7 @@ class GraphQLRequestMixin(ClientMixin):
         client_doc_id: Optional[str] = None,
         domain: str = PRIVATE_GRAPHQL_WWW_DOMAIN,
         extra_headers: Optional[dict] = None,
+        purpose: Optional[str] = "fetch",
     ) -> dict:
         data = {
             "method": "post",
@@ -395,13 +396,14 @@ class GraphQLRequestMixin(ClientMixin):
             "format": "json",
             "server_timestamps": "true",
             "locale": "user",
-            "purpose": "fetch",
             "fb_api_req_friendly_name": friendly_name,
             "enable_canonical_naming": "true",
             "enable_canonical_variable_overrides": "true",
             "enable_canonical_naming_ambiguous_type_prefixing": "true",
             "variables": json.dumps(variables or {}, separators=(",", ":")),
         }
+        if purpose is not None:
+            data["purpose"] = purpose
         if client_doc_id:
             data["client_doc_id"] = str(client_doc_id)
         headers = {
@@ -439,10 +441,10 @@ class GraphQLRequestMixin(ClientMixin):
                 "JSONDecodeError {0!s} while opening {1!s}".format(exc, url),
                 response=response,
             )
-        except httpx_ext.HTTPError as exc:
-            self._raise_graphql_http_error(exc, response)
         except (httpx_ext.ConnectError, httpx_ext.ReadError) as exc:
             raise ClientConnectionError("{} {}".format(exc.__class__.__name__, str(exc)))
+        except httpx_ext.HTTPError as exc:
+            self._raise_graphql_http_error(exc, response)
         if self.last_json.get("errors"):
             raise ClientGraphqlError(self.last_json.get("errors"))
         if self.last_json.get("status") == "fail":
