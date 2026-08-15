@@ -575,6 +575,9 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
 
     async def _try_caa_login(self, exc: Exception, verification_code: str = "") -> bool:
         """Try current Android CAA login while preserving the legacy error on failure."""
+        if not self.bloks_versioning_id:
+            self.logger.warning("CAA login fallback requires a complete app profile with a Bloks versioning id")
+            return False
         try:
             outcome = await self.bloks_caa_login(verification_code=verification_code)
         except (ChallengeError, TwoFactorRequired):

@@ -281,6 +281,23 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         client.bloks_caa_login.assert_awaited_once_with(verification_code="654321")
 
+    async def test_login_bad_password_without_bloks_hash_preserves_original_error(self):
+        client = Client()
+        client.username = "example"
+        client.password = "password"
+        client.authorization_data = {}
+        client.bloks_versioning_id = None
+        client.last_json = {"message": "Bad Password", "error_type": "bad_password"}
+        client.pre_login_flow = AsyncMock(return_value=True)
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+        client.private_request = AsyncMock(side_effect=BadPassword("Bad Password", response=Mock(status_code=400)))
+        client.bloks_caa_login = AsyncMock(side_effect=AssertionError("Bloks hash is required"))
+
+        with self.assertRaises(BadPassword):
+            await client.login(verification_code="654321")
+
+        client.bloks_caa_login.assert_not_awaited()
+
     async def test_caa_profile_code_error_is_not_replaced_with_legacy_bad_password(self):
         client = Client()
         original = BadPassword("Bad Password", response=Mock(status_code=400))
