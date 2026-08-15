@@ -10,7 +10,7 @@ from aiograpi.exceptions import (  # CommentsDisabled,
     PreLoginRequired,
     PrivateError,
 )
-from aiograpi.extractors import extract_comment
+from aiograpi.extractors import extract_comment, extract_comment_gql
 from aiograpi.mixins.base import ClientMixin
 from aiograpi.mixins.graphql import GQL_STUFF
 from aiograpi.types import Comment
@@ -477,6 +477,10 @@ class CommentMixin(ClientMixin):
                 if not self.inject_sessionid_to_public():
                     raise e
                 comments = await self.media_comments_gql(media_id, amount)  # retry
+            try:
+                comments = [extract_comment_gql(comment) for comment in comments]
+            except Exception:
+                raise ValueError("Could not normalize GraphQL comments") from None
         except PrivateError as e:
             raise e
         except Exception as e:
