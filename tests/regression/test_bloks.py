@@ -175,6 +175,16 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             login=True,
         )
 
+    async def test_bloks_async_action_preserves_positional_login_argument(self):
+        client = self.build_client()
+        params = {"server_params": {"flow": "example_flow"}}
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        await client.bloks_async_action("com.example.action", params, "", None, True)
+
+        self.assertTrue(client.private_request.await_args.kwargs["login"])
+        self.assertNotIn("domain", client.private_request.await_args.kwargs)
+
     async def test_bloks_async_action_does_not_leak_friendly_name_onto_session(self):
         client = self.build_client()
         client._user_id = "123"
@@ -235,12 +245,23 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             login=True,
         )
 
+    async def test_bloks_app_preserves_positional_login_argument(self):
+        client = self.build_client()
+        params = {"server_params": {"flow": "example_flow"}}
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        await client.bloks_app("com.example.app", params, "", True)
+
+        self.assertTrue(client.private_request.await_args.kwargs["login"])
+        self.assertNotIn("domain", client.private_request.await_args.kwargs)
+
     async def test_bloks_login_helpers_allow_prelogin_private_requests(self):
         client = self.build_client()
         client.username = "example"
         client.android_device_id = "android-1"
         client.phone_id = "family-device-1"
         client.mid = "machine-1"
+        client.caa_aac = "server-aac"
         client.password_encrypt = AsyncMock(return_value="#PWD_INSTAGRAM:4:1:encrypted")
         client._send_private_request = AsyncMock()
 
@@ -552,6 +573,7 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.phone_id = "family-device-1"
         client.uuid = "uuid-1"
         client.mid = "machine-1"
+        client.caa_aac = "server-aac"
         client.password_encrypt = AsyncMock(return_value="#PWD_INSTAGRAM:4:1:encrypted")
         expected = {"status": "ok"}
 
@@ -563,16 +585,18 @@ class BloksRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         action, params = bloks_async_action.call_args.args[:2]
         self.assertEqual(
             bloks_async_action.call_args.kwargs,
-            {"bloks_versioning_id": "", "login": True},
+            {"bloks_versioning_id": "", "domain": None, "extra_headers": None, "login": True},
         )
         self.assertEqual(action, "com.bloks.www.bloks.caa.login.async.send_login_request")
         self.assertEqual(params["client_input_params"]["contact_point"], "example")
         self.assertEqual(params["client_input_params"]["password"], "#PWD_INSTAGRAM:4:1:encrypted")
+        self.assertEqual(params["client_input_params"]["aac"], "server-aac")
         self.assertEqual(params["client_input_params"]["device_id"], "android-1")
         self.assertEqual(params["client_input_params"]["family_device_id"], "family-device-1")
         self.assertEqual(params["client_input_params"]["machine_id"], "machine-1")
         self.assertEqual(params["client_input_params"]["login_attempt_count"], 1)
         self.assertEqual(params["client_input_params"]["try_num"], 1)
+        self.assertEqual(params["client_input_params"]["gms_incoming_call_retriever_eligibility"], "eligible")
         network_info = params["client_input_params"]["si_device_param_network_info"]
         self.assertEqual(network_info["active_subscriptions_info"], None)
         self.assertEqual(network_info["is_airplane_mode"], 0)

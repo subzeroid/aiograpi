@@ -13,8 +13,13 @@ if TYPE_CHECKING:
         """
 
         android_device_id: str
+        app_id: str
+        attestation_challenge_nonce: str
+        attestation_key_nonce: str
         authorization_data: Dict[str, Any]
         bloks_versioning_id: str
+        caa_aac: str
+        caa_waterfall_id: str
         challenge_code_handler: Any
         change_password_handler: Any
         client_session_id: str
@@ -56,6 +61,8 @@ if TYPE_CHECKING:
         user_agent: str
         username: str
         uuid: str
+        usdid_private_key: str
+        usdid_registered: bool
         with_challenge_flow: bool
 
         @property
@@ -129,6 +136,18 @@ if TYPE_CHECKING:
 
         async def bloks_caa_login_send_request(self, *args: Any, **kwargs: Any) -> Any: ...
 
+        async def bloks_caa_login(self, *args: Any, **kwargs: Any) -> Dict[str, Any]: ...
+
+        async def attestation_create_android_keystore(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        def attestation_params(self, *args: Any, **kwargs: Any) -> str: ...
+
+        async def private_graphql_www_request(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        async def usdid_register(self, *args: Any, **kwargs: Any) -> bool: ...
+
+        def usdid_header(self, *args: Any, **kwargs: Any) -> str: ...
+
         async def bloks_challenge_take_challenge(self, *args: Any, **kwargs: Any) -> Any: ...
 
         async def bloks_change_password(self, *args: Any, **kwargs: Any) -> Any: ...
@@ -147,9 +166,13 @@ if TYPE_CHECKING:
 
         async def challenge_resolve(self, *args: Any, **kwargs: Any) -> Any: ...
 
+        async def challenge_code_or_raised(self, *args: Any, **kwargs: Any) -> str: ...
+
         async def expose(self, *args: Any, **kwargs: Any) -> Any: ...
 
         def gen_user_breadcrumb(self, *args: Any, **kwargs: Any) -> str: ...
+
+        def get_usdid_settings(self, *args: Any, **kwargs: Any) -> Dict[str, Any]: ...
 
         def generate_android_device_id(self, *args: Any, **kwargs: Any) -> str: ...
 
@@ -236,6 +259,8 @@ if TYPE_CHECKING:
         def set_timezone_offset(self, *args: Any, **kwargs: Any) -> Any: ...
 
         def set_user_agent(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        def set_usdid_settings(self, *args: Any, **kwargs: Any) -> bool: ...
 
         async def top_search(self, *args: Any, **kwargs: Any) -> Any: ...
 
