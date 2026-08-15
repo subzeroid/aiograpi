@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.12.11] - 2026-08-15
+
+### Fixed
+
+- Routed Facebook and Threads discovery through Instagram's current mobile GraphQL transport and resolved Facebook destinations through connected services with eligibility and audience handling.
+- Preserved explicit and partial Facebook destination overrides and sent Reel validation bypass data in the expected configure payload.
+- Kept crossposting transport and protocol failures distinct from accounts that do not have a linked destination, preventing live checks from silently skipping real failures.
+
+### Changed
+
+- Synced the upstream baseline to `instagrapi` 2.18.15.
+
 ## [1.12.10] - 2026-08-15
 
 ### Fixed
