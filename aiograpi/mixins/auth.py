@@ -536,6 +536,13 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
             return "sms"
         return "totp"
 
+    def _is_unavailable_caa_login_error(self, exc: ClientError) -> bool:
+        response = getattr(exc, "response", None)
+        status_code = getattr(response, "status_code", None) or getattr(exc, "code", None)
+        error_type = str(getattr(exc, "error_type", "") or "").casefold()
+        message = str(getattr(exc, "message", "") or exc).casefold()
+        return status_code == 404 or (error_type == "field_exception" and "payload returned is null" in message)
+
     async def _login_with_bloks_two_factor(self, verification_code: str, login_json: Dict, exc: Exception) -> bool:
         context = self._extract_two_step_verification_context(login_json)
         if not context:
@@ -583,6 +590,8 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         except (ChallengeError, TwoFactorRequired):
             raise
         except ClientError as caa_exc:
+            if not self._is_unavailable_caa_login_error(caa_exc):
+                raise
             self.logger.warning("CAA login fallback failed: %s", caa_exc)
             return False
         if outcome.get("logged_in"):
@@ -799,10 +808,13 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
             self.authorization_data = self.parse_authorization(self.last_response.headers.get("ig-set-authorization"))
         except BadPassword as exc:
             login_json = deepcopy(self.last_json) if isinstance(self.last_json, dict) else {}
+            login_response = self.last_response
             context = self._extract_two_step_verification_context(login_json)
             if not context:
                 logged = await self._try_caa_login(exc, verification_code=verification_code)
                 if not logged:
+                    self.last_json = login_json
+                    self.last_response = login_response
                     raise
             elif not verification_code.strip():
                 raise TwoFactorRequired(

@@ -5,12 +5,14 @@ from pydantic import ValidationError
 
 from aiograpi import Client
 from aiograpi.exceptions import (
+    AccountSuspended,
     BadPassword,
     ChallengeError,
     ClientNotFoundError,
     LoginRequired,
     PleaseWaitFewMinutes,
     PrivateError,
+    RateLimitError,
     TwoFactorRequired,
 )
 from aiograpi.types import UserShort
@@ -246,40 +248,65 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.username = "example"
         client.password = "password"
         client.authorization_data = {}
-        client.last_json = {"message": "The password you entered is incorrect.", "error_type": "bad_password"}
+        legacy_json = {"message": "The password you entered is incorrect.", "error_type": "bad_password"}
+        legacy_response = Mock(status_code=400)
+        client.last_json = legacy_json
+        client.last_response = legacy_response
         client.pre_login_flow = AsyncMock(return_value=True)
         client.password_encrypt = AsyncMock(return_value="enc-password")
-        client.private_request = AsyncMock(side_effect=BadPassword("Bad Password", response=Mock(status_code=400)))
-        client.bloks_caa_login = AsyncMock(
-            return_value={"logged_in": False, "two_step_verification_context": "", "reason": "no session"}
-        )
+        original = BadPassword("Bad Password", response=legacy_response)
+        client.private_request = AsyncMock(side_effect=original)
 
-        with self.assertRaises(BadPassword):
+        async def caa_without_session(**kwargs):
+            client.last_json = {"status": "ok", "step": "caa"}
+            client.last_response = Mock(status_code=200)
+            return {"logged_in": False, "two_step_verification_context": "", "reason": "no session"}
+
+        client.bloks_caa_login = AsyncMock(side_effect=caa_without_session)
+
+        with self.assertRaises(BadPassword) as raised:
             await client.login(verification_code="654321")
 
+        self.assertIs(raised.exception, original)
         client.bloks_caa_login.assert_awaited_once_with(verification_code="654321")
+        self.assertEqual(client.last_json, legacy_json)
+        self.assertIs(client.last_response, legacy_response)
 
     async def test_login_bad_password_without_context_preserves_original_error_when_caa_is_unavailable(self):
         client = Client()
         client.username = "example"
         client.password = "password"
         client.authorization_data = {}
-        client.last_json = {"message": "Bad Password", "error_type": "bad_password"}
+        legacy_json = {"message": "Bad Password", "error_type": "bad_password"}
+        legacy_response = Mock(status_code=400)
+        client.last_json = legacy_json
+        client.last_response = legacy_response
         client.pre_login_flow = AsyncMock(return_value=True)
         client.password_encrypt = AsyncMock(return_value="enc-password")
-        client.private_request = AsyncMock(side_effect=BadPassword("Bad Password", response=Mock(status_code=400)))
+        original = BadPassword("Bad Password", response=legacy_response)
+        client.private_request = AsyncMock(side_effect=original)
+        caa_response = Mock(status_code=404)
         caa_error = ClientNotFoundError(
             "Payload returned is null",
-            response=Mock(status_code=404),
+            response=caa_response,
             error_type="field_exception",
             status="fail",
         )
-        client.bloks_caa_login = AsyncMock(side_effect=caa_error)
 
-        with self.assertRaises(BadPassword):
+        async def unavailable_caa(**kwargs):
+            client.last_json = {"status": "fail", "error_type": "field_exception"}
+            client.last_response = caa_response
+            raise caa_error
+
+        client.bloks_caa_login = AsyncMock(side_effect=unavailable_caa)
+
+        with self.assertRaises(BadPassword) as raised:
             await client.login(verification_code="654321")
 
+        self.assertIs(raised.exception, original)
         client.bloks_caa_login.assert_awaited_once_with(verification_code="654321")
+        self.assertEqual(client.last_json, legacy_json)
+        self.assertIs(client.last_response, legacy_response)
 
     async def test_login_bad_password_without_bloks_hash_preserves_original_error(self):
         client = Client()
@@ -305,6 +332,45 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.bloks_caa_login = AsyncMock(side_effect=rejection)
 
         with self.assertRaises(ChallengeError) as raised:
+            await client._try_caa_login(original, verification_code="654321")
+
+        self.assertIs(raised.exception, rejection)
+
+    async def test_login_caa_rate_limit_error_is_not_replaced_and_retains_caa_state(self):
+        client = Client()
+        client.username = "example"
+        client.password = "password"
+        client.authorization_data = {}
+        client.last_json = {"message": "Bad Password", "error_type": "bad_password"}
+        client.last_response = Mock(status_code=400)
+        client.pre_login_flow = AsyncMock(return_value=True)
+        client.password_encrypt = AsyncMock(return_value="enc-password")
+        client.private_request = AsyncMock(side_effect=BadPassword("Bad Password", response=client.last_response))
+        caa_json = {"status": "fail", "error_type": "rate_limit_error"}
+        caa_response = Mock(status_code=429)
+        rejection = RateLimitError("CAA login is rate limited", response=caa_response)
+
+        async def rate_limited_caa(**kwargs):
+            client.last_json = caa_json
+            client.last_response = caa_response
+            raise rejection
+
+        client.bloks_caa_login = AsyncMock(side_effect=rate_limited_caa)
+
+        with self.assertRaises(RateLimitError) as raised:
+            await client.login(verification_code="654321")
+
+        self.assertIs(raised.exception, rejection)
+        self.assertEqual(client.last_json, caa_json)
+        self.assertIs(client.last_response, caa_response)
+
+    async def test_caa_account_suspension_is_not_replaced_with_legacy_bad_password(self):
+        client = Client()
+        original = BadPassword("Bad Password", response=Mock(status_code=400))
+        rejection = AccountSuspended("CAA account suspension")
+        client.bloks_caa_login = AsyncMock(side_effect=rejection)
+
+        with self.assertRaises(AccountSuspended) as raised:
             await client._try_caa_login(original, verification_code="654321")
 
         self.assertIs(raised.exception, rejection)
