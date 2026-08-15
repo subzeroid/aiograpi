@@ -219,6 +219,36 @@ def extract_media_inline_comment_gql(data, replied_to_comment_id=None):
     return comment
 
 
+def extract_comment_gql(data):
+    """Extract a public GraphQL comment."""
+    comment = deepcopy(data)
+    comment_pk = comment.get("pk") or comment.get("id")
+    if not comment_pk:
+        raise ValueError("Comment without pk")
+    comment["pk"] = str(comment_pk)
+    user = comment.get("user") or comment.get("owner")
+    if not isinstance(user, dict):
+        raise ValueError("Comment user without pk")
+    user_pk = user.get("id") or user.get("pk")
+    if not user_pk:
+        raise ValueError("Comment user without pk")
+    user["id"] = user_pk
+    comment["user"] = extract_user_short(user)
+    comment["created_at_utc"] = comment.get("created_at_utc", comment.get("created_at"))
+    if "has_liked" not in comment:
+        comment["has_liked"] = comment.get("has_liked_comment", comment.get("viewer_has_liked"))
+    if "like_count" not in comment:
+        if "comment_like_count" in comment:
+            comment["like_count"] = comment["comment_like_count"]
+        else:
+            comment["like_count"] = json_value(comment, "edge_liked_by", "count")
+    if "replied_to_comment_id" not in comment and comment.get("parent_comment_id") is not None:
+        comment["replied_to_comment_id"] = str(comment["parent_comment_id"])
+    comment.setdefault("content_type", "comment")
+    comment.setdefault("status", "Active")
+    return Comment(**comment)
+
+
 def extract_resource_v1(data):
     data = deepcopy(data)
     if data.get("video_versions"):

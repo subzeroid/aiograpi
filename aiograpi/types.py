@@ -607,6 +607,7 @@ class Comment(TypesBaseModel):
     replied_to_comment_id: Optional[str] = None
     has_liked: Optional[bool] = None
     like_count: Optional[int] = None
+    child_comment_count: Optional[int] = None
 
 
 class Hashtag(TypesBaseModel):

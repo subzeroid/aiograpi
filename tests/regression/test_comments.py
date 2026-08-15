@@ -1,7 +1,9 @@
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
+from aiograpi.exceptions import ClientLoginRequired
+from aiograpi.extractors import extract_comment, extract_comment_gql
 from aiograpi.types import Comment
 
 
@@ -24,6 +26,200 @@ class CommentRepliesRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             "has_liked_comment": False,
             "comment_like_count": 0,
         }
+
+    def _graphql_comment_payload(self):
+        return {
+            "pk": "101",
+            "user": {
+                "id": "1",
+                "pk": "1",
+                "username": "example",
+                "is_verified": True,
+            },
+            "child_comment_count": 2,
+            "parent_comment_id": None,
+            "has_liked_comment": False,
+            "text": "hello",
+            "created_at": 1_700_000_000,
+            "comment_like_count": 7,
+            "__typename": "XDTCommentDict",
+        }
+
+    async def test_media_comments_normalizes_xdt_graphql_comment(self):
+        client = Client()
+        client.media_comments_gql = AsyncMock(return_value=[self._graphql_comment_payload()])
+        client.media_comments_v1 = AsyncMock()
+
+        comments = await client.media_comments("123_456", amount=1)
+
+        self.assertEqual(len(comments), 1)
+        comment = comments[0]
+        self.assertIsInstance(comment, Comment)
+        self.assertEqual(comment.pk, "101")
+        self.assertEqual(comment.user.pk, "1")
+        self.assertEqual(int(comment.created_at_utc.timestamp()), 1_700_000_000)
+        self.assertEqual(comment.content_type, "comment")
+        self.assertEqual(comment.status, "Active")
+        self.assertIs(comment.has_liked, False)
+        self.assertEqual(comment.like_count, 7)
+        self.assertEqual(comment.child_comment_count, 2)
+        self.assertIsNone(comment.replied_to_comment_id)
+        client.media_comments_v1.assert_not_awaited()
+
+    def test_extract_comment_preserves_optional_child_comment_count(self):
+        with_count = self._reply_payload("201")
+        with_count["child_comment_count"] = 0
+
+        self.assertEqual(extract_comment(with_count).child_comment_count, 0)
+        self.assertIsNone(extract_comment(self._reply_payload("202")).child_comment_count)
+
+    async def test_media_comments_falls_back_when_graphql_comment_has_no_pk(self):
+        client = Client()
+        malformed_comment = self._graphql_comment_payload()
+        malformed_comment.pop("pk")
+        private_comment = extract_comment(self._reply_payload("203"))
+        client.media_comments_gql = AsyncMock(return_value=[malformed_comment])
+        client.media_comments_v1 = AsyncMock(return_value=[private_comment])
+        client.logger = Mock()
+
+        comments = await client.media_comments("123_456", amount=1)
+
+        self.assertEqual(comments, [private_comment])
+        client.media_comments_v1.assert_awaited_once_with("123_456", 1)
+
+    async def test_media_comments_normalizes_graphql_user_with_null_id_and_valid_pk(self):
+        client = Client()
+        malformed_comment = self._graphql_comment_payload()
+        malformed_comment["user"] = {
+            "id": None,
+            "pk": "1",
+            "username": "sensitive-user",
+            "profile_pic_url": "https://sensitive.example/avatar.jpg",
+        }
+        client.media_comments_gql = AsyncMock(return_value=[malformed_comment])
+        client.media_comments_v1 = AsyncMock()
+        client.logger = Mock()
+
+        comments = await client.media_comments("123_456", amount=1)
+
+        self.assertIsInstance(comments[0], Comment)
+        self.assertEqual(comments[0].user.pk, "1")
+        client.media_comments_v1.assert_not_awaited()
+        client.logger.exception.assert_not_called()
+
+    async def test_media_comments_does_not_log_graphql_user_payload_without_pk(self):
+        client = Client()
+        malformed_comment = self._graphql_comment_payload()
+        malformed_comment["user"] = {
+            "username": "sensitive-user",
+            "profile_pic_url": "https://sensitive.example/avatar.jpg",
+        }
+        private_comment = extract_comment(self._reply_payload("204"))
+        client.media_comments_gql = AsyncMock(return_value=[malformed_comment])
+        client.media_comments_v1 = AsyncMock(return_value=[private_comment])
+        client.logger = Mock()
+
+        comments = await client.media_comments("123_456", amount=1)
+
+        self.assertEqual(comments, [private_comment])
+        logged_error = str(client.logger.exception.call_args.args[0])
+        self.assertNotIn("sensitive-user", logged_error)
+        self.assertNotIn("sensitive.example", logged_error)
+
+    async def test_media_comments_does_not_log_graphql_validation_input(self):
+        client = Client()
+        malformed_comment = self._graphql_comment_payload()
+        malformed_comment["user"]["profile_pic_url"] = "sensitive-token-not-a-url"
+        private_comment = extract_comment(self._reply_payload("205"))
+        client.media_comments_gql = AsyncMock(return_value=[malformed_comment])
+        client.media_comments_v1 = AsyncMock(return_value=[private_comment])
+        client.logger = Mock()
+
+        comments = await client.media_comments("123_456", amount=1)
+
+        self.assertEqual(comments, [private_comment])
+        logged_error = str(client.logger.exception.call_args.args[0])
+        self.assertNotIn("sensitive-token-not-a-url", logged_error)
+
+    async def test_media_comments_normalizes_graphql_comment_after_login_retry(self):
+        client = Client()
+        payload = self._graphql_comment_payload()
+        client.media_comments_gql = AsyncMock(side_effect=[ClientLoginRequired("login"), [payload]])
+        client.inject_sessionid_to_public = Mock(return_value=True)
+        client.media_comments_v1 = AsyncMock()
+
+        comments = await client.media_comments("123_456", amount=1)
+
+        self.assertEqual(client.media_comments_gql.await_count, 2)
+        self.assertEqual(client.media_comments_gql.await_args_list[0].args, ("123_456", 1))
+        self.assertEqual(client.media_comments_gql.await_args_list[1].args, ("123_456", 1))
+        client.inject_sessionid_to_public.assert_called_once_with()
+        self.assertIsInstance(comments[0], Comment)
+        self.assertEqual(comments[0].child_comment_count, 2)
+        client.media_comments_v1.assert_not_awaited()
+
+    async def test_media_comments_falls_back_when_public_session_injection_is_unavailable(self):
+        client = Client()
+        private_comment = extract_comment(self._reply_payload("206"))
+        client.media_comments_gql = AsyncMock(side_effect=ClientLoginRequired("login"))
+        client.inject_sessionid_to_public = Mock(return_value=False)
+        client.media_comments_v1 = AsyncMock(return_value=[private_comment])
+
+        comments = await client.media_comments("123_456", amount=1)
+
+        self.assertEqual(comments, [private_comment])
+        client.media_comments_gql.assert_awaited_once_with("123_456", 1)
+        client.inject_sessionid_to_public.assert_called_once_with()
+        client.media_comments_v1.assert_awaited_once_with("123_456", 1)
+
+    def test_extract_comment_gql_normalizes_legacy_aliases(self):
+        comment = extract_comment_gql(
+            {
+                "id": "301",
+                "owner": {"id": "7", "username": "legacy"},
+                "text": "legacy",
+                "created_at": 1_700_000_000,
+                "viewer_has_liked": False,
+                "edge_liked_by": {"count": 0},
+                "parent_comment_id": 42,
+            }
+        )
+
+        self.assertEqual(comment.pk, "301")
+        self.assertEqual(comment.user.pk, "7")
+        self.assertIs(comment.has_liked, False)
+        self.assertEqual(comment.like_count, 0)
+        self.assertEqual(comment.replied_to_comment_id, "42")
+        self.assertEqual(comment.content_type, "comment")
+        self.assertEqual(comment.status, "Active")
+
+    def test_extract_comment_gql_preserves_canonical_fields(self):
+        comment = extract_comment_gql(
+            {
+                "pk": "302",
+                "user": {"id": "8", "username": "canonical"},
+                "text": "canonical",
+                "created_at_utc": 1_700_000_001,
+                "created_at": 1_700_000_000,
+                "has_liked": False,
+                "has_liked_comment": True,
+                "viewer_has_liked": True,
+                "like_count": 0,
+                "comment_like_count": 9,
+                "edge_liked_by": {"count": 8},
+                "replied_to_comment_id": "41",
+                "parent_comment_id": 42,
+                "content_type": "canonical-comment",
+                "status": "Canonical",
+            }
+        )
+
+        self.assertEqual(int(comment.created_at_utc.timestamp()), 1_700_000_001)
+        self.assertIs(comment.has_liked, False)
+        self.assertEqual(comment.like_count, 0)
+        self.assertEqual(comment.replied_to_comment_id, "41")
+        self.assertEqual(comment.content_type, "canonical-comment")
+        self.assertEqual(comment.status, "Canonical")
 
     async def test_media_comment_posts_current_action_context(self):
         client = self._build_logged_in_client()
@@ -121,6 +317,18 @@ class CommentRepliesRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             },
             referer="https://www.instagram.com/p/C_BM2yAN4Rm/",
         )
+
+    async def test_media_comments_gql_aggregates_raw_comment_nodes(self):
+        client = Client()
+        first = {"pk": "101", "text": "first"}
+        second = {"pk": "102", "text": "second"}
+        client.media_comments_gql_chunk = AsyncMock(side_effect=[([first], "cursor-1"), ([second], "")])
+
+        comments = await client.media_comments_gql("3441088131388376166", amount=0)
+
+        self.assertEqual(comments, [first, second])
+        self.assertTrue(all(isinstance(comment, dict) for comment in comments))
+        self.assertEqual(client.media_comments_gql_chunk.await_count, 2)
 
     async def test_media_comments_public_gql_uses_shortcode_without_manual_graphql_params(self):
         client = Client()
