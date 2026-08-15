@@ -33,6 +33,42 @@ async def _client_from_test_account(account):
     return client
 
 
+async def _client_with_destination(accounts, destination_method, *, initial_client=None):
+    """Find a login-capable account that also exposes the requested destination."""
+    failures = {}
+
+    async def resolve(client):
+        try:
+            destination = await getattr(client, destination_method)()
+            if not destination:
+                raise ClientError("destination resolver returned no destination")
+            return client, destination
+        except ClientError as exc:
+            if type(exc) is not ClientError or exc.response is not None:
+                raise
+            name = exc.__class__.__name__
+            failures[name] = failures.get(name, 0) + 1
+            return None
+
+    if initial_client is not None:
+        resolved = await resolve(initial_client)
+        if resolved is not None:
+            return resolved
+
+    for account in accounts:
+        try:
+            client = await _client_from_test_account(account)
+        except Exception as exc:
+            name = exc.__class__.__name__
+            failures[name] = failures.get(name, 0) + 1
+            continue
+        resolved = await resolve(client)
+        if resolved is not None:
+            return resolved
+
+    raise ClientError(f"No usable test account exposed {destination_method} (failure_types={failures})")
+
+
 class ClientUploadCoauthorLiveTestCase(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.test_accounts_url = os.getenv("TEST_ACCOUNTS_URL")
@@ -327,9 +363,10 @@ class ClientFacebookReelCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
             self.skipTest("TEST_ACCOUNTS_URL is required for Reel Facebook crosspost live tests")
         accounts = await _fetch_accounts(test_accounts_url, count=20)
         login_failures = {}
-        for account in accounts:
+        for index, account in enumerate(accounts):
             try:
                 self.cl = await _client_from_test_account(account)
+                self.remaining_accounts = accounts[index + 1 :]
                 return
             except Exception as exc:
                 login_failures[exc.__class__.__name__] = login_failures.get(exc.__class__.__name__, 0) + 1
@@ -411,37 +448,6 @@ class ClientFacebookReelCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((payload.get("caption") or {}).get("text", ""), caption_text)
         return payload
 
-    async def test_clip_share_to_fb_extra_data_live(self):
-        config = await self.cl.clip_share_to_fb_config()
-        self.assertEqual(config.get("status"), "ok")
-        try:
-            extra_data = await self.cl.clip_share_to_fb_extra_data()
-        except ClientError as exc:
-            self.skipTest(f"No linked Facebook Reel destination available: {exc}")
-
-        self.assertEqual(extra_data["share_to_facebook"], "1")
-        self.assertTrue(extra_data["share_to_facebook_reels"])
-        self.assertTrue(extra_data["is_reel_shared_to_fb"])
-        self.assertTrue(extra_data["share_to_fb_destination_id"])
-        self.assertIn(extra_data["share_to_fb_destination_type"], {"USER", "PAGE"})
-        self.assertEqual(extra_data["cross_app_share_type"], "2")
-        self.assertEqual(extra_data["xpost_surface"], "IG_REELS_COMPOSER")
-        self.assertEqual(extra_data["no_token_crosspost"], "1")
-        self.assertTrue(extra_data["attempt_id"])
-
-    async def test_clip_share_to_fb_destination_live(self):
-        config = await self.cl.clip_share_to_fb_config()
-        self.assertEqual(config.get("status"), "ok")
-        try:
-            destination = await self.cl.clip_share_to_fb_destination()
-        except ClientError as exc:
-            self.skipTest(f"No confirmed Facebook Reel destination available: {exc}")
-
-        self.assertTrue(destination["destination_id"])
-        self.assertIn(destination["destination_type"], {"USER", "PAGE"})
-        if destination.get("destination_audience_type"):
-            self.assertIsInstance(destination["destination_audience_type"], str)
-
     async def test_clip_share_to_fb_unified_config_live(self):
         config = await self.cl.clip_share_to_fb_unified_config()
 
@@ -458,9 +464,30 @@ class ClientFacebookReelCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_clip_upload_share_to_facebook_live(self):
         try:
-            destination = await self.cl.clip_share_to_fb_destination()
+            self.cl, destination = await _client_with_destination(
+                self.remaining_accounts,
+                "clip_share_to_fb_destination",
+                initial_client=self.cl,
+            )
         except ClientError as exc:
             self.skipTest(f"No confirmed Facebook Reel destination available: {exc}")
+
+        config = await self.cl.clip_share_to_fb_config()
+        self.assertEqual(config.get("status"), "ok")
+        extra_data = await self.cl.clip_share_to_fb_extra_data()
+        self.assertEqual(extra_data["share_to_facebook"], "1")
+        self.assertTrue(extra_data["share_to_facebook_reels"])
+        self.assertTrue(extra_data["is_reel_shared_to_fb"])
+        self.assertTrue(extra_data["share_to_fb_destination_id"])
+        self.assertIn(extra_data["share_to_fb_destination_type"], {"USER", "PAGE"})
+        self.assertEqual(extra_data["cross_app_share_type"], "2")
+        self.assertEqual(extra_data["xpost_surface"], "IG_REELS_COMPOSER")
+        self.assertEqual(extra_data["no_token_crosspost"], "1")
+        self.assertTrue(extra_data["attempt_id"])
+        self.assertTrue(destination["destination_id"])
+        self.assertIn(destination["destination_type"], {"USER", "PAGE"})
+        if destination.get("destination_audience_type"):
+            self.assertIsInstance(destination["destination_audience_type"], str)
 
         path = self.make_clip_mp4()
         media = None
@@ -507,9 +534,10 @@ class ClientFeedCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
             self.skipTest("TEST_ACCOUNTS_URL is required for feed crosspost live tests")
         accounts = await _fetch_accounts(self.test_accounts_url, count=20)
         login_failures = {}
-        for account in accounts:
+        for index, account in enumerate(accounts):
             try:
                 self.cl = await _client_from_test_account(account)
+                self.remaining_accounts = accounts[index + 1 :]
                 return
             except Exception as exc:
                 login_failures[exc.__class__.__name__] = login_failures.get(exc.__class__.__name__, 0) + 1
@@ -553,15 +581,6 @@ class ClientFeedCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(roots, "Android connected-services response omitted its root field")
         self.assertIsInstance(roots[0], dict)
 
-    async def test_media_share_to_fb_destination_live(self):
-        try:
-            destination = await self.cl.media_share_to_fb_destination()
-        except ClientError as exc:
-            self.skipTest(f"No confirmed Facebook Feed destination available: {exc}")
-
-        self.assertTrue(destination["destination_id"])
-        self.assertIn(destination["destination_type"], {"USER", "PAGE"})
-
     async def test_media_share_to_threads_config_live(self):
         config = await self.cl.media_share_to_threads_config()
 
@@ -570,19 +589,18 @@ class ClientFeedCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
         roots = [value for key, value in data.items() if "xcxp_fetch_linked_threads_profile" in str(key)]
         self.assertTrue(roots, "Android linked-Threads response omitted its root field")
 
-    async def test_media_share_to_threads_destination_live(self):
-        try:
-            destination = await self.cl.media_share_to_threads_destination()
-        except ClientError as exc:
-            self.skipTest(f"No linked Threads profile available: {exc}")
-
-        self.assertTrue(destination["destination_id"])
-
     async def test_photo_upload_share_to_facebook_live(self):
         try:
-            destination = await self.cl.media_share_to_fb_destination()
+            self.cl, destination = await _client_with_destination(
+                self.remaining_accounts,
+                "media_share_to_fb_destination",
+                initial_client=self.cl,
+            )
         except ClientError as exc:
             self.skipTest(f"No confirmed Facebook Feed destination available: {exc}")
+
+        self.assertTrue(destination["destination_id"])
+        self.assertIn(destination["destination_type"], {"USER", "PAGE"})
 
         media = None
         try:
@@ -606,9 +624,15 @@ class ClientFeedCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_photo_upload_share_to_threads_live(self):
         try:
-            destination = await self.cl.media_share_to_threads_destination()
+            self.cl, destination = await _client_with_destination(
+                self.remaining_accounts,
+                "media_share_to_threads_destination",
+                initial_client=self.cl,
+            )
         except ClientError as exc:
             self.skipTest(f"No linked Threads profile available: {exc}")
+
+        self.assertTrue(destination["destination_id"])
 
         media = None
         try:
