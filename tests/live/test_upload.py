@@ -320,6 +320,184 @@ class ClientUploadCoauthorLiveTestCase(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue(await uploader.media_delete(media.id))
 
 
+class ClientFacebookReelCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        test_accounts_url = os.getenv("TEST_ACCOUNTS_URL")
+        if not test_accounts_url:
+            self.skipTest("TEST_ACCOUNTS_URL is required for Reel Facebook crosspost live tests")
+        accounts = await _fetch_accounts(test_accounts_url, count=20)
+        login_failures = {}
+        for account in accounts:
+            try:
+                self.cl = await _client_from_test_account(account)
+                return
+            except Exception as exc:
+                login_failures[exc.__class__.__name__] = login_failures.get(exc.__class__.__name__, 0) + 1
+        self.skipTest(f"No usable test account was available (login_failures={login_failures})")
+
+    def make_clip_mp4(self):
+        try:
+            import imageio_ffmpeg
+        except ImportError:
+            self.skipTest("imageio_ffmpeg is required to generate a Reel fixture")
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp:
+            path = Path(tmp.name)
+        self.addCleanup(lambda: path.unlink(missing_ok=True))
+
+        try:
+            subprocess.run(
+                [
+                    imageio_ffmpeg.get_ffmpeg_exe(),
+                    "-y",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "color=c=black:s=720x1280:r=30:d=4",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "sine=frequency=440:duration=4",
+                    "-shortest",
+                    "-c:v",
+                    "libx264",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-c:a",
+                    "aac",
+                    "-b:a",
+                    "64k",
+                    str(path),
+                ],
+                check=True,
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+            )
+        except (OSError, subprocess.CalledProcessError) as exc:
+            self.skipTest(f"Could not generate Reel fixture: {exc}")
+        return path
+
+    async def uploaded_media_payload(self, media, attempts=5, delay=3):
+        last_error = None
+        for attempt in range(attempts):
+            if attempt:
+                await asyncio.sleep(delay)
+            try:
+                result = await self.cl.private_request(f"media/{media.pk}/info/")
+                items = result.get("items") or []
+                self.assertTrue(items, "media info did not return items")
+                return items[0]
+            except Exception as exc:
+                last_error = exc
+        self.fail(f"Uploaded media {media.id} was not accessible after {attempts} attempts: {last_error}")
+
+    async def assert_uploaded_media_accessible(
+        self,
+        media,
+        *,
+        media_type=None,
+        product_type=None,
+        caption_text=None,
+    ):
+        self.assertIsInstance(media, Media)
+        payload = await self.uploaded_media_payload(media)
+        self.assertEqual(str(payload.get("pk")), str(media.pk))
+        self.assertEqual(str(payload.get("id")), str(media.id))
+        if media_type is not None:
+            self.assertEqual(payload.get("media_type"), media_type)
+        if product_type is not None:
+            self.assertEqual(payload.get("product_type"), product_type)
+        if caption_text is not None:
+            self.assertEqual((payload.get("caption") or {}).get("text", ""), caption_text)
+        return payload
+
+    async def test_clip_share_to_fb_extra_data_live(self):
+        config = await self.cl.clip_share_to_fb_config()
+        self.assertEqual(config.get("status"), "ok")
+        try:
+            extra_data = await self.cl.clip_share_to_fb_extra_data()
+        except ClientError as exc:
+            self.skipTest(f"No linked Facebook Reel destination available: {exc}")
+
+        self.assertEqual(extra_data["share_to_facebook"], "1")
+        self.assertTrue(extra_data["share_to_facebook_reels"])
+        self.assertTrue(extra_data["is_reel_shared_to_fb"])
+        self.assertTrue(extra_data["share_to_fb_destination_id"])
+        self.assertIn(extra_data["share_to_fb_destination_type"], {"USER", "PAGE"})
+        self.assertEqual(extra_data["cross_app_share_type"], "2")
+        self.assertEqual(extra_data["xpost_surface"], "IG_REELS_COMPOSER")
+        self.assertEqual(extra_data["no_token_crosspost"], "1")
+        self.assertTrue(extra_data["attempt_id"])
+
+    async def test_clip_share_to_fb_destination_live(self):
+        config = await self.cl.clip_share_to_fb_config()
+        self.assertEqual(config.get("status"), "ok")
+        try:
+            destination = await self.cl.clip_share_to_fb_destination()
+        except ClientError as exc:
+            self.skipTest(f"No confirmed Facebook Reel destination available: {exc}")
+
+        self.assertTrue(destination["destination_id"])
+        self.assertIn(destination["destination_type"], {"USER", "PAGE"})
+        if destination.get("destination_audience_type"):
+            self.assertIsInstance(destination["destination_audience_type"], str)
+
+    async def test_clip_share_to_fb_unified_config_live(self):
+        config = await self.cl.clip_share_to_fb_unified_config()
+
+        self.assertEqual(config.get("status"), "ok")
+        data = config.get("data")
+        self.assertIsInstance(data, dict)
+        roots = [value for key, value in data.items() if "xcxp_unified_crossposting_configs_root" in str(key)]
+        self.assertTrue(roots, "Android unified config response omitted its root field")
+        self.assertIsInstance(
+            roots[0],
+            dict,
+            "Android unified config returned a null Facebook cross-posting root",
+        )
+
+    async def test_clip_upload_share_to_facebook_live(self):
+        try:
+            destination = await self.cl.clip_share_to_fb_destination()
+        except ClientError as exc:
+            self.skipTest(f"No confirmed Facebook Reel destination available: {exc}")
+
+        path = self.make_clip_mp4()
+        media = None
+        try:
+            caption_text = f"Facebook Reel crosspost live test {int(time.time())}"
+            media = await self.cl.clip_upload(
+                path,
+                caption_text,
+                share_to_facebook=True,
+                fb_destination_id=destination["destination_id"],
+                fb_destination_type=destination["destination_type"],
+            )
+            payload = await self.assert_uploaded_media_accessible(
+                media,
+                media_type=2,
+                product_type="clips",
+                caption_text=caption_text,
+            )
+            for attempt in range(8):
+                clips_metadata = payload.get("clips_metadata") or {}
+                crosspost = {str(item).upper() for item in payload.get("crosspost") or []}
+                if clips_metadata.get("is_shared_to_fb") or payload.get("has_shared_to_fb") or "FB" in crosspost:
+                    break
+                if attempt < 7:
+                    await asyncio.sleep(5)
+                    payload = await self.uploaded_media_payload(media)
+            self.assertTrue(
+                (payload.get("clips_metadata") or {}).get("is_shared_to_fb")
+                or payload.get("has_shared_to_fb")
+                or "FB" in {str(item).upper() for item in payload.get("crosspost") or []},
+                "Instagram did not confirm Facebook Reel cross-posting",
+            )
+        finally:
+            if media:
+                self.assertTrue(await self.cl.media_delete(media.id))
+
+
 class ClientFeedCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
     photo_path = Path("examples/kanada.jpg")
 
@@ -354,7 +532,26 @@ class ClientFeedCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_media_share_to_fb_unified_config_live(self):
         config = await self.cl.media_share_to_fb_unified_config()
 
-        self.assertIsInstance(config.get("data"), dict)
+        self.assertEqual(config.get("status"), "ok")
+        data = config.get("data")
+        self.assertIsInstance(data, dict)
+        roots = [value for key, value in data.items() if "xcxp_unified_crossposting_configs_root" in str(key)]
+        self.assertTrue(roots, "Android unified config response omitted its root field")
+        self.assertIsInstance(
+            roots[0],
+            dict,
+            "Android unified config returned a null Facebook cross-posting root",
+        )
+
+    async def test_media_share_to_fb_connected_services_config_live(self):
+        config = await self.cl.media_share_to_fb_connected_services_config()
+
+        self.assertEqual(config.get("status"), "ok")
+        data = config.get("data")
+        self.assertIsInstance(data, dict)
+        roots = [value for key, value in data.items() if "fx_service_cache" in str(key)]
+        self.assertTrue(roots, "Android connected-services response omitted its root field")
+        self.assertIsInstance(roots[0], dict)
 
     async def test_media_share_to_fb_destination_live(self):
         try:
@@ -370,7 +567,8 @@ class ClientFeedCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
 
         data = config.get("data")
         self.assertIsInstance(data, dict)
-        self.assertIn("xcxp_fetch_linked_threads_profile", data)
+        roots = [value for key, value in data.items() if "xcxp_fetch_linked_threads_profile" in str(key)]
+        self.assertTrue(roots, "Android linked-Threads response omitted its root field")
 
     async def test_media_share_to_threads_destination_live(self):
         try:

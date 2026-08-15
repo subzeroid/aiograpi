@@ -5,7 +5,7 @@
 The current recorded API baseline is:
 
 ```text
-instagrapi 2.12.0
+instagrapi 2.18.15
 ```
 
 `aiograpi 1.0.x` established the SemVer async baseline through `instagrapi 2.7.17`, including Bloks login fallback

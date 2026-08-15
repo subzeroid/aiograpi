@@ -258,3 +258,24 @@ class PrivateGraphQLRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(headers["X-Client-Doc-Id"], "doc-id")
         self.assertEqual(headers["Host"], "b.i.instagram.com")
         client.request_log.assert_called_once_with(response)
+
+    async def test_private_graphql_www_request_can_omit_purpose_on_mobile_endpoint(self):
+        client = self._build_client()
+        response = Mock()
+        response.url = "https://i.instagram.com/graphql_www"
+        response.json.return_value = {"data": {"ok": True}}
+        response.raise_for_status.return_value = None
+        client.private.post = AsyncMock(return_value=response)
+
+        result = await client.private_graphql_www_request(
+            "ExampleQuery",
+            {},
+            client_doc_id="doc-id",
+            domain="i.instagram.com",
+            purpose=None,
+        )
+
+        self.assertEqual(result, {"data": {"ok": True}})
+        self.assertEqual(client.private.post.call_args.args, ("https://i.instagram.com/graphql_www",))
+        self.assertNotIn("purpose", client.private.post.call_args.kwargs["data"])
+        self.assertEqual(client.private.post.call_args.kwargs["headers"]["Host"], "i.instagram.com")
