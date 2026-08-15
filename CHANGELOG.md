@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.12.10] - 2026-08-15
+
+### Fixed
+
+- Restored async credential login for accounts routed from the legacy endpoint into Instagram's current Android CAA flow, including embedded-session application and Verify Profile code challenges.
+- Preserved actionable CAA failures and the original login diagnostics when the fallback cannot safely complete.
+
+### Changed
+
+- Persisted the device-bound USDID signing identity across saved sessions and rotated it when the device family changes.
+- Added the required server-issued CAA, device-attestation, and OAuth preflight context and synced the upstream baseline to `instagrapi` 2.18.14.
+
 ## [1.12.9] - 2026-08-12
 
 ### Added
