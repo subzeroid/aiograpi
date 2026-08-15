@@ -7,7 +7,12 @@ from unittest import mock
 from unittest.mock import AsyncMock, Mock
 
 from aiograpi import Client
-from aiograpi.exceptions import ClientError, ClipNotUpload
+from aiograpi.exceptions import (
+    ClientConnectionError,
+    ClientError,
+    ClipNotUpload,
+    CrosspostingDestinationError,
+)
 
 
 def _build_client():
@@ -225,6 +230,14 @@ class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             "status": "ok",
         }
 
+    async def test_clip_share_to_fb_destination_preserves_discovery_connection_errors(self):
+        client = _build_client()
+        client.clip_share_to_fb_config = AsyncMock(return_value={})
+        client.clip_share_to_fb_unified_destination = AsyncMock(side_effect=ClientConnectionError("offline"))
+
+        with self.assertRaisesRegex(ClientConnectionError, "offline"):
+            await client.clip_share_to_fb_destination()
+
     async def test_clip_share_to_fb_destination_normalizes_current_reel_destination_fields(self):
         client = _build_client()
 
@@ -267,7 +280,7 @@ class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_clip_share_to_fb_destination_rejects_unavailable_config_without_destination(self):
         client = _build_client()
 
-        with self.assertRaises(ClientError) as ctx:
+        with self.assertRaises(CrosspostingDestinationError) as ctx:
             await client.clip_share_to_fb_destination(
                 config={
                     "share_to_fb_unavailable": True,

@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from aiograpi import Client
-from aiograpi.exceptions import ClientError, PhotoConfigureError, PhotoNotUpload
+from aiograpi.exceptions import CrosspostingDestinationError, PhotoConfigureError, PhotoNotUpload
 from aiograpi.types import Media, UserShort, Usertag
 from tests.live.auth_helpers import login_with_timeout
 from tests.live.smoke import _fetch_accounts
@@ -41,11 +41,9 @@ async def _client_with_destination(accounts, destination_method, *, initial_clie
         try:
             destination = await getattr(client, destination_method)()
             if not destination:
-                raise ClientError("destination resolver returned no destination")
+                raise CrosspostingDestinationError("destination resolver returned no destination")
             return client, destination
-        except ClientError as exc:
-            if type(exc) is not ClientError or exc.response is not None:
-                raise
+        except CrosspostingDestinationError as exc:
             name = exc.__class__.__name__
             failures[name] = failures.get(name, 0) + 1
             return None
@@ -66,7 +64,9 @@ async def _client_with_destination(accounts, destination_method, *, initial_clie
         if resolved is not None:
             return resolved
 
-    raise ClientError(f"No usable test account exposed {destination_method} (failure_types={failures})")
+    raise CrosspostingDestinationError(
+        f"No usable test account exposed {destination_method} (failure_types={failures})"
+    )
 
 
 class ClientUploadCoauthorLiveTestCase(unittest.IsolatedAsyncioTestCase):
@@ -469,7 +469,7 @@ class ClientFacebookReelCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
                 "clip_share_to_fb_destination",
                 initial_client=self.cl,
             )
-        except ClientError as exc:
+        except CrosspostingDestinationError as exc:
             self.skipTest(f"No confirmed Facebook Reel destination available: {exc}")
 
         config = await self.cl.clip_share_to_fb_config()
@@ -596,7 +596,7 @@ class ClientFeedCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
                 "media_share_to_fb_destination",
                 initial_client=self.cl,
             )
-        except ClientError as exc:
+        except CrosspostingDestinationError as exc:
             self.skipTest(f"No confirmed Facebook Feed destination available: {exc}")
 
         self.assertTrue(destination["destination_id"])
@@ -629,7 +629,7 @@ class ClientFeedCrosspostLiveTestCase(unittest.IsolatedAsyncioTestCase):
                 "media_share_to_threads_destination",
                 initial_client=self.cl,
             )
-        except ClientError as exc:
+        except CrosspostingDestinationError as exc:
             self.skipTest(f"No linked Threads profile available: {exc}")
 
         self.assertTrue(destination["destination_id"])

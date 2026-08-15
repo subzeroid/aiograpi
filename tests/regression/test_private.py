@@ -8,6 +8,7 @@ from aiograpi.exceptions import (
     AccountEditError,
     AccountSuspended,
     BadPassword,
+    ClientConnectionError,
     ClientNotFoundError,
     DirectMessageRequestsDisabled,
 )
@@ -279,3 +280,10 @@ class PrivateGraphQLRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client.private.post.call_args.args, ("https://i.instagram.com/graphql_www",))
         self.assertNotIn("purpose", client.private.post.call_args.kwargs["data"])
         self.assertEqual(client.private.post.call_args.kwargs["headers"]["Host"], "i.instagram.com")
+
+    async def test_private_graphql_www_request_preserves_connection_errors(self):
+        client = self._build_client()
+        client.private.post = AsyncMock(side_effect=httpx_ext.ConnectError("offline"))
+
+        with self.assertRaisesRegex(ClientConnectionError, "ConnectError offline"):
+            await client.private_graphql_www_request("ExampleQuery", {})

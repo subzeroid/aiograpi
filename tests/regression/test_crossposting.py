@@ -4,7 +4,7 @@ from typing import Literal, Union, get_args, get_origin, get_type_hints
 from unittest.mock import AsyncMock, Mock, mock_open, patch
 
 from aiograpi import Client
-from aiograpi.exceptions import ClientError, ClientGraphqlError
+from aiograpi.exceptions import ClientError, ClientGraphqlError, CrosspostingDestinationError
 from aiograpi.extractors import extract_media_v1
 
 
@@ -352,7 +352,7 @@ class CrossPostingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             }
         }
 
-        with self.assertRaises(ClientError):
+        with self.assertRaises(CrosspostingDestinationError):
             await client.media_share_to_fb_destination(config=config)
 
     async def test_media_share_to_fb_destination_applies_partial_id_override_to_connected_service_identity(self):
@@ -505,7 +505,7 @@ class CrossPostingRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_media_share_to_threads_destination_rejects_unlinked_profile(self):
         client = self.build_client()
 
-        with self.assertRaises(ClientError) as ctx:
+        with self.assertRaises(CrosspostingDestinationError) as ctx:
             await client.media_share_to_threads_destination(
                 config={"data": {"xcxp_fetch_linked_threads_profile": None}}
             )

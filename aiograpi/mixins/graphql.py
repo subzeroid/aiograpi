@@ -441,10 +441,10 @@ class GraphQLRequestMixin(ClientMixin):
                 "JSONDecodeError {0!s} while opening {1!s}".format(exc, url),
                 response=response,
             )
-        except httpx_ext.HTTPError as exc:
-            self._raise_graphql_http_error(exc, response)
         except (httpx_ext.ConnectError, httpx_ext.ReadError) as exc:
             raise ClientConnectionError("{} {}".format(exc.__class__.__name__, str(exc)))
+        except httpx_ext.HTTPError as exc:
+            self._raise_graphql_http_error(exc, response)
         if self.last_json.get("errors"):
             raise ClientGraphqlError(self.last_json.get("errors"))
         if self.last_json.get("status") == "fail":

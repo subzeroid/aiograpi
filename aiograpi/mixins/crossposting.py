@@ -3,7 +3,7 @@ from typing import Dict, Iterable, List, Literal, Optional
 from uuid import uuid4
 
 from aiograpi import config
-from aiograpi.exceptions import ClientError, ClientGraphqlError
+from aiograpi.exceptions import ClientGraphqlError, CrosspostingDestinationError
 from aiograpi.mixins.base import ClientMixin
 
 FB_CROSSPOSTING_UNIFIED_CONFIG_CLIENT_DOC_ID = "216179630714134719310007237117"
@@ -290,7 +290,7 @@ class CrossPostingMixin(ClientMixin):
                     config=candidate,
                     use_unified_config=False,
                 )
-            except ClientError:
+            except CrosspostingDestinationError:
                 continue
         return None
 
@@ -330,9 +330,9 @@ class CrossPostingMixin(ClientMixin):
                         config=candidate,
                         use_unified_config=False,
                     )
-                except ClientError:
+                except CrosspostingDestinationError:
                     continue
-        raise ClientError("Facebook Feed cross-posting config has no confirmed Facebook destination")
+        raise CrosspostingDestinationError("Facebook Feed cross-posting config has no confirmed Facebook destination")
 
     @staticmethod
     def _crossposting_validation_bypass(value) -> Optional[List[str]]:
@@ -393,9 +393,9 @@ class CrossPostingMixin(ClientMixin):
                         validation_bypass=validation_bypass,
                         use_unified_config=False,
                     )
-                except ClientError:
+                except CrosspostingDestinationError:
                     continue
-            raise ClientError("Facebook connected-services config has no eligible Feed destination")
+            raise CrosspostingDestinationError("Facebook connected-services config has no eligible Feed destination")
 
         has_unified_root = bool(
             config and self._crossposting_has_graphql_root(config, FB_CROSSPOSTING_UNIFIED_CONFIG_ROOT_FIELD)
@@ -412,14 +412,14 @@ class CrossPostingMixin(ClientMixin):
                             validation_bypass=validation_bypass,
                             use_unified_config=False,
                         )
-                    except ClientError:
+                    except CrosspostingDestinationError:
                         continue
 
         fb_config = config or {}
         if not fb_config and not explicit_destination and use_unified_config:
             return await self.media_share_to_fb_unified_destination()
         if fb_config.get("enabled") is False or fb_config.get("is_account_linked") is False:
-            raise ClientError("Facebook Feed sharing is not enabled or no Facebook account is linked")
+            raise CrosspostingDestinationError("Facebook Feed sharing is not enabled or no Facebook account is linked")
 
         destination_id_value: object = destination_id or self._crossposting_candidate_value(
             fb_config,
@@ -462,16 +462,16 @@ class CrossPostingMixin(ClientMixin):
         normalized_validation_bypass = self._crossposting_validation_bypass(validation_bypass_value)
 
         if not destination_id_value:
-            raise ClientError(
+            raise CrosspostingDestinationError(
                 "Facebook Feed sharing configuration has no destination. "
                 "Link a Facebook account/page in the Instagram app or pass destination_id."
             )
         if not destination_type_text:
-            raise ClientError(
+            raise CrosspostingDestinationError(
                 "Facebook Feed sharing configuration has no destination type. Pass destination_type as USER or PAGE."
             )
         if destination_type_text not in {"USER", "PAGE"}:
-            raise ClientError("Facebook Feed sharing destination type must be USER or PAGE")
+            raise CrosspostingDestinationError("Facebook Feed sharing destination type must be USER or PAGE")
 
         destination: Dict[str, object] = {
             "destination_id": str(destination_id_value),
@@ -594,7 +594,7 @@ class CrossPostingMixin(ClientMixin):
             ),
         )
         if not destination_id_value:
-            raise ClientError(
+            raise CrosspostingDestinationError(
                 "Threads sharing configuration has no linked Threads profile. "
                 "Link a Threads profile in the Instagram app or pass destination_id."
             )
