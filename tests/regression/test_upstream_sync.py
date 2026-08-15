@@ -4,7 +4,7 @@ import aiograpi
 
 
 def test_upstream_instagrapi_baseline_is_recorded():
-    assert aiograpi.__upstream_instagrapi_version__ == "2.18.15"
+    assert aiograpi.__upstream_instagrapi_version__ == "2.18.16"
 
 
 def test_upstream_sync_doc_matches_recorded_baseline():

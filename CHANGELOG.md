@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.12.12] - 2026-08-16
+
+### Fixed
+
+- Restored direct `bloks_caa_login_send_request(...)` compatibility by automatically preparing server-issued CAA state when AAC is missing, while preserving manually prepared and explicit opt-out flows.
+- Rolled partial CAA state back when preparation fails or is cancelled so retries cannot bypass incomplete attestation or OAuth setup.
+
+### Changed
+
+- Synced the upstream baseline to `instagrapi` 2.18.16.
+
 ## [1.12.11] - 2026-08-15
 
 ### Fixed
