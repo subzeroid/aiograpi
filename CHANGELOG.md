@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [1.12.13] - 2026-08-21
+
+### Fixed
+
+- Required TLS 1.2 or newer for library-created Realtime MQTT SSL contexts while preserving stricter platform defaults and caller-provided SSL contexts, mirroring `instagrapi` 2.18.16 security hardening.
+
 ## [1.12.12] - 2026-08-16
 
 ### Fixed
