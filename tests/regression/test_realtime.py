@@ -1,5 +1,6 @@
 import json
 import socket
+import ssl
 import threading
 import unittest
 import zlib
@@ -118,6 +119,43 @@ class RealtimeClientRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertIsInstance(realtime.transport, SocketMQTToTTransport)
         self.assertEqual(realtime.transport.proxy, "socks5://127.0.0.1:8888")
+
+    def test_transport_default_context_requires_tls_1_2(self):
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.minimum_version = ssl.TLSVersion.MINIMUM_SUPPORTED
+
+        with mock.patch(
+            "aiograpi.realtime.mqttot.ssl.create_default_context",
+            return_value=context,
+        ):
+            transport = SocketMQTToTTransport("example.com")
+
+        self.assertIs(transport.tls_context, context)
+        self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_2)
+
+    def test_transport_default_context_preserves_stricter_tls_minimum(self):
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.minimum_version = ssl.TLSVersion.TLSv1_3
+
+        with mock.patch(
+            "aiograpi.realtime.mqttot.ssl.create_default_context",
+            return_value=context,
+        ):
+            transport = SocketMQTToTTransport("example.com")
+
+        self.assertIs(transport.tls_context, context)
+        self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_3)
+
+    def test_transport_does_not_modify_caller_supplied_weak_tls_context(self):
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.minimum_version = ssl.TLSVersion.MINIMUM_SUPPORTED
+
+        with mock.patch("aiograpi.realtime.mqttot.ssl.create_default_context") as create_context:
+            transport = SocketMQTToTTransport("example.com", tls_context=context)
+
+        self.assertIs(transport.tls_context, context)
+        self.assertEqual(context.minimum_version, ssl.TLSVersion.MINIMUM_SUPPORTED)
+        create_context.assert_not_called()
 
     def test_transport_disconnect_shuts_down_socket_to_unblock_active_recv(self):
         class BlockingRecvSocket:
