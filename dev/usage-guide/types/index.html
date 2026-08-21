@@ -3560,7 +3560,7 @@
     <span class="n">is_private</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">profile_pic_url</span><span class="p">:</span> <span class="n">HttpUrl</span>
     <span class="n">is_verified</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">biography</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">biography</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">external_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">is_business</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">birthday</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -3568,12 +3568,12 @@
     <span class="n">gender</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">email</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;external_url&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"external_url"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_external_url</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"http"</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"://"</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">v</span>
-        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;external_url must be a URL or string&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">"external_url must be a URL or string"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3673,7 +3673,7 @@
     <span class="n">media_count</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">follower_count</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">following_count</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">biography</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">biography</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">bio_links</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BioLink</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">external_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">show_text_post_app_badge</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -3701,12 +3701,12 @@
     <span class="n">instagram_location_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">interop_messaging_user_fbid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;external_url&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"external_url"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_external_url</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"http"</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"://"</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">v</span>
-        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;external_url must be a URL or string&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">"external_url must be a URL or string"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3786,7 +3786,7 @@
 
     <span class="n">pk</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">full_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">full_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">profile_pic_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HttpUrl</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">profile_pic_url_hd</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HttpUrl</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">is_private</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -3979,7 +3979,7 @@
 <span class="normal">187</span>
 <span class="normal">188</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Viewer</span><span class="p">(</span><span class="n">UserShort</span><span class="p">):</span>
     <span class="n">has_liked</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">reply_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">reply_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">is_spam_viewer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -4082,11 +4082,11 @@
 <span class="normal">104</span>
 <span class="normal">105</span>
 <span class="normal">106</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">About</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-    <span class="n">username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">is_verified</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">country</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">former_usernames</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">country</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">former_usernames</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4358,8 +4358,8 @@
 <span class="normal">121</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AddressBookContact</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
     <span class="n">phone_numbers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AddressBookPhone</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">email_addresses</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AddressBookEmail</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">first_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">last_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">first_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">last_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4454,7 +4454,7 @@
     <span class="n">taken_at</span><span class="p">:</span> <span class="n">datetime</span>
     <span class="n">media_type</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">image_versions2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SharedMediaImageVersions</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">product_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># igtv or feed</span>
+    <span class="n">product_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>  <span class="c1"># igtv or feed</span>
     <span class="n">thumbnail_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HttpUrl</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">location</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Location</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">user</span><span class="p">:</span> <span class="n">UserShort</span>
@@ -4484,7 +4484,7 @@
     <span class="n">video_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HttpUrl</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># for Video and IGTV</span>
     <span class="n">view_count</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># for Video and IGTV</span>
     <span class="n">video_duration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># for Video and IGTV</span>
-    <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">resources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Resource</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">clips_metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">ClipsMetadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">crosspost</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -4544,7 +4544,7 @@
     <span class="n">video_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HttpUrl</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># for Video and IGTV</span>
     <span class="n">thumbnail_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HttpUrl</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">media_type</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">usertags</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;Usertag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">usertags</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s2">"Usertag"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4685,7 +4685,7 @@
 <span class="normal">572</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MediaXma</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
     <span class="c1"># media_type: int</span>
     <span class="n">video_url</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># XMA target_url; can be http(s) or an Instagram deep link (instagram://)</span>
-    <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">preview_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">preview_url_mime_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">header_icon_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -4694,13 +4694,13 @@
     <span class="n">header_title_text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">preview_media_fbid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;preview_url&quot;</span><span class="p">,</span> <span class="s2">&quot;header_icon_url&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"preview_url"</span><span class="p">,</span> <span class="s2">"header_icon_url"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_url_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate URL fields allowing None, valid URLs, or any string&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Validate URL fields allowing None, valid URLs, or any string"""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"http"</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"://"</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">v</span>
-        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;URL field must be a URL or string&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">"URL field must be a URL or string"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4743,13 +4743,13 @@
 <span class="normal">569</span>
 <span class="normal">570</span>
 <span class="normal">571</span>
-<span class="normal">572</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;preview_url&quot;</span><span class="p">,</span> <span class="s2">&quot;header_icon_url&quot;</span><span class="p">)</span>
+<span class="normal">572</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"preview_url"</span><span class="p">,</span> <span class="s2">"header_icon_url"</span><span class="p">)</span>
 <span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_url_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate URL fields allowing None, valid URLs, or any string&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Validate URL fields allowing None, valid URLs, or any string"""</span>
+    <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"http"</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"://"</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">v</span>
-    <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;URL field must be a URL or string&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">"URL field must be a URL or string"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4906,7 +4906,7 @@
     <span class="n">did_report_as_spam</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">is_restricted_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">replies_count</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">replies</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;MediaInlineComment&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">replies</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s2">"MediaInlineComment"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -5015,7 +5015,7 @@
 <span class="normal">222</span>
 <span class="normal">223</span>
 <span class="normal">224</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SharedMediaImageCandidate</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Image candidate for shared media clips with video features&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Image candidate for shared media clips with video features"""</span>
 
     <span class="n">estimated_scans_sizes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">height</span><span class="p">:</span> <span class="nb">int</span>
@@ -5075,7 +5075,7 @@
 <span class="normal">261</span>
 <span class="normal">262</span>
 <span class="normal">263</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SharedMediaImageVersions</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete image_versions2 structure for shared media clips&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Complete image_versions2 structure for shared media clips"""</span>
 
     <span class="n">additional_candidates</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AdditionalCandidates</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">candidates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SharedMediaImageCandidate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -5132,7 +5132,7 @@
 <span class="normal">253</span>
 <span class="normal">254</span>
 <span class="normal">255</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AdditionalCandidates</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional candidates structure in image_versions2&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Additional candidates structure in image_versions2"""</span>
 
     <span class="n">first_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SharedMediaImageCandidate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">igtv_first_frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SharedMediaImageCandidate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -5198,7 +5198,7 @@
 <span class="normal">239</span>
 <span class="normal">240</span>
 <span class="normal">241</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ScrubberSpritesheetInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Spritesheet information for video scrubbing&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Spritesheet information for video scrubbing"""</span>
 
     <span class="n">file_size_kb</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">max_thumbnails_per_sprite</span><span class="p">:</span> <span class="nb">int</span>
@@ -5262,7 +5262,7 @@
 <span class="normal">245</span>
 <span class="normal">246</span>
 <span class="normal">247</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ScrubberSpritesheetInfoCandidates</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for spritesheet information candidates&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Container for spritesheet information candidates"""</span>
 
     <span class="n">default</span><span class="p">:</span> <span class="n">ScrubberSpritesheetInfo</span>
 </code></pre></div></td></tr></table></div>
@@ -5443,13 +5443,13 @@
 <span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Location</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
     <span class="n">pk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">phone</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">website</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">category</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">phone</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">website</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">category</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">hours</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># opening hours</span>
-    <span class="n">address</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">city</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="nb">zip</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">address</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">city</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="nb">zip</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">lng</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">lat</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">external_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -5764,9 +5764,9 @@
 <span class="normal">463</span>
 <span class="normal">464</span>
 <span class="normal">465</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsMetadata</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete clips metadata structure for Media objects&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Complete clips metadata structure for Media objects"""</span>
 
-    <span class="n">clips_creation_entry_point</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;clips&quot;</span>
+    <span class="n">clips_creation_entry_point</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"clips"</span>
     <span class="n">featured_label</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">is_public_chat_welcome_video</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">professional_clips_upsell_type</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
@@ -5775,7 +5775,7 @@
     <span class="n">additional_audio_info</span><span class="p">:</span> <span class="n">ClipsAdditionalAudioInfo</span>
     <span class="n">asset_recommendation_info</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">audio_ranking_info</span><span class="p">:</span> <span class="n">ClipsAudioRankingInfo</span>
-    <span class="n">audio_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;original_sounds&quot;</span>
+    <span class="n">audio_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"original_sounds"</span>
     <span class="n">branded_content_tag_info</span><span class="p">:</span> <span class="n">ClipsBrandedContentTagInfo</span>
     <span class="n">breaking_content_info</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">breaking_creator_info</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -5853,7 +5853,7 @@
 <span class="normal">268</span>
 <span class="normal">269</span>
 <span class="normal">270</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsAchievementsInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Information about achievements in clips&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Information about achievements in clips"""</span>
 
     <span class="n">num_earned_achievements</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">show_achievements</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
@@ -5907,7 +5907,7 @@
 <span class="normal">274</span>
 <span class="normal">275</span>
 <span class="normal">276</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AudioReattributionInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Audio reattribution settings&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Audio reattribution settings"""</span>
 
     <span class="n">should_allow_restore</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 </code></pre></div></td></tr></table></div>
@@ -5961,7 +5961,7 @@
 <span class="normal">281</span>
 <span class="normal">282</span>
 <span class="normal">283</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsAdditionalAudioInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional audio information for clips&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Additional audio information for clips"""</span>
 
     <span class="n">additional_audio_username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">audio_reattribution_info</span><span class="p">:</span> <span class="n">AudioReattributionInfo</span>
@@ -6015,7 +6015,7 @@
 <span class="normal">287</span>
 <span class="normal">288</span>
 <span class="normal">289</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsAudioRankingInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Audio ranking information for clips&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Audio ranking information for clips"""</span>
 
     <span class="n">best_audio_cluster_id</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div></td></tr></table></div>
@@ -6068,7 +6068,7 @@
 <span class="normal">293</span>
 <span class="normal">294</span>
 <span class="normal">295</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsBrandedContentTagInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Branded content tag information for clips&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Branded content tag information for clips"""</span>
 
     <span class="n">can_add_tag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 </code></pre></div></td></tr></table></div>
@@ -6122,7 +6122,7 @@
 <span class="normal">300</span>
 <span class="normal">301</span>
 <span class="normal">302</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsContentAppreciationInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Content appreciation information for clips&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Content appreciation information for clips"""</span>
 
     <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">entry_point_container</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -6189,7 +6189,7 @@
 <span class="normal">319</span>
 <span class="normal">320</span>
 <span class="normal">321</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsMashupInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mashup information for clips&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Mashup information for clips"""</span>
 
     <span class="n">can_toggle_mashups_allowed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">formatted_mashups_count</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -6260,12 +6260,12 @@
 <span class="normal">330</span>
 <span class="normal">331</span>
 <span class="normal">332</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsConsumptionInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Consumption information for clips original sound&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Consumption information for clips original sound"""</span>
 
     <span class="n">display_media_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">is_bookmarked</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">is_trending_in_clips</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">should_mute_audio_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">should_mute_audio_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">should_mute_audio_reason_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">user_notes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
@@ -6318,9 +6318,9 @@
 <span class="normal">336</span>
 <span class="normal">337</span>
 <span class="normal">338</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsFbDownstreamUseXpostMetadata</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Facebook downstream use xpost metadata for clips&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Facebook downstream use xpost metadata for clips"""</span>
 
-    <span class="n">downstream_use_xpost_deny_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;NONE&quot;</span>
+    <span class="n">downstream_use_xpost_deny_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"NONE"</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -6380,7 +6380,7 @@
 <span class="normal">351</span>
 <span class="normal">352</span>
 <span class="normal">353</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsIgArtist</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Instagram artist information for clips original sound&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Instagram artist information for clips original sound"""</span>
 
     <span class="n">pk</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">pk_id</span><span class="p">:</span> <span class="nb">str</span>
@@ -6476,7 +6476,7 @@
 <span class="normal">391</span>
 <span class="normal">392</span>
 <span class="normal">393</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsOriginalSoundInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Original sound information for clips&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Original sound information for clips"""</span>
 
     <span class="n">allow_creator_to_rename</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">audio_asset_id</span><span class="p">:</span> <span class="nb">int</span>
@@ -6496,8 +6496,8 @@
     <span class="n">is_xpost_from_fb</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">music_canonical_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">oa_owner_is_music_artist</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">original_audio_subtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span>
-    <span class="n">original_audio_title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Original audio&quot;</span>
+    <span class="n">original_audio_subtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"default"</span>
+    <span class="n">original_audio_title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Original audio"</span>
     <span class="n">original_media_id</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">progressive_download_url</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">should_mute_audio</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
@@ -6564,7 +6564,7 @@
 <span class="normal">398</span>
 <span class="normal">399</span>
 <span class="normal">400</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsReusableTextColor</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Color information for reusable text in clips&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Color information for reusable text in clips"""</span>
 
     <span class="n">count</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">hex_rgba_color</span><span class="p">:</span> <span class="nb">str</span>
@@ -6636,7 +6636,7 @@
 <span class="normal">422</span>
 <span class="normal">423</span>
 <span class="normal">424</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipsReusableTextInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reusable text information for clips&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Reusable text information for clips"""</span>
 
     <span class="n">alignment</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">end_time_ms</span><span class="p">:</span> <span class="nb">float</span>
@@ -6654,8 +6654,8 @@
     <span class="n">text_format_type</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">width</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">z_index</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">effects</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">animation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">effects</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">animation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">colors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ClipsReusableTextColor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -6875,7 +6875,7 @@
     <span class="n">taken_at</span><span class="p">:</span> <span class="n">datetime</span>
     <span class="n">imported_taken_at</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">media_type</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">product_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">product_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">thumbnail_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HttpUrl</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">user</span><span class="p">:</span> <span class="n">UserShort</span>
     <span class="n">video_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HttpUrl</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># for Video and IGTV</span>
@@ -7248,7 +7248,7 @@
 <span class="normal">683</span>
 <span class="normal">684</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StorySticker</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
     <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;gif&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"gif"</span>
     <span class="n">x</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">y</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">z</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1000005</span>
@@ -7320,7 +7320,7 @@
 <span class="normal">703</span>
 <span class="normal">704</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StoryPoll</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
     <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;poll&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"poll"</span>
     <span class="n">x</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">y</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">z</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
@@ -7331,8 +7331,8 @@
     <span class="n">is_shared_result</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">viewer_can_vote</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">finished</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;black&quot;</span>
-    <span class="n">poll_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"black"</span>
+    <span class="n">poll_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">question</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">options</span><span class="p">:</span> <span class="nb">list</span>
     <span class="n">extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -7620,9 +7620,9 @@
     <span class="n">last_seen_at</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">LastSeenInfo</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">is_seen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Have I seen this thread?</span>
+<span class="w">        </span><span class="sd">"""Have I seen this thread?</span>
 <span class="sd">        :param user_id: You account user_id</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">user_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">user_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_seen_at</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
@@ -7676,9 +7676,9 @@
 <span class="normal">1049</span>
 <span class="normal">1050</span>
 <span class="normal">1051</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_seen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Have I seen this thread?</span>
+<span class="w">    </span><span class="sd">"""Have I seen this thread?</span>
 <span class="sd">    :param user_id: You account user_id</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">user_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">user_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_seen_at</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
@@ -8078,13 +8078,13 @@
 <span class="normal">777</span>
 <span class="normal">778</span>
 <span class="normal">779</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MessageReaction</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Individual emoji reaction on a direct message&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Individual emoji reaction on a direct message"""</span>
 
     <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span>
     <span class="n">client_context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">sender_id</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">emoji</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">super_react_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span>
+    <span class="n">super_react_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"none"</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -8137,7 +8137,7 @@
 <span class="normal">785</span>
 <span class="normal">786</span>
 <span class="normal">787</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MessageReactions</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reactions structure for direct messages&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Reactions structure for direct messages"""</span>
 
     <span class="n">likes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Structure unknown from current examples</span>
     <span class="n">likes_count</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
@@ -8195,7 +8195,7 @@
 <span class="normal">803</span>
 <span class="normal">804</span>
 <span class="normal">805</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MessageLink</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Link structure for direct messages&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Link structure for direct messages"""</span>
 
     <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">link_context</span><span class="p">:</span> <span class="n">LinkContext</span>
@@ -8254,12 +8254,12 @@
 <span class="normal">794</span>
 <span class="normal">795</span>
 <span class="normal">796</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LinkContext</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Link context metadata for direct message links&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Link context metadata for direct message links"""</span>
 
     <span class="n">link_url</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">link_title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">link_summary</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">link_image_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">link_title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">link_summary</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">link_image_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -8314,7 +8314,7 @@
 <span class="normal">821</span>
 <span class="normal">822</span>
 <span class="normal">823</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LastSeenInfo</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Last seen information for a user in a direct thread&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Last seen information for a user in a direct thread"""</span>
 
     <span class="n">item_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span>
@@ -8373,7 +8373,7 @@
 <span class="normal">811</span>
 <span class="normal">812</span>
 <span class="normal">813</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DisappearingMessagesSeenState</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Disappearing messages seen state information&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Disappearing messages seen state information"""</span>
 
     <span class="n">item_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span>
@@ -8428,7 +8428,7 @@
 <span class="normal">827</span>
 <span class="normal">828</span>
 <span class="normal">829</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FallbackUrl</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fallback URL structure for media candidates&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Fallback URL structure for media candidates"""</span>
 
     <span class="n">url</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div></td></tr></table></div>
@@ -8486,7 +8486,7 @@
 <span class="normal">838</span>
 <span class="normal">839</span>
 <span class="normal">840</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DirectMessageImageCandidate</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Image candidate for ephemeral visual media in direct messages&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Image candidate for ephemeral visual media in direct messages"""</span>
 
     <span class="n">width</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">height</span><span class="p">:</span> <span class="nb">int</span>
@@ -8544,7 +8544,7 @@
 <span class="normal">844</span>
 <span class="normal">845</span>
 <span class="normal">846</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DirectMessageImageVersions</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Image versions for ephemeral visual media in direct messages&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Image versions for ephemeral visual media in direct messages"""</span>
 
     <span class="n">candidates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DirectMessageImageCandidate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 </code></pre></div></td></tr></table></div>
@@ -8604,9 +8604,9 @@
 <span class="normal">857</span>
 <span class="normal">858</span>
 <span class="normal">859</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VideoVersion</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Individual video version with specific resolution and quality&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Individual video version with specific resolution and quality"""</span>
 
-    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">width</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">height</span><span class="p">:</span> <span class="nb">int</span>
@@ -8667,7 +8667,7 @@
 <span class="normal">866</span>
 <span class="normal">867</span>
 <span class="normal">868</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FriendshipStatus</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Friendship status information for visual media user&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Friendship status information for visual media user"""</span>
 
     <span class="n">blocking</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">is_messaging_only_blocking</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
@@ -8733,12 +8733,12 @@
 <span class="normal">938</span>
 <span class="normal">939</span>
 <span class="normal">940</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VisualMedia</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete visual media structure for direct messages&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Complete visual media structure for direct messages"""</span>
 
     <span class="n">media</span><span class="p">:</span> <span class="n">VisualMediaContent</span>
     <span class="n">seen_user_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">seen_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">view_mode</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &#39;replayable&#39;, &#39;permanent&#39;, etc.</span>
+    <span class="n">view_mode</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># 'replayable', 'permanent', etc.</span>
     <span class="n">replay_expiring_at_us</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">reply_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">url_expire_at_secs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -8810,7 +8810,7 @@
 <span class="normal">922</span>
 <span class="normal">923</span>
 <span class="normal">924</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VisualMediaContent</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Content structure for visual media (can be rich or minimal)&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Content structure for visual media (can be rich or minimal)"""</span>
 
     <span class="n">media_type</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># Always present: 1=image, 2=video</span>
     <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -8899,7 +8899,7 @@
 <span class="normal">894</span>
 <span class="normal">895</span>
 <span class="normal">896</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VisualMediaUser</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;User information in visual media (enhanced UserShort)&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""User information in visual media (enhanced UserShort)"""</span>
 
     <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">strong_id__</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -8976,7 +8976,7 @@
 <span class="normal">902</span>
 <span class="normal">903</span>
 <span class="normal">904</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ExpiringMediaActionSummary</span><span class="p">(</span><span class="n">TypesBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Summary of expiring media actions&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Summary of expiring media actions"""</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span>

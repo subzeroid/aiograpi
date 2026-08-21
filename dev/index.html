@@ -1611,8 +1611,8 @@
 <p>Asynchronous Instagram Private API wrapper without selenium. Use the most recent version of the API from Instagram, which was obtained using <a href="https://github.com/subzeroid/instagrapi/discussions/1182">reverse-engineering with Charles Proxy</a> and <a href="https://proxyman.io/">Proxyman</a>.</p>
 <p>Support <strong>Python &gt;= 3.10</strong></p>
 <p>Video uploads can use a built-in MP4 metadata parser when you provide <code>thumbnail=...</code>. Automatic thumbnail generation, <code>StoryBuilder</code>, and video/audio composition still need the optional video dependencies, MoviePy <code>2.2.1</code>, and executable <code>ffmpeg</code>:</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;aiograpi[video]&quot;</span>
-pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span><span class="s2">&quot;moviepy==2.2.1&quot;</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"aiograpi[video]"</span>
+pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span><span class="s2">"moviepy==2.2.1"</span>
 </code></pre></div>
 <p>MoviePy <code>2.2.1</code> currently declares <code>Pillow&lt;12</code>, but aiograpi keeps <code>Pillow&gt;=12.3.0</code> for security fixes; the <code>--no-deps</code> install keeps the safe Pillow version. If your project imports MoviePy directly, migrate any MoviePy <code>1.x</code> code from <code>moviepy.editor</code>, <code>set_*</code>, <code>resize</code>, and <code>subclip</code> APIs to the MoviePy <code>2.x</code> API before upgrading.</p>
 <p>Android users should see <a href="usage-guide/pydroid/">Pydroid and ffmpeg</a> and <a href="usage-guide/termux/">Termux</a>.</p>
@@ -1645,11 +1645,11 @@ pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="
     <span class="nb">print</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 
 
-<span class="n">cl</span><span class="o">.</span><span class="n">realtime_on</span><span class="p">(</span><span class="s2">&quot;message&quot;</span><span class="p">,</span> <span class="n">handle_message</span><span class="p">)</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">realtime_on</span><span class="p">(</span><span class="s2">"message"</span><span class="p">,</span> <span class="n">handle_message</span><span class="p">)</span>
 <span class="n">rt</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">realtime_connect</span><span class="p">()</span>
 <span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">direct_subscribe</span><span class="p">()</span>
 
-<span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">direct_send_text</span><span class="p">(</span><span class="n">thread_id</span><span class="p">,</span> <span class="s2">&quot;Hello from MQTT&quot;</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">rt</span><span class="o">.</span><span class="n">direct_send_text</span><span class="p">(</span><span class="n">thread_id</span><span class="p">,</span> <span class="s2">"Hello from MQTT"</span><span class="p">)</span>
 
 <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
     <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">realtime_read_once</span><span class="p">()</span>
@@ -1661,7 +1661,7 @@ pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">ACCOUNT_USERNAME</span><span class="p">,</span> <span class="n">ACCOUNT_PASSWORD</span><span class="p">)</span>
 
-<span class="n">user_id</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_id_from_username</span><span class="p">(</span><span class="s2">&quot;example&quot;</span><span class="p">)</span>
+<span class="n">user_id</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_id_from_username</span><span class="p">(</span><span class="s2">"example"</span><span class="p">)</span>
 <span class="n">medias</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_medias</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="the-full-example">The full example</h4>
@@ -1669,18 +1669,18 @@ pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="
 <span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">StoryMention</span><span class="p">,</span> <span class="n">StoryMedia</span><span class="p">,</span> <span class="n">StoryLink</span><span class="p">,</span> <span class="n">StoryHashtag</span>
 
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">,</span> <span class="n">verification_code</span><span class="o">=</span><span class="s2">&quot;&lt;2FA CODE HERE&gt;&quot;</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">,</span> <span class="n">verification_code</span><span class="o">=</span><span class="s2">"&lt;2FA CODE HERE&gt;"</span><span class="p">)</span>
 
-<span class="n">media_pk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_url</span><span class="p">(</span><span class="s1">&#39;https://www.instagram.com/p/CGgDsi7JQdS/&#39;</span><span class="p">)</span>
+<span class="n">media_pk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_url</span><span class="p">(</span><span class="s1">'https://www.instagram.com/p/CGgDsi7JQdS/'</span><span class="p">)</span>
 <span class="n">media_path</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_download</span><span class="p">(</span><span class="n">media_pk</span><span class="p">)</span>
-<span class="n">example</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username</span><span class="p">(</span><span class="s1">&#39;example&#39;</span><span class="p">)</span>
-<span class="n">hashtag</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">hashtag_info</span><span class="p">(</span><span class="s1">&#39;dhbastards&#39;</span><span class="p">)</span>
+<span class="n">example</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username</span><span class="p">(</span><span class="s1">'example'</span><span class="p">)</span>
+<span class="n">hashtag</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">hashtag_info</span><span class="p">(</span><span class="s1">'dhbastards'</span><span class="p">)</span>
 
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_upload_to_story</span><span class="p">(</span>
     <span class="n">media_path</span><span class="p">,</span>
-    <span class="s2">&quot;Credits @example&quot;</span><span class="p">,</span>
+    <span class="s2">"Credits @example"</span><span class="p">,</span>
     <span class="n">mentions</span><span class="o">=</span><span class="p">[</span><span class="n">StoryMention</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">example</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.49892962</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.703125</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.8333333333333334</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.125</span><span class="p">)],</span>
-    <span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="n">StoryLink</span><span class="p">(</span><span class="n">webUri</span><span class="o">=</span><span class="s1">&#39;https://github.com/subzeroid/aiograpi&#39;</span><span class="p">)],</span>
+    <span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="n">StoryLink</span><span class="p">(</span><span class="n">webUri</span><span class="o">=</span><span class="s1">'https://github.com/subzeroid/aiograpi'</span><span class="p">)],</span>
     <span class="n">hashtags</span><span class="o">=</span><span class="p">[</span><span class="n">StoryHashtag</span><span class="p">(</span><span class="n">hashtag</span><span class="o">=</span><span class="n">hashtag</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.23</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.32</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.22</span><span class="p">)],</span>
     <span class="n">medias</span><span class="o">=</span><span class="p">[</span><span class="n">StoryMedia</span><span class="p">(</span><span class="n">media_pk</span><span class="o">=</span><span class="n">media_pk</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)]</span>
 <span class="p">)</span>

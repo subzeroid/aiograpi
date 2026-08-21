@@ -1525,7 +1525,7 @@
 <span class="o">&gt;&gt;&gt;</span> <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
 
-<span class="o">&gt;&gt;&gt;</span> <span class="n">user_id</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_id_from_username</span><span class="p">(</span><span class="s2">&quot;instagram&quot;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">user_id</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_id_from_username</span><span class="p">(</span><span class="s2">"instagram"</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">standalone_fundraiser_info_v1</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
 <span class="p">{</span><span class="o">...</span><span class="p">}</span>
 </code></pre></div>
@@ -1573,12 +1573,12 @@
 <span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FundraiserMixin</span><span class="p">(</span><span class="n">ClientMixin</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Helpers for the fundraisers.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">standalone_fundraiser_info_v1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get fundraiser info.</span>
 
 <span class="sd">        Parameters</span>
@@ -1589,9 +1589,9 @@
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        dict</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">user_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
-        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_request</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fundraiser/</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">/standalone_fundraiser_info/&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_request</span><span class="p">(</span><span class="sa">f</span><span class="s2">"fundraiser/</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">/standalone_fundraiser_info/"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1648,7 +1648,7 @@
 <span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">standalone_fundraiser_info_v1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Get fundraiser info.</span>
 
 <span class="sd">    Parameters</span>
@@ -1659,9 +1659,9 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    dict</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">user_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
-    <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_request</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fundraiser/</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">/standalone_fundraiser_info/&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_request</span><span class="p">(</span><span class="sa">f</span><span class="s2">"fundraiser/</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">/standalone_fundraiser_info/"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

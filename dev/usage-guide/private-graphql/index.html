@@ -1731,12 +1731,12 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">,</span> <span class="n">verification_code</span><span class="o">=</span><span class="s2">&quot;123456&quot;</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">,</span> <span class="n">verification_code</span><span class="o">=</span><span class="s2">"123456"</span><span class="p">)</span>
 
 <span class="c1"># v2 GraphQL profile fetch — preferred over user_info_by_username_gql</span>
-<span class="c1"># when you&#39;re logged in (the legacy api/v1/users/web_profile_info/</span>
+<span class="c1"># when you're logged in (the legacy api/v1/users/web_profile_info/</span>
 <span class="c1"># endpoint is increasingly flaky for authenticated callers).</span>
-<span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username_v2_gql</span><span class="p">(</span><span class="s2">&quot;instagram&quot;</span><span class="p">)</span>
+<span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username_v2_gql</span><span class="p">(</span><span class="s2">"instagram"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">follower_count</span><span class="p">)</span>
 
 <span class="c1"># Followers via the mobile-app GraphQL surface. rank_token is a UUID</span>
@@ -1744,36 +1744,36 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="n">rank_token</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
 <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">private_graphql_followers_list</span><span class="p">(</span>
-    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;25025320&quot;</span><span class="p">,</span>
+    <span class="n">user_id</span><span class="o">=</span><span class="s2">"25025320"</span><span class="p">,</span>
     <span class="n">rank_token</span><span class="o">=</span><span class="n">rank_token</span><span class="p">,</span>
-    <span class="n">order</span><span class="o">=</span><span class="s2">&quot;date_followed_latest&quot;</span><span class="p">,</span>
+    <span class="n">order</span><span class="o">=</span><span class="s2">"date_followed_latest"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="c1"># Returns the raw GraphQL envelope: {&quot;data&quot;: {...}, &quot;status&quot;: &quot;ok&quot;, ...}.</span>
-<span class="c1"># Schema is large and varies — pick what you need from data[&quot;data&quot;].</span>
+<span class="c1"># Returns the raw GraphQL envelope: {"data": {...}, "status": "ok", ...}.</span>
+<span class="c1"># Schema is large and varies — pick what you need from data["data"].</span>
 
 <span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_followers_private_gql</span><span class="p">(</span>
-    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;25025320&quot;</span><span class="p">,</span>
+    <span class="n">user_id</span><span class="o">=</span><span class="s2">"25025320"</span><span class="p">,</span>
     <span class="n">amount</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
     <span class="n">rank_token</span><span class="o">=</span><span class="n">rank_token</span><span class="p">,</span>
-    <span class="n">order</span><span class="o">=</span><span class="s2">&quot;date_followed_latest&quot;</span><span class="p">,</span>
+    <span class="n">order</span><span class="o">=</span><span class="s2">"date_followed_latest"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># Search typeahead</span>
-<span class="n">hits</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_keyword_typeahead</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">hit</span> <span class="ow">in</span> <span class="n">hits</span><span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">]:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">hit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">hit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">))</span>
+<span class="n">hits</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_keyword_typeahead</span><span class="p">(</span><span class="s2">"python"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">hit</span> <span class="ow">in</span> <span class="n">hits</span><span class="p">[</span><span class="s2">"list"</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">hit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">hit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"user"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"username"</span><span class="p">))</span>
 
 <span class="c1"># v2 SERP endpoints — same surfaces the IG app uses for the Top /</span>
 <span class="c1"># Accounts / Reels tabs. Return raw payloads (users / items /</span>
 <span class="c1"># pagination tokens) — caller decides what to extract.</span>
-<span class="n">top</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_topsearch_v2</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
-<span class="n">accounts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_accounts_v2</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
-<span class="n">reels</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_reels_v2</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
-<span class="n">media_hits</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_search</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">top</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_topsearch_v2</span><span class="p">(</span><span class="s2">"python"</span><span class="p">)</span>
+<span class="n">accounts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_accounts_v2</span><span class="p">(</span><span class="s2">"python"</span><span class="p">)</span>
+<span class="n">reels</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_reels_v2</span><span class="p">(</span><span class="s2">"python"</span><span class="p">)</span>
+<span class="n">media_hits</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_search</span><span class="p">(</span><span class="s2">"python"</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 
 <span class="c1"># Pagination: pass the cursor from the previous response back in.</span>
 <span class="n">more_accounts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">fbsearch_accounts_v2</span><span class="p">(</span>
-    <span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">page_token</span><span class="o">=</span><span class="n">accounts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;next_page_token&quot;</span><span class="p">)</span>
+    <span class="s2">"python"</span><span class="p">,</span> <span class="n">page_token</span><span class="o">=</span><span class="n">accounts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"next_page_token"</span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
 <h2 id="calling-unwrapped-doc_ids-directly">Calling unwrapped doc_ids directly</h2>
@@ -1782,21 +1782,21 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 go through the primitive:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Public host (PolarisProfilePageContentQuery family)</span>
 <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">public_doc_id_graphql_request</span><span class="p">(</span>
-    <span class="n">doc_id</span><span class="o">=</span><span class="s2">&quot;25980296051578533&quot;</span><span class="p">,</span>  <span class="c1"># PolarisProfilePageContentQuery</span>
+    <span class="n">doc_id</span><span class="o">=</span><span class="s2">"25980296051578533"</span><span class="p">,</span>  <span class="c1"># PolarisProfilePageContentQuery</span>
     <span class="n">variables</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;25025320&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;render_surface&quot;</span><span class="p">:</span> <span class="s2">&quot;PROFILE&quot;</span><span class="p">,</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"25025320"</span><span class="p">,</span>
+        <span class="s2">"render_surface"</span><span class="p">:</span> <span class="s2">"PROFILE"</span><span class="p">,</span>
         <span class="c1"># ... relay provider flags</span>
     <span class="p">},</span>
 <span class="p">)</span>
-<span class="n">user_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;user&quot;</span><span class="p">]</span>
+<span class="n">user_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"user"</span><span class="p">]</span>
 
 <span class="c1"># Mobile host (XDT-prefixed root fields)</span>
 <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">private_graphql_query_request</span><span class="p">(</span>
-    <span class="n">friendly_name</span><span class="o">=</span><span class="s2">&quot;MyCustomQuery&quot;</span><span class="p">,</span>
-    <span class="n">root_field_name</span><span class="o">=</span><span class="s2">&quot;xdt_my_custom_root&quot;</span><span class="p">,</span>
-    <span class="n">variables</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;some_id&quot;</span><span class="p">:</span> <span class="s2">&quot;123&quot;</span><span class="p">},</span>
-    <span class="n">client_doc_id</span><span class="o">=</span><span class="s2">&quot;123456789012345678901234567890&quot;</span><span class="p">,</span>
+    <span class="n">friendly_name</span><span class="o">=</span><span class="s2">"MyCustomQuery"</span><span class="p">,</span>
+    <span class="n">root_field_name</span><span class="o">=</span><span class="s2">"xdt_my_custom_root"</span><span class="p">,</span>
+    <span class="n">variables</span><span class="o">=</span><span class="p">{</span><span class="s2">"some_id"</span><span class="p">:</span> <span class="s2">"123"</span><span class="p">},</span>
+    <span class="n">client_doc_id</span><span class="o">=</span><span class="s2">"123456789012345678901234567890"</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 <h2 id="doc_id-rotation">doc_id rotation</h2>
@@ -1805,10 +1805,10 @@ working tomorrow without notice — the server just returns HTTP 400.
 Every named wrapper ships a default <code>client_doc_id</code> captured from a
 working mobile-app session, but you can override per-call:</p>
 <div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">private_graphql_followers_list</span><span class="p">(</span>
-    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;25025320&quot;</span><span class="p">,</span>
+    <span class="n">user_id</span><span class="o">=</span><span class="s2">"25025320"</span><span class="p">,</span>
     <span class="n">rank_token</span><span class="o">=</span><span class="n">rank_token</span><span class="p">,</span>
-    <span class="n">order</span><span class="o">=</span><span class="s2">&quot;date_followed_latest&quot;</span><span class="p">,</span>
-    <span class="n">client_doc_id</span><span class="o">=</span><span class="s2">&quot;&lt;freshly captured doc_id&gt;&quot;</span><span class="p">,</span>
+    <span class="n">order</span><span class="o">=</span><span class="s2">"date_followed_latest"</span><span class="p">,</span>
+    <span class="n">client_doc_id</span><span class="o">=</span><span class="s2">"&lt;freshly captured doc_id&gt;"</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 <p>If a wrapper starts failing with HTTP 400, the first thing to try is
@@ -1821,8 +1821,8 @@ flags that, when <code>True</code>, make IG return a multi-document NDJSON envel
 (<code>{...}\n{...}\n{...}</code>). aiograpi's wrappers default these to <code>False</code> so
 the response is a single JSON that <code>response.json()</code> can parse:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Default — single-JSON, easy to parse:</span>
-<span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">private_graphql_clips_profile</span><span class="p">(</span><span class="n">target_user_id</span><span class="o">=</span><span class="s2">&quot;25025320&quot;</span><span class="p">)</span>
-<span class="n">clips</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;xdt_user_clips_graphql&quot;</span><span class="p">][</span><span class="s2">&quot;edges&quot;</span><span class="p">]</span>
+<span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">private_graphql_clips_profile</span><span class="p">(</span><span class="n">target_user_id</span><span class="o">=</span><span class="s2">"25025320"</span><span class="p">)</span>
+<span class="n">clips</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"xdt_user_clips_graphql"</span><span class="p">][</span><span class="s2">"edges"</span><span class="p">]</span>
 
 <span class="c1"># Raw stream — you parse it yourself from response.text:</span>
 <span class="c1"># (would need to subclass and pass should_stream_response=True in</span>
@@ -1839,13 +1839,13 @@ exception clauses you'd use anywhere else:</p>
     <span class="n">ClientForbiddenError</span><span class="p">,</span>         <span class="c1"># 403 — endpoint requires login or geo</span>
     <span class="n">ClientThrottledError</span><span class="p">,</span>         <span class="c1"># 429 — rate-limited</span>
     <span class="n">UserNotFound</span><span class="p">,</span>                 <span class="c1"># for user_info_*_v2_gql when the</span>
-                                  <span class="c1">#   target doesn&#39;t exist</span>
+                                  <span class="c1">#   target doesn't exist</span>
     <span class="n">ClientGraphqlError</span><span class="p">,</span>           <span class="c1"># GraphQL-level error in the response</span>
-                                  <span class="c1">#   body (status != &quot;ok&quot; or no &quot;data&quot;)</span>
+                                  <span class="c1">#   body (status != "ok" or no "data")</span>
 <span class="p">)</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username_v2_gql</span><span class="p">(</span><span class="s2">&quot;missing_user&quot;</span><span class="p">)</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username_v2_gql</span><span class="p">(</span><span class="s2">"missing_user"</span><span class="p">)</span>
 <span class="k">except</span> <span class="n">UserNotFound</span><span class="p">:</span>
     <span class="c1"># IG returned a valid response but no matching user.</span>
     <span class="k">pass</span>
@@ -1854,7 +1854,7 @@ exception clauses you'd use anywhere else:</p>
     <span class="k">pass</span>
 <span class="k">except</span> <span class="n">ClientGraphqlError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
     <span class="c1"># The endpoint returned a structured GraphQL error.</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;GraphQL error:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"GraphQL error:"</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="how-this-maps-to-upstream-and-prior-art">How this maps to upstream and prior art</h2>
 <ul>

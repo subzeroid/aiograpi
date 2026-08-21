@@ -1529,16 +1529,16 @@
 </tbody>
 </table>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_download</span><span class="p">(</span><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_pk_from_url</span><span class="p">(</span><span class="s1">&#39;https://www.instagram.com/stories/example/2581281926631793076/&#39;</span><span class="p">))</span>
-<span class="n">PosixPath</span><span class="p">(</span><span class="s1">&#39;/app/189361307_229642088942817_9180243596650100310_n.mp4&#39;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_download</span><span class="p">(</span><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_pk_from_url</span><span class="p">(</span><span class="s1">'https://www.instagram.com/stories/example/2581281926631793076/'</span><span class="p">))</span>
+<span class="n">PosixPath</span><span class="p">(</span><span class="s1">'/app/189361307_229642088942817_9180243596650100310_n.mp4'</span><span class="p">)</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="n">s</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_info</span><span class="p">(</span><span class="mi">2581281926631793076</span><span class="p">)</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_download_by_url</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">video_url</span><span class="p">)</span>  <span class="c1"># url to mp4 file</span>
-<span class="n">PosixPath</span><span class="p">(</span><span class="s1">&#39;/app/189361307_229642088942817_9180243596650100310_n.mp4&#39;</span><span class="p">)</span>
+<span class="n">PosixPath</span><span class="p">(</span><span class="s1">'/app/189361307_229642088942817_9180243596650100310_n.mp4'</span><span class="p">)</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_download_by_url</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">thumbnail_url</span><span class="p">)</span>  <span class="c1"># URL to jpg file</span>
-<span class="n">PosixPath</span><span class="p">(</span><span class="s1">&#39;/app/191260083_2908005872746895_8988438451809588865_n.jpg&#39;</span><span class="p">)</span>
+<span class="n">PosixPath</span><span class="p">(</span><span class="s1">'/app/191260083_2908005872746895_8988438451809588865_n.jpg'</span><span class="p">)</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="n">days</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">archive_story_days</span><span class="p">(</span><span class="n">amount</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">stories</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">archive_stories</span><span class="p">(</span><span class="n">amount</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -1632,37 +1632,37 @@ expose Instagram's native interactive lyrics/music sticker UI.</p>
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
 
-<span class="n">media_pk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_url</span><span class="p">(</span><span class="s1">&#39;https://www.instagram.com/p/CGgDsi7JQdS/&#39;</span><span class="p">)</span>
+<span class="n">media_pk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_url</span><span class="p">(</span><span class="s1">'https://www.instagram.com/p/CGgDsi7JQdS/'</span><span class="p">)</span>
 <span class="n">media_path</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_download</span><span class="p">(</span><span class="n">media_pk</span><span class="p">)</span>
-<span class="n">example</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username</span><span class="p">(</span><span class="s1">&#39;example&#39;</span><span class="p">)</span>
-<span class="n">hashtag</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">hashtag_info</span><span class="p">(</span><span class="s1">&#39;dhbastards&#39;</span><span class="p">)</span>
+<span class="n">example</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username</span><span class="p">(</span><span class="s1">'example'</span><span class="p">)</span>
+<span class="n">hashtag</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">hashtag_info</span><span class="p">(</span><span class="s1">'dhbastards'</span><span class="p">)</span>
 
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_upload_to_story</span><span class="p">(</span>
     <span class="n">media_path</span><span class="p">,</span>
-    <span class="s2">&quot;Credits @example&quot;</span><span class="p">,</span>
+    <span class="s2">"Credits @example"</span><span class="p">,</span>
     <span class="n">mentions</span><span class="o">=</span><span class="p">[</span><span class="n">StoryMention</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">example</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.49892962</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.703125</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.8333333333333334</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.125</span><span class="p">)],</span>
-    <span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="n">StoryLink</span><span class="p">(</span><span class="n">webUri</span><span class="o">=</span><span class="s1">&#39;https://github.com/subzeroid/aiograpi&#39;</span><span class="p">)],</span>
+    <span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="n">StoryLink</span><span class="p">(</span><span class="n">webUri</span><span class="o">=</span><span class="s1">'https://github.com/subzeroid/aiograpi'</span><span class="p">)],</span>
     <span class="n">hashtags</span><span class="o">=</span><span class="p">[</span><span class="n">StoryHashtag</span><span class="p">(</span><span class="n">hashtag</span><span class="o">=</span><span class="n">hashtag</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.23</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.32</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.22</span><span class="p">)],</span>
     <span class="n">medias</span><span class="o">=</span><span class="p">[</span><span class="n">StoryMedia</span><span class="p">(</span><span class="n">media_pk</span><span class="o">=</span><span class="n">media_pk</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)],</span>
 <span class="p">)</span>
 </code></pre></div>
 <p>Upload a story poll:</p>
 <div class="highlight"><pre><span></span><code><span class="n">story</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">photo_upload_to_story</span><span class="p">(</span>
-    <span class="s2">&quot;/app/image.jpg&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Poll&quot;</span><span class="p">,</span>
-    <span class="n">polls</span><span class="o">=</span><span class="p">[</span><span class="n">StoryPoll</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">question</span><span class="o">=</span><span class="s2">&quot;Pick one&quot;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Yes&quot;</span><span class="p">,</span> <span class="s2">&quot;No&quot;</span><span class="p">])],</span>
+    <span class="s2">"/app/image.jpg"</span><span class="p">,</span>
+    <span class="s2">"Poll"</span><span class="p">,</span>
+    <span class="n">polls</span><span class="o">=</span><span class="p">[</span><span class="n">StoryPoll</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">question</span><span class="o">=</span><span class="s2">"Pick one"</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s2">"Yes"</span><span class="p">,</span> <span class="s2">"No"</span><span class="p">])],</span>
 <span class="p">)</span>
 </code></pre></div>
 <p>Share a feed media to story:</p>
 <div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_share_to_story</span><span class="p">(</span>
-    <span class="s2">&quot;3613500067578544892_25025320&quot;</span><span class="p">,</span>
-    <span class="n">caption</span><span class="o">=</span><span class="s2">&quot;Shared from feed&quot;</span><span class="p">,</span>
+    <span class="s2">"3613500067578544892_25025320"</span><span class="p">,</span>
+    <span class="n">caption</span><span class="o">=</span><span class="s2">"Shared from feed"</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 <h2 id="build-story-to-upload">Build Story to Upload</h2>
 <p>If you want to format your story correctly (correct resolution, user mentions, etc) use StoryBuilder. StoryBuilder renders media with MoviePy and ffmpeg, so install the optional video dependencies first:</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;aiograpi[video]&quot;</span>
-pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span><span class="s2">&quot;moviepy==2.2.1&quot;</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"aiograpi[video]"</span>
+pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span><span class="s2">"moviepy==2.2.1"</span>
 </code></pre></div>
 <p>MoviePy <code>2.2.1</code> currently declares <code>Pillow&lt;12</code>, but aiograpi keeps <code>Pillow&gt;=12.3.0</code> for security fixes; the <code>--no-deps</code> install keeps the safe Pillow version. Older MoviePy <code>1.x</code> imports such as <code>moviepy.editor</code> and clip methods such as <code>set_duration</code>, <code>set_position</code>, <code>resize</code>, and <code>subclip</code> are not supported by aiograpi's video helpers.</p>
 <table>
@@ -1700,47 +1700,47 @@ pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">StoryMention</span><span class="p">,</span> <span class="n">StoryMedia</span><span class="p">,</span> <span class="n">StoryLink</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi.story</span><span class="w"> </span><span class="kn">import</span> <span class="n">StoryBuilder</span>
 
-<span class="n">media_pk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_url</span><span class="p">(</span><span class="s1">&#39;https://www.instagram.com/p/CGgDsi7JQdS/&#39;</span><span class="p">)</span>
+<span class="n">media_pk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_url</span><span class="p">(</span><span class="s1">'https://www.instagram.com/p/CGgDsi7JQdS/'</span><span class="p">)</span>
 <span class="n">media_path</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_download</span><span class="p">(</span><span class="n">media_pk</span><span class="p">)</span>
-<span class="n">example</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username</span><span class="p">(</span><span class="s1">&#39;example&#39;</span><span class="p">)</span>
+<span class="n">example</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username</span><span class="p">(</span><span class="s1">'example'</span><span class="p">)</span>
 
 <span class="n">buildout</span> <span class="o">=</span> <span class="n">StoryBuilder</span><span class="p">(</span>
     <span class="n">media_path</span><span class="p">,</span>
-    <span class="s1">&#39;Credits @example&#39;</span><span class="p">,</span>
+    <span class="s1">'Credits @example'</span><span class="p">,</span>
     <span class="p">[</span><span class="n">StoryMention</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">example</span><span class="p">)],</span>
-    <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;/path/to/background_720x1280.jpg&#39;</span><span class="p">)</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s1">'/path/to/background_720x1280.jpg'</span><span class="p">)</span>
 <span class="p">)</span><span class="o">.</span><span class="n">video</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>  <span class="c1"># seconds</span>
 
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_upload_to_story</span><span class="p">(</span>
     <span class="n">buildout</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
-    <span class="s2">&quot;Credits @example&quot;</span><span class="p">,</span>
+    <span class="s2">"Credits @example"</span><span class="p">,</span>
     <span class="n">mentions</span><span class="o">=</span><span class="n">buildout</span><span class="o">.</span><span class="n">mentions</span><span class="p">,</span>
-    <span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="n">StoryLink</span><span class="p">(</span><span class="n">webUri</span><span class="o">=</span><span class="s1">&#39;https://github.com/subzeroid/aiograpi&#39;</span><span class="p">)],</span>
+    <span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="n">StoryLink</span><span class="p">(</span><span class="n">webUri</span><span class="o">=</span><span class="s1">'https://github.com/subzeroid/aiograpi'</span><span class="p">)],</span>
     <span class="n">medias</span><span class="o">=</span><span class="p">[</span><span class="n">StoryMedia</span><span class="p">(</span><span class="n">media_pk</span><span class="o">=</span><span class="n">media_pk</span><span class="p">)]</span>
 <span class="p">)</span>
 </code></pre></div>
 <p>Result:</p>
 <p><img alt="" src="https://raw.githubusercontent.com/example/aiograpi/main/examples/dhb.gif" /></p>
 <p>Photo upload:</p>
-<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">photo_upload_to_story</span><span class="p">(</span><span class="s1">&#39;/app/image.jpg&#39;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">photo_upload_to_story</span><span class="p">(</span><span class="s1">'/app/image.jpg'</span><span class="p">)</span>
 </code></pre></div>
 <p>Upload photo as video:</p>
-<div class="highlight"><pre><span></span><code><span class="n">buildout</span> <span class="o">=</span> <span class="n">StoryBuilder</span><span class="p">(</span><span class="s1">&#39;/app/image.jpg&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">photo</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="n">buildout</span> <span class="o">=</span> <span class="n">StoryBuilder</span><span class="p">(</span><span class="s1">'/app/image.jpg'</span><span class="p">)</span><span class="o">.</span><span class="n">photo</span><span class="p">()</span>
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_upload_to_story</span><span class="p">(</span><span class="n">buildout</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
 </code></pre></div>
 <p>Upload photo or video without cropping:</p>
-<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">photo_upload_to_story</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/app/landscape.jpg&quot;</span><span class="p">),</span> <span class="n">resize_mode</span><span class="o">=</span><span class="s2">&quot;fit&quot;</span><span class="p">)</span>
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_upload_to_story</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/app/landscape.mp4&quot;</span><span class="p">),</span> <span class="n">resize_mode</span><span class="o">=</span><span class="s2">&quot;fit&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">photo_upload_to_story</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">"/app/landscape.jpg"</span><span class="p">),</span> <span class="n">resize_mode</span><span class="o">=</span><span class="s2">"fit"</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_upload_to_story</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">"/app/landscape.mp4"</span><span class="p">),</span> <span class="n">resize_mode</span><span class="o">=</span><span class="s2">"fit"</span><span class="p">)</span>
 </code></pre></div>
 <p>Like &amp; unlike story:</p>
-<div class="highlight"><pre><span></span><code><span class="n">pk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_pk_from_url</span><span class="p">(</span><span class="s2">&quot;https://instagram.com/stories/purely.anand/2884886531427631361/&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">pk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_pk_from_url</span><span class="p">(</span><span class="s2">"https://instagram.com/stories/purely.anand/2884886531427631361/"</span><span class="p">)</span>
 <span class="n">info</span> <span class="o">=</span> <span class="p">(</span><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_info</span><span class="p">(</span><span class="n">pk</span><span class="p">))</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
 
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_like</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span> <span class="c1"># To like story</span>
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_unlike</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span> <span class="c1"># To unlike story</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_like</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">'id'</span><span class="p">])</span> <span class="c1"># To like story</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_unlike</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">'id'</span><span class="p">])</span> <span class="c1"># To unlike story</span>
 
 <span class="c1"># another way to unlike story</span>
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_like</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">],</span> <span class="n">revert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_like</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">'id'</span><span class="p">],</span> <span class="n">revert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 <p>Vote in story poll:</p>
 <div class="highlight"><pre><span></span><code><span class="n">story</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">story_info</span><span class="p">(</span><span class="n">STORY_ID</span><span class="p">)</span>

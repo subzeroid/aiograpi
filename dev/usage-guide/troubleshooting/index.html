@@ -2122,12 +2122,12 @@ hierarchy or open a <a href="https://github.com/subzeroid/aiograpi/issues/new/ch
 that mutates account state) without logging in first.</p>
 <div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
 <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>   <span class="c1"># do this first</span>
-<span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_info_v1</span><span class="p">(</span><span class="s2">&quot;25025320&quot;</span><span class="p">)</span>
+<span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_info_v1</span><span class="p">(</span><span class="s2">"25025320"</span><span class="p">)</span>
 </code></pre></div>
 <p>Or restore from a saved session:</p>
 <div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
 <span class="n">client</span><span class="o">.</span><span class="n">set_settings</span><span class="p">(</span><span class="n">saved_dict</span><span class="p">)</span>   <span class="c1"># contains a valid sessionid</span>
-<span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_info_v1</span><span class="p">(</span><span class="s2">&quot;25025320&quot;</span><span class="p">)</span>
+<span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_info_v1</span><span class="p">(</span><span class="s2">"25025320"</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="badcredentials-both-username-and-password-must-be-provided"><code>BadCredentials: Both username and password must be provided</code></h3>
 <p>Empty / missing username or password. Check env vars are loaded.</p>
@@ -2137,7 +2137,7 @@ the password. If the same credentials work in the IG app, you've been
 flagged — wait 24-48 hours, change IP, log in via app first.</p>
 <h3 id="twofactorrequired"><code>TwoFactorRequired</code></h3>
 <p>Pass <code>verification_code=</code> to <code>login()</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USER</span><span class="p">,</span> <span class="n">PASS</span><span class="p">,</span> <span class="n">verification_code</span><span class="o">=</span><span class="s2">&quot;123456&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USER</span><span class="p">,</span> <span class="n">PASS</span><span class="p">,</span> <span class="n">verification_code</span><span class="o">=</span><span class="s2">"123456"</span><span class="p">)</span>
 </code></pre></div>
 <p>For TOTP-based 2FA, generate the code from the seed:</p>
 <div class="highlight"><pre><span></span><code><span class="n">code</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">totp_generate_code</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
@@ -2170,7 +2170,7 @@ so your retry logic can branch on it correctly.</p>
 <h3 id="sslsslcertverificationerror-tls-handshake-failures"><code>ssl.SSLCertVerificationError</code> / TLS handshake failures</h3>
 <p>Since 0.6.6 aiograpi verifies TLS by default. If your proxy is a known
 SSL-MITM (corporate inspection gateway), pass its CA bundle:</p>
-<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">tls_verify</span><span class="o">=</span><span class="s2">&quot;/path/to/proxy-ca.pem&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">tls_verify</span><span class="o">=</span><span class="s2">"/path/to/proxy-ca.pem"</span><span class="p">)</span>
 </code></pre></div>
 <p>For short trusted local debugging only, use <code>Client(tls_verify=False)</code>.
 Don't blindly disable verification on residential proxies because MITM attackers can intercept your sessionid.</p>
@@ -2216,9 +2216,9 @@ unauthenticated calls instead of letting them reach the extractor.</p>
 (IG re-registers queries periodically). Capture a fresh <code>client_doc_id</code>
 from a current Instagram-app build and pass it explicitly:</p>
 <div class="highlight"><pre><span></span><code><span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">private_graphql_followers_list</span><span class="p">(</span>
-    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;25025320&quot;</span><span class="p">,</span>
+    <span class="n">user_id</span><span class="o">=</span><span class="s2">"25025320"</span><span class="p">,</span>
     <span class="n">rank_token</span><span class="o">=</span><span class="n">rank_token</span><span class="p">,</span>
-    <span class="n">client_doc_id</span><span class="o">=</span><span class="s2">&quot;&lt;fresh capture&gt;&quot;</span><span class="p">,</span>
+    <span class="n">client_doc_id</span><span class="o">=</span><span class="s2">"&lt;fresh capture&gt;"</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 <p>See <a href="../private-graphql/">Private GraphQL &amp; doc_id</a> for the rotation

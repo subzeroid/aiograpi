@@ -1671,7 +1671,7 @@ with <code>TypeError: 'NoneType' object is not subscriptable</code>.</p>
 (<code>client.private</code> / <code>.public</code> / <code>.graphql</code>) ship with <code>verify=True</code>
 now. If your proxy is a known SSL-MITM (e.g. corporate inspection
 gateway), pass its CA bundle or opt out explicitly at construction:</p>
-<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">tls_verify</span><span class="o">=</span><span class="s2">&quot;/path/to/proxy-ca.pem&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">tls_verify</span><span class="o">=</span><span class="s2">"/path/to/proxy-ca.pem"</span><span class="p">)</span>
 <span class="c1"># or, for short trusted local debugging only:</span>
 <span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">tls_verify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
@@ -1698,10 +1698,10 @@ the proxy is trustworthy.</p>
 <span class="n">client</span><span class="o">.</span><span class="n">challenge_resolve_new_password_form</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </code></pre></div>
 <p>Old code with <code>await</code> raises:</p>
-<div class="highlight"><pre><span></span><code>TypeError: object str can&#39;t be used in &#39;await&#39; expression
+<div class="highlight"><pre><span></span><code>TypeError: object str can't be used in 'await' expression
 </code></pre></div>
 <p>(or quietly returns a coroutine that's never scheduled). A grep helps:</p>
-<div class="highlight"><pre><span></span><code>grep<span class="w"> </span>-nE<span class="w"> </span><span class="s2">&quot;await\s+\w+\.(share_info|share_info_by_url|share_code_from_url|highlight_pk_from_url|handle_challenge_result|challenge_resolve_new_password_form)\(&quot;</span><span class="w"> </span>your_code/
+<div class="highlight"><pre><span></span><code>grep<span class="w"> </span>-nE<span class="w"> </span><span class="s2">"await\s+\w+\.(share_info|share_info_by_url|share_code_from_url|highlight_pk_from_url|handle_challenge_result|challenge_resolve_new_password_form)\("</span><span class="w"> </span>your_code/
 </code></pre></div>
 <p>Bonus fixes in the same release:</p>
 <ul>
@@ -1741,10 +1741,10 @@ methods. New things you can use:</p>
 </ul>
 <p>Constructor changes that may surprise you:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Before</span>
-<span class="n">Client</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;some&quot;</span><span class="p">:</span> <span class="s2">&quot;dict&quot;</span><span class="p">})</span>  <span class="c1"># caller-supplied dict was held by reference</span>
+<span class="n">Client</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="p">{</span><span class="s2">"some"</span><span class="p">:</span> <span class="s2">"dict"</span><span class="p">})</span>  <span class="c1"># caller-supplied dict was held by reference</span>
 
 <span class="c1"># After</span>
-<span class="n">Client</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;some&quot;</span><span class="p">:</span> <span class="s2">&quot;dict&quot;</span><span class="p">})</span>  <span class="c1"># deepcopy&#39;d, mutating it later won&#39;t leak in</span>
+<span class="n">Client</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="p">{</span><span class="s2">"some"</span><span class="p">:</span> <span class="s2">"dict"</span><span class="p">})</span>  <span class="c1"># deepcopy'd, mutating it later won't leak in</span>
 </code></pre></div>
 <p>If your code relied on <code>cl.settings is the_dict_i_passed</code>, that's no
 longer true. Use <code>cl.settings</code> directly.</p>

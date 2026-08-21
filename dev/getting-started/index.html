@@ -1555,8 +1555,8 @@
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-    <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s2">&quot;YOUR_USERNAME&quot;</span><span class="p">,</span> <span class="s2">&quot;YOUR_PASSWORD&quot;</span><span class="p">)</span>
-    <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_info_by_username</span><span class="p">(</span><span class="s2">&quot;instagram&quot;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s2">"YOUR_USERNAME"</span><span class="p">,</span> <span class="s2">"YOUR_PASSWORD"</span><span class="p">)</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_info_by_username</span><span class="p">(</span><span class="s2">"instagram"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">full_name</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">follower_count</span><span class="p">)</span>
     <span class="n">medias</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_medias</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">medias</span><span class="p">:</span>
@@ -1581,9 +1581,9 @@ Instagram pushing back — see the <a href="../usage-guide/challenge_resolver/">
 and <a href="../usage-guide/handle_exception/">Handle Exceptions</a> guides.</p>
 <h2 id="reuse-a-saved-session">Reuse a saved session</h2>
 <div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-<span class="n">client</span><span class="o">.</span><span class="n">load_settings</span><span class="p">(</span><span class="s2">&quot;session.json&quot;</span><span class="p">)</span>
-<span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s2">&quot;YOUR_USERNAME&quot;</span><span class="p">,</span> <span class="s2">&quot;YOUR_PASSWORD&quot;</span><span class="p">)</span>
-<span class="n">client</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">&quot;session.json&quot;</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">load_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s2">"YOUR_USERNAME"</span><span class="p">,</span> <span class="s2">"YOUR_PASSWORD"</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
 </code></pre></div>
 <p>The saved session is validated during <code>login()</code>. If Instagram rejects it with
 <code>login_required</code>, aiograpi performs a fresh login with the supplied
@@ -1591,8 +1591,8 @@ credentials. Saving the settings again persists any refreshed session.</p>
 <h2 id="public-anonymous-calls-no-login">Public, anonymous calls (no login)</h2>
 <p>For some endpoints you can skip login entirely:</p>
 <div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-<span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_info_by_username_gql</span><span class="p">(</span><span class="s2">&quot;instagram&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>  <span class="c1"># → &quot;instagram&quot;, &quot;25025320&quot;</span>
+<span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_info_by_username_gql</span><span class="p">(</span><span class="s2">"instagram"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>  <span class="c1"># → "instagram", "25025320"</span>
 </code></pre></div>
 <p>Methods with the <code>_gql</code> suffix hit the public web GraphQL surface and
 work anonymously. Methods with <code>_v1</code> need login.</p>

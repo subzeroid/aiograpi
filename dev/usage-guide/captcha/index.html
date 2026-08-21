@@ -1613,8 +1613,8 @@ the solved token.</p>
     <span class="c1"># details contains: site_key, page_url, challenge_type, raw_challenge_json</span>
     <span class="c1"># Forward to your favorite captcha solver and return the token</span>
     <span class="k">return</span> <span class="n">solve_recaptcha</span><span class="p">(</span>
-        <span class="n">site_key</span><span class="o">=</span><span class="n">details</span><span class="p">[</span><span class="s2">&quot;site_key&quot;</span><span class="p">],</span>
-        <span class="n">page_url</span><span class="o">=</span><span class="n">details</span><span class="p">[</span><span class="s2">&quot;page_url&quot;</span><span class="p">],</span>
+        <span class="n">site_key</span><span class="o">=</span><span class="n">details</span><span class="p">[</span><span class="s2">"site_key"</span><span class="p">],</span>
+        <span class="n">page_url</span><span class="o">=</span><span class="n">details</span><span class="p">[</span><span class="s2">"page_url"</span><span class="p">],</span>
     <span class="p">)</span>
 
 
@@ -1730,11 +1730,11 @@ the solved token.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">_captcha_handler_instance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="c1"># Ensure compatibility with other mixins/classes by calling super()</span>
         <span class="c1"># This is important if CaptchaHandlerMixin is used in a multiple inheritance scenario.</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">super</span><span class="p">(),</span> <span class="s2">&quot;__init__&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">super</span><span class="p">(),</span> <span class="s2">"__init__"</span><span class="p">):</span>
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set_captcha_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">],</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Set a custom handler function for solving captcha challenges.</span>
 
 <span class="sd">        Parameters</span>
@@ -1744,11 +1744,11 @@ the solved token.</p>
 <span class="sd">            (e.g., site_key, page_url, raw_challenge_json) and returns</span>
 <span class="sd">            the solved captcha token as a string.</span>
 <span class="sd">            If None, clears the existing handler.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_captcha_handler_instance</span> <span class="o">=</span> <span class="n">handler</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">captcha_resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">challenge_details</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Resolve a captcha challenge using the registered handler.</span>
 
 <span class="sd">        Parameters</span>
@@ -1769,28 +1769,28 @@ the solved token.</p>
 <span class="sd">            or if the handler itself raises an unhandled exception.</span>
 <span class="sd">        ClientError</span>
 <span class="sd">            For unexpected errors during the process.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_captcha_handler_instance&quot;</span><span class="p">):</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_captcha_handler_instance"</span><span class="p">):</span>
             <span class="c1"># This can happen if __init__ of this mixin was not called,</span>
             <span class="c1"># e.g. due to incorrect super() chain.</span>
-            <span class="k">raise</span> <span class="n">ClientError</span><span class="p">(</span><span class="s2">&quot;CaptchaHandlerMixin not properly initialized. _captcha_handler_instance is missing.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ClientError</span><span class="p">(</span><span class="s2">"CaptchaHandlerMixin not properly initialized. _captcha_handler_instance is missing."</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_captcha_handler_instance</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="c1"># Ensure all keys expected by typical handlers are present, even if None</span>
                 <span class="n">details_to_pass</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="s2">&quot;site_key&quot;</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;site_key&quot;</span><span class="p">),</span>
-                    <span class="s2">&quot;page_url&quot;</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;page_url&quot;</span><span class="p">),</span>  <span class="c1"># Important for some solvers</span>
-                    <span class="s2">&quot;challenge_type&quot;</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;challenge_type&quot;</span><span class="p">),</span>
-                    <span class="s2">&quot;raw_challenge_json&quot;</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;raw_challenge_json&quot;</span><span class="p">),</span>
+                    <span class="s2">"site_key"</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"site_key"</span><span class="p">),</span>
+                    <span class="s2">"page_url"</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"page_url"</span><span class="p">),</span>  <span class="c1"># Important for some solvers</span>
+                    <span class="s2">"challenge_type"</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"challenge_type"</span><span class="p">),</span>
+                    <span class="s2">"raw_challenge_json"</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"raw_challenge_json"</span><span class="p">),</span>
                 <span class="p">}</span>
                 <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_captcha_handler_instance</span><span class="p">(</span><span class="n">details_to_pass</span><span class="p">)</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">token</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">token</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># Handler was called but didn&#39;t return a valid token</span>
+                    <span class="c1"># Handler was called but didn't return a valid token</span>
                     <span class="k">raise</span> <span class="n">CaptchaChallengeRequired</span><span class="p">(</span>
-                        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Captcha handler ran but did not return a valid token string.&quot;</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="s2">"Captcha handler ran but did not return a valid token string."</span><span class="p">,</span>
                         <span class="n">challenge_details</span><span class="o">=</span><span class="n">challenge_details</span><span class="p">,</span>
                     <span class="p">)</span>
             <span class="k">except</span> <span class="n">CaptchaChallengeRequired</span><span class="p">:</span>  <span class="c1"># Allow handler to raise this specifically</span>
@@ -1798,13 +1798,13 @@ the solved token.</p>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="c1"># Handler raised an unexpected exception</span>
                 <span class="k">raise</span> <span class="n">CaptchaChallengeRequired</span><span class="p">(</span>
-                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Captcha handler raised an unexpected exception: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Captcha handler raised an unexpected exception: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                     <span class="n">challenge_details</span><span class="o">=</span><span class="n">challenge_details</span><span class="p">,</span>
                 <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># No handler is configured</span>
             <span class="k">raise</span> <span class="n">CaptchaChallengeRequired</span><span class="p">(</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;No captcha handler is configured. Use client.set_captcha_handler() to set one.&quot;</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"No captcha handler is configured. Use client.set_captcha_handler() to set one."</span><span class="p">,</span>
                 <span class="n">challenge_details</span><span class="o">=</span><span class="n">challenge_details</span><span class="p">,</span>
             <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -1912,7 +1912,7 @@ ClientError
 <span class="normal">88</span>
 <span class="normal">89</span>
 <span class="normal">90</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">captcha_resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">challenge_details</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Resolve a captcha challenge using the registered handler.</span>
 
 <span class="sd">    Parameters</span>
@@ -1933,28 +1933,28 @@ ClientError
 <span class="sd">        or if the handler itself raises an unhandled exception.</span>
 <span class="sd">    ClientError</span>
 <span class="sd">        For unexpected errors during the process.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_captcha_handler_instance&quot;</span><span class="p">):</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_captcha_handler_instance"</span><span class="p">):</span>
         <span class="c1"># This can happen if __init__ of this mixin was not called,</span>
         <span class="c1"># e.g. due to incorrect super() chain.</span>
-        <span class="k">raise</span> <span class="n">ClientError</span><span class="p">(</span><span class="s2">&quot;CaptchaHandlerMixin not properly initialized. _captcha_handler_instance is missing.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ClientError</span><span class="p">(</span><span class="s2">"CaptchaHandlerMixin not properly initialized. _captcha_handler_instance is missing."</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_captcha_handler_instance</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Ensure all keys expected by typical handlers are present, even if None</span>
             <span class="n">details_to_pass</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;site_key&quot;</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;site_key&quot;</span><span class="p">),</span>
-                <span class="s2">&quot;page_url&quot;</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;page_url&quot;</span><span class="p">),</span>  <span class="c1"># Important for some solvers</span>
-                <span class="s2">&quot;challenge_type&quot;</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;challenge_type&quot;</span><span class="p">),</span>
-                <span class="s2">&quot;raw_challenge_json&quot;</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;raw_challenge_json&quot;</span><span class="p">),</span>
+                <span class="s2">"site_key"</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"site_key"</span><span class="p">),</span>
+                <span class="s2">"page_url"</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"page_url"</span><span class="p">),</span>  <span class="c1"># Important for some solvers</span>
+                <span class="s2">"challenge_type"</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"challenge_type"</span><span class="p">),</span>
+                <span class="s2">"raw_challenge_json"</span><span class="p">:</span> <span class="n">challenge_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"raw_challenge_json"</span><span class="p">),</span>
             <span class="p">}</span>
             <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_captcha_handler_instance</span><span class="p">(</span><span class="n">details_to_pass</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">token</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">token</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Handler was called but didn&#39;t return a valid token</span>
+                <span class="c1"># Handler was called but didn't return a valid token</span>
                 <span class="k">raise</span> <span class="n">CaptchaChallengeRequired</span><span class="p">(</span>
-                    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Captcha handler ran but did not return a valid token string.&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="s2">"Captcha handler ran but did not return a valid token string."</span><span class="p">,</span>
                     <span class="n">challenge_details</span><span class="o">=</span><span class="n">challenge_details</span><span class="p">,</span>
                 <span class="p">)</span>
         <span class="k">except</span> <span class="n">CaptchaChallengeRequired</span><span class="p">:</span>  <span class="c1"># Allow handler to raise this specifically</span>
@@ -1962,13 +1962,13 @@ ClientError
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="c1"># Handler raised an unexpected exception</span>
             <span class="k">raise</span> <span class="n">CaptchaChallengeRequired</span><span class="p">(</span>
-                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Captcha handler raised an unexpected exception: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Captcha handler raised an unexpected exception: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                 <span class="n">challenge_details</span><span class="o">=</span><span class="n">challenge_details</span><span class="p">,</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># No handler is configured</span>
         <span class="k">raise</span> <span class="n">CaptchaChallengeRequired</span><span class="p">(</span>
-            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;No captcha handler is configured. Use client.set_captcha_handler() to set one.&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"No captcha handler is configured. Use client.set_captcha_handler() to set one."</span><span class="p">,</span>
             <span class="n">challenge_details</span><span class="o">=</span><span class="n">challenge_details</span><span class="p">,</span>
         <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -2012,7 +2012,7 @@ ClientError
 <span class="normal">27</span>
 <span class="normal">28</span>
 <span class="normal">29</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_captcha_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">],</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Set a custom handler function for solving captcha challenges.</span>
 
 <span class="sd">    Parameters</span>
@@ -2022,7 +2022,7 @@ ClientError
 <span class="sd">        (e.g., site_key, page_url, raw_challenge_json) and returns</span>
 <span class="sd">        the solved captcha token as a string.</span>
 <span class="sd">        If None, clears the existing handler.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_captcha_handler_instance</span> <span class="o">=</span> <span class="n">handler</span>
 </code></pre></div></td></tr></table></div>
             </details>

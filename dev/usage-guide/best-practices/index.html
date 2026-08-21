@@ -1486,12 +1486,12 @@ less suspicious than using a different IP address every time you make a request.
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-<span class="n">before_ip</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">_send_public_request</span><span class="p">(</span><span class="s2">&quot;https://api.ipify.org/&quot;</span><span class="p">)</span>
-<span class="n">cl</span><span class="o">.</span><span class="n">set_proxy</span><span class="p">(</span><span class="s2">&quot;http://&lt;api_key&gt;:wifi;ca;;;toronto@proxy.soax.com:9137&quot;</span><span class="p">)</span>
-<span class="n">after_ip</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">_send_public_request</span><span class="p">(</span><span class="s2">&quot;https://api.ipify.org/&quot;</span><span class="p">)</span>
+<span class="n">before_ip</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">_send_public_request</span><span class="p">(</span><span class="s2">"https://api.ipify.org/"</span><span class="p">)</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">set_proxy</span><span class="p">(</span><span class="s2">"http://&lt;api_key&gt;:wifi;ca;;;toronto@proxy.soax.com:9137"</span><span class="p">)</span>
+<span class="n">after_ip</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">_send_public_request</span><span class="p">(</span><span class="s2">"https://api.ipify.org/"</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Before: </span><span class="si">{</span><span class="n">before_ip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;After: </span><span class="si">{</span><span class="n">after_ip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Before: </span><span class="si">{</span><span class="n">before_ip</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"After: </span><span class="si">{</span><span class="n">after_ip</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="add-delays">Add Delays</h2>
 <p>It's recommended you try to mimic the behavior of a real user. This means you should add delays
@@ -1518,16 +1518,16 @@ and password again.</p>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
     <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
-    <span class="n">cl</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">&quot;session.json&quot;</span><span class="p">)</span>
+    <span class="n">cl</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
 </code></pre></div>
 <p>And the next time</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-    <span class="n">cl</span><span class="o">.</span><span class="n">load_settings</span><span class="p">(</span><span class="s2">&quot;session.json&quot;</span><span class="p">)</span>
+    <span class="n">cl</span><span class="o">.</span><span class="n">load_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
-    <span class="n">cl</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">&quot;session.json&quot;</span><span class="p">)</span>
+    <span class="n">cl</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
 </code></pre></div>
 <p><code>login()</code> validates the loaded session before reusing it. When Instagram
 returns <code>login_required</code>, aiograpi clears the rejected authorization and logs
@@ -1539,8 +1539,8 @@ session. Save the settings again in case the session was refreshed.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">login_user</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Login with a saved session and refresh it only when required.&quot;&quot;&quot;</span>
-    <span class="n">session_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;session.json&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Login with a saved session and refresh it only when required."""</span>
+    <span class="n">session_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
     <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">session_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="n">cl</span><span class="o">.</span><span class="n">load_settings</span><span class="p">(</span><span class="n">session_file</span><span class="p">)</span>
