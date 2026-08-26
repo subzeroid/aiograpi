@@ -5,11 +5,17 @@ accounts and networks you control.
 """
 
 import argparse
+import asyncio
 import hashlib
 import hmac
+import json
+import time
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+from aiograpi import Client
 
 MAX_ATTEMPTS = 10
 MIN_COOLDOWN_SECONDS = 10.0
@@ -58,6 +64,78 @@ def build_jobs(accounts: list[dict], modes: tuple[str, ...], pairing: str, count
 
 def digest_profile_value(key: bytes, value: object) -> str:
     return hmac.new(key, str(value).encode(), hashlib.sha256).hexdigest()[:16]
+
+
+def profile(client: Client, digest_key: bytes) -> dict[str, str]:
+    return {
+        "uuid": digest_profile_value(digest_key, client.uuid),
+        "android_device_id": digest_profile_value(digest_key, client.android_device_id),
+        "user_agent": digest_profile_value(digest_key, client.user_agent),
+    }
+
+
+def fetch_accounts(url: str, count: int, *, opener=urllib.request.urlopen) -> list[dict]:
+    request = urllib.request.Request(
+        build_accounts_url(url, count),
+        headers={"User-Agent": "aiograpi-login-matrix"},
+    )
+    with opener(request, timeout=30) as response:
+        payload = json.loads(response.read())
+
+    accounts = payload if isinstance(payload, list) else payload.get("accounts") if isinstance(payload, dict) else None
+    if not isinstance(accounts, list):
+        raise ValueError("account pool response must contain an accounts list")
+    for account in accounts:
+        if not isinstance(account, dict) or not account.get("username") or not account.get("password"):
+            raise ValueError("account pool records must contain username and password")
+    return accounts
+
+
+async def attempt(
+    job: Job,
+    account: dict,
+    *,
+    run_id: str,
+    digest_key: bytes,
+    pairing: str,
+    login_timeout: float,
+    client_factory=Client,
+) -> dict:
+    settings = dict(account.get("client_settings") or account.get("settings") or {})
+    totp_seed = settings.pop("totp_seed", None) or account.get("totp_seed")
+    client = client_factory(
+        settings=device_only_settings(settings) if job.mode == "stable" else None,
+        proxy=account.get("proxy"),
+    )
+    result = {
+        "run_id": run_id,
+        "trial": job.trial,
+        "mode": job.mode,
+        "pairing": pairing,
+        "proxy_used": bool(account.get("proxy")),
+        "profile_before": profile(client, digest_key),
+        "status": "error",
+    }
+    login_kwargs = {}
+    if totp_seed:
+        login_kwargs["verification_code"] = client.totp_generate_code(totp_seed)
+
+    started = time.monotonic()
+    try:
+        async with client.public, client.private, client.graphql:
+            await asyncio.wait_for(
+                client.login(account["username"], account["password"], **login_kwargs),
+                timeout=login_timeout,
+            )
+        result["status"] = "ok"
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        result["error_type"] = type(exc).__name__
+    finally:
+        result["elapsed_ms"] = round((time.monotonic() - started) * 1000)
+        result["profile_after"] = profile(client, digest_key)
+    return result
 
 
 def selected_modes(mode: str) -> tuple[str, ...]:
