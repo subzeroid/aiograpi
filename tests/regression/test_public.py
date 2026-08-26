@@ -1,10 +1,11 @@
 import unittest
 from unittest.mock import AsyncMock, Mock
 
+import httpx
 import orjson
 
 from aiograpi import Client
-from aiograpi.exceptions import ClientLoginRequired
+from aiograpi.exceptions import ClientLoginRequired, ClientThrottledError
 
 
 class PublicRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -21,6 +22,34 @@ class PublicRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaises(ClientLoginRequired):
             await client._send_public_request("https://www.instagram.com/graphql/query/", return_json=True)
+
+    async def test_public_request_retries_typed_429_only_at_the_outer_layer(self):
+        client = Client()
+        client.last_response_ts = 0
+        requests = []
+
+        def handle_request(request):
+            requests.append(request)
+            return httpx.Response(429, text="rate limited")
+
+        client.public._client = httpx.AsyncClient(transport=httpx.MockTransport(handle_request))
+
+        try:
+            with unittest.mock.patch("aiograpi.mixins.public.asyncio.sleep", new_callable=AsyncMock) as sleep:
+                with self.assertRaises(ClientThrottledError) as cm:
+                    await client.public_request(
+                        "https://www.instagram.com/graphql/query/",
+                        retries_count=3,
+                        retries_timeout=0,
+                    )
+        finally:
+            await client.public._close()
+
+        self.assertEqual(cm.exception.response.status_code, 429)
+        self.assertEqual(len(requests), 3)
+        self.assertTrue(all(request.method == "GET" for request in requests))
+        self.assertEqual(sleep.await_args_list.count(unittest.mock.call(0)), 2)
+        self.assertEqual(sleep.await_args_list.count(unittest.mock.call(1.0)), 2)
 
     async def test_public_doc_id_graphql_request_injects_logged_in_public_cookies(self):
         client = Client()

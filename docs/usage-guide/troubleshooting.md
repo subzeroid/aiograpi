@@ -108,9 +108,7 @@ Open the proxy's management URL (often the redirect target) to confirm.
 
 ### `PleaseWaitFewMinutes`
 
-Self-explanatory. Wait, don't retry-loop. aiograpi already retries with
-backoff on 429, so this means you've exhausted that and Instagram wants
-you to actually pause.
+Instagram is asking the account to pause. Private requests surface this response immediately; unlike the configurable outer retry loop in `public_request()`, they do not automatically retry HTTP 429. Wait instead of starting another retry loop.
 
 ### `ClientThrottledError` (HTTP 429)
 

@@ -2,6 +2,8 @@ import json
 import unittest
 from unittest.mock import AsyncMock, Mock
 
+import httpx
+
 from aiograpi import Client, httpx_ext
 from aiograpi.exceptions import (
     AccountContactPointRequired,
@@ -10,7 +12,9 @@ from aiograpi.exceptions import (
     BadPassword,
     ClientConnectionError,
     ClientNotFoundError,
+    ClientThrottledError,
     DirectMessageRequestsDisabled,
+    PleaseWaitFewMinutes,
 )
 
 
@@ -159,6 +163,52 @@ class PrivateRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             await client._send_private_request("users/999/info/")
 
         self.assertEqual(client.last_json, {})
+
+    async def test_send_private_request_maps_429_to_typed_throttling_error_without_transport_retries(self):
+        client = self._build_client()
+        client.session_retry_total = 9
+        requests = []
+
+        def handle_request(request):
+            requests.append(request)
+            return httpx.Response(429, json={"message": "rate limited", "status": "fail"})
+
+        client.private._client = httpx.AsyncClient(transport=httpx.MockTransport(handle_request))
+
+        try:
+            with self.assertRaises(ClientThrottledError) as cm:
+                await client._send_private_request("users/999/info/")
+        finally:
+            await client.private._close()
+
+        self.assertEqual(cm.exception.response.status_code, 429)
+        self.assertEqual(len(requests), 1)
+        self.assertEqual(requests[0].method, "GET")
+
+    async def test_send_private_request_maps_429_wait_message_to_please_wait(self):
+        client = self._build_client()
+        requests = []
+
+        def handle_request(request):
+            requests.append(request)
+            return httpx.Response(
+                429,
+                json={
+                    "message": "Please wait a few minutes before you try again",
+                    "status": "fail",
+                },
+            )
+
+        client.private._client = httpx.AsyncClient(transport=httpx.MockTransport(handle_request))
+
+        try:
+            with self.assertRaises(PleaseWaitFewMinutes) as cm:
+                await client._send_private_request("users/999/info/")
+        finally:
+            await client.private._close()
+
+        self.assertEqual(cm.exception.response.status_code, 429)
+        self.assertEqual(len(requests), 1)
 
     async def test_private_request_retries_remote_protocol_error_once(self):
         client = self._build_client()
