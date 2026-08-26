@@ -1469,7 +1469,7 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded API baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 2.18.16
+<div class="highlight"><pre><span></span><code>instagrapi 2.18.18
 </code></pre></div>
 <p><code>aiograpi 1.0.x</code> established the SemVer async baseline through <code>instagrapi 2.7.17</code>, including Bloks login fallback
 updates, backup-code 2FA, email and phone helper work, password reset helpers, album per-slide usertags, comment
@@ -1486,6 +1486,7 @@ challenge context handling, and clearer Reel/clip upload failure details.</p>
 <p><code>aiograpi 1.4.15</code> continues the baseline through <code>instagrapi 2.10.14</code> and adds async story poll voting via <code>story_poll_vote(...)</code> plus private <code>Story.polls</code> extraction for story poll sticker ids, questions, options, and vote state.</p>
 <p><code>aiograpi 1.5.0</code> continues the baseline through <code>instagrapi 2.11.0</code> and ports the <code>user_follow(...)</code> action-count/cache semantics fix so duplicate follow attempts return <code>False</code> when the relationship already exists or is pending.</p>
 <p><code>aiograpi 1.6.0</code> continues the baseline through <code>instagrapi 2.12.0</code> and ports typed preservation for v2-only <code>UserShort</code> fields in private GraphQL follow-list payloads, including <code>friendship_status</code> and normalized <code>latest_reel_media</code>.</p>
+<p><code>aiograpi 1.12.14</code> continues the baseline through <code>instagrapi 2.18.18</code>. Its HTTPX transport already exposes the final HTTP response directly, so exhausted <code>429</code> responses map to <code>ClientThrottledError</code> or <code>PleaseWaitFewMinutes</code> without leaking urllib3 retry errors or adding a second transport retry layer.</p>
 <h2 id="release-policy">Release policy</h2>
 <ul>
 <li>Use one <code>aiograpi</code> feature release for a large upstream sync.</li>

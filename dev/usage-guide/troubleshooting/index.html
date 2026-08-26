@@ -2184,9 +2184,7 @@ Don't blindly disable verification on residential proxies because MITM attackers
 <p>Open the proxy's management URL (often the redirect target) to confirm.</p>
 <h2 id="ig-side-rate-limits-blocks">IG-side rate limits &amp; blocks</h2>
 <h3 id="pleasewaitfewminutes"><code>PleaseWaitFewMinutes</code></h3>
-<p>Self-explanatory. Wait, don't retry-loop. aiograpi already retries with
-backoff on 429, so this means you've exhausted that and Instagram wants
-you to actually pause.</p>
+<p>Instagram is asking the account to pause. Private requests surface this response immediately; unlike the configurable outer retry loop in <code>public_request()</code>, they do not automatically retry HTTP 429. Wait instead of starting another retry loop.</p>
 <h3 id="clientthrottlederror-http-429"><code>ClientThrottledError</code> (HTTP 429)</h3>
 <p>You're hitting the endpoint too fast. Slow down:</p>
 <div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">delay_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>   <span class="c1"># random delay 3-6s between requests</span>
