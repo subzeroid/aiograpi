@@ -79,3 +79,87 @@ case "$VERSION_ORDER" in
     exit 1
     ;;
 esac
+
+if [[ "$VERSION_ORDER" != "newer" ]]; then
+  exit 0
+fi
+
+if [[ -z "$GITHUB_REPOSITORY" ]]; then
+  echo "::error::GITHUB_REPOSITORY is required" >&2
+  exit 1
+fi
+
+TARGET_REPOSITORY="$GITHUB_REPOSITORY"
+ISSUE_TITLE="Sync aiograpi with instagrapi $TARGET_TAG"
+ISSUES_FILE="$(mktemp)"
+BODY_FILE=""
+
+cleanup() {
+  rm -f "$ISSUES_FILE"
+  if [[ -n "$BODY_FILE" ]]; then
+    rm -f "$BODY_FILE"
+  fi
+}
+trap cleanup EXIT
+
+if ! gh issue list \
+  --repo "$TARGET_REPOSITORY" \
+  --state all \
+  --limit 1000 \
+  --json number,title,url,state > "$ISSUES_FILE"; then
+  echo "::error::Failed to list existing upstream sync issues" >&2
+  exit 1
+fi
+
+find_existing_issue() {
+  python3 - "$ISSUES_FILE" "$ISSUE_TITLE" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+issues = json.loads(Path(sys.argv[1]).read_text())
+title = sys.argv[2]
+for issue in issues:
+    if issue.get("title") == title:
+        print(f"{issue.get('state', '')}\t{issue.get('url', '')}")
+        break
+PY
+}
+
+if ! EXISTING_ISSUE="$(find_existing_issue)"; then
+  echo "::error::Failed to inspect existing upstream sync issues" >&2
+  exit 1
+fi
+
+if [[ -n "$EXISTING_ISSUE" ]]; then
+  IFS=$'\t' read -r EXISTING_STATE EXISTING_URL <<< "$EXISTING_ISSUE"
+  if [[ "$EXISTING_STATE" == "CLOSED" ]]; then
+    echo "::warning::Upstream sync issue is already closed while the baseline is behind: $EXISTING_URL" >&2
+  else
+    echo "Upstream sync issue already exists: $EXISTING_URL"
+  fi
+  exit 0
+fi
+
+BODY_FILE="$(mktemp)"
+{
+  printf '%s\n\n' "A new instagrapi release needs aiograpi triage."
+  printf 'Current aiograpi baseline: %s\n' "$BASELINE"
+  printf 'Target instagrapi tag: %s\n' "$TARGET_TAG"
+  printf 'Compare: https://github.com/subzeroid/instagrapi/compare/%s...%s\n\n' "$BASELINE" "$TARGET_TAG"
+  printf '%s\n' "Checklist:"
+  printf '%s\n' "- [ ] Review instagrapi release notes and changed files."
+  printf '%s\n' "- [ ] Decide which changes are async-portable."
+  printf '%s\n' "- [ ] Port features/fixes with regression tests."
+  printf '%s\n' "- [ ] Update docs and aiograpi upstream baseline."
+  printf '%s\n' "- [ ] Run local checks and CI."
+  printf '%s\n' "- [ ] Publish an aiograpi release or record why no release is needed."
+} > "$BODY_FILE"
+
+if ! gh issue create \
+  --repo "$TARGET_REPOSITORY" \
+  --title "$ISSUE_TITLE" \
+  --body-file "$BODY_FILE"; then
+  echo "::error::Failed to create upstream sync issue" >&2
+  exit 1
+fi

@@ -12,6 +12,19 @@ import aiograpi
 ROOT = Path(__file__).resolve().parents[2]
 TRACKER = ROOT / "scripts" / "upstream_sync_tracker.sh"
 
+ISSUE_LIST_ARGS = [
+    "issue",
+    "list",
+    "--repo",
+    "subzeroid/aiograpi",
+    "--state",
+    "all",
+    "--limit",
+    "1000",
+    "--json",
+    "number,title,url,state",
+]
+
 
 def _tracker_context(tmp_path, baseline="2.18.18"):
     fake_bin = tmp_path / "fake-bin"
@@ -197,14 +210,20 @@ def test_comparison_error_does_not_report_a_new_release(tmp_path):
     ("target", "baseline"),
     [("2.18.19", "2.18.18"), ("2.19.0", "2.18.99")],
 )
-def test_valid_newer_target_reports_detection_without_gh_calls(tmp_path, target, baseline):
+def test_valid_newer_target_reports_detection_and_creates_issue(tmp_path, target, baseline):
     context = _tracker_context(tmp_path, baseline=baseline)
 
     result = _run_tracker(context, "workflow_dispatch", workflow_tag=target)
 
     assert result.returncode == 0
-    assert result.stdout == f"New upstream release detected: {baseline} -> {target}\n"
-    assert _gh_calls(context) == []
+    assert f"New upstream release detected: {baseline} -> {target}" in result.stdout
+    assert _gh_calls(context)[0] == ISSUE_LIST_ARGS
+    assert _gh_calls(context)[1][0:4] == [
+        "issue",
+        "create",
+        "--repo",
+        "subzeroid/aiograpi",
+    ]
 
 
 def test_release_api_failure_stops_before_issue_creation(tmp_path):
@@ -239,3 +258,120 @@ def test_invalid_scheduled_release_tag_is_rejected(tmp_path):
         ]
     ]
     assert "Invalid instagrapi target tag" in result.stderr
+
+
+def test_issue_list_failure_is_visible_and_does_not_create_issue(tmp_path):
+    context = _tracker_context(tmp_path)
+
+    result = _run_tracker(
+        context,
+        "workflow_dispatch",
+        workflow_tag="2.18.19",
+        GH_ISSUE_LIST_FAIL="1",
+    )
+
+    assert result.returncode != 0
+    assert _gh_calls(context) == [ISSUE_LIST_ARGS]
+    assert not context.body_capture.exists()
+
+
+def test_exact_issue_in_any_state_suppresses_duplicate_creation(tmp_path):
+    for state in ("OPEN", "CLOSED"):
+        context = _tracker_context(tmp_path / state.lower())
+        issue_url = "https://github.com/subzeroid/aiograpi/issues/500"
+        issues = json.dumps(
+            [
+                {
+                    "number": 500,
+                    "title": "Sync aiograpi with instagrapi 2.18.19",
+                    "url": issue_url,
+                    "state": state,
+                }
+            ]
+        )
+
+        result = _run_tracker(
+            context,
+            "workflow_dispatch",
+            workflow_tag="2.18.19",
+            GH_ISSUES=issues,
+        )
+
+        assert result.returncode == 0
+        assert issue_url in result.stdout + result.stderr
+        assert _gh_calls(context) == [ISSUE_LIST_ARGS]
+        assert not context.body_capture.exists()
+        if state == "CLOSED":
+            assert "::warning::" in result.stderr
+
+
+def test_near_match_titles_do_not_suppress_issue_creation(tmp_path):
+    context = _tracker_context(tmp_path)
+    issues = json.dumps(
+        [
+            {
+                "number": 1,
+                "title": "Sync aiograpi with instagrapi 2.18.1",
+                "url": "https://github.com/subzeroid/aiograpi/issues/1",
+                "state": "OPEN",
+            },
+            {
+                "number": 2,
+                "title": "Sync aiograpi with instagrapi 2.18.190",
+                "url": "https://github.com/subzeroid/aiograpi/issues/2",
+                "state": "CLOSED",
+            },
+            {
+                "number": 3,
+                "title": "Sync aiograpi with instagrapi 2.18.19-rc1",
+                "url": "https://github.com/subzeroid/aiograpi/issues/3",
+                "state": "OPEN",
+            },
+        ]
+    )
+
+    result = _run_tracker(
+        context,
+        "workflow_dispatch",
+        workflow_tag="2.18.19",
+        GH_ISSUES=issues,
+    )
+
+    assert result.returncode == 0
+    calls = _gh_calls(context)
+    assert calls[0] == ISSUE_LIST_ARGS
+    assert calls[1][0:4] == ["issue", "create", "--repo", "subzeroid/aiograpi"]
+    assert calls[1][4:6] == ["--title", "Sync aiograpi with instagrapi 2.18.19"]
+    assert calls[1][6] == "--body-file"
+    body = context.body_capture.read_text()
+    assert "Current aiograpi baseline: 2.18.18" in body
+    assert "Target instagrapi tag: 2.18.19" in body
+    assert "compare/2.18.18...2.18.19" in body
+
+
+def test_issue_create_failure_is_visible(tmp_path):
+    context = _tracker_context(tmp_path)
+
+    result = _run_tracker(
+        context,
+        "repository_dispatch",
+        dispatch_tag="2.18.19",
+        GH_ISSUE_CREATE_FAIL="1",
+    )
+
+    assert result.returncode != 0
+    assert [call[:2] for call in _gh_calls(context)] == [
+        ["issue", "list"],
+        ["issue", "create"],
+    ]
+
+
+def test_newer_target_requires_github_repository(tmp_path):
+    context = _tracker_context(tmp_path)
+    context.env.pop("GITHUB_REPOSITORY")
+
+    result = _run_tracker(context, "workflow_dispatch", workflow_tag="2.18.19")
+
+    assert result.returncode != 0
+    assert "GITHUB_REPOSITORY is required" in result.stderr
+    assert _gh_calls(context) == []
