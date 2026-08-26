@@ -349,6 +349,33 @@ def test_near_match_titles_do_not_suppress_issue_creation(tmp_path):
     assert "compare/2.18.18...2.18.19" in body
 
 
+def test_saturated_issue_list_without_exact_match_fails_closed(tmp_path):
+    context = _tracker_context(tmp_path)
+    issues = json.dumps(
+        [
+            {
+                "number": number,
+                "title": f"Other issue {number}",
+                "url": f"https://github.com/subzeroid/aiograpi/issues/{number}",
+                "state": "OPEN",
+            }
+            for number in range(1, 1001)
+        ]
+    )
+
+    result = _run_tracker(
+        context,
+        "workflow_dispatch",
+        workflow_tag="2.18.19",
+        GH_ISSUES=issues,
+    )
+
+    assert result.returncode != 0
+    assert "::error::" in result.stderr
+    assert _gh_calls(context) == [ISSUE_LIST_ARGS]
+    assert not context.body_capture.exists()
+
+
 def test_issue_create_failure_is_visible(tmp_path):
     context = _tracker_context(tmp_path)
 

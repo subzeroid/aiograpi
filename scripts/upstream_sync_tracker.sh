@@ -121,8 +121,11 @@ issues = json.loads(Path(sys.argv[1]).read_text())
 title = sys.argv[2]
 for issue in issues:
     if issue.get("title") == title:
-        print(f"{issue.get('state', '')}\t{issue.get('url', '')}")
-        break
+        print(f"match\t{issue.get('state', '')}\t{issue.get('url', '')}")
+        sys.exit(0)
+
+if len(issues) == 1000:
+    print("saturated")
 PY
 }
 
@@ -132,13 +135,25 @@ if ! EXISTING_ISSUE="$(find_existing_issue)"; then
 fi
 
 if [[ -n "$EXISTING_ISSUE" ]]; then
-  IFS=$'\t' read -r EXISTING_STATE EXISTING_URL <<< "$EXISTING_ISSUE"
-  if [[ "$EXISTING_STATE" == "CLOSED" ]]; then
-    echo "::warning::Upstream sync issue is already closed while the baseline is behind: $EXISTING_URL" >&2
-  else
-    echo "Upstream sync issue already exists: $EXISTING_URL"
-  fi
-  exit 0
+  IFS=$'\t' read -r ISSUE_RESULT EXISTING_STATE EXISTING_URL <<< "$EXISTING_ISSUE"
+  case "$ISSUE_RESULT" in
+    saturated)
+      echo "::error::Issue list reached its limit without an exact title match" >&2
+      exit 1
+      ;;
+    match)
+      if [[ "$EXISTING_STATE" == "CLOSED" ]]; then
+        echo "::warning::Upstream sync issue is already closed while the baseline is behind: $EXISTING_URL" >&2
+      else
+        echo "Upstream sync issue already exists: $EXISTING_URL"
+      fi
+      exit 0
+      ;;
+    *)
+      echo "::error::Invalid existing upstream sync issue result" >&2
+      exit 1
+      ;;
+  esac
 fi
 
 BODY_FILE="$(mktemp)"
