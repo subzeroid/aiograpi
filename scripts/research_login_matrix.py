@@ -10,16 +10,17 @@ import contextlib
 import hashlib
 import hmac
 import json
+import math
 import os
 import secrets
 import stat
 import time
-import urllib.error
-import urllib.request
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+import httpx
 
 from aiograpi import Client
 
@@ -82,15 +83,17 @@ def profile(client: Client, digest_key: bytes) -> dict[str, str]:
     }
 
 
-def fetch_accounts(url: str, count: int, *, opener=urllib.request.urlopen) -> list[dict]:
-    request = urllib.request.Request(
-        build_accounts_url(url, count),
-        headers={"User-Agent": "aiograpi-login-matrix"},
-    )
+def fetch_accounts(url: str, count: int, *, getter=httpx.get) -> list[dict]:
     try:
-        with opener(request, timeout=30) as response:
-            payload = json.loads(response.read())
-    except (json.JSONDecodeError, OSError, TimeoutError, urllib.error.URLError) as exc:
+        response = getter(
+            build_accounts_url(url, count),
+            headers={"User-Agent": "aiograpi-login-matrix"},
+            timeout=30,
+            follow_redirects=False,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except (httpx.HTTPError, json.JSONDecodeError, OSError, TimeoutError, ValueError) as exc:
         raise RuntimeError(f"account pool request failed ({type(exc).__name__})") from None
 
     accounts = payload if isinstance(payload, list) else payload.get("accounts") if isinstance(payload, dict) else None
@@ -142,13 +145,12 @@ async def attempt(
         "profile_before": profile(client, digest_key),
         "status": "error",
     }
-    login_kwargs = {}
-    if totp_seed:
-        login_kwargs["verification_code"] = client.totp_generate_code(totp_seed)
-
     started = time.monotonic()
     try:
         async with client.public, client.private, client.graphql:
+            login_kwargs = {}
+            if totp_seed:
+                login_kwargs["verification_code"] = client.totp_generate_code(totp_seed)
             await asyncio.wait_for(
                 client.login(account["username"], account["password"], **login_kwargs),
                 timeout=login_timeout,
@@ -185,9 +187,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     if args.count <= 0:
         parser.error("--count must be positive")
-    if args.cooldown < MIN_COOLDOWN_SECONDS:
+    if not math.isfinite(args.cooldown) or args.cooldown < MIN_COOLDOWN_SECONDS:
         parser.error(f"--cooldown must be at least {MIN_COOLDOWN_SECONDS:g} seconds")
-    if args.login_timeout <= 0:
+    if not math.isfinite(args.login_timeout) or args.login_timeout <= 0:
         parser.error("--login-timeout must be positive")
     args.attempts = args.count * len(selected_modes(args.mode))
     if args.attempts > MAX_ATTEMPTS:
@@ -236,7 +238,7 @@ async def async_main(argv: list[str] | None = None, environ: dict[str, str] | No
     account_pool_url = require_opt_in(os.environ if environ is None else environ)
     modes = selected_modes(args.mode)
     requested = args.count if args.pairing == "crossover" else args.count * len(modes)
-    accounts = fetch_accounts(account_pool_url, requested)
+    accounts = await asyncio.to_thread(fetch_accounts, account_pool_url, requested)
     jobs = build_jobs(accounts, modes, args.pairing, args.count)
     digest_key = secrets.token_bytes(32)
     run_id = uuid.uuid4().hex

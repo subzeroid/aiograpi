@@ -19,15 +19,15 @@ def test_build_accounts_url_preserves_query_and_sets_count():
     assert login_matrix.build_accounts_url("https://pool.test/accounts?kind=live", 3) == (
         "https://pool.test/accounts?kind=live&count=3"
     )
+    assert login_matrix.build_accounts_url("https://pool.test/accounts?count=99", 2) == (
+        "https://pool.test/accounts?count=2"
+    )
 
 
 @pytest.mark.parametrize("url", ["http://pool.test/accounts", "pool.test/accounts", "https:///accounts"])
 def test_build_accounts_url_requires_https(url):
     with pytest.raises(ValueError, match="HTTPS"):
         login_matrix.build_accounts_url(url, 1)
-    assert login_matrix.build_accounts_url("https://pool.test/accounts?count=99", 2) == (
-        "https://pool.test/accounts?count=2"
-    )
 
 
 def test_device_only_settings_drops_authentication_state():
@@ -96,7 +96,11 @@ def test_profile_digest_is_stable_only_within_one_run():
         ["--count", "0"],
         ["--count", "-1"],
         ["--login-timeout", "0"],
+        ["--login-timeout", "nan"],
+        ["--login-timeout", "inf"],
         ["--cooldown", "9.99"],
+        ["--cooldown", "nan"],
+        ["--cooldown", "inf"],
         ["--mode", "both", "--count", "6"],
         ["--mode", "stable", "--count", "11"],
     ],
@@ -136,30 +140,27 @@ class FakeResponse:
     def __init__(self, payload):
         self.payload = payload
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *_args):
+    def raise_for_status(self):
         return None
 
-    def read(self):
-        return json.dumps(self.payload).encode()
+    def json(self):
+        return self.payload
 
 
-class FakeOpener:
+class FakeGetter:
     def __init__(self, payload):
         self.payload = payload
         self.request = None
         self.kwargs = None
 
-    def __call__(self, request, **kwargs):
-        self.request = request
+    def __call__(self, url, **kwargs):
+        self.request = url
         self.kwargs = kwargs
         return FakeResponse(self.payload)
 
 
 def test_fetch_accounts_uses_verified_tls_and_validates_records():
-    opener = FakeOpener(
+    getter = FakeGetter(
         {
             "accounts": [
                 {"username": "first", "password": "secret"},
@@ -168,12 +169,15 @@ def test_fetch_accounts_uses_verified_tls_and_validates_records():
         }
     )
 
-    accounts = login_matrix.fetch_accounts("https://pool.test/accounts?kind=live", 2, opener=opener)
+    accounts = login_matrix.fetch_accounts("https://pool.test/accounts?kind=live", 2, getter=getter)
 
     assert len(accounts) == 2
-    assert opener.request.full_url == "https://pool.test/accounts?kind=live&count=2"
-    assert opener.request.headers["User-agent"] == "aiograpi-login-matrix"
-    assert opener.kwargs == {"timeout": 30}
+    assert getter.request == "https://pool.test/accounts?kind=live&count=2"
+    assert getter.kwargs == {
+        "headers": {"User-Agent": "aiograpi-login-matrix"},
+        "timeout": 30,
+        "follow_redirects": False,
+    }
 
 
 @pytest.mark.parametrize(
@@ -190,7 +194,7 @@ def test_fetch_accounts_uses_verified_tls_and_validates_records():
 )
 def test_fetch_accounts_rejects_invalid_shapes_without_echoing_payload(payload):
     with pytest.raises(ValueError, match="account pool") as exc_info:
-        login_matrix.fetch_accounts("https://pool.test/accounts", 1, opener=FakeOpener(payload))
+        login_matrix.fetch_accounts("https://pool.test/accounts", 1, getter=FakeGetter(payload))
 
     assert "only" not in str(exc_info.value)
     assert "not-a-list" not in str(exc_info.value)
@@ -228,6 +232,8 @@ class FakeClient:
 
     def totp_generate_code(self, seed):
         self.totp_seed = seed
+        if self.behavior == "totp_failure":
+            raise ValueError("private TOTP failure details")
         return "123456"
 
     async def login(self, username, password, **kwargs):
@@ -323,6 +329,23 @@ def test_attempt_bounds_login_time_and_closes_all_sessions():
     assert all(session.exited == 1 for session in (client.public, client.private, client.graphql))
 
 
+def test_attempt_sanitizes_totp_failure_and_closes_all_sessions():
+    result = run_attempt(
+        {
+            "username": "private-user",
+            "password": "private-password",
+            "totp_seed": "private-totp",
+        },
+        behavior="totp_failure",
+    )
+
+    client = FakeClient.instances[0]
+    assert result["status"] == "error"
+    assert result["error_type"] == "ValueError"
+    assert "private TOTP failure details" not in json.dumps(result)
+    assert all(session.exited == 1 for session in (client.public, client.private, client.graphql))
+
+
 def test_secure_output_creates_owner_only_file_and_appends_jsonl(tmp_path):
     output_path = tmp_path / "matrix.jsonl"
 
@@ -377,9 +400,14 @@ def test_async_main_runs_sequential_matrix_and_flushes_before_cooldown(tmp_path,
         calls.append(("sleep", seconds))
         flush_sizes.append(len(output_path.read_text().splitlines()))
 
+    async def fake_to_thread(function, *args):
+        calls.append(("thread", function.__name__))
+        return function(*args)
+
     monkeypatch.setattr(login_matrix, "fetch_accounts", fake_fetch)
     monkeypatch.setattr(login_matrix, "attempt", fake_attempt)
     monkeypatch.setattr(login_matrix.asyncio, "sleep", fake_sleep)
+    monkeypatch.setattr(login_matrix.asyncio, "to_thread", fake_to_thread)
 
     result = asyncio.run(
         login_matrix.async_main(
@@ -403,7 +431,10 @@ def test_async_main_runs_sequential_matrix_and_flushes_before_cooldown(tmp_path,
     )
 
     assert result == 0
-    assert calls[0] == ("fetch", "https://pool.test/accounts?kind=live", 4)
+    assert calls[:2] == [
+        ("thread", "fake_fetch"),
+        ("fetch", "https://pool.test/accounts?kind=live", 4),
+    ]
     assert [call[1:] for call in calls if call[0] == "attempt"] == [
         (0, 0, "stable", "user-0"),
         (0, 1, "fresh", "user-1"),
