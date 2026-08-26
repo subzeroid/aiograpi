@@ -1402,6 +1402,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#controlled-login-profile-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlled Login Profile Research
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1546,6 +1557,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#controlled-login-profile-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlled Login Profile Research
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1643,6 +1665,16 @@ for the MQTT socket and keep the account proxy for normal private API calls.</p>
 publishes versioned docs with <code>mike</code>.</p>
 <p>The <code>Upstream Sync Tracker</code> workflow can be triggered manually or by repository dispatch when <code>instagrapi</code> publishes a
 new release. It creates a tracking issue with the current async-port baseline and the target upstream tag.</p>
+<h2 id="controlled-login-profile-research">Controlled Login Profile Research</h2>
+<p>Maintainers can use <code>scripts/research_login_matrix.py</code> to compare login outcomes for a reused device profile and a fresh profile. This is an opt-in diagnostic experiment for accounts and networks you control, not a CI test. Repeated login attempts can trigger Instagram checkpoints or temporary restrictions, so start with one trial and inspect the result before increasing the count.</p>
+<div class="highlight"><pre><span></span><code><span class="nv">IG_RUN_LOGIN_MATRIX</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="nv">TEST_ACCOUNTS_URL</span><span class="o">=</span><span class="s2">"https://your-controlled-pool.example/accounts"</span><span class="w"> </span><span class="se">\</span>
+python<span class="w"> </span>scripts/research_login_matrix.py<span class="w"> </span>--mode<span class="w"> </span>both<span class="w"> </span>--count<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<p>The account-pool URL must use HTTPS with normal certificate verification. Redirects are rejected. <code>stable</code> retains only device/profile fields from the stored client settings; it drops sessions and other authentication state. <code>fresh</code> creates a client without stored settings. The default <code>separate</code> pairing uses different accounts for the two conditions. <code>--pairing crossover</code> uses the same account for both conditions, but the first login can influence the second.</p>
+<p>Attempts run sequentially. The default cooldown is 30 seconds, the minimum is 10 seconds, and one invocation is limited to ten total login attempts. Use <code>--login-timeout</code> to bound each attempt and <code>--output</code> to select the append-only JSONL file. Non-finite numeric values are rejected.</p>
+<p>The output file is created with owner-only permissions. The script refuses symlinks and existing files accessible by group or other users, and it verifies the opened file before writing. Records include a random run ID, trial and attempt indexes, mode, status, exception class, elapsed time, a proxy-used boolean, and keyed per-run device-profile digests. They never include usernames, passwords, TOTP secrets or codes, sessions, proxy values, account-pool URLs, exception messages, or response bodies. Client and request loggers are muted during attempts so library warnings cannot print raw responses. The digest key is not saved, so device identifiers cannot be correlated across separate runs. The default <code>login-matrix.jsonl</code> output is ignored by Git.</p>
+<p>Individual login errors are experiment results and do not stop the matrix. Invalid configuration, unsafe output paths, account-pool failures, and malformed account records stop the run with a non-zero exit status. GitHub Actions never invokes this script.</p>
 
 
 
