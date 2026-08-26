@@ -7,9 +7,11 @@ accounts and networks you control.
 import argparse
 import asyncio
 import contextlib
+import errno
 import hashlib
 import hmac
 import json
+import logging
 import math
 import os
 import secrets
@@ -35,6 +37,10 @@ DEVICE_SETTING_KEYS = {
     "user_agent",
     "uuids",
 }
+QUIET_LOGGER = logging.getLogger("aiograpi.login_matrix.quiet")
+QUIET_LOGGER.handlers.clear()
+QUIET_LOGGER.addHandler(logging.NullHandler())
+QUIET_LOGGER.propagate = False
 
 
 @dataclass(frozen=True)
@@ -132,22 +138,28 @@ async def attempt(
 ) -> dict:
     settings = dict(account.get("client_settings") or account.get("settings") or {})
     totp_seed = settings.pop("totp_seed", None) or account.get("totp_seed")
-    client = client_factory(
-        settings=device_only_settings(settings) if job.mode == "stable" else None,
-        proxy=account.get("proxy"),
-    )
     result = {
         "run_id": run_id,
         "trial": job.trial,
         "mode": job.mode,
         "pairing": pairing,
         "proxy_used": bool(account.get("proxy")),
-        "profile_before": profile(client, digest_key),
+        "profile_before": None,
+        "profile_after": None,
         "status": "error",
     }
     started = time.monotonic()
+    client = None
     try:
+        client = client_factory(
+            settings=device_only_settings(settings) if job.mode == "stable" else None,
+            proxy=account.get("proxy"),
+        )
+        client.logger = QUIET_LOGGER
+        client.request_logger = QUIET_LOGGER
+        client.public_request_logger = QUIET_LOGGER
         async with client.public, client.private, client.graphql:
+            result["profile_before"] = profile(client, digest_key)
             login_kwargs = {}
             if totp_seed:
                 login_kwargs["verification_code"] = client.totp_generate_code(totp_seed)
@@ -165,7 +177,12 @@ async def attempt(
         result["error_type"] = type(exc).__name__
     finally:
         result["elapsed_ms"] = round((time.monotonic() - started) * 1000)
-        result["profile_after"] = profile(client, digest_key)
+        if client is not None:
+            try:
+                result["profile_after"] = profile(client, digest_key)
+            except Exception as exc:
+                result["status"] = "error"
+                result.setdefault("error_type", type(exc).__name__)
     return result
 
 
@@ -221,10 +238,27 @@ def secure_output(path: Path):
         if not stat.S_ISREG(current.st_mode):
             raise PermissionError("output path must be a regular file")
 
-    flags = os.O_APPEND | os.O_CREAT | os.O_WRONLY | getattr(os, "O_NOFOLLOW", 0)
-    descriptor = os.open(path, flags, 0o600)
+    flags = os.O_APPEND | os.O_WRONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOFOLLOW", 0)
     try:
-        mode = stat.S_IMODE(os.fstat(descriptor).st_mode)
+        descriptor = os.open(path, flags | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        try:
+            descriptor = os.open(path, flags)
+        except OSError as exc:
+            if exc.errno == errno.ELOOP:
+                raise PermissionError("output path must not be a symlink") from None
+            raise
+    try:
+        opened = os.fstat(descriptor)
+        try:
+            current = os.lstat(path)
+        except FileNotFoundError:
+            raise PermissionError("output path changed while it was opened") from None
+        if not stat.S_ISREG(opened.st_mode) or not stat.S_ISREG(current.st_mode):
+            raise PermissionError("output path must be a regular file")
+        if not os.path.samestat(opened, current):
+            raise PermissionError("output path changed while it was opened")
+        mode = stat.S_IMODE(opened.st_mode)
         if mode & 0o077:
             raise PermissionError("output file permissions must be owner-only")
         output = os.fdopen(descriptor, "a", encoding="utf-8")

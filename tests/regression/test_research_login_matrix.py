@@ -1,6 +1,8 @@
 import asyncio
 import importlib.util
 import json
+import logging
+import os
 import stat
 import sys
 from pathlib import Path
@@ -218,6 +220,8 @@ class FakeClient:
     behavior = "success"
 
     def __init__(self, settings=None, proxy=None):
+        if self.behavior == "constructor_failure":
+            raise ValueError("bogus://private-proxy-user:private-proxy-password@private-proxy.test:1234")
         self.settings_argument = settings
         self.proxy_argument = proxy
         self.uuid = "uuid-before"
@@ -226,6 +230,9 @@ class FakeClient:
         self.public = FakeSession()
         self.private = FakeSession()
         self.graphql = FakeSession()
+        self.logger = logging.getLogger("research-login-matrix-test-leak")
+        self.request_logger = self.logger
+        self.public_request_logger = self.logger
         self.login_call = None
         self.totp_seed = None
         type(self).instances.append(self)
@@ -238,6 +245,8 @@ class FakeClient:
 
     async def login(self, username, password, **kwargs):
         self.login_call = (username, password, kwargs)
+        if self.behavior == "logs":
+            self.logger.error("raw response: PRIVATE-RESPONSE-BODY")
         if self.behavior == "failure":
             raise RuntimeError("private failure details")
         if self.behavior == "timeout":
@@ -283,6 +292,9 @@ def test_attempt_reuses_only_device_settings_and_sanitizes_success_record():
     assert client.proxy_argument == "http://private-proxy.test"
     assert client.totp_seed == "private-totp"
     assert client.login_call == ("private-user", "private-password", {"verification_code": "123456"})
+    assert client.logger is login_matrix.QUIET_LOGGER
+    assert client.request_logger is login_matrix.QUIET_LOGGER
+    assert client.public_request_logger is login_matrix.QUIET_LOGGER
     assert result["status"] == "ok"
     assert result["run_id"] == "public-run-id"
     assert result["trial"] == 2
@@ -358,6 +370,35 @@ def test_attempt_sanitizes_totp_failure_and_closes_all_sessions():
     assert all(session.exited == 1 for session in (client.public, client.private, client.graphql))
 
 
+def test_attempt_sanitizes_client_constructor_failure():
+    result = run_attempt(
+        {
+            "username": "private-user",
+            "password": "private-password",
+            "proxy": "bogus://private-proxy-user:private-proxy-password@private-proxy.test:1234",
+        },
+        behavior="constructor_failure",
+    )
+
+    serialized = json.dumps(result)
+    assert result["status"] == "error"
+    assert result["error_type"] == "ValueError"
+    assert result["profile_before"] is None
+    assert result["profile_after"] is None
+    assert "private-proxy" not in serialized
+
+
+def test_attempt_suppresses_library_error_logs(caplog):
+    with caplog.at_level(logging.ERROR):
+        result = run_attempt(
+            {"username": "private-user", "password": "private-password"},
+            behavior="logs",
+        )
+
+    assert result["status"] == "ok"
+    assert "PRIVATE-RESPONSE-BODY" not in caplog.text
+
+
 def test_secure_output_creates_owner_only_file_and_appends_jsonl(tmp_path):
     output_path = tmp_path / "matrix.jsonl"
 
@@ -389,6 +430,32 @@ def test_secure_output_rejects_existing_shared_permissions(tmp_path):
     with pytest.raises(PermissionError, match="owner-only"):
         with login_matrix.secure_output(output_path):
             pass
+
+
+def test_secure_output_detects_symlink_swap_without_o_nofollow(tmp_path, monkeypatch):
+    output_path = tmp_path / "matrix.jsonl"
+    output_path.write_text("original\n")
+    output_path.chmod(0o600)
+    target = tmp_path / "target.jsonl"
+    target.write_text("private target\n")
+    target.chmod(0o600)
+    real_open = os.open
+
+    def swapping_open(path, flags, mode=0o777):
+        if flags & os.O_EXCL:
+            return real_open(path, flags, mode)
+        output_path.unlink()
+        output_path.symlink_to(target)
+        return real_open(path, flags, mode)
+
+    monkeypatch.setattr(login_matrix.os, "O_NOFOLLOW", 0)
+    monkeypatch.setattr(login_matrix.os, "open", swapping_open)
+
+    with pytest.raises(PermissionError, match="changed|regular"):
+        with login_matrix.secure_output(output_path) as output:
+            output.write("LEAKED\n")
+
+    assert target.read_text() == "private target\n"
 
 
 def test_async_main_runs_sequential_matrix_and_flushes_before_cooldown(tmp_path, monkeypatch):
