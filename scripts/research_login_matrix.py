@@ -151,11 +151,14 @@ async def attempt(
             login_kwargs = {}
             if totp_seed:
                 login_kwargs["verification_code"] = client.totp_generate_code(totp_seed)
-            await asyncio.wait_for(
+            logged_in = await asyncio.wait_for(
                 client.login(account["username"], account["password"], **login_kwargs),
                 timeout=login_timeout,
             )
-        result["status"] = "ok"
+        if logged_in:
+            result["status"] = "ok"
+        else:
+            result["error_type"] = "LoginReturnedFalse"
     except asyncio.CancelledError:
         raise
     except Exception as exc:

@@ -242,6 +242,8 @@ class FakeClient:
             raise RuntimeError("private failure details")
         if self.behavior == "timeout":
             await asyncio.sleep(60)
+        if self.behavior == "false":
+            return False
         self.uuid = "uuid-after"
         return True
 
@@ -327,6 +329,16 @@ def test_attempt_bounds_login_time_and_closes_all_sessions():
     assert result["status"] == "error"
     assert result["error_type"] == "TimeoutError"
     assert all(session.exited == 1 for session in (client.public, client.private, client.graphql))
+
+
+def test_attempt_does_not_record_false_login_result_as_success():
+    result = run_attempt(
+        {"username": "private-user", "password": "private-password"},
+        behavior="false",
+    )
+
+    assert result["status"] == "error"
+    assert result["error_type"] == "LoginReturnedFalse"
 
 
 def test_attempt_sanitizes_totp_failure_and_closes_all_sessions():
