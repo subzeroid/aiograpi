@@ -52,13 +52,15 @@ For the 2026-05 sync, the public releases are `aiograpi 0.9.0` and newer.
 - Add or port regression tests before behavior changes when practical.
 - Run Ruff, regression tests, docs build, and package build before tagging.
 
-## Future automation
+## Automated release tracking
 
-When `instagrapi` publishes a release, `aiograpi` should get a visible follow-up
-task even when no async changes are needed. The preferred workflow is a GitHub
-Actions `workflow_dispatch` or `repository_dispatch` job that records:
+The `Upstream Sync Tracker` workflow checks GitHub's latest stable `instagrapi` release every day at 06:17 UTC. It compares that tag with `__upstream_instagrapi_version__` and creates one durable sync issue when the upstream version is newer. Existing issues are matched by exact title across open and closed states, so a closed or superseded tracker is not recreated daily.
+
+Maintainers can also run the workflow with an explicit tag through `workflow_dispatch` or send the existing `repository_dispatch` event with `event_type` `instagrapi_release` and `client_payload.tag` set to a stable three-component `X.Y.Z` tag, such as `2.18.19`. All modes record:
 
 - previous `instagrapi` baseline;
 - new `instagrapi` tag;
 - compare URL;
 - checklist of changed files and release-note items.
+
+GitHub schedules are best-effort. They run from the default branch, can be delayed or dropped during high Actions load, and are disabled for public repositories after 60 days without repository activity. Manual dispatch can replace delayed or dropped scheduled runs. If GitHub disables the workflow after 60 days of inactivity, maintainers must first re-enable it in Actions or with `gh workflow enable upstream-sync.yml`, then dispatch it.
