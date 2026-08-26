@@ -6,11 +6,17 @@ accounts and networks you control.
 
 import argparse
 import asyncio
+import contextlib
 import hashlib
 import hmac
 import json
+import os
+import secrets
+import stat
 import time
+import urllib.error
 import urllib.request
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -39,6 +45,8 @@ class Job:
 
 def build_accounts_url(url: str, count: int) -> str:
     parts = urlsplit(url)
+    if parts.scheme.lower() != "https" or not parts.hostname:
+        raise ValueError("account pool URL must use HTTPS")
     query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key != "count"]
     query.append(("count", str(count)))
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
@@ -79,15 +87,33 @@ def fetch_accounts(url: str, count: int, *, opener=urllib.request.urlopen) -> li
         build_accounts_url(url, count),
         headers={"User-Agent": "aiograpi-login-matrix"},
     )
-    with opener(request, timeout=30) as response:
-        payload = json.loads(response.read())
+    try:
+        with opener(request, timeout=30) as response:
+            payload = json.loads(response.read())
+    except (json.JSONDecodeError, OSError, TimeoutError, urllib.error.URLError) as exc:
+        raise RuntimeError(f"account pool request failed ({type(exc).__name__})") from None
 
     accounts = payload if isinstance(payload, list) else payload.get("accounts") if isinstance(payload, dict) else None
     if not isinstance(accounts, list):
         raise ValueError("account pool response must contain an accounts list")
     for account in accounts:
-        if not isinstance(account, dict) or not account.get("username") or not account.get("password"):
+        if (
+            not isinstance(account, dict)
+            or not isinstance(account.get("username"), str)
+            or not account["username"]
+            or not isinstance(account.get("password"), str)
+            or not account["password"]
+        ):
             raise ValueError("account pool records must contain username and password")
+        for settings_key in ("client_settings", "settings"):
+            if (
+                settings_key in account
+                and account[settings_key] is not None
+                and not isinstance(account[settings_key], dict)
+            ):
+                raise ValueError("account pool settings must be objects")
+        if account.get("proxy") is not None and not isinstance(account["proxy"], str):
+            raise ValueError("account pool proxy must be a string")
     return accounts
 
 
@@ -176,3 +202,69 @@ def require_opt_in(environ: dict[str, str]) -> str:
     if not url:
         raise RuntimeError("TEST_ACCOUNTS_URL is required")
     return url
+
+
+@contextlib.contextmanager
+def secure_output(path: Path):
+    try:
+        current = os.lstat(path)
+    except FileNotFoundError:
+        current = None
+    if current is not None:
+        if stat.S_ISLNK(current.st_mode):
+            raise PermissionError("output path must not be a symlink")
+        if not stat.S_ISREG(current.st_mode):
+            raise PermissionError("output path must be a regular file")
+
+    flags = os.O_APPEND | os.O_CREAT | os.O_WRONLY | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags, 0o600)
+    try:
+        mode = stat.S_IMODE(os.fstat(descriptor).st_mode)
+        if mode & 0o077:
+            raise PermissionError("output file permissions must be owner-only")
+        output = os.fdopen(descriptor, "a", encoding="utf-8")
+        descriptor = -1
+        with output:
+            yield output
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+
+
+async def async_main(argv: list[str] | None = None, environ: dict[str, str] | None = None) -> int:
+    args = parse_args(argv)
+    account_pool_url = require_opt_in(os.environ if environ is None else environ)
+    modes = selected_modes(args.mode)
+    requested = args.count if args.pairing == "crossover" else args.count * len(modes)
+    accounts = fetch_accounts(account_pool_url, requested)
+    jobs = build_jobs(accounts, modes, args.pairing, args.count)
+    digest_key = secrets.token_bytes(32)
+    run_id = uuid.uuid4().hex
+
+    with secure_output(args.output) as output:
+        for index, job in enumerate(jobs):
+            record = await attempt(
+                job,
+                accounts[job.account_index],
+                run_id=run_id,
+                digest_key=digest_key,
+                pairing=args.pairing,
+                login_timeout=args.login_timeout,
+            )
+            record["attempt"] = index
+            output.write(json.dumps(record, sort_keys=True) + "\n")
+            output.flush()
+            if index + 1 < len(jobs):
+                await asyncio.sleep(args.cooldown)
+    return 0
+
+
+def main(argv: list[str] | None = None, environ: dict[str, str] | None = None) -> int:
+    try:
+        return asyncio.run(async_main(argv, environ))
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise SystemExit(str(exc)) from None
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

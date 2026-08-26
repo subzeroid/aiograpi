@@ -1,6 +1,7 @@
 import asyncio
 import importlib.util
 import json
+import stat
 import sys
 from pathlib import Path
 
@@ -18,6 +19,12 @@ def test_build_accounts_url_preserves_query_and_sets_count():
     assert login_matrix.build_accounts_url("https://pool.test/accounts?kind=live", 3) == (
         "https://pool.test/accounts?kind=live&count=3"
     )
+
+
+@pytest.mark.parametrize("url", ["http://pool.test/accounts", "pool.test/accounts", "https:///accounts"])
+def test_build_accounts_url_requires_https(url):
+    with pytest.raises(ValueError, match="HTTPS"):
+        login_matrix.build_accounts_url(url, 1)
     assert login_matrix.build_accounts_url("https://pool.test/accounts?count=99", 2) == (
         "https://pool.test/accounts?count=2"
     )
@@ -176,6 +183,9 @@ def test_fetch_accounts_uses_verified_tls_and_validates_records():
         {"accounts": "not-a-list"},
         {"accounts": [{}]},
         {"accounts": [{"username": "only"}]},
+        {"accounts": [{"username": 123, "password": "secret"}]},
+        {"accounts": [{"username": "user", "password": "secret", "client_settings": "invalid"}]},
+        {"accounts": [{"username": "user", "password": "secret", "proxy": {"url": "private"}}]},
     ],
 )
 def test_fetch_accounts_rejects_invalid_shapes_without_echoing_payload(payload):
@@ -311,3 +321,129 @@ def test_attempt_bounds_login_time_and_closes_all_sessions():
     assert result["status"] == "error"
     assert result["error_type"] == "TimeoutError"
     assert all(session.exited == 1 for session in (client.public, client.private, client.graphql))
+
+
+def test_secure_output_creates_owner_only_file_and_appends_jsonl(tmp_path):
+    output_path = tmp_path / "matrix.jsonl"
+
+    with login_matrix.secure_output(output_path) as output:
+        output.write('{"attempt": 0}\n')
+    with login_matrix.secure_output(output_path) as output:
+        output.write('{"attempt": 1}\n')
+
+    assert stat.S_IMODE(output_path.stat().st_mode) == 0o600
+    assert output_path.read_text().splitlines() == ['{"attempt": 0}', '{"attempt": 1}']
+
+
+def test_secure_output_rejects_symlinks(tmp_path):
+    target = tmp_path / "target.jsonl"
+    target.write_text("")
+    output_path = tmp_path / "matrix.jsonl"
+    output_path.symlink_to(target)
+
+    with pytest.raises(PermissionError, match="symlink"):
+        with login_matrix.secure_output(output_path):
+            pass
+
+
+def test_secure_output_rejects_existing_shared_permissions(tmp_path):
+    output_path = tmp_path / "matrix.jsonl"
+    output_path.write_text("")
+    output_path.chmod(0o640)
+
+    with pytest.raises(PermissionError, match="owner-only"):
+        with login_matrix.secure_output(output_path):
+            pass
+
+
+def test_async_main_runs_sequential_matrix_and_flushes_before_cooldown(tmp_path, monkeypatch):
+    output_path = tmp_path / "matrix.jsonl"
+    calls = []
+    flush_sizes = []
+
+    def fake_fetch(url, count):
+        calls.append(("fetch", url, count))
+        return [{"username": f"user-{index}", "password": "secret"} for index in range(count)]
+
+    async def fake_attempt(job, account, **kwargs):
+        calls.append(("attempt", job.trial, job.account_index, job.mode, account["username"]))
+        assert kwargs["pairing"] == "separate"
+        assert kwargs["login_timeout"] == 12.0
+        assert isinstance(kwargs["digest_key"], bytes)
+        assert kwargs["run_id"]
+        return {"status": "ok", "trial": job.trial, "mode": job.mode}
+
+    async def fake_sleep(seconds):
+        calls.append(("sleep", seconds))
+        flush_sizes.append(len(output_path.read_text().splitlines()))
+
+    monkeypatch.setattr(login_matrix, "fetch_accounts", fake_fetch)
+    monkeypatch.setattr(login_matrix, "attempt", fake_attempt)
+    monkeypatch.setattr(login_matrix.asyncio, "sleep", fake_sleep)
+
+    result = asyncio.run(
+        login_matrix.async_main(
+            [
+                "--mode",
+                "both",
+                "--count",
+                "2",
+                "--cooldown",
+                "10",
+                "--login-timeout",
+                "12",
+                "--output",
+                str(output_path),
+            ],
+            {
+                "IG_RUN_LOGIN_MATRIX": "1",
+                "TEST_ACCOUNTS_URL": "https://pool.test/accounts?kind=live",
+            },
+        )
+    )
+
+    assert result == 0
+    assert calls[0] == ("fetch", "https://pool.test/accounts?kind=live", 4)
+    assert [call[1:] for call in calls if call[0] == "attempt"] == [
+        (0, 0, "stable", "user-0"),
+        (0, 1, "fresh", "user-1"),
+        (1, 2, "fresh", "user-2"),
+        (1, 3, "stable", "user-3"),
+    ]
+    assert [call for call in calls if call[0] == "sleep"] == [("sleep", 10.0)] * 3
+    assert flush_sizes == [1, 2, 3]
+    records = [json.loads(line) for line in output_path.read_text().splitlines()]
+    assert [record["attempt"] for record in records] == [0, 1, 2, 3]
+
+
+def test_async_main_crossover_fetches_one_account_per_trial(tmp_path, monkeypatch):
+    requested = []
+
+    def fake_fetch(_url, count):
+        requested.append(count)
+        return [{"username": f"user-{index}", "password": "secret"} for index in range(count)]
+
+    async def fake_attempt(job, _account, **_kwargs):
+        return {"status": "ok", "trial": job.trial, "mode": job.mode}
+
+    async def fake_sleep(_seconds):
+        return None
+
+    monkeypatch.setattr(login_matrix, "fetch_accounts", fake_fetch)
+    monkeypatch.setattr(login_matrix, "attempt", fake_attempt)
+    monkeypatch.setattr(login_matrix.asyncio, "sleep", fake_sleep)
+
+    result = asyncio.run(
+        login_matrix.async_main(
+            ["--pairing", "crossover", "--count", "2", "--cooldown", "10", "--output", str(tmp_path / "out")],
+            {"IG_RUN_LOGIN_MATRIX": "1", "TEST_ACCOUNTS_URL": "https://pool.test/accounts"},
+        )
+    )
+
+    assert result == 0
+    assert requested == [2]
+
+
+def test_main_reports_configuration_error_without_traceback():
+    with pytest.raises(SystemExit, match="IG_RUN_LOGIN_MATRIX=1"):
+        login_matrix.main([], {})
