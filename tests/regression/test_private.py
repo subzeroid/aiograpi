@@ -10,7 +10,9 @@ from aiograpi.exceptions import (
     BadPassword,
     ClientConnectionError,
     ClientNotFoundError,
+    ClientThrottledError,
     DirectMessageRequestsDisabled,
+    PleaseWaitFewMinutes,
 )
 
 
@@ -159,6 +161,35 @@ class PrivateRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             await client._send_private_request("users/999/info/")
 
         self.assertEqual(client.last_json, {})
+
+    async def test_send_private_request_maps_429_to_typed_throttling_error_without_transport_retries(self):
+        client = self._build_client()
+        client.session_retry_total = 9
+        response = self._response({"message": "rate limited", "status": "fail"}, status_code=429)
+        client.private.get = AsyncMock(return_value=response)
+
+        with self.assertRaises(ClientThrottledError) as cm:
+            await client._send_private_request("users/999/info/")
+
+        self.assertIs(cm.exception.response, response)
+        client.private.get.assert_awaited_once()
+
+    async def test_send_private_request_maps_429_wait_message_to_please_wait(self):
+        client = self._build_client()
+        response = self._response(
+            {
+                "message": "Please wait a few minutes before you try again",
+                "status": "fail",
+            },
+            status_code=429,
+        )
+        client.private.get = AsyncMock(return_value=response)
+
+        with self.assertRaises(PleaseWaitFewMinutes) as cm:
+            await client._send_private_request("users/999/info/")
+
+        self.assertIs(cm.exception.response, response)
+        client.private.get.assert_awaited_once()
 
     async def test_private_request_retries_remote_protocol_error_once(self):
         client = self._build_client()

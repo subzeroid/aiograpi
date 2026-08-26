@@ -3,11 +3,26 @@ from unittest.mock import AsyncMock, Mock
 
 import orjson
 
-from aiograpi import Client
-from aiograpi.exceptions import ClientLoginRequired
+from aiograpi import Client, httpx_ext
+from aiograpi.exceptions import ClientLoginRequired, ClientThrottledError
 
 
 class PublicRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    def _response(self, status_code=200):
+        response = Mock()
+        response.status_code = status_code
+        response.url = "https://www.instagram.com/graphql/query/"
+        response.text = "rate limited"
+        response.headers = {}
+        response.raise_for_status.return_value = None
+        if status_code >= 400:
+            response.raise_for_status.side_effect = httpx_ext.HTTPStatusError(
+                f"{status_code} response",
+                request=Mock(),
+                response=response,
+            )
+        return response
+
     async def test_public_request_maps_challenge_redirect_html_to_login_required(self):
         client = Client()
         client.last_response_ts = 0
@@ -21,6 +36,24 @@ class PublicRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaises(ClientLoginRequired):
             await client._send_public_request("https://www.instagram.com/graphql/query/", return_json=True)
+
+    async def test_public_request_retries_typed_429_only_at_the_outer_layer(self):
+        client = Client()
+        client.last_response_ts = 0
+        client.public.get = AsyncMock(return_value=self._response(status_code=429))
+
+        with unittest.mock.patch("aiograpi.mixins.public.asyncio.sleep", new_callable=AsyncMock) as sleep:
+            with self.assertRaises(ClientThrottledError) as cm:
+                await client.public_request(
+                    "https://www.instagram.com/graphql/query/",
+                    retries_count=3,
+                    retries_timeout=0,
+                )
+
+        self.assertEqual(cm.exception.response.status_code, 429)
+        self.assertEqual(client.public.get.await_count, 3)
+        self.assertEqual(sleep.await_args_list.count(unittest.mock.call(0)), 2)
+        self.assertEqual(sleep.await_args_list.count(unittest.mock.call(1.0)), 2)
 
     async def test_public_doc_id_graphql_request_injects_logged_in_public_cookies(self):
         client = Client()
