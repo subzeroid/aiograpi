@@ -109,6 +109,38 @@ publishes versioned docs with `mike`.
 The `Upstream Sync Tracker` workflow can be triggered manually or by repository dispatch when `instagrapi` publishes a
 new release. It creates a tracking issue with the current async-port baseline and the target upstream tag.
 
+## Controlled Login Profile Research
+
+Maintainers can use `scripts/research_login_matrix.py` to compare login outcomes for a reused device profile and a
+fresh profile. This is an opt-in diagnostic experiment for accounts and networks you control, not a CI test. Repeated
+login attempts can trigger Instagram checkpoints or temporary restrictions, so start with one trial and inspect the
+result before increasing the count.
+
+```bash
+IG_RUN_LOGIN_MATRIX=1 \
+TEST_ACCOUNTS_URL="https://your-controlled-pool.example/accounts" \
+python scripts/research_login_matrix.py --mode both --count 1
+```
+
+The account-pool URL must use HTTPS with normal certificate verification. `stable` retains only device/profile fields
+from the stored client settings; it drops sessions and other authentication state. `fresh` creates a client without
+stored settings. The default `separate` pairing uses different accounts for the two conditions. `--pairing crossover`
+uses the same account for both conditions, but the first login can influence the second.
+
+Attempts run sequentially. The default cooldown is 30 seconds, the minimum is 10 seconds, and one invocation is limited
+to ten total login attempts. Use `--login-timeout` to bound each attempt and `--output` to select the append-only JSONL
+file.
+
+The output file is created with owner-only permissions. The script refuses symlinks and existing files accessible by
+group or other users. Records include a random run ID, trial and attempt indexes, mode, status, exception class, elapsed
+time, a proxy-used boolean, and keyed per-run device-profile digests. They never include usernames, passwords, TOTP
+secrets or codes, sessions, proxy values, account-pool URLs, exception messages, or response bodies. The digest key is
+not saved, so device identifiers cannot be correlated across separate runs.
+
+Individual login errors are experiment results and do not stop the matrix. Invalid configuration, unsafe output paths,
+account-pool failures, and malformed account records stop the run with a non-zero exit status. GitHub Actions never
+invokes this script.
+
 [pdb-docs]: https://docs.python.org/3/library/pdb.html
 [pytest-docs]: https://docs.pytest.org/en/latest/
 [ruff-docs]: https://docs.astral.sh/ruff/
