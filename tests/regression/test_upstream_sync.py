@@ -6,11 +6,13 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import yaml
 
 import aiograpi
 
 ROOT = Path(__file__).resolve().parents[2]
 TRACKER = ROOT / "scripts" / "upstream_sync_tracker.sh"
+WORKFLOW = ROOT / ".github" / "workflows" / "upstream-sync.yml"
 
 ISSUE_LIST_ARGS = [
     "issue",
@@ -134,6 +136,39 @@ def test_upstream_sync_doc_matches_recorded_baseline():
     docs = Path("docs/upstream-sync.md").read_text()
 
     assert f"instagrapi {aiograpi.__upstream_instagrapi_version__}" in docs
+
+
+def test_upstream_sync_workflow_is_scheduled_serialized_and_minimally_privileged():
+    workflow = yaml.load(WORKFLOW.read_text(), Loader=yaml.BaseLoader)
+
+    assert workflow["on"]["schedule"] == [{"cron": "17 6 * * *"}]
+    assert "workflow_dispatch" in workflow["on"]
+    assert workflow["on"]["workflow_dispatch"]["inputs"]["instagrapi_tag"]["required"] == "true"
+    assert workflow["on"]["repository_dispatch"]["types"] == ["instagrapi_release"]
+    assert workflow["permissions"] == {"contents": "read", "issues": "write"}
+    assert workflow["concurrency"] == {
+        "group": "upstream-sync-tracker",
+        "queue": "max",
+        "cancel-in-progress": "false",
+    }
+
+    job = workflow["jobs"]["create-sync-issue"]
+    assert job["runs-on"] == "ubuntu-latest"
+    assert job["timeout-minutes"] == "10"
+    checkout, tracker = job["steps"]
+    assert checkout["uses"] == "actions/checkout@v7"
+    assert checkout["with"] == {
+        "ref": "${{ github.event.repository.default_branch }}",
+        "persist-credentials": "false",
+    }
+    assert tracker["run"] == "scripts/upstream_sync_tracker.sh"
+    assert tracker["env"] == {
+        "GH_TOKEN": "${{ secrets.GITHUB_TOKEN }}",
+        "EVENT_NAME": "${{ github.event_name }}",
+        "WORKFLOW_TAG": "${{ github.event.inputs.instagrapi_tag }}",
+        "DISPATCH_TAG": "${{ github.event.client_payload.tag }}",
+    }
+    assert all("${{" not in step.get("run", "") for step in job["steps"])
 
 
 def test_scheduled_tracker_skips_current_release(tmp_path):
