@@ -393,10 +393,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#future-automation" class="md-nav__link">
+  <a href="#automated-release-tracking" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Future automation
+        Automated release tracking
       
     </span>
   </a>
@@ -1436,10 +1436,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#future-automation" class="md-nav__link">
+  <a href="#automated-release-tracking" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Future automation
+        Automated release tracking
       
     </span>
   </a>
@@ -1505,16 +1505,16 @@ challenge context handling, and clearer Reel/clip upload failure details.</p>
 <li>Add or port regression tests before behavior changes when practical.</li>
 <li>Run Ruff, regression tests, docs build, and package build before tagging.</li>
 </ul>
-<h2 id="future-automation">Future automation</h2>
-<p>When <code>instagrapi</code> publishes a release, <code>aiograpi</code> should get a visible follow-up
-task even when no async changes are needed. The preferred workflow is a GitHub
-Actions <code>workflow_dispatch</code> or <code>repository_dispatch</code> job that records:</p>
+<h2 id="automated-release-tracking">Automated release tracking</h2>
+<p>The <code>Upstream Sync Tracker</code> workflow checks GitHub's latest stable <code>instagrapi</code> release every day at 06:17 UTC. It compares that tag with <code>__upstream_instagrapi_version__</code> and creates one durable sync issue when the upstream version is newer. Existing issues are matched by exact title across open and closed states, so a closed or superseded tracker is not recreated daily.</p>
+<p>Maintainers can also run the workflow with an explicit tag through <code>workflow_dispatch</code> or send the existing <code>repository_dispatch</code> event with <code>event_type</code> <code>instagrapi_release</code> and <code>client_payload.tag</code> set to a stable three-component <code>X.Y.Z</code> tag, such as <code>2.18.19</code>. All modes record:</p>
 <ul>
 <li>previous <code>instagrapi</code> baseline;</li>
 <li>new <code>instagrapi</code> tag;</li>
 <li>compare URL;</li>
 <li>checklist of changed files and release-note items.</li>
 </ul>
+<p>GitHub schedules are best-effort. They run from the default branch, can be delayed or dropped during high Actions load, and are disabled for public repositories after 60 days without repository activity. Manual dispatch can replace delayed or dropped scheduled runs. If GitHub disables the workflow after 60 days of inactivity, maintainers must first re-enable it in Actions or with <code>gh workflow enable upstream-sync.yml</code>, then dispatch it.</p>
 
 
 
