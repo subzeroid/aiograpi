@@ -39,7 +39,7 @@ import sys
 from pathlib import Path
 
 match = re.search(
-    r'^__upstream_instagrapi_version__\s*=\s*["\']([^"\']+)["\']\s*$',
+    r'^__upstream_instagrapi_version__\s*=\s*"([^"]+)"\s*$',
     Path(sys.argv[1]).read_text(),
     re.MULTILINE,
 )
@@ -55,15 +55,27 @@ if ! [[ "$BASELINE" =~ $VERSION_PATTERN ]]; then
   exit 1
 fi
 
-if python3 - "$TARGET_TAG" "$BASELINE" <<'PY'
+compare_versions() {
+  python3 - "$TARGET_TAG" "$BASELINE" <<'PY'
 import sys
 
 target = tuple(map(int, sys.argv[1].split(".")))
 baseline = tuple(map(int, sys.argv[2].split(".")))
-sys.exit(0 if target <= baseline else 1)
+print("not-newer" if target <= baseline else "newer")
 PY
-then
-  echo "No upstream sync needed: $TARGET_TAG <= $BASELINE"
-else
-  echo "New upstream release detected: $BASELINE -> $TARGET_TAG"
-fi
+}
+
+VERSION_ORDER="$(compare_versions)"
+
+case "$VERSION_ORDER" in
+  not-newer)
+    echo "No upstream sync needed: $TARGET_TAG <= $BASELINE"
+    ;;
+  newer)
+    echo "New upstream release detected: $BASELINE -> $TARGET_TAG"
+    ;;
+  *)
+    echo "Invalid version comparison result: $VERSION_ORDER" >&2
+    exit 1
+    ;;
+esac

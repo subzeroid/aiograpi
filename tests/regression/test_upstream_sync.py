@@ -171,6 +171,42 @@ def test_invalid_baseline_is_rejected_without_gh_calls(tmp_path):
     assert _gh_calls(context) == []
 
 
+def test_invalid_baseline_with_mismatched_quotes_is_rejected(tmp_path):
+    context = _tracker_context(tmp_path)
+    context.baseline_file.write_text("__upstream_instagrapi_version__ = \"2.18.18'\n")
+
+    result = _run_tracker(context, "workflow_dispatch", workflow_tag="2.18.19")
+
+    assert result.returncode == 1
+    assert "Invalid aiograpi upstream baseline" in result.stderr
+    assert _gh_calls(context) == []
+
+
+def test_comparison_error_does_not_report_a_new_release(tmp_path):
+    context = _tracker_context(tmp_path)
+    target = f"{'9' * 5000}.0.0"
+
+    result = _run_tracker(context, "workflow_dispatch", workflow_tag=target)
+
+    assert result.returncode != 0
+    assert "New upstream release detected" not in result.stdout
+    assert _gh_calls(context) == []
+
+
+@pytest.mark.parametrize(
+    ("target", "baseline"),
+    [("2.18.19", "2.18.18"), ("2.19.0", "2.18.99")],
+)
+def test_valid_newer_target_reports_detection_without_gh_calls(tmp_path, target, baseline):
+    context = _tracker_context(tmp_path, baseline=baseline)
+
+    result = _run_tracker(context, "workflow_dispatch", workflow_tag=target)
+
+    assert result.returncode == 0
+    assert result.stdout == f"New upstream release detected: {baseline} -> {target}\n"
+    assert _gh_calls(context) == []
+
+
 def test_release_api_failure_stops_before_issue_creation(tmp_path):
     context = _tracker_context(tmp_path)
 
