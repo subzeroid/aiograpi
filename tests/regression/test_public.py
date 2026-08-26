@@ -4,26 +4,11 @@ from unittest.mock import AsyncMock, Mock
 import httpx
 import orjson
 
-from aiograpi import Client, httpx_ext
+from aiograpi import Client
 from aiograpi.exceptions import ClientLoginRequired, ClientThrottledError
 
 
 class PublicRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
-    def _response(self, status_code=200):
-        response = Mock()
-        response.status_code = status_code
-        response.url = "https://www.instagram.com/graphql/query/"
-        response.text = "rate limited"
-        response.headers = {}
-        response.raise_for_status.return_value = None
-        if status_code >= 400:
-            response.raise_for_status.side_effect = httpx_ext.HTTPStatusError(
-                f"{status_code} response",
-                request=Mock(),
-                response=response,
-            )
-        return response
-
     async def test_public_request_maps_challenge_redirect_html_to_login_required(self):
         client = Client()
         client.last_response_ts = 0
