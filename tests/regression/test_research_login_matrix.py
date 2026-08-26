@@ -7,6 +7,7 @@ import stat
 import sys
 from pathlib import Path
 
+import httpx
 import pytest
 
 SCRIPT_PATH = Path(__file__).resolve().parents[2] / "scripts" / "research_login_matrix.py"
@@ -182,6 +183,47 @@ def test_fetch_accounts_uses_verified_tls_and_validates_records():
     }
 
 
+def test_fetch_accounts_accepts_direct_list_and_legacy_settings_alias():
+    accounts = login_matrix.fetch_accounts(
+        "https://pool.test/accounts",
+        1,
+        getter=FakeGetter([{"username": "user", "password": "secret", "settings": {"locale": "en_US"}}]),
+    )
+
+    assert accounts == [{"username": "user", "password": "secret", "settings": {"locale": "en_US"}}]
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        httpx.ConnectError("PRIVATE-POOL-DETAILS"),
+        TimeoutError("PRIVATE-POOL-DETAILS"),
+    ],
+)
+def test_fetch_accounts_sanitizes_request_and_decode_failures(failure):
+    def failing_getter(*_args, **_kwargs):
+        raise failure
+
+    with pytest.raises(RuntimeError, match=rf"account pool request failed \({type(failure).__name__}\)") as exc_info:
+        login_matrix.fetch_accounts("https://pool.test/accounts", 1, getter=failing_getter)
+
+    assert "PRIVATE" not in str(exc_info.value)
+
+
+def test_fetch_accounts_sanitizes_invalid_json_failure():
+    class InvalidJsonResponse(FakeResponse):
+        def json(self):
+            raise json.JSONDecodeError("PRIVATE-JSON-DETAILS", "PRIVATE-JSON-DOCUMENT", 0)
+
+    def invalid_json_getter(*_args, **_kwargs):
+        return InvalidJsonResponse(None)
+
+    with pytest.raises(RuntimeError, match=r"account pool request failed \(JSONDecodeError\)") as exc_info:
+        login_matrix.fetch_accounts("https://pool.test/accounts", 1, getter=invalid_json_getter)
+
+    assert "PRIVATE" not in str(exc_info.value)
+
+
 @pytest.mark.parametrize(
     "payload",
     [
@@ -247,14 +289,24 @@ class FakeClient:
         self.login_call = (username, password, kwargs)
         if self.behavior == "logs":
             self.logger.error("raw response: PRIVATE-RESPONSE-BODY")
+        if self.behavior == "cancelled":
+            raise asyncio.CancelledError
         if self.behavior == "failure":
             raise RuntimeError("private failure details")
         if self.behavior == "timeout":
             await asyncio.sleep(60)
         if self.behavior == "false":
             return False
-        self.uuid = "uuid-after"
+        if self.behavior == "profile_after_failure":
+            self.uuid = UnstringableValue()
+        else:
+            self.uuid = "uuid-after"
         return True
+
+
+class UnstringableValue:
+    def __str__(self):
+        raise ValueError("private profile details")
 
 
 def run_attempt(account, *, mode="stable", behavior="success", timeout=1.0):
@@ -313,6 +365,19 @@ def test_attempt_reuses_only_device_settings_and_sanitizes_success_record():
         "123456",
     ):
         assert private_value not in serialized
+
+
+def test_attempt_fresh_mode_ignores_stored_settings():
+    run_attempt(
+        {
+            "username": "private-user",
+            "password": "private-password",
+            "client_settings": {"uuids": {"phone_id": "private-phone"}},
+        },
+        mode="fresh",
+    )
+
+    assert FakeClient.instances[0].settings_argument is None
 
 
 def test_attempt_records_only_exception_type_and_closes_all_sessions():
@@ -399,6 +464,29 @@ def test_attempt_suppresses_library_error_logs(caplog):
     assert "PRIVATE-RESPONSE-BODY" not in caplog.text
 
 
+def test_attempt_reraises_cancellation_after_closing_sessions():
+    with pytest.raises(asyncio.CancelledError):
+        run_attempt(
+            {"username": "private-user", "password": "private-password"},
+            behavior="cancelled",
+        )
+
+    client = FakeClient.instances[0]
+    assert all(session.exited == 1 for session in (client.public, client.private, client.graphql))
+
+
+def test_attempt_sanitizes_profile_after_failure():
+    result = run_attempt(
+        {"username": "private-user", "password": "private-password"},
+        behavior="profile_after_failure",
+    )
+
+    assert result["status"] == "error"
+    assert result["error_type"] == "ValueError"
+    assert result["profile_after"] is None
+    assert "private profile details" not in json.dumps(result)
+
+
 def test_secure_output_creates_owner_only_file_and_appends_jsonl(tmp_path):
     output_path = tmp_path / "matrix.jsonl"
 
@@ -430,6 +518,60 @@ def test_secure_output_rejects_existing_shared_permissions(tmp_path):
     with pytest.raises(PermissionError, match="owner-only"):
         with login_matrix.secure_output(output_path):
             pass
+
+
+def test_secure_output_rejects_non_regular_target(tmp_path):
+    with pytest.raises(PermissionError, match="regular file"):
+        with login_matrix.secure_output(tmp_path):
+            pass
+
+
+def test_secure_output_detects_path_removed_after_open(tmp_path, monkeypatch):
+    output_path = tmp_path / "matrix.jsonl"
+    output_path.write_text("")
+    output_path.chmod(0o600)
+    real_open = os.open
+
+    def unlinking_open(path, flags, mode=0o777):
+        descriptor = real_open(path, flags, mode)
+        output_path.unlink()
+        return descriptor
+
+    monkeypatch.setattr(login_matrix.os, "open", unlinking_open)
+
+    with pytest.raises(PermissionError, match="changed"):
+        with login_matrix.secure_output(output_path):
+            pass
+
+
+def test_secure_output_detects_open_file_identity_mismatch(tmp_path, monkeypatch):
+    output_path = tmp_path / "matrix.jsonl"
+    output_path.write_text("")
+    output_path.chmod(0o600)
+    monkeypatch.setattr(login_matrix.os.path, "samestat", lambda *_args: False)
+
+    with pytest.raises(PermissionError, match="changed"):
+        with login_matrix.secure_output(output_path):
+            pass
+
+
+def test_secure_output_converts_open_eloop_to_permission_error(tmp_path, monkeypatch):
+    output_path = tmp_path / "matrix.jsonl"
+    output_path.write_text("")
+    output_path.chmod(0o600)
+
+    def failing_open(_path, flags, _mode=0o777):
+        if flags & os.O_EXCL:
+            raise FileExistsError
+        raise OSError(login_matrix.errno.ELOOP, "PRIVATE-PATH-DETAILS")
+
+    monkeypatch.setattr(login_matrix.os, "open", failing_open)
+
+    with pytest.raises(PermissionError, match="symlink") as exc_info:
+        with login_matrix.secure_output(output_path):
+            pass
+
+    assert "PRIVATE" not in str(exc_info.value)
 
 
 def test_secure_output_detects_symlink_swap_without_o_nofollow(tmp_path, monkeypatch):
@@ -554,6 +696,50 @@ def test_async_main_crossover_fetches_one_account_per_trial(tmp_path, monkeypatc
     assert requested == [2]
 
 
+def test_async_main_records_failed_result_and_continues(tmp_path, monkeypatch):
+    output_path = tmp_path / "matrix.jsonl"
+    attempted = []
+
+    def fake_fetch(_url, count):
+        return [{"username": f"user-{index}", "password": "secret"} for index in range(count)]
+
+    async def fake_attempt(job, _account, **_kwargs):
+        attempted.append(job.mode)
+        if len(attempted) == 1:
+            return {"status": "error", "error_type": "RuntimeError"}
+        return {"status": "ok"}
+
+    async def fake_sleep(_seconds):
+        return None
+
+    monkeypatch.setattr(login_matrix, "fetch_accounts", fake_fetch)
+    monkeypatch.setattr(login_matrix, "attempt", fake_attempt)
+    monkeypatch.setattr(login_matrix.asyncio, "sleep", fake_sleep)
+
+    assert (
+        asyncio.run(
+            login_matrix.async_main(
+                ["--mode", "both", "--cooldown", "10", "--output", str(output_path)],
+                {"IG_RUN_LOGIN_MATRIX": "1", "TEST_ACCOUNTS_URL": "https://pool.test/accounts"},
+            )
+        )
+        == 0
+    )
+    assert attempted == ["stable", "fresh"]
+    assert [record["status"] for record in map(json.loads, output_path.read_text().splitlines())] == ["error", "ok"]
+
+
 def test_main_reports_configuration_error_without_traceback():
     with pytest.raises(SystemExit, match="IG_RUN_LOGIN_MATRIX=1"):
         login_matrix.main([], {})
+
+
+def test_main_returns_async_main_result(monkeypatch):
+    async def fake_async_main(argv, environ):
+        assert argv == ["--mode", "fresh"]
+        assert environ == {"IG_RUN_LOGIN_MATRIX": "1"}
+        return 7
+
+    monkeypatch.setattr(login_matrix, "async_main", fake_async_main)
+
+    assert login_matrix.main(["--mode", "fresh"], {"IG_RUN_LOGIN_MATRIX": "1"}) == 7
