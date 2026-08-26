@@ -102,6 +102,17 @@ def _gh_calls(context):
     return [json.loads(line) for line in context.call_log.read_text().splitlines()]
 
 
+def test_tracker_syntax_is_compatible_with_macos_bash_3_2():
+    result = subprocess.run(
+        ["/bin/bash", "-n", str(TRACKER)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
 def test_upstream_instagrapi_baseline_is_recorded():
     assert aiograpi.__upstream_instagrapi_version__ == "2.18.18"
 

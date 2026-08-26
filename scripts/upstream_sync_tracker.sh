@@ -32,7 +32,8 @@ if ! [[ "$TARGET_TAG" =~ $VERSION_PATTERN ]]; then
   exit 1
 fi
 
-BASELINE="$(python3 - "$BASELINE_FILE" <<'PY'
+read_baseline() {
+  python3 - "$BASELINE_FILE" <<'PY'
 import re
 import sys
 from pathlib import Path
@@ -45,7 +46,9 @@ match = re.search(
 if match:
     print(match.group(1))
 PY
-)"
+}
+
+BASELINE="$(read_baseline)"
 
 if ! [[ "$BASELINE" =~ $VERSION_PATTERN ]]; then
   echo "Invalid aiograpi upstream baseline: $BASELINE" >&2
