@@ -61,8 +61,9 @@ upstream version is newer. Existing issues are matched by exact title across ope
 and closed states, so a closed or superseded tracker is not recreated daily.
 
 Maintainers can also run the workflow with an explicit tag through
-`workflow_dispatch` or send the existing `instagrapi_release`
-`repository_dispatch` event. All modes record:
+`workflow_dispatch` or send the existing `repository_dispatch` event with
+`event_type` `instagrapi_release` and `client_payload.tag` set to a stable
+three-component `X.Y.Z` tag, such as `2.18.19`. All modes record:
 
 - previous `instagrapi` baseline;
 - new `instagrapi` tag;
@@ -71,5 +72,7 @@ Maintainers can also run the workflow with an explicit tag through
 
 GitHub schedules are best-effort. They run from the default branch, can be delayed
 or dropped during high Actions load, and are disabled for public repositories
-after 60 days without repository activity. Manual dispatch remains available when
-scheduled execution is delayed or disabled.
+after 60 days without repository activity. Manual dispatch can replace delayed or
+dropped scheduled runs. If GitHub disables the workflow after 60 days of
+inactivity, maintainers must first re-enable it in Actions or with
+`gh workflow enable upstream-sync.yml`, then dispatch it.
