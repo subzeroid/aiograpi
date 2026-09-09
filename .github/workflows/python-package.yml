@@ -114,7 +114,8 @@ jobs:
         uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          # Resolve dependency stubs for the same version mypy checks.
+          python-version: "3.10"
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:

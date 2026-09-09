@@ -51,10 +51,13 @@ You'll be unable to merge code unless linting and tests pass. The main local che
 pytest -sv tests/regression
 ruff check .
 ruff format --check .
+./scripts/check-mypy-baseline.sh
 bandit -c pyproject.toml -r aiograpi
 pip-audit --strict .
 mkdocs build --strict
 ```
+
+The mypy gate targets Python 3.10 and runs under Python 3.10 in CI so dependency type stubs match that target. For local parity, create the development environment with `python3.10 -m venv .venv` or `uv venv --python 3.10` and install the test extras. The gate compares only completed analysis with `.mypy-baseline`; aborted analysis and unrecognized output fail instead of being accepted as a low error count.
 
 To apply automatic lint and formatting fixes locally:
 
