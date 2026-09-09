@@ -144,13 +144,13 @@ See the [Migration Guide](https://subzeroid.github.io/aiograpi/latest/migration/
 pip install aiograpi
 ```
 
-Optional public web TLS impersonation support is available as an extra:
+Optional public web TLS impersonation and private HTTP/2 transports are available as an extra:
 
 ```bash
 pip install "aiograpi[curl]"
 ```
 
-Use it only for public web endpoints that are sensitive to browser TLS fingerprints:
+For public web endpoints that are sensitive to browser TLS fingerprints:
 
 ```python
 cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
@@ -158,8 +158,7 @@ cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
 
 See the [public transport guide](docs/usage-guide/public-transport.md) for live comparison results and caveats.
 
-Private mobile API requests can separately use native async HTTP/2 with `Client(private_transport="curl")`.
-See the [private HTTP/2 transport guide](docs/usage-guide/interactions.md#private-http2-transport) for saved-session setup and requirements.
+Private mobile API requests can separately use native async HTTP/2 with `Client(private_transport="curl")`. See the [private HTTP/2 transport guide](docs/usage-guide/interactions.md#private-http2-transport) for saved-session setup, requirements and limitations.
 
 TLS certificate verification is enabled by default. For a trusted debugging MITM proxy, prefer `Client(tls_verify="/path/to/proxy-ca.pem")`; use `Client(tls_verify=False)` only for temporary local debugging because it allows session interception.
 

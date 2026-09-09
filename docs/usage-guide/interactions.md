@@ -104,6 +104,7 @@ settings = {
    },
    "user_agent": "Instagram 117.0.0.28.123 Android (23/6.0.1; ...US; 168361634)",
    "public_transport": "requests",
+   "private_transport": "requests",
    "public_transport_impersonate": "chrome136",
    "tls_verify": True
 }
@@ -156,6 +157,7 @@ cl.dump_settings('/tmp/dump.json')
 | set_country_code(country_code: int = 1)  | bool | Set country calling code. Default: +1 (USA)
 | set_locale(locale: str = "en_US")        | bool | Set locale (advice: use the locale of your proxy)
 | set_timezone_offset(seconds: int)        | bool | Set timezone offset in seconds
+| set_retry_config(...)                    | bool | Configure request timing, retry settings and public/private transport choices
 | set_tls_verify(tls_verify: bool \| str)  | bool | Update TLS certificate verification for existing public, private and GraphQL sessions
 
 ``` python
@@ -205,8 +207,7 @@ Then opt in explicitly:
 cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
 ```
 
-The default remains `public_transport="requests"`. Configure private mobile API requests separately with `private_transport`.
-See [Public Transport](public-transport.md) for live comparison results and caveats.
+The default remains `public_transport="requests"`. Configure private mobile API requests separately with `private_transport`. See [Public Transport](public-transport.md) for live comparison results and caveats.
 
 ### Private HTTP/2 transport
 
