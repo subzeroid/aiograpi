@@ -21,12 +21,18 @@ if [ -x "$ROOT/.venv/bin/python" ]; then
   PYTHON_BIN="$ROOT/.venv/bin/python"
 fi
 
-# Run mypy and capture last summary line. mypy returns nonzero when errors
-# exist — that's expected, so don't propagate via pipefail.
+# Mypy exits 1 for completed analysis with type errors, and 2 for fatal
+# failures. Only completed analysis can be compared with the baseline.
 set +e
 OUTPUT=$(cd "$ROOT" && "$PYTHON_BIN" -m mypy --python-version 3.10 aiograpi/ 2>&1)
 STATUS=$?
 set -e
+
+if [ "$STATUS" -gt 1 ]; then
+  echo "::error::mypy analysis failed (exit $STATUS)" >&2
+  printf '%s\n' "$OUTPUT" >&2
+  exit "$STATUS"
+fi
 
 SUMMARY=$(printf '%s\n' "$OUTPUT" | tail -1)
 if printf '%s' "$SUMMARY" | grep -q '^Success:'; then
@@ -38,7 +44,7 @@ fi
 if [ -z "${CURRENT:-}" ]; then
   echo "::error::unable to parse mypy output" >&2
   printf '%s\n' "$OUTPUT" >&2
-  exit "$STATUS"
+  exit 1
 fi
 
 echo "mypy baseline: $BASELINE"
