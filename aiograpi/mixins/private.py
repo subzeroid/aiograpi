@@ -4,6 +4,7 @@ import logging
 import random
 import time
 
+import httpx
 import orjson
 
 from aiograpi import config, httpx_ext
@@ -146,12 +147,17 @@ class PrivateRequestMixin(ClientMixin):
     session_retry_total = 3
     session_retry_backoff_factor = 2
     session_retry_statuses = [429, 500, 502, 503, 504]
+    private_transport = "requests"
     domain = config.API_DOMAIN
     last_response = None
     last_json = {}
 
     def __init__(self, *args, **kwargs):
-        self.private = httpx_ext.Session(verify=getattr(self, "tls_verify", True))
+        self.private_transport = self._normalize_private_transport(
+            kwargs.pop("private_transport", self.private_transport)
+        )
+        session = httpx_ext.CurlPrivateSession if self.private_transport == "curl" else httpx_ext.Session
+        self.private = session(verify=getattr(self, "tls_verify", True))
         self.email = kwargs.pop("email", None)
         self.phone_number = kwargs.pop("phone_number", None)
         self.request_timeout = kwargs.pop("request_timeout", getattr(self, "request_timeout", self.request_timeout))
@@ -179,6 +185,28 @@ class PrivateRequestMixin(ClientMixin):
             )
         )
         super().__init__(*args, **kwargs)
+
+    @staticmethod
+    def _normalize_private_transport(private_transport):
+        if private_transport not in {"requests", "curl"}:
+            raise ValueError("private_transport must be 'requests' or 'curl'")
+        return private_transport
+
+    def _configure_private_transport(self, private_transport):
+        selected = self._normalize_private_transport(private_transport)
+        if selected == self.private_transport:
+            return
+        old = self.private
+        session = httpx_ext.CurlPrivateSession if selected == "curl" else httpx_ext.Session
+        replacement = session(verify=old.verify)
+        replacement.proxy = old.proxy
+        replacement.headers.update(old.headers)
+        replacement._client.cookies = httpx.Cookies(old.cookies)
+        replacement._retired_clients.extend(old._retired_clients)
+        if old._client is not None:
+            replacement._retired_clients.append(old._client)
+        self.private = replacement
+        self.private_transport = selected
 
     async def small_delay(self):
         """
@@ -417,7 +445,7 @@ class PrivateRequestMixin(ClientMixin):
         with_signature=True,
         headers=None,
         extra_sig=None,
-        domain: str = None,
+        domain: str | None = None,
     ):
         self.last_response = None
         self.last_json = last_json = {}  # for Sentry context in traceback
@@ -737,7 +765,7 @@ class PrivateRequestMixin(ClientMixin):
         with_signature=True,
         headers=None,
         extra_sig=None,
-        domain: str = None,
+        domain: str | None = None,
     ):
         # Hard guard: every private endpoint requires a logged-in
         # session (cookie + user_id). Without this, IG returns

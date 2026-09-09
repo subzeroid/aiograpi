@@ -5,7 +5,7 @@
 The current recorded API baseline is:
 
 ```text
-instagrapi 2.18.18
+instagrapi 2.18.19
 ```
 
 `aiograpi 1.0.x` established the SemVer async baseline through `instagrapi 2.7.17`, including Bloks login fallback
@@ -32,6 +32,8 @@ challenge context handling, and clearer Reel/clip upload failure details.
 `aiograpi 1.6.0` continues the baseline through `instagrapi 2.12.0` and ports typed preservation for v2-only `UserShort` fields in private GraphQL follow-list payloads, including `friendship_status` and normalized `latest_reel_media`.
 
 `aiograpi 1.12.14` continues the baseline through `instagrapi 2.18.18`. Its HTTPX transport already exposes the final HTTP response directly, so exhausted `429` responses map to `ClientThrottledError` or `PleaseWaitFewMinutes` without leaking urllib3 retry errors or adding a second transport retry layer.
+
+The `instagrapi` 2.18.19 transport port adds optional native async private HTTP/2 through `curl_cffi`, preserving HTTPX request preparation, redirects and cookies. The private transport API, saved settings, guarded CAA/saved-session live tests and real TLS/HTTP2 CI coverage are mirrored; default login routing remains unchanged.
 
 ## Release policy
 

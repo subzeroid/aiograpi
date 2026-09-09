@@ -56,6 +56,7 @@ We recommend using [these proxies](https://soax.com/?r=sEysufQI)
 | ------------------- | --------------------------------------------------------------
 | request\_logger     | Logger in which various actions from Instagram are registered
 | request\_timeout    | Timeout in seconds between requests (1 second by default)
+| private\_transport | Private mobile transport: `requests` (HTTPX) by default, or native async `curl` for HTTP/2
 | public\_transport   | Public web transport: `requests`-compatible async transport by default, or `curl` when `aiograpi[curl]` is installed
 | public\_transport\_impersonate | Browser fingerprint used by the optional curl public transport
 | tls\_verify | TLS certificate verification: `True` by default, `False` for temporary trusted MITM debugging, or a CA bundle path
@@ -103,6 +104,7 @@ settings = {
    },
    "user_agent": "Instagram 117.0.0.28.123 Android (23/6.0.1; ...US; 168361634)",
    "public_transport": "requests",
+   "private_transport": "requests",
    "public_transport_impersonate": "chrome136",
    "tls_verify": True
 }
@@ -155,6 +157,7 @@ cl.dump_settings('/tmp/dump.json')
 | set_country_code(country_code: int = 1)  | bool | Set country calling code. Default: +1 (USA)
 | set_locale(locale: str = "en_US")        | bool | Set locale (advice: use the locale of your proxy)
 | set_timezone_offset(seconds: int)        | bool | Set timezone offset in seconds
+| set_retry_config(...)                    | bool | Configure request timing, retry settings and public/private transport choices
 | set_tls_verify(tls_verify: bool \| str)  | bool | Update TLS certificate verification for existing public, private and GraphQL sessions
 
 ``` python
@@ -204,8 +207,33 @@ Then opt in explicitly:
 cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
 ```
 
-The default remains `public_transport="requests"`. Private mobile API requests still use the regular mobile session.
-See [Public Transport](public-transport.md) for live comparison results and caveats.
+The default remains `public_transport="requests"`. Configure private mobile API requests separately with `private_transport`. See [Public Transport](public-transport.md) for live comparison results and caveats.
+
+### Private HTTP/2 transport
+
+Install `aiograpi[curl]` and use `Client(private_transport="curl")` to send all private mobile API requests, including the existing CAA login flow, through native asynchronous `curl_cffi`. HTTPS advertises only `h2` through ALPN and rejects an HTTP/1 response. Mobile headers and device settings are preserved; no browser impersonation is applied.
+
+```python
+from aiograpi import Client
+
+cl = Client()
+cl.load_settings("session.json")  # if you have saved settings
+cl.set_retry_config(private_transport="curl")  # choose after loading settings
+await cl.login(USERNAME, PASSWORD)
+cl.dump_settings("session.json")
+```
+
+The transport choice is saved with settings. An explicit saved choice overrides the constructor; old settings without this field preserve the constructor choice. The default remains `private_transport="requests"`, aiograpi's existing HTTPX transport. Selecting curl does not change the order or error handling of login methods.
+
+Requirements: `curl_cffi>=0.15.0` and its bundled libcurl >= 8.10.0. No system `curl` executable is needed. Availability depends on curl_cffi wheels for your platform; Android/Termux has not been verified.
+
+HTTPX prepares requests, scopes cookies, follows redirects and decodes responses. Curl maintains native asynchronous connections with no automatic retries, so an interrupted password POST is not resubmitted by the legacy incomplete-read handler. Curl network errors become the existing `ConnectProxyError`; an HTTP 429 remains `ClientThrottledError` with its response.
+
+The curl session uses the explicitly configured proxy and `tls_verify`, ignoring environment proxy and CA overrides. Set a trusted CA bundle with `Client(tls_verify="/path/to/ca.pem")`. Changing transport, proxy or TLS settings preserves the curl session's cookies; replaced async clients are closed on the next awaited request or session close. Change configuration between requests, not while requests are in flight.
+
+Curl buffers responses. HTTPX numeric connect/read timeout values map to curl's connect/read tuple, with a total transfer budget equal to their sum; write/pool limits are not separate curl timers. `timeout=None` is unlimited. Mixed numeric/`None` connect/read values are rejected before I/O. Native asyncio cancellation propagates normally.
+
+This option addresses a reproduced transport-sensitive empty-429 login case. It does not bypass verification, suspension or rate limits, and does not guarantee that rejected saved sessions will become valid.
 
 ### Private mobile headers
 

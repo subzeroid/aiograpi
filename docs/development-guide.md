@@ -68,6 +68,8 @@ coverage rather than decreasing it.
 
 We use [pytest][pytest-docs] as our testing framework.
 
+To include the optional private curl transport tests, install both extras with `python -m pip install -e ".[test,curl]"`, then run `python -m pytest -q tests/regression/test_private_transport.py tests/regression/test_private_transport_wire.py`. These tests use local TLS/HTTP2 servers and need no Instagram account.
+
 #### Stages
 
 To customize / override a specific testing stage, please read the documentation specific to that tool:
@@ -94,9 +96,7 @@ maintainers cut a version tag only after the checks are green.
 
 ## Continuous Integration Pipeline
 
-The `Package` workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs
-builds. On canonical repository pushes it also runs `tests/live/smoke.py` against the pooled live-account endpoint
-configured in `TEST_ACCOUNTS_URL`.
+The `Package` workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs builds. Its private curl job checks minimum and current curl_cffi on Python 3.10 and 3.14. On canonical repository pushes it also runs `tests/live/smoke.py` against the pooled live-account endpoint configured in `TEST_ACCOUNTS_URL`.
 
 Realtime MQTT/FBNS live tests also use `TEST_ACCOUNTS_URL` for pooled accounts. Set `IG_REALTIME_PROXY` when the account
 HTTP proxy can log in but cannot open a CONNECT tunnel to Instagram's MQTT hosts; the realtime tests use that proxy only

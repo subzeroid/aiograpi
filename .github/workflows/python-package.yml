@@ -167,6 +167,28 @@ jobs:
             tests/legacy.py::ChapiPortedRegressionTestCase \
             tests/regression
 
+  private-curl-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.14"]
+        curl-version: [minimum, current]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install private transport test dependencies
+        env:
+          CURL_VERSION: ${{ matrix.curl-version }}
+        run: |
+          python -m pip install -e ".[test,curl]"
+          if [ "$CURL_VERSION" = minimum ]; then
+            python -m pip install "curl_cffi==0.15.0"
+          fi
+      - name: Check private transport and real TLS/HTTP2 behavior
+        run: python -m pytest -q tests/regression/test_private_transport.py tests/regression/test_private_transport_wire.py
+
   live-test:
     # Live IG tests via pooled accounts. Only on canonical-repo pushes
     # — PRs from forks don't have access to the TEST_ACCOUNTS_URL secret.
