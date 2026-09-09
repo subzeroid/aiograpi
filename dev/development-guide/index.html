@@ -1634,6 +1634,7 @@ ruff<span class="w"> </span>format<span class="w"> </span>.
 <p>Generally we should endeavor to write tests for every feature. Every new feature branch should increase the test
 coverage rather than decreasing it.</p>
 <p>We use <a href="https://docs.pytest.org/en/latest/">pytest</a> as our testing framework.</p>
+<p>To include the optional private curl transport tests, install both extras with <code>python -m pip install -e ".[test,curl]"</code>, then run <code>python -m pytest -q tests/regression/test_private_transport.py tests/regression/test_private_transport_wire.py</code>. These tests use local TLS/HTTP2 servers and need no Instagram account.</p>
 <h4 id="stages">Stages</h4>
 <p>To customize / override a specific testing stage, please read the documentation specific to that tool:</p>
 <ol>
@@ -1654,9 +1655,7 @@ coverage rather than decreasing it.</p>
 <p>Publishing is handled by the tag-based <code>publish.yml</code> workflow. Pushes and pull requests run the package workflow first;
 maintainers cut a version tag only after the checks are green.</p>
 <h2 id="continuous-integration-pipeline">Continuous Integration Pipeline</h2>
-<p>The <code>Package</code> workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs
-builds. On canonical repository pushes it also runs <code>tests/live/smoke.py</code> against the pooled live-account endpoint
-configured in <code>TEST_ACCOUNTS_URL</code>.</p>
+<p>The <code>Package</code> workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs builds. Its private curl job checks minimum and current curl_cffi on Python 3.10 and 3.14. On canonical repository pushes it also runs <code>tests/live/smoke.py</code> against the pooled live-account endpoint configured in <code>TEST_ACCOUNTS_URL</code>.</p>
 <p>Realtime MQTT/FBNS live tests also use <code>TEST_ACCOUNTS_URL</code> for pooled accounts. Set <code>IG_REALTIME_PROXY</code> when the account
 HTTP proxy can log in but cannot open a CONNECT tunnel to Instagram's MQTT hosts; the realtime tests use that proxy only
 for the MQTT socket and keep the account proxy for normal private API calls.</p>

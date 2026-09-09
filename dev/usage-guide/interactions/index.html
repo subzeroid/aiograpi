@@ -570,6 +570,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#private-http2-transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Private HTTP/2 transport
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#private-mobile-headers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1555,6 +1566,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#private-http2-transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Private HTTP/2 transport
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#private-mobile-headers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1677,6 +1699,10 @@
 <td>Timeout in seconds between requests (1 second by default)</td>
 </tr>
 <tr>
+<td>private_transport</td>
+<td>Private mobile transport: <code>requests</code> (HTTPX) by default, or native async <code>curl</code> for HTTP/2</td>
+</tr>
+<tr>
 <td>public_transport</td>
 <td>Public web transport: <code>requests</code>-compatible async transport by default, or <code>curl</code> when <code>aiograpi[curl]</code> is installed</td>
 </tr>
@@ -1759,6 +1785,7 @@
    <span class="p">},</span>
    <span class="s2">"user_agent"</span><span class="p">:</span> <span class="s2">"Instagram 117.0.0.28.123 Android (23/6.0.1; ...US; 168361634)"</span><span class="p">,</span>
    <span class="s2">"public_transport"</span><span class="p">:</span> <span class="s2">"requests"</span><span class="p">,</span>
+   <span class="s2">"private_transport"</span><span class="p">:</span> <span class="s2">"requests"</span><span class="p">,</span>
    <span class="s2">"public_transport_impersonate"</span><span class="p">:</span> <span class="s2">"chrome136"</span><span class="p">,</span>
    <span class="s2">"tls_verify"</span><span class="p">:</span> <span class="kc">True</span>
 <span class="p">}</span>
@@ -1885,6 +1912,11 @@
 <td>Set timezone offset in seconds</td>
 </tr>
 <tr>
+<td>set_retry_config(...)</td>
+<td>bool</td>
+<td>Configure request timing, retry settings and public/private transport choices</td>
+</tr>
+<tr>
 <td>set_tls_verify(tls_verify: bool | str)</td>
 <td>bool</td>
 <td>Update TLS certificate verification for existing public, private and GraphQL sessions</td>
@@ -1929,8 +1961,23 @@
 <p>Then opt in explicitly:</p>
 <div class="highlight"><pre><span></span><code><span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">public_transport</span><span class="o">=</span><span class="s2">"curl"</span><span class="p">,</span> <span class="n">public_transport_impersonate</span><span class="o">=</span><span class="s2">"chrome136"</span><span class="p">)</span>
 </code></pre></div>
-<p>The default remains <code>public_transport="requests"</code>. Private mobile API requests still use the regular mobile session.
-See <a href="../public-transport/">Public Transport</a> for live comparison results and caveats.</p>
+<p>The default remains <code>public_transport="requests"</code>. Configure private mobile API requests separately with <code>private_transport</code>. See <a href="../public-transport/">Public Transport</a> for live comparison results and caveats.</p>
+<h3 id="private-http2-transport">Private HTTP/2 transport</h3>
+<p>Install <code>aiograpi[curl]</code> and use <code>Client(private_transport="curl")</code> to send all private mobile API requests, including the existing CAA login flow, through native asynchronous <code>curl_cffi</code>. HTTPS advertises only <code>h2</code> through ALPN and rejects an HTTP/1 response. Mobile headers and device settings are preserved; no browser impersonation is applied.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
+
+<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">load_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>  <span class="c1"># if you have saved settings</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">set_retry_config</span><span class="p">(</span><span class="n">private_transport</span><span class="o">=</span><span class="s2">"curl"</span><span class="p">)</span>  <span class="c1"># choose after loading settings</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
+</code></pre></div>
+<p>The transport choice is saved with settings. An explicit saved choice overrides the constructor; old settings without this field preserve the constructor choice. The default remains <code>private_transport="requests"</code>, aiograpi's existing HTTPX transport. Selecting curl does not change the order or error handling of login methods.</p>
+<p>Requirements: <code>curl_cffi&gt;=0.15.0</code> and its bundled libcurl &gt;= 8.10.0. No system <code>curl</code> executable is needed. Availability depends on curl_cffi wheels for your platform; Android/Termux has not been verified.</p>
+<p>HTTPX prepares requests, scopes cookies, follows redirects and decodes responses. Curl maintains native asynchronous connections with no automatic retries, so an interrupted password POST is not resubmitted by the legacy incomplete-read handler. Curl network errors become the existing <code>ConnectProxyError</code>; an HTTP 429 remains <code>ClientThrottledError</code> with its response.</p>
+<p>The curl session uses the explicitly configured proxy and <code>tls_verify</code>, ignoring environment proxy and CA overrides. Set a trusted CA bundle with <code>Client(tls_verify="/path/to/ca.pem")</code>. Changing transport, proxy or TLS settings preserves the curl session's cookies; replaced async clients are closed on the next awaited request or session close. Change configuration between requests, not while requests are in flight.</p>
+<p>Curl buffers responses. HTTPX numeric connect/read timeout values map to curl's connect/read tuple, with a total transfer budget equal to their sum; write/pool limits are not separate curl timers. <code>timeout=None</code> is unlimited. Mixed numeric/<code>None</code> connect/read values are rejected before I/O. Native asyncio cancellation propagates normally.</p>
+<p>This option addresses a reproduced transport-sensitive empty-429 login case. It does not bypass verification, suspension or rate limits, and does not guarantee that rejected saved sessions will become valid.</p>
 <h3 id="private-mobile-headers">Private mobile headers</h3>
 <p><code>base_headers</code> follows the current supported Android app profile for normal private API requests, including static transport/network hints such as <code>X-FB-HTTP-Engine</code>, <code>X-Tigon-Is-Retry</code>, and <code>X-Zero-*</code>.</p>
 <p>Device-bound or attestation-style headers such as <code>x-meta-zca</code>, <code>x-meta-usdid</code>, and <code>x-ig-attest-params</code> are not generated by default. These values are tied to Android / Google Play / device signing context, so adding fake static values is more likely to hurt trust than help.</p>
