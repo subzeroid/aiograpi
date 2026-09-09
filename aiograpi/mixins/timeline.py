@@ -106,7 +106,7 @@ class ReelsMixin(ClientMixin):
                 return total_items
 
             for item in result["items"]:
-                if last_media_pk and last_media_pk == item["media"]["pk"]:
+                if last_media_pk and str(last_media_pk) == str(item["media"]["pk"]):
                     return total_items
                 total_items.append(extract_media_v1(item.get("media")))
 
