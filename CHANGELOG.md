@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [Unreleased]
+
+### Added
+
+- Optional native asynchronous private HTTP/2 transport with `Client(private_transport="curl")`, ported from `instagrapi` 2.18.19. It preserves mobile headers, device settings and scoped cookies and advertises only `h2` for HTTPS; the default transport and login routing are unchanged.
+- Real TLS/HTTP2 regression coverage for ALPN, connection reuse, CONNECT proxies, redirects, cookies, errors, timeouts and cancellation; CI checks minimum and current curl_cffi on Python 3.10 and 3.14.
+- Explicitly guarded CAA and saved-session live tests. Private curl requires `aiograpi[curl]`, curl_cffi >= 0.15.0 and libcurl >= 8.10.0.
+
 ## [1.12.14] - 2026-08-26
 
 ### Changed

@@ -43,6 +43,7 @@ if TYPE_CHECKING:
         phone_id: str
         phone_number: Optional[str]
         private: Any
+        private_transport: str
         private_requests_count: int
         public: Any
         public_accept_language: str
@@ -211,6 +212,8 @@ if TYPE_CHECKING:
         def parse_authorization(self, *args: Any, **kwargs: Any) -> Dict[str, Any]: ...
 
         def _configure_public_transport(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        def _configure_private_transport(self, private_transport: str) -> Any: ...
 
         def _default_public_user_agent(self, *args: Any, **kwargs: Any) -> str: ...
 

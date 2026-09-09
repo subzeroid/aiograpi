@@ -620,6 +620,10 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         bool
             A boolean value
         """
+        # Select the saved transport before applying cookies and TLS settings.
+        # Rebuilding the curl client for TLS configuration preserves its jar.
+        if "private_transport" in self.settings:
+            self._configure_private_transport(self.settings["private_transport"])
         if "cookies" in self.settings:
             self.private.set_cookies(self.settings["cookies"])
         else:
@@ -648,6 +652,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
             session_retry_statuses=self.settings.get("session_retry_statuses", self.session_retry_statuses),
             public_transport=self.settings.get("public_transport"),
             public_transport_impersonate=self.settings.get("public_transport_impersonate"),
+            private_transport=self.settings.get("private_transport"),
         )
 
         self.set_timezone_offset(timezone_offset, timezone_name=timezone_name or None)
@@ -988,6 +993,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
             "session_retry_statuses": self.session_retry_statuses,
             "public_transport": self.public_transport,
             "public_transport_impersonate": self.public_transport_impersonate,
+            "private_transport": self.private_transport,
             "tls_verify": self.tls_verify,
         }
         usdid_settings = self.get_usdid_settings()
@@ -1072,9 +1078,12 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         session_retry_statuses: list = None,
         public_transport: Optional[Literal["requests", "curl"]] = None,
         public_transport_impersonate: Optional[str] = None,
+        private_transport: Optional[Literal["requests", "curl"]] = None,
     ) -> bool:
         if request_timeout is not None:
             self.request_timeout = request_timeout
+        if private_transport is not None:
+            self._configure_private_transport(private_transport)
         if public_request_retries_count is not None:
             self.public_request_retries_count = public_request_retries_count
         if public_request_retries_timeout is not None:
@@ -1111,6 +1120,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
                     "session_retry_statuses": self.session_retry_statuses,
                     "public_transport": self.public_transport,
                     "public_transport_impersonate": self.public_transport_impersonate,
+                    "private_transport": self.private_transport,
                 }
             )
         return True

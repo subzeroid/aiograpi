@@ -158,6 +158,9 @@ cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
 
 See the [public transport guide](docs/usage-guide/public-transport.md) for live comparison results and caveats.
 
+Private mobile API requests can separately use native async HTTP/2 with `Client(private_transport="curl")`.
+See the [private HTTP/2 transport guide](docs/usage-guide/interactions.md#private-http2-transport) for saved-session setup and requirements.
+
 TLS certificate verification is enabled by default. For a trusted debugging MITM proxy, prefer `Client(tls_verify="/path/to/proxy-ca.pem")`; use `Client(tls_verify=False)` only for temporary local debugging because it allows session interception.
 
 ### Realtime MQTT and Direct

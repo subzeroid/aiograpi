@@ -74,6 +74,7 @@ Changelog = "https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 curl = [
+    "curl_cffi>=0.15.0",
     "curl-adapter>=1.2.1",
 ]
 video = [
@@ -87,6 +88,8 @@ video = [
     "python-dotenv>=0.10",
 ]
 test = [
+    "h2>=4.3.0",
+    "cryptography>=46.0.5",
     "mypy==1.20.2",
     "Pillow==12.3.0",
     "bandit==1.9.4",

@@ -89,6 +89,7 @@ class Session:
         self.verify = verify
         self._client = None
         self._proxy = None
+        self._retired_clients = []
 
     @property
     def cookies(self):
@@ -129,10 +130,16 @@ class Session:
         await self._close()
 
     async def _close(self):
+        await self._close_retired_clients()
         if self._client and self._client._state is ClientState.OPENED:
             await self._client.__aexit__()
 
+    async def _close_retired_clients(self):
+        while self._retired_clients:
+            await self._retired_clients.pop().aclose()
+
     async def request(self, *args, headers=None, proxy=None, **kwargs):
+        await self._close_retired_clients()
         if "timeout" not in kwargs:
             kwargs["timeout"] = DEFAULT_TIMEOUT
         if self._client._state is ClientState.UNOPENED:
@@ -147,6 +154,36 @@ class Session:
 
     async def post(self, *args, **kwargs):
         return await self.request("post", *args, **kwargs)
+
+
+class CurlPrivateSession(Session):
+    """Private HTTPX session using native asynchronous curl I/O."""
+
+    def _set_client(self):
+        from aiograpi.transports import CurlH2Transport
+
+        old = self._client
+        replacement = httpx.AsyncClient(
+            transport=CurlH2Transport(proxy=self._proxy, verify=self.verify),
+            follow_redirects=True,
+            trust_env=False,
+            cookies=old.cookies if old is not None else None,
+        )
+        self._client = replacement
+        if old is not None:
+            self._retired_clients.append(old)
+
+    async def _close(self):
+        await self._close_retired_clients()
+        if self._client is not None:
+            await self._client.aclose()
+
+    async def request(self, *args, headers=None, proxy=None, **kwargs):
+        await self._close_retired_clients()
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = DEFAULT_TIMEOUT
+        headers = {key: value for key, value in (self.headers | (headers or {})).items() if value is not None}
+        return await self._client.request(*args, headers=headers, **kwargs)
 
 
 class CurlResponse:
@@ -299,4 +336,5 @@ __all__ = [
     "request",
     "Session",
     "CurlSession",
+    "CurlPrivateSession",
 ]

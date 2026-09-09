@@ -129,7 +129,7 @@ def test_tracker_syntax_is_compatible_with_macos_bash_3_2():
 
 
 def test_upstream_instagrapi_baseline_is_recorded():
-    assert aiograpi.__upstream_instagrapi_version__ == "2.18.18"
+    assert aiograpi.__upstream_instagrapi_version__ == "2.18.19"
 
 
 def test_upstream_sync_doc_matches_recorded_baseline():
