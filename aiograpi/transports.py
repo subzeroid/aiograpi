@@ -33,7 +33,13 @@ class CurlH2Transport(httpx.AsyncBaseTransport):
         self._verify = verify
         self._client = None
         self._closed = False
-        self._curl_options = {CurlOpt.HTTP_CONTENT_DECODING: 0, CurlOpt.NOPROXY: ""}
+        self._curl_options = {
+            CurlOpt.HTTP_CONTENT_DECODING: 0,
+            CurlOpt.NOPROXY: "",
+            # Some proxy paths reject the default classical-only ClientHello.
+            # Keep classical groups available for peers without hybrid support.
+            CurlOpt.SSL_EC_CURVES: "X25519MLKEM768:X25519:P-256:P-384",
+        }
         if isinstance(verify, str) and os.path.isdir(verify):
             self._curl_options.update({CurlOpt.CAPATH: verify, CurlOpt.CAINFO: ffi.NULL})
             self._verify = True
