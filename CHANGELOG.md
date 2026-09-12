@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [Unreleased]
+
+### Fixed
+
+- Advertise the hybrid `X25519MLKEM768` TLS group in the optional private curl transport to address connection failures on proxy paths that reject a classical-only ClientHello. Preserve classical groups and h2-only ALPN; this changes TLS reachability, not authentication handling.
+
 ## [1.12.15] - 2026-09-09
 
 ### Added

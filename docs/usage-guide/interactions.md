@@ -227,6 +227,8 @@ The transport choice is saved with settings. An explicit saved choice overrides 
 
 Requirements: `curl_cffi>=0.15.0` and its bundled libcurl >= 8.10.0. No system `curl` executable is needed. Availability depends on curl_cffi wheels for your platform; Android/Termux has not been verified.
 
+The TLS offer includes the hybrid `X25519MLKEM768` group alongside `X25519`, `P-256` and `P-384` to address connection failures on some proxy paths. Servers without hybrid support can still select a classical group, while ALPN offers only `h2`.
+
 HTTPX prepares requests, scopes cookies, follows redirects and decodes responses. Curl maintains native asynchronous connections with no automatic retries, so an interrupted password POST is not resubmitted by the legacy incomplete-read handler. Curl network errors become the existing `ConnectProxyError`; an HTTP 429 remains `ClientThrottledError` with its response.
 
 The curl session uses the explicitly configured proxy and `tls_verify`, ignoring environment proxy and CA overrides. Set a trusted CA bundle with `Client(tls_verify="/path/to/ca.pem")`. Changing transport, proxy or TLS settings preserves the curl session's cookies; replaced async clients are closed on the next awaited request or session close. Change configuration between requests, not while requests are in flight.
