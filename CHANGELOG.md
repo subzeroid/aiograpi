@@ -12,6 +12,12 @@ starting with 1.0.0.
 
 - Reels feed readers now accept media from current `items_with_ads` responses when legacy `items` is empty or absent, avoiding empty results and unnecessary pagination. Existing feed ordering and cursor behavior are preserved.
 
+## [2.0.1] - 2026-09-13
+
+### Fixed
+
+- Return configured photos, videos, albums, Reels, IGTV and Stories without a follow-up `qe/expose/` request, preventing an exposure endpoint error from hiding a successful upload (instagrapi #2790).
+
 ## [2.0.0] - 2026-09-13
 
 - **Breaking:** Make `login()` use CAA directly; retain the previous login flow and arguments as `login_legacy()`. Default login does not automatically fall back to legacy login.
