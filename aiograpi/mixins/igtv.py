@@ -187,7 +187,6 @@ class UploadIGTVMixin(ClientMixin):
                 raise e
             else:
                 if configured:
-                    await self.expose()
                     return self._extract_configured_media_or_raise(
                         configured,
                         IGTVConfigureError,
