@@ -8,6 +8,10 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Return configured photos, videos, albums, Reels, IGTV and Stories without a follow-up `qe/expose/` request, preventing an exposure endpoint error from hiding a successful upload (instagrapi #2790).
+
 ## [1.12.16] - 2026-09-12
 
 ### Changed
