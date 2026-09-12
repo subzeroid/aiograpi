@@ -68,7 +68,7 @@ coverage rather than decreasing it.
 
 We use [pytest][pytest-docs] as our testing framework.
 
-To include the optional private curl transport tests, install both extras with `python -m pip install -e ".[test,curl]"`, then run `python -m pytest -q tests/regression/test_private_transport.py tests/regression/test_private_transport_wire.py`. These tests use local TLS/HTTP2 servers and need no Instagram account.
+To run private curl transport tests, install test dependencies with `python -m pip install -e ".[test]"`, then run `python -m pytest -q tests/regression/test_private_transport.py tests/regression/test_private_transport_wire.py`. These tests use local TLS/HTTP2 servers and need no Instagram account.
 
 #### Stages
 

@@ -55,6 +55,7 @@ keywords = [
     "aiograpi",
 ]
 dependencies = [
+    "curl_cffi>=0.15.0",
     "httpx>=0.28.1,<0.29",
     "orjson>=3.11.8,<4",
     "PySocks>=1.7.1,<2",
@@ -74,7 +75,6 @@ Changelog = "https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 curl = [
-    "curl_cffi>=0.15.0",
     "curl-adapter>=1.2.1",
 ]
 video = [

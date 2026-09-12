@@ -56,7 +56,7 @@ We recommend using [these proxies](https://soax.com/?r=sEysufQI)
 | ------------------- | --------------------------------------------------------------
 | request\_logger     | Logger in which various actions from Instagram are registered
 | request\_timeout    | Timeout in seconds between requests (1 second by default)
-| private\_transport | Private mobile transport: `requests` (HTTPX) by default, or native async `curl` for HTTP/2
+| private\_transport | Private mobile transport: native async `curl` by default for HTTP/2; `requests` selects the previous HTTPX transport
 | public\_transport   | Public web transport: `requests`-compatible async transport by default, or `curl` when `aiograpi[curl]` is installed
 | public\_transport\_impersonate | Browser fingerprint used by the optional curl public transport
 | tls\_verify | TLS certificate verification: `True` by default, `False` for temporary trusted MITM debugging, or a CA bundle path
@@ -66,12 +66,15 @@ We recommend using [these proxies](https://soax.com/?r=sEysufQI)
 
 | Method                               | Return  | Description
 | ------------------------------------ | ------- | -------------------------------------------------
-| login(username: str, password: str)  | bool    | Login by username and password (get new cookies if it does not exist in settings)
-| login(username: str, password: str, verification\_code: str) | bool | Login by username and password with 2FA verification code (use Google Authenticator or something similar to generate TOTP code, not work with SMS)
+| login(username: str, password: str)  | bool    | CAA login by username and password; validate and reuse a saved session when present
+| login(username: str, password: str, verification\_code: str) | bool | CAA login with a supported TOTP, SMS, backup or profile verification code
+| login\_legacy(username: str, password: str, relogin: bool = False, verification\_code: str = "") | bool | Explicit compatibility entry point for the previous login flow
 | relogin()                            | bool    | Re-login with clean cookies (required cl.username and cl.password)
 | login\_by\_sessionid(sessionid: str) | bool    | Lightweight compatibility login using a session cookie value
 | inject\_sessionid\_to\_public()      | bool    | Inject sessionid from Private Session to Public Session
 | logout()                             | bool    | Logout
+
+`login()` uses CAA directly and does not automatically fall back to `login_legacy()`. Both entry points accept the same arguments. See the [login migration guide](login-migration.md) for compatibility and saved-session behavior.
 
 `login_by_sessionid()` only works when Instagram accepts that `sessionid` for the private mobile API. A browser/web `sessionid` can be rejected with `login_required` or invalidated server-side; for long-lived automation, prefer `login()` once, then `dump_settings()` and reuse the saved settings.
 
@@ -104,7 +107,7 @@ settings = {
    },
    "user_agent": "Instagram 117.0.0.28.123 Android (23/6.0.1; ...US; 168361634)",
    "public_transport": "requests",
-   "private_transport": "requests",
+   "private_transport": "curl",
    "public_transport_impersonate": "chrome136",
    "tls_verify": True
 }
@@ -211,19 +214,18 @@ The default remains `public_transport="requests"`. Configure private mobile API 
 
 ### Private HTTP/2 transport
 
-Install `aiograpi[curl]` and use `Client(private_transport="curl")` to send all private mobile API requests, including the existing CAA login flow, through native asynchronous `curl_cffi`. HTTPS advertises only `h2` through ALPN and rejects an HTTP/1 response. Mobile headers and device settings are preserved; no browser impersonation is applied.
+The standard installation includes `curl_cffi`. `Client()` sends private mobile API requests over HTTP/2 with an ALPN offer containing only `h2`, including CAA login. Mobile request headers and account device settings are preserved.
 
 ```python
 from aiograpi import Client
 
 cl = Client()
 cl.load_settings("session.json")  # if you have saved settings
-cl.set_retry_config(private_transport="curl")  # choose after loading settings
 await cl.login(USERNAME, PASSWORD)
 cl.dump_settings("session.json")
 ```
 
-The transport choice is saved with settings. An explicit saved choice overrides the constructor; old settings without this field preserve the constructor choice. The default remains `private_transport="requests"`, aiograpi's existing HTTPX transport. Selecting curl does not change the order or error handling of login methods.
+Transport selection is saved in settings. An explicit saved choice overrides the constructor; settings without this field preserve the constructor choice, which defaults to `curl`. To migrate settings that explicitly saved `requests`, call `cl.set_retry_config(private_transport="curl")` after loading them, then save again. `Client(private_transport="requests")` selects the previous private transport. Public and GraphQL transports have their own configuration.
 
 Requirements: `curl_cffi>=0.15.0` and its bundled libcurl >= 8.10.0. No system `curl` executable is needed. Availability depends on curl_cffi wheels for your platform; Android/Termux has not been verified.
 
