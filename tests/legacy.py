@@ -1104,7 +1104,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(BadCredentials):
             await client.login()
 
-    async def test_login_continues_after_pre_login_throttling(self):
+    async def test_login_legacy_continues_after_pre_login_throttling(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -1116,14 +1116,14 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.login_flow = AsyncMock()
         client.password_encrypt = AsyncMock(return_value="enc-password")
 
-        result = await client.login()
+        result = await client.login_legacy()
 
         self.assertTrue(result)
         client.pre_login_flow.assert_called_once_with()
         client.private_request.assert_called_once()
         client.login_flow.assert_called_once_with()
 
-    async def test_login_continues_after_client_throttled_error(self):
+    async def test_login_legacy_continues_after_client_throttled_error(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -1135,7 +1135,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.login_flow = AsyncMock()
         client.password_encrypt = AsyncMock(return_value="enc-password")
 
-        result = await client.login()
+        result = await client.login_legacy()
 
         self.assertTrue(result)
         client.pre_login_flow.assert_called_once_with()
@@ -1173,7 +1173,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.pre_login_flow.assert_not_called()
         client.private_request.assert_not_called()
 
-    async def test_login_uses_stored_username_when_called_without_args(self):
+    async def test_login_legacy_uses_stored_username_when_called_without_args(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -1185,13 +1185,13 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.login_flow = AsyncMock()
         client.password_encrypt = AsyncMock(return_value="enc-password")
 
-        result = await client.login()
+        result = await client.login_legacy()
 
         self.assertTrue(result)
         payload = client.private_request.call_args.args[1]
         self.assertEqual(payload["username"], "example")
 
-    async def test_login_strips_outer_username_whitespace(self):
+    async def test_login_legacy_strips_outer_username_whitespace(self):
         client = Client()
         client.authorization_data = {}
         client.last_response = Mock(headers={"ig-set-authorization": "Bearer token"})
@@ -1201,14 +1201,14 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.login_flow = AsyncMock()
         client.password_encrypt = AsyncMock(return_value="enc-password")
 
-        result = await client.login(" example ", "password")
+        result = await client.login_legacy(" example ", "password")
 
         self.assertTrue(result)
         payload = client.private_request.call_args.args[1]
         self.assertEqual(payload["username"], "example")
         self.assertEqual(client.username, "example")
 
-    async def test_login_two_factor_requires_verification_code(self):
+    async def test_login_legacy_two_factor_requires_verification_code(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -1217,11 +1217,11 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.password_encrypt = AsyncMock(return_value="enc-password")
 
         with self.assertRaises(TwoFactorRequired) as cm:
-            await client.login()
+            await client.login_legacy()
 
         self.assertIn("you did not provide verification_code", str(cm.exception))
 
-    async def test_login_two_factor_uses_verification_code_flow(self):
+    async def test_login_legacy_two_factor_uses_verification_code_flow(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -1243,7 +1243,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             ]
         )
 
-        result = await client.login(verification_code="123456")
+        result = await client.login_legacy(verification_code="123456")
 
         self.assertTrue(result)
         self.assertEqual(client.private_request.call_count, 2)
@@ -1256,7 +1256,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second_call.args[1]["username"], "example")
         client.login_flow.assert_called_once_with()
 
-    async def test_login_two_factor_invalid_parameters_raises_clear_bloks_hint(self):
+    async def test_login_legacy_two_factor_invalid_parameters_raises_clear_bloks_hint(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -1276,12 +1276,12 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         )
 
         with self.assertRaises(TwoFactorRequired) as cm:
-            await client.login(verification_code="123456")
+            await client.login_legacy(verification_code="123456")
 
         self.assertIn("Bloks-based two-factor verification flow", str(cm.exception))
         self.assertEqual(client.private_request.call_count, 2)
 
-    async def test_login_two_factor_invalid_parameters_falls_back_to_bloks_when_context_available(self):
+    async def test_login_legacy_two_factor_invalid_parameters_falls_back_to_bloks_when_context_available(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -1313,7 +1313,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.bloks_two_step_verification_verify_code = AsyncMock(return_value={"layout": {}})
         client.bloks_apply_login_response = Mock(return_value=True)
 
-        result = await client.login(verification_code="123456")
+        result = await client.login_legacy(verification_code="123456")
 
         self.assertTrue(result)
         self.assertEqual(client.private_request.call_count, 2)
@@ -1331,7 +1331,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.bloks_apply_login_response.assert_called_once_with({"layout": {}})
         client.login_flow.assert_awaited_once_with()
 
-    async def test_login_two_factor_invalid_parameters_without_context_keeps_clear_error(self):
+    async def test_login_legacy_two_factor_invalid_parameters_without_context_keeps_clear_error(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -1352,12 +1352,12 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.bloks_two_step_verification_verify_code = AsyncMock()
 
         with self.assertRaises(TwoFactorRequired) as cm:
-            await client.login(verification_code="123456")
+            await client.login_legacy(verification_code="123456")
 
         self.assertIn("two_step_verification_context", str(cm.exception))
         client.bloks_two_step_verification_verify_code.assert_not_called()
 
-    async def test_login_bad_password_with_bloks_context_and_code_falls_back_to_bloks(self):
+    async def test_login_legacy_bad_password_with_bloks_context_and_code_falls_back_to_bloks(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -1377,7 +1377,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.bloks_two_step_verification_verify_code = AsyncMock(return_value={"layout": {}})
         client.bloks_apply_login_response = Mock(return_value=True)
 
-        result = await client.login(verification_code="654321")
+        result = await client.login_legacy(verification_code="654321")
 
         self.assertTrue(result)
         client.bloks_two_step_verification_select_method.assert_awaited_once_with(
@@ -1486,7 +1486,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AssertionError):
             await client.login_by_sessionid("abcdefghijklmnopqrstuvwxyz123456")
 
-    async def test_login_resets_relogin_attempt_after_success(self):
+    async def test_login_legacy_resets_relogin_attempt_after_success(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -1499,7 +1499,7 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.login_flow = AsyncMock()
         client.password_encrypt = AsyncMock(return_value="enc-password")
 
-        result = await client.login(relogin=True)
+        result = await client.login_legacy(relogin=True)
 
         self.assertTrue(result)
         self.assertEqual(client.relogin_attempt, 0)
