@@ -14,7 +14,7 @@
         <link rel="prev" href="../fundamentals/">
       
       
-        <link rel="next" href="../types/">
+        <link rel="next" href="../login-migration/">
       
       
         
@@ -622,6 +622,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../login-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Login Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1700,7 +1728,7 @@
 </tr>
 <tr>
 <td>private_transport</td>
-<td>Private mobile transport: <code>requests</code> (HTTPX) by default, or native async <code>curl</code> for HTTP/2</td>
+<td>Private mobile transport: native async <code>curl</code> by default for HTTP/2; <code>requests</code> selects the previous HTTPX transport</td>
 </tr>
 <tr>
 <td>public_transport</td>
@@ -1729,12 +1757,17 @@
 <tr>
 <td>login(username: str, password: str)</td>
 <td>bool</td>
-<td>Login by username and password (get new cookies if it does not exist in settings)</td>
+<td>CAA login by username and password; validate and reuse a saved session when present</td>
 </tr>
 <tr>
 <td>login(username: str, password: str, verification_code: str)</td>
 <td>bool</td>
-<td>Login by username and password with 2FA verification code (use Google Authenticator or something similar to generate TOTP code, not work with SMS)</td>
+<td>CAA login with a supported TOTP, SMS, backup or profile verification code</td>
+</tr>
+<tr>
+<td>login_legacy(username: str, password: str, relogin: bool = False, verification_code: str = "")</td>
+<td>bool</td>
+<td>Explicit compatibility entry point for the previous login flow</td>
 </tr>
 <tr>
 <td>relogin()</td>
@@ -1758,6 +1791,7 @@
 </tr>
 </tbody>
 </table>
+<p><code>login()</code> uses CAA directly and does not automatically fall back to <code>login_legacy()</code>. Both entry points accept the same arguments. See the <a href="../login-migration/">login migration guide</a> for compatibility and saved-session behavior.</p>
 <p><code>login_by_sessionid()</code> only works when Instagram accepts that <code>sessionid</code> for the private mobile API. A browser/web <code>sessionid</code> can be rejected with <code>login_required</code> or invalidated server-side; for long-lived automation, prefer <code>login()</code> once, then <code>dump_settings()</code> and reuse the saved settings.</p>
 <p>When <code>login_by_sessionid()</code> needs to recover the account username after a private profile lookup failure, it tries the private mobile profile stream before falling back to public/web GraphQL.</p>
 <p>You can pass settings to the Client (and save cookies), it has the following format:</p>
@@ -1785,13 +1819,14 @@
    <span class="p">},</span>
    <span class="s2">"user_agent"</span><span class="p">:</span> <span class="s2">"Instagram 117.0.0.28.123 Android (23/6.0.1; ...US; 168361634)"</span><span class="p">,</span>
    <span class="s2">"public_transport"</span><span class="p">:</span> <span class="s2">"requests"</span><span class="p">,</span>
-   <span class="s2">"private_transport"</span><span class="p">:</span> <span class="s2">"requests"</span><span class="p">,</span>
+   <span class="s2">"private_transport"</span><span class="p">:</span> <span class="s2">"curl"</span><span class="p">,</span>
    <span class="s2">"public_transport_impersonate"</span><span class="p">:</span> <span class="s2">"chrome136"</span><span class="p">,</span>
    <span class="s2">"tls_verify"</span><span class="p">:</span> <span class="kc">True</span>
 <span class="p">}</span>
 
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span>
 </code></pre></div>
+<p>This example contains an older app profile without a Bloks hash. Before a fresh CAA login, follow the <a href="../login-migration/#older-app-profiles-without-a-bloks-hash">older-profile migration steps</a>.</p>
 <h3 id="settings">Settings</h3>
 <p>Store and manage uuids, device configuration, user agent, authorization data (aka cookies) and other session settings</p>
 <table>
@@ -1814,9 +1849,9 @@
 <td>Set session settings</td>
 </tr>
 <tr>
-<td>load_settings(path: Path)</td>
+<td>load_settings(path: Path, override_app_version: bool = False)</td>
 <td>dict</td>
-<td>Load session settings from file</td>
+<td>Load session settings; optionally update the app version, version code and Bloks hash</td>
 </tr>
 <tr>
 <td>dump_settings(path: Path)</td>
@@ -1963,16 +1998,15 @@
 </code></pre></div>
 <p>The default remains <code>public_transport="requests"</code>. Configure private mobile API requests separately with <code>private_transport</code>. See <a href="../public-transport/">Public Transport</a> for live comparison results and caveats.</p>
 <h3 id="private-http2-transport">Private HTTP/2 transport</h3>
-<p>Install <code>aiograpi[curl]</code> and use <code>Client(private_transport="curl")</code> to send all private mobile API requests, including the existing CAA login flow, through native asynchronous <code>curl_cffi</code>. HTTPS advertises only <code>h2</code> through ALPN and rejects an HTTP/1 response. Mobile headers and device settings are preserved; no browser impersonation is applied.</p>
+<p>The standard installation includes <code>curl_cffi</code>. <code>Client()</code> sends private mobile API requests over HTTP/2 with an ALPN offer containing only <code>h2</code>, including CAA login. Mobile request headers and account device settings are preserved.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">load_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>  <span class="c1"># if you have saved settings</span>
-<span class="n">cl</span><span class="o">.</span><span class="n">set_retry_config</span><span class="p">(</span><span class="n">private_transport</span><span class="o">=</span><span class="s2">"curl"</span><span class="p">)</span>  <span class="c1"># choose after loading settings</span>
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
 </code></pre></div>
-<p>The transport choice is saved with settings. An explicit saved choice overrides the constructor; old settings without this field preserve the constructor choice. The default remains <code>private_transport="requests"</code>, aiograpi's existing HTTPX transport. Selecting curl does not change the order or error handling of login methods.</p>
+<p>Transport selection is saved in settings. An explicit saved choice overrides the constructor; settings without this field preserve the constructor choice, which defaults to <code>curl</code>. To migrate settings that explicitly saved <code>requests</code>, call <code>cl.set_retry_config(private_transport="curl")</code> after loading them, then save again. <code>Client(private_transport="requests")</code> selects the previous private transport. Public and GraphQL transports have their own configuration.</p>
 <p>Requirements: <code>curl_cffi&gt;=0.15.0</code> and its bundled libcurl &gt;= 8.10.0. No system <code>curl</code> executable is needed. Availability depends on curl_cffi wheels for your platform; Android/Termux has not been verified.</p>
 <p>The TLS offer includes the hybrid <code>X25519MLKEM768</code> group alongside <code>X25519</code>, <code>P-256</code> and <code>P-384</code> to address connection failures on some proxy paths. Servers without hybrid support can still select a classical group, while ALPN offers only <code>h2</code>.</p>
 <p>HTTPX prepares requests, scopes cookies, follows redirects and decodes responses. Curl maintains native asynchronous connections with no automatic retries, so an interrupted password POST is not resubmitted by the legacy incomplete-read handler. Curl network errors become the existing <code>ConnectProxyError</code>; an HTTP 429 remains <code>ClientThrottledError</code> with its response.</p>

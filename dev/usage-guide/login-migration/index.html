@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/totp/">
+        <link rel="canonical" href="https://subzeroid.github.io/aiograpi/dev/usage-guide/login-migration/">
       
       
-        <link rel="prev" href="../termux/">
+        <link rel="prev" href="../interactions/">
       
       
-        <link rel="next" href="../track/">
+        <link rel="next" href="../types/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>TOTP - aiograpi Documentation</title>
+        <title>Login Migration - aiograpi Documentation</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#totp" class="md-skip">
+        <a href="#caa-login-migration" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              TOTP
+              Login Migration
             
           </span>
         </div>
@@ -468,10 +468,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../login-migration/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Login Migration
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -487,6 +514,92 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#default-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keep-the-previous-login-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep the previous login flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reuse-saved-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reuse saved sessions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#older-app-profiles-without-a-bloks-hash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Older app profiles without a Bloks hash
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-and-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification and failures
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1056,37 +1169,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    TOTP
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../totp/" class="md-nav__link">
         
   
   
@@ -1102,37 +1188,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#bloks-two-factor-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bloks two-factor flow
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1422,10 +1477,65 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#bloks-two-factor-flow" class="md-nav__link">
+  <a href="#default-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Bloks two-factor flow
+        Default usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keep-the-previous-login-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep the previous login flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reuse-saved-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reuse saved sessions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#older-app-profiles-without-a-bloks-hash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Older app profiles without a Bloks hash
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-and-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification and failures
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation requirements
       
     </span>
   </a>
@@ -1452,98 +1562,59 @@
   
 
 
-<h1 id="totp">TOTP</h1>
-<p>TOTP setup and code generation</p>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Return</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>totp_generate_seed()</td>
-<td>str</td>
-<td>Generate 2FA TOTP seed</td>
-</tr>
-<tr>
-<td>totp_enable(verification_code: str)</td>
-<td>List[str]</td>
-<td>Enable TOTP 2FA (return backup keys, save it)</td>
-</tr>
-<tr>
-<td>totp_disable()</td>
-<td>bool</td>
-<td>Disable TOTP 2FA</td>
-</tr>
-<tr>
-<td>totp_generate_code(seed: str)</td>
-<td>str</td>
-<td>Generate 2FA TOTP code (you can use it instead of Google Authenticator)</td>
-</tr>
-</tbody>
-</table>
-<p>Example:</p>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="n">seed</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">totp_generate_seed</span><span class="p">()</span>
-<span class="s2">"67EIYPWCIJDTTVX632NEODKEU2PY5BIW"</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="n">code</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">totp_generate_code</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-<span class="s2">"123456"</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">totp_enable</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
-<span class="p">[</span><span class="s2">"1234 5678"</span><span class="p">,</span> <span class="s2">"1234 5678"</span><span class="p">,</span> <span class="s2">"1234 5678"</span><span class="p">,</span> <span class="s2">"1234 5678"</span><span class="p">,</span> <span class="s2">"1234 5678"</span><span class="p">]</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">totp_disable</span><span class="p">()</span>
-<span class="kc">True</span>
+<h1 id="caa-login-migration">CAA login migration</h1>
+<p>Version 2.0.0 changes the default login flow and private transport. This guide explains how to migrate existing applications and saved settings.</p>
+<h2 id="default-usage">Default usage</h2>
+<p>Install the package normally; <code>curl_cffi</code> is a required dependency:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>aiograpi
 </code></pre></div>
-<p>Notes:</p>
-<ul>
-<li><code>totp_generate_seed()</code> gives you the secret key you would normally scan into an authenticator app.</li>
-<li><code>totp_generate_code()</code> is a local helper and can be used anywhere you already have the TOTP seed.</li>
-<li>Save the backup codes returned by <code>totp_enable()</code> immediately. Instagram does not guarantee that you can fetch the same codes again later.</li>
-</ul>
-<h2 id="bloks-two-factor-flow">Bloks two-factor flow</h2>
-<p><code>await cl.login(..., verification_code="123456")</code> uses CAA directly, including device registration and server-issued preflight state. A successful embedded session is applied automatically. The CAA profile-code flow uses the supplied <code>verification_code</code> or <code>challenge_code_handler</code>. When Instagram returns <code>two_step_verification_context</code>, the existing Bloks verification helpers handle the code; a missing code raises <code>TwoFactorRequired</code>.</p>
-<p>The previous login flow is available explicitly as <code>await cl.login_legacy(...)</code>, with the same arguments and its existing CAA/Bloks fallbacks. Default <code>login()</code> never invokes that legacy flow automatically. See the <a href="../login-migration/">login migration guide</a>.</p>
-<p>8-digit backup codes can be passed through the same <code>verification_code</code> parameter:</p>
-<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">,</span> <span class="n">verification_code</span><span class="o">=</span><span class="s2">"12345678"</span><span class="p">)</span>
-</code></pre></div>
-<p>When the code is 8 digits and Instagram exposes <code>two_step_verification_context</code>, aiograpi selects the Bloks <code>backup_codes</code> challenge instead of sending the code to the legacy TOTP/SMS endpoint.</p>
-<p>The low-level helpers remain available when you need to inspect or drive the flow manually:</p>
+<p>The application code stays simple:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-
-<span class="c1"># The context comes from Instagram's login challenge response.</span>
-<span class="n">context</span> <span class="o">=</span> <span class="s2">"&lt;two_step_verification_context&gt;"</span>
-
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">bloks_two_step_verification_entrypoint</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">bloks_two_step_verification_method_picker</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">bloks_two_step_verification_select_method</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">selected_method</span><span class="o">=</span><span class="s2">"totp"</span><span class="p">)</span>
-
-<span class="n">code</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">totp_generate_code</span><span class="p">(</span><span class="s2">"&lt;totp seed&gt;"</span><span class="p">)</span>
-<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">bloks_two_step_verification_verify_code</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="n">challenge</span><span class="o">=</span><span class="s2">"totp"</span><span class="p">)</span>
-<span class="n">login_payload</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="n">bloks_extract_login_response</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-<span class="n">cl</span><span class="o">.</span><span class="n">bloks_apply_login_response</span><span class="p">(</span><span class="n">login_payload</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
 </code></pre></div>
-<p>For SMS, select and verify the <code>sms</code> challenge instead:</p>
-<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">bloks_two_step_verification_select_method</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">selected_method</span><span class="o">=</span><span class="s2">"sms"</span><span class="p">)</span>
-<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">bloks_two_step_verification_verify_code</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="s2">"123456"</span><span class="p">,</span> <span class="n">challenge</span><span class="o">=</span><span class="s2">"sms"</span><span class="p">)</span>
+<p><code>login()</code> uses CAA directly. It does not try <code>accounts/login/</code> first and does not automatically fall back to that endpoint after a CAA failure. All private mobile API requests use curl with HTTP/2 by default. Public web and GraphQL transports retain their separate configuration.</p>
+<h2 id="keep-the-previous-login-flow">Keep the previous login flow</h2>
+<p>The previous method is now named <code>login_legacy()</code>. Its arguments and existing fallback behavior are preserved:</p>
+<div class="highlight"><pre><span></span><code><span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login_legacy</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">,</span> <span class="n">verification_code</span><span class="o">=</span><span class="s2">"123456"</span><span class="p">)</span>
 </code></pre></div>
-<p>For backup codes, select <code>backup_codes</code>, open the backup-code entry screen, then verify the 8-digit code:</p>
-<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">bloks_two_step_verification_select_method</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">selected_method</span><span class="o">=</span><span class="s2">"backup_codes"</span><span class="p">)</span>
-<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">bloks_two_step_verification_enter_backup_code</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
-<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">bloks_two_step_verification_verify_code</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="s2">"12345678"</span><span class="p">,</span> <span class="n">challenge</span><span class="o">=</span><span class="s2">"backup_codes"</span><span class="p">)</span>
+<p>Login flow and transport are independent choices. To explicitly use the previous HTTPX private transport as well:</p>
+<div class="highlight"><pre><span></span><code><span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">private_transport</span><span class="o">=</span><span class="s2">"requests"</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login_legacy</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
 </code></pre></div>
-<p><code>await bloks_caa_login(...)</code> runs the complete current CAA sequence. For low-level inspection, <code>await bloks_caa_login_send_request(...)</code> now runs <code>await bloks_caa_login_prepare(...)</code> automatically when the client has no server-issued account access context; existing prepared context is reused on later calls. Its domain, waterfall ID, offline experiment group, and Bloks versioning ID overrides are forwarded to that automatic preflight. Pass <code>auto_prepare=False</code> to require pre-existing state, or call the preparation helper explicitly when you need to inspect or control the preflight separately. <code>bloks_extract_two_step_verification_context(...)</code> extracts a legacy Bloks two-factor context when the login response exposes one.</p>
-<p><code>bloks_extract_login_response(...)</code> returns decoded <code>login_response</code>, response <code>headers</code>, cookie values, raw cookie header text, and the raw embedded object when Instagram returns a successful Bloks login payload. It returns <code>{}</code> when the response is an intermediate UI state or an error. <code>bloks_apply_login_response(...)</code> can then copy the returned authorization data and cookies into the current client session.</p>
-<p>The separate account-recovery UI used by some accounts is not automated. Native CAA exceptions propagate from <code>login()</code>. If CAA returns neither a session nor a supported verification context, <code>login()</code> raises <code>ClientError</code> with the CAA failure reason. The explicit <code>login_legacy()</code> entry point preserves its previous fallback error behavior.</p>
+<p>An explicit legacy login may still invoke its existing CAA fallback. There is no automatic fallback in the opposite direction. <code>relogin()</code> uses the new default CAA flow; use <code>login_legacy(relogin=True)</code> to explicitly repeat the previous flow.</p>
+<h2 id="reuse-saved-sessions">Reuse saved sessions</h2>
+<p>Both entry points validate an existing session before using the supplied credentials. If Instagram rejects that session with <code>LoginRequired</code>, each repeats its own login flow after clearing the expired authorization state.</p>
+<div class="highlight"><pre><span></span><code><span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">load_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
+</code></pre></div>
+<p>Settings with an explicit <code>private_transport</code> keep that choice, even when it differs from the constructor. Settings without that field keep the selected constructor transport, which now defaults to <code>curl</code>.</p>
+<p>To migrate settings that explicitly saved <code>requests</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">cl</span><span class="o">.</span><span class="n">load_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">set_retry_config</span><span class="p">(</span><span class="n">private_transport</span><span class="o">=</span><span class="s2">"curl"</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
+</code></pre></div>
+<p>This transport change does not replace the saved device profile, proxy, cookies or authorization data. Keep the account's existing proxy configuration when restoring its session.</p>
+<h2 id="older-app-profiles-without-a-bloks-hash">Older app profiles without a Bloks hash</h2>
+<p>CAA needs a Bloks hash matching the configured app version. Saved settings for an older unsupported version may lack this hash. If the session cannot be reused, <code>login()</code> raises <code>ClientError</code> before starting CAA requests and explains how to update the profile.</p>
+<p>Use the supported profile explicitly when migrating those settings:</p>
+<div class="highlight"><pre><span></span><code><span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">load_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">,</span> <span class="n">override_app_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">set_retry_config</span><span class="p">(</span><span class="n">private_transport</span><span class="o">=</span><span class="s2">"curl"</span><span class="p">)</span>  <span class="c1"># migrate an explicit saved requests choice</span>
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">dump_settings</span><span class="p">(</span><span class="s2">"session.json"</span><span class="p">)</span>
+</code></pre></div>
+<p><code>override_app_version=True</code> updates the app version, version code and Bloks hash. It retains hardware settings and device identifiers. Keep using the account's existing proxy. Alternatively, provide the correct Bloks hash for the original profile or explicitly use <code>login_legacy()</code>.</p>
+<h2 id="verification-and-failures">Verification and failures</h2>
+<p>Continue to pass <code>verification_code</code> for supported two-factor challenges. The CAA profile-code flow also supports <code>challenge_code_handler</code>; see <a href="../totp/">TOTP</a>. Native CAA exceptions propagate. A response without a session or a supported verification context raises <code>ClientError</code> with the CAA failure reason. Curl does not automatically retry a failed password POST.</p>
+<h2 id="installation-requirements">Installation requirements</h2>
+<p>Private HTTP/2 requires <code>curl_cffi&gt;=0.15.0</code> and libcurl 8.10 or newer. <code>curl_cffi</code> normally supplies libcurl in its wheels; a system <code>curl</code> executable and the Python <code>h2</code> package are not required for this transport. A compatible wheel or a supported native build is required for your platform. Android/Termux has not been verified.</p>
+<p>The optional <code>aiograpi[curl]</code> extra remains available for public web browser impersonation through <code>curl-adapter</code>. It is not required for private HTTP/2. See <a href="../interactions/#private-http2-transport">private HTTP/2 transport</a> for TLS, proxy and timeout behavior.</p>
 
 
 

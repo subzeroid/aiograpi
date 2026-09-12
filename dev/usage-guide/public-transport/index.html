@@ -471,6 +471,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../login-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Login Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../types/" class="md-nav__link">
         
   
@@ -1464,7 +1492,7 @@
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">public_transport</span><span class="o">=</span><span class="s2">"curl"</span><span class="p">,</span> <span class="n">public_transport_impersonate</span><span class="o">=</span><span class="s2">"chrome136"</span><span class="p">)</span>
 <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info_by_username_gql</span><span class="p">(</span><span class="s2">"instagram"</span><span class="p">)</span>
 </code></pre></div>
-<p>Private mobile API requests can separately opt into <code>private_transport="curl"</code>; see <a href="../interactions/#private-http2-transport">private HTTP/2 transport</a>. The public transport setting only changes the public web session.</p>
+<p>Private mobile API requests use <code>private_transport="curl"</code> by default; see <a href="../interactions/#private-http2-transport">private HTTP/2 transport</a>. The public transport setting only changes the public web session.</p>
 <h2 id="live-comparison">Live Comparison</h2>
 <p>This is a point-in-time live comparison from May 15, 2026. Instagram public web behavior changes frequently, so treat
 these numbers as a practical signal, not a guarantee.</p>

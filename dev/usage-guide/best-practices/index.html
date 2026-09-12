@@ -471,6 +471,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../login-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Login Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../types/" class="md-nav__link">
         
   
@@ -1505,8 +1533,8 @@ between requests. The delays should be random and not too long.</p>
 <span class="n">cl</span><span class="o">.</span><span class="n">delay_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
 </code></pre></div>
 <h2 id="use-sessions">Use Sessions</h2>
-<p>When using <code>.login()</code> you will login and create a new session with Instagram every time.
-This is suspicious for Instagram.
+<p>Calling <code>.login()</code> without a reusable saved session starts a fresh login with Instagram.
+Load settings first so <code>login()</code> can validate and reuse the saved session.
 For example, when you use your mobile device, you login to Instagram once
 and then you can use it for a long time without logging in again. This is because Instagram stores
 your session on your device and you can use it to login to Instagram without entering your username
