@@ -115,6 +115,8 @@ settings = {
 cl = Client(settings)
 ```
 
+This example contains an older app profile without a Bloks hash. Before a fresh CAA login, follow the [older-profile migration steps](login-migration.md#older-app-profiles-without-a-bloks-hash).
+
 ### Settings
 
 Store and manage uuids, device configuration, user agent, authorization data (aka cookies) and other session settings
@@ -123,7 +125,7 @@ Store and manage uuids, device configuration, user agent, authorization data (ak
 | ------------------------------ | ------- | ------------------------------------------------------------------
 | get\_settings()                | dict    | Return settings dict
 | set\_settings(settings: dict)  | bool    | Set session settings
-| load\_settings(path: Path)     | dict    | Load session settings from file
+| load\_settings(path: Path, override\_app\_version: bool = False) | dict | Load session settings; optionally update the app version, version code and Bloks hash
 | dump\_settings(path: Path)     | bool    | Serialize and save session settings to file
 
 In order for Instagram [to trust you more](https://github.com/subzeroid/instagrapi/discussions/220), you must always login from one device and one IP (or from a subnet):
