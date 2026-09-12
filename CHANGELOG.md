@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
-## [Unreleased]
+## [2.0.0] - 2026-09-13
+
+- **Breaking:** Make `login()` use CAA directly; retain the previous login flow and arguments as `login_legacy()`. Default login does not automatically fall back to legacy login.
+- Reject CAA login with a clear error before preflight when saved app settings lack the required Bloks hash; document explicit app-profile migration.
+- **Breaking:** Use `curl_cffi` and private HTTP/2 by default and install `curl_cffi` as a runtime dependency. Preserve explicit saved transport choices and the `private_transport="requests"` compatibility option.
 
 ## [1.12.16] - 2026-09-12
 
