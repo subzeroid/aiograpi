@@ -340,7 +340,6 @@ class UploadPhotoMixin(ClientMixin):
                 location,
                 extra_data=extra_data,
             ):
-                await self.expose()
                 media = await self._extract_configured_media_or_recent(
                     self.last_json,
                     PhotoConfigureError,
@@ -640,7 +639,6 @@ class UploadPhotoMixin(ClientMixin):
                 extra_data=extra_data,
             )
             if configured:
-                await self.expose()
                 return await self._extract_configured_story_or_recent(
                     configured,
                     PhotoConfigureStoryError,
