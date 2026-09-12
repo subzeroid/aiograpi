@@ -21,8 +21,8 @@ LAB_HOST = "localhost"
 LAB_JSON = b'{"status":"lab-ok"}'
 
 
-def peek_protocols(sock):
-    """Read ALPN names from the actual ClientHello without consuming it."""
+def peek_client_hello(sock):
+    """Read ALPN and supported groups from the actual ClientHello."""
     header = sock.recv(5, socket.MSG_PEEK | socket.MSG_WAITALL)
     if len(header) != 5 or header[0] != 22:
         raise ValueError("Expected a TLS handshake")
@@ -38,12 +38,15 @@ def peek_protocols(sock):
     end = offset + 2 + int.from_bytes(hello[offset : offset + 2], "big")
     offset += 2
     protocols = []
+    groups = []
     while offset < end:
         kind = int.from_bytes(hello[offset : offset + 2], "big")
         length = int.from_bytes(hello[offset + 2 : offset + 4], "big")
         value = hello[offset + 4 : offset + 4 + length]
         offset += 4 + length
-        if kind == 16:
+        if kind == 10:
+            groups = [int.from_bytes(value[i : i + 2], "big") for i in range(2, len(value), 2)]
+        elif kind == 16:
             index = 2
             while index < len(value):
                 length = value[index]
@@ -51,7 +54,7 @@ def peek_protocols(sock):
                 index += 1 + length
     if offset != end or end != len(hello):
         raise ValueError("Malformed ClientHello")
-    return protocols
+    return {"alpn_offers": protocols, "supported_groups": groups}
 
 
 class Handler(socketserver.BaseRequestHandler):
@@ -59,7 +62,7 @@ class Handler(socketserver.BaseRequestHandler):
         raw = self.request
         raw.settimeout(5)
         try:
-            offers = peek_protocols(raw)
+            hello = peek_client_hello(raw)
             conn = self.server.tls.wrap_socket(raw, server_side=True)
         except (OSError, ValueError, ssl.SSLError):
             return
@@ -87,7 +90,7 @@ class Handler(socketserver.BaseRequestHandler):
                             record = {
                                 "connection_id": connection_id,
                                 "stream_id": event.stream_id,
-                                "alpn_offers": offers,
+                                **hello,
                                 "negotiated": conn.selected_alpn_protocol(),
                                 "headers": request["headers"],
                                 "body_base64": base64.b64encode(request["body"]).decode(),

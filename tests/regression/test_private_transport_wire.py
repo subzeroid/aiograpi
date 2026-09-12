@@ -282,3 +282,93 @@ def test_configuration_change_preserves_cookies_and_closes_opened_client(lab, ch
             }
 
     asyncio.run(scenario())
+
+
+@pytest.fixture
+def hybrid_lab(lab, monkeypatch):
+    from tests import http2_server
+
+    original = http2_server.peek_client_hello
+    hellos = []
+
+    def require_hybrid_group(sock):
+        hello = original(sock)
+        hellos.append(hello)
+        if 4588 not in hello["supported_groups"]:
+            raise ValueError("Peer requires the hybrid group to be advertised")
+        return hello
+
+    monkeypatch.setattr(http2_server, "peek_client_hello", require_hybrid_group)
+    return lab, hellos
+
+
+@pytest.mark.parametrize("proxy_scheme", [None, "http", "socks5h"])
+def test_hybrid_group_reaches_peer_through_proxy(hybrid_lab, proxy_scheme):
+    from contextlib import ExitStack
+
+    from tests.http2_server import LoopbackProxy
+    from tests.socks5_proxy import LoopbackSocksProxy
+
+    lab, hellos = hybrid_lab
+
+    async def scenario(proxy_url):
+        async with client_for(lab) as client:
+            client.private.proxy = proxy_url
+            first = await client.private.post(url(lab), content=b"synthetic-body", timeout=2)
+            second = await client.private.get(url(lab), timeout=2)
+            assert first.content == second.content == LAB_JSON
+            assert first.http_version == second.http_version == "HTTP/2"
+            headers = dict(lab.records[0]["headers"])
+            assert headers["user-agent"] == client.user_agent
+            assert "proxy-authorization" not in headers
+            assert base64.b64decode(lab.records[0]["body_base64"]) == b"synthetic-body"
+
+    with ExitStack() as stack:
+        proxy_url = None
+        if proxy_scheme:
+            proxy_type = LoopbackProxy if proxy_scheme == "http" else LoopbackSocksProxy
+            proxy = stack.enter_context(proxy_type(lab))
+            proxy_url = f"{proxy_scheme}://synthetic:password@127.0.0.1:{proxy.port}"
+        asyncio.run(scenario(proxy_url))
+        assert hellos == [{"alpn_offers": ["h2"], "supported_groups": [4588, 29, 23, 24]}]
+        assert [r["connection_id"] for r in lab.records] == [1, 1]
+        if proxy_scheme:
+            assert len(proxy.records) == 1
+        if proxy_scheme == "socks5h":
+            assert proxy.records[0] == {"hostname": "localhost", "port": lab.port, "authenticated": True}
+
+
+def test_classical_group_control_fails_without_resubmitting(hybrid_lab):
+    from curl_cffi import CurlOpt
+
+    from tests.socks5_proxy import LoopbackSocksProxy
+
+    lab, hellos = hybrid_lab
+
+    async def scenario(proxy):
+        proxy_url = f"socks5h://synthetic:password@127.0.0.1:{proxy.port}"
+        async with client_for(lab) as client:
+            client.private.proxy = proxy_url
+            transport = client.private._client._transport
+            transport._curl_options[CurlOpt.SSL_EC_CURVES] = "X25519:P-256:P-384"
+            with pytest.raises(httpx.ConnectError):
+                await client.private.post(url(lab), content=b"synthetic-body", timeout=2)
+        assert len(proxy.records) == len(hellos) == 1
+        assert hellos[0]["supported_groups"] == [29, 23, 24]
+        assert not lab.records
+
+    with LoopbackSocksProxy(lab) as proxy:
+        asyncio.run(scenario(proxy))
+
+
+def test_hybrid_offer_remains_compatible_with_classical_peer(lab):
+    # Restrict the server to P-256, which must remain in the client's offer.
+    lab.server.tls.set_ecdh_curve("prime256v1")
+
+    async def scenario():
+        async with client_for(lab) as client:
+            assert (await client.private.get(url(lab), timeout=2)).content == LAB_JSON
+        assert 23 in lab.records[0]["supported_groups"]
+        assert lab.records[0]["negotiated"] == "h2"
+
+    asyncio.run(scenario())
