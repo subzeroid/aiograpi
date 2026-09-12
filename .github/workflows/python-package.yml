@@ -89,11 +89,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install \
+            "curl_cffi==0.15.0" \
             "httpx==0.28.1" \
             "orjson==3.11.8" \
             "PySocks==1.7.1" \
             "pydantic==2.12.5" \
-            "Pillow==12.2.0" \
+            "Pillow==12.3.0" \
             "pycryptodomex==3.23.0" \
             "zstandard==0.25.0"
           python -m pip install .
@@ -101,7 +102,7 @@ jobs:
           python - <<'PY'
           from aiograpi import Client
 
-          Client()
+          assert Client().private_transport == "curl"
           PY
 
   mypy:
@@ -128,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
     steps:
       - name: Check out code
         uses: actions/checkout@v7
@@ -167,6 +168,45 @@ jobs:
             tests/legacy.py::ChapiPortedRegressionTestCase \
             tests/regression
 
+  default-install:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Verify a clean standard installation
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          environment = Path(".default-install").resolve()
+          subprocess.run([sys.executable, "-m", "venv", str(environment)], check=True)
+          python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+          subprocess.run([str(python), "-m", "pip", "install", "."], check=True)
+          subprocess.run([str(python), "-m", "pip", "check"], check=True)
+          code = """
+          import importlib.util
+          from aiograpi import Client
+
+          assert importlib.util.find_spec("h2") is None
+          assert importlib.util.find_spec("curl_adapter") is None
+          client = Client()
+          assert client.private_transport == "curl"
+          assert callable(client.login_legacy)
+          print(type(client.private).__name__, client.private_transport)
+          """
+          subprocess.run([str(python), "-c", code], cwd=environment, check=True)
+          PY
+
   private-curl-test:
     runs-on: ubuntu-latest
     strategy:
@@ -182,12 +222,12 @@ jobs:
         env:
           CURL_VERSION: ${{ matrix.curl-version }}
         run: |
-          python -m pip install -e ".[test,curl]"
+          python -m pip install -e ".[test]"
           if [ "$CURL_VERSION" = minimum ]; then
             python -m pip install "curl_cffi==0.15.0"
           fi
       - name: Check private transport and real TLS/HTTP2 behavior
-        run: python -m pytest -q tests/regression/test_private_transport.py tests/regression/test_private_transport_wire.py
+        run: python -m pytest -q tests/regression/test_default_transport.py tests/regression/test_private_transport.py tests/regression/test_private_transport_wire.py
 
   live-test:
     # Live IG tests via pooled accounts. Only on canonical-repo pushes

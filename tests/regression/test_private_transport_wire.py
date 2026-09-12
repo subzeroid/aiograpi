@@ -36,7 +36,7 @@ def url(lab, path="/lab/ok"):
 
 @asynccontextmanager
 async def client_for(lab, **kwargs):
-    client = Client(private_transport="curl", tls_verify=str(lab.ca_path), request_timeout=0, **kwargs)
+    client = Client(tls_verify=str(lab.ca_path), request_timeout=0, **kwargs)
     try:
         yield client
     finally:

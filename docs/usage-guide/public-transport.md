@@ -25,7 +25,7 @@ cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
 user = await cl.user_info_by_username_gql("instagram")
 ```
 
-Private mobile API requests can separately opt into `private_transport="curl"`; see [private HTTP/2 transport](interactions.md#private-http2-transport). The public transport setting only changes the public web session.
+Private mobile API requests use `private_transport="curl"` by default; see [private HTTP/2 transport](interactions.md#private-http2-transport). The public transport setting only changes the public web session.
 
 ## Live Comparison
 

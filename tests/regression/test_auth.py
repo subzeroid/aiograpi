@@ -33,7 +33,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.pre_login_flow.assert_not_awaited()
         client.private_request.assert_not_awaited()
 
-    async def test_login_refreshes_session_rejected_during_validation(self):
+    async def test_login_legacy_refreshes_session_rejected_during_validation(self):
         client = Client()
         client.authorization_data = {"ds_user_id": "123", "sessionid": "stale"}
         client.private.set_cookies({"sessionid": "stale"})
@@ -47,7 +47,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.private_request = AsyncMock(return_value=True)
         client.login_flow = AsyncMock()
 
-        result = await client.login("example", "password")
+        result = await client.login_legacy("example", "password")
 
         self.assertTrue(result)
         client.account_info.assert_awaited_once_with()
@@ -123,7 +123,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.user_short_gql.assert_not_awaited()
         self.assertEqual(client.username, "example")
 
-    async def test_login_bad_password_without_context_tries_current_caa_flow(self):
+    async def test_login_legacy_bad_password_without_context_tries_current_caa_flow(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -135,13 +135,13 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.private_request = AsyncMock(side_effect=BadPassword("Bad Password", response=Mock(status_code=400)))
         client.bloks_caa_login = AsyncMock(return_value={"logged_in": True})
 
-        result = await client.login(verification_code="654321")
+        result = await client.login_legacy(verification_code="654321")
 
         self.assertTrue(result)
         client.bloks_caa_login.assert_awaited_once_with(verification_code="654321")
         client.login_flow.assert_awaited_once_with()
 
-    async def test_login_bad_password_recovery_response_tries_current_caa_flow_without_code(self):
+    async def test_login_legacy_bad_password_recovery_response_tries_current_caa_flow_without_code(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -157,13 +157,13 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.private_request = AsyncMock(side_effect=BadPassword("Bad Password", response=Mock(status_code=400)))
         client.bloks_caa_login = AsyncMock(return_value={"logged_in": True})
 
-        result = await client.login()
+        result = await client.login_legacy()
 
         self.assertTrue(result)
         client.bloks_caa_login.assert_awaited_once_with(verification_code="")
         client.login_flow.assert_awaited_once_with()
 
-    async def test_login_with_eight_digit_backup_code_selects_backup_code_bloks_challenge(self):
+    async def test_login_legacy_with_eight_digit_backup_code_selects_backup_code_bloks_challenge(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -184,7 +184,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.bloks_two_step_verification_verify_code = AsyncMock(return_value={"layout": {}})
         client.bloks_apply_login_response = Mock(return_value=True)
 
-        result = await client.login(verification_code="1234 5678")
+        result = await client.login_legacy(verification_code="1234 5678")
 
         self.assertTrue(result)
         client.bloks_two_step_verification_select_method.assert_awaited_once_with(
@@ -199,7 +199,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         )
         client.login_flow.assert_awaited_once_with()
 
-    async def test_login_two_factor_backup_code_with_context_uses_bloks_without_legacy_two_factor_request(self):
+    async def test_login_legacy_two_factor_backup_code_with_context_uses_bloks_without_legacy_two_factor_request(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -227,7 +227,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.bloks_two_step_verification_verify_code = AsyncMock(return_value={"layout": {}})
         client.bloks_apply_login_response = Mock(return_value=True)
 
-        result = await client.login(verification_code="1234 5678")
+        result = await client.login_legacy(verification_code="1234 5678")
 
         self.assertTrue(result)
         self.assertEqual(client.private_request.await_count, 1)
@@ -243,7 +243,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         )
         client.login_flow.assert_awaited_once_with()
 
-    async def test_login_bad_password_without_context_preserves_original_error_when_caa_has_no_session(self):
+    async def test_login_legacy_bad_password_without_context_preserves_original_error_when_caa_has_no_session(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -265,14 +265,14 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.bloks_caa_login = AsyncMock(side_effect=caa_without_session)
 
         with self.assertRaises(BadPassword) as raised:
-            await client.login(verification_code="654321")
+            await client.login_legacy(verification_code="654321")
 
         self.assertIs(raised.exception, original)
         client.bloks_caa_login.assert_awaited_once_with(verification_code="654321")
         self.assertEqual(client.last_json, legacy_json)
         self.assertIs(client.last_response, legacy_response)
 
-    async def test_login_bad_password_without_context_preserves_original_error_when_caa_is_unavailable(self):
+    async def test_login_legacy_bad_password_without_context_preserves_original_error_when_caa_is_unavailable(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -301,14 +301,14 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.bloks_caa_login = AsyncMock(side_effect=unavailable_caa)
 
         with self.assertRaises(BadPassword) as raised:
-            await client.login(verification_code="654321")
+            await client.login_legacy(verification_code="654321")
 
         self.assertIs(raised.exception, original)
         client.bloks_caa_login.assert_awaited_once_with(verification_code="654321")
         self.assertEqual(client.last_json, legacy_json)
         self.assertIs(client.last_response, legacy_response)
 
-    async def test_login_bad_password_without_bloks_hash_preserves_original_error(self):
+    async def test_login_legacy_bad_password_without_bloks_hash_preserves_original_error(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -321,7 +321,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.bloks_caa_login = AsyncMock(side_effect=AssertionError("Bloks hash is required"))
 
         with self.assertRaises(BadPassword):
-            await client.login(verification_code="654321")
+            await client.login_legacy(verification_code="654321")
 
         client.bloks_caa_login.assert_not_awaited()
 
@@ -336,7 +336,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertIs(raised.exception, rejection)
 
-    async def test_login_caa_rate_limit_error_is_not_replaced_and_retains_caa_state(self):
+    async def test_login_legacy_caa_rate_limit_error_is_not_replaced_and_retains_caa_state(self):
         client = Client()
         client.username = "example"
         client.password = "password"
@@ -358,7 +358,7 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.bloks_caa_login = AsyncMock(side_effect=rate_limited_caa)
 
         with self.assertRaises(RateLimitError) as raised:
-            await client.login(verification_code="654321")
+            await client.login_legacy(verification_code="654321")
 
         self.assertIs(raised.exception, rejection)
         self.assertEqual(client.last_json, caa_json)

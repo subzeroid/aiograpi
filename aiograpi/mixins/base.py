@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
+    from aiograpi.types import Account
 
     class ClientMixin:
         """
@@ -126,6 +127,8 @@ if TYPE_CHECKING:
         def _track_highlight_start(self, *args: Any, **kwargs: Any) -> int: ...
 
         def _track_value(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        async def account_info(self) -> Account: ...
 
         async def _send_private_request(self, *args: Any, **kwargs: Any) -> Any: ...
 

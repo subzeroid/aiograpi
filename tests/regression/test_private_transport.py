@@ -11,9 +11,9 @@ import pytest
 from aiograpi import Client
 
 
-def test_default_private_transport_does_not_require_curl(monkeypatch):
+def test_explicit_requests_transport_does_not_require_curl(monkeypatch):
     monkeypatch.setitem(sys.modules, "curl_cffi", None)
-    client = Client()
+    client = Client(private_transport="requests")
     assert client.private_transport == "requests"
 
 
@@ -22,10 +22,11 @@ def test_invalid_private_transport_is_rejected():
         Client(private_transport="invalid")
 
 
-def test_missing_private_curl_extra_has_install_hint(monkeypatch):
+@pytest.mark.parametrize("kwargs", [{}, {"private_transport": "curl"}])
+def test_missing_private_curl_dependency_has_install_hint(monkeypatch, kwargs):
     monkeypatch.setitem(sys.modules, "curl_cffi", None)
-    with pytest.raises(RuntimeError, match=r"pip install aiograpi\[curl\]"):
-        Client(private_transport="curl")
+    with pytest.raises(RuntimeError, match=r"requires curl_cffi>=0.15.0"):
+        Client(**kwargs)
 
 
 @pytest.mark.parametrize("version", ["libcurl/8.9.1", "unknown"])
@@ -50,7 +51,7 @@ def test_private_transport_settings_restore_and_old_settings_preserve_selection(
 
 def test_switch_preserves_scoped_cookies_headers_proxy_and_device():
     pytest.importorskip("curl_cffi")
-    client = Client(proxy="http://127.0.0.1:3128")
+    client = Client(private_transport="requests", proxy="http://127.0.0.1:3128")
     cookie = Cookie(
         0,
         "sessionid",
@@ -185,7 +186,7 @@ def test_switch_closes_retired_async_client_on_explicit_close():
     pytest.importorskip("curl_cffi")
 
     async def scenario():
-        client = Client()
+        client = Client(private_transport="requests")
         old = client.private._client
         client.set_retry_config(private_transport="curl")
         await client.private._close()
@@ -196,11 +197,11 @@ def test_switch_closes_retired_async_client_on_explicit_close():
 
 
 def test_failed_transport_switch_keeps_working_session(monkeypatch):
-    client = Client()
+    client = Client(private_transport="requests")
     original = client.private
     original.headers["X-Custom"] = "preserved"
     monkeypatch.setitem(sys.modules, "curl_cffi", None)
-    with pytest.raises(RuntimeError, match="optional curl extra"):
+    with pytest.raises(RuntimeError, match="requires curl_cffi"):
         client.set_retry_config(private_transport="curl")
     assert client.private is original
     assert client.get_settings()["private_transport"] == "requests"

@@ -29,6 +29,7 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client.with_default_data = lambda data: data
         client.request_log = lambda response: None
         client.expose = AsyncMock(return_value=None)
+        client._current_media_ids = AsyncMock(return_value=set())
         return client
 
     def build_media(self, media_type=1):

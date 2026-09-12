@@ -51,8 +51,8 @@ cl.delay_range = [1, 3]
 
 ## Use Sessions
 
-When using `.login()` you will login and create a new session with Instagram every time.
-This is suspicious for Instagram.
+Calling `.login()` without a reusable saved session starts a fresh login with Instagram.
+Load settings first so `login()` can validate and reuse the saved session.
 For example, when you use your mobile device, you login to Instagram once
 and then you can use it for a long time without logging in again. This is because Instagram stores
 your session on your device and you can use it to login to Instagram without entering your username
