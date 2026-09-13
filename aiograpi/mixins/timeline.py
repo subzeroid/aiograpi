@@ -111,7 +111,7 @@ class ReelsMixin(ClientMixin):
                 media = item.get("media")
                 if not media:
                     continue
-                if last_media_pk and last_media_pk == media["pk"]:
+                if last_media_pk and str(last_media_pk) == str(media["pk"]):
                     return total_items
                 total_items.append(extract_media_v1(media))
                 if len(total_items) >= float(amount):
