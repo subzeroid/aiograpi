@@ -1087,6 +1087,12 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         usdid_settings = self.get_usdid_settings()
         if usdid_settings:
             settings["usdid"] = usdid_settings
+        if getattr(self, "fbns", None) and getattr(self.fbns, "auth", None):
+            settings["fbns_auth"] = self.fbns.auth.to_settings()
+            if getattr(self, "settings", None) is not None:
+                self.settings["fbns_auth"] = deepcopy(settings["fbns_auth"])
+        elif getattr(self, "settings", None) and self.settings.get("fbns_auth") is not None:
+            settings["fbns_auth"] = deepcopy(self.settings["fbns_auth"])
         return settings
 
     def set_settings(self, settings: Dict) -> bool:

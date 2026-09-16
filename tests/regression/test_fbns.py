@@ -1,4 +1,6 @@
 import json
+import os
+import tempfile
 import unittest
 import zlib
 from unittest import mock
@@ -71,6 +73,46 @@ class FbnsClientRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(auth.device_secret, "fbns-device-secret")
         self.assertEqual(client.settings["fbns_auth"]["device_id"], "fbns-device-id")
         self.assertEqual(client.settings["fbns_auth"]["user_id"], 123456)
+        settings = client.get_settings()
+        self.assertIn("fbns_auth", settings)
+        self.assertEqual(settings["fbns_auth"]["device_id"], "fbns-device-id")
+        self.assertEqual(settings["fbns_auth"]["user_id"], 123456)
+
+    def test_get_settings_and_dump_settings_preserves_fbns_auth(self):
+        client = _build_logged_in_client()
+        auth = FbnsDeviceAuth(client_id="phone-id-12345678901")
+        auth.read(
+            {
+                "ck": 123456,
+                "cs": "connection-secret",
+                "di": "fbns-device-id",
+                "ds": "fbns-device-secret",
+                "sr": "odn",
+                "rc": "ATN",
+            }
+        )
+        auth.save(client)
+
+        settings = client.get_settings()
+        self.assertIn("fbns_auth", settings)
+        self.assertEqual(settings["fbns_auth"]["device_id"], "fbns-device-id")
+        self.assertEqual(settings["fbns_auth"]["user_id"], 123456)
+
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tf:
+            path = tf.name
+        try:
+            client.dump_settings(path)
+            new_client = _build_logged_in_client()
+            new_client.load_settings(path)
+            self.assertEqual(new_client.get_settings()["fbns_auth"]["device_id"], "fbns-device-id")
+            restored_auth = FbnsDeviceAuth.from_client(new_client)
+            self.assertEqual(restored_auth.device_id, "fbns-device-id")
+            self.assertEqual(restored_auth.user_id, 123456)
+            self.assertEqual(restored_auth.password, "connection-secret")
+            self.assertEqual(restored_auth.device_secret, "fbns-device-secret")
+        finally:
+            if os.path.exists(path):
+                os.remove(path)
 
     def test_fbns_device_auth_reads_length_prefixed_connack_payload(self):
         auth = FbnsDeviceAuth()
