@@ -482,13 +482,16 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             return [private_user]
 
         client.user_followers_v1 = AsyncMock(side_effect=private_lookup)
-        client.user_followers_gql = AsyncMock(return_value=[public_user])
+        client.user_followers_private_gql = AsyncMock(return_value=[public_user])
+        client.user_followers_gql = AsyncMock(
+            side_effect=AssertionError("limited private list should use private GraphQL, not legacy")
+        )
 
         result = await client.user_followers("123", amount=2, use_cache=False)
 
         self.assertEqual(list(result.keys()), ["public"])
         client.user_followers_v1.assert_awaited_once_with("123", 2)
-        client.user_followers_gql.assert_awaited_once_with("123", 2)
+        client.user_followers_private_gql.assert_awaited_once_with("123", 2)
 
     async def test_user_followers_default_amount_falls_back_when_private_list_is_limited(self):
         client = Client()
@@ -502,13 +505,134 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             return [private_user]
 
         client.user_followers_v1 = AsyncMock(side_effect=private_lookup)
-        client.user_followers_gql = AsyncMock(return_value=[public_user])
+        client.user_followers_private_gql = AsyncMock(return_value=[public_user])
+        client.user_followers_gql = AsyncMock(
+            side_effect=AssertionError("limited private list should use private GraphQL, not legacy")
+        )
 
         result = await client.user_followers("123", use_cache=False)
 
         self.assertEqual(list(result.keys()), ["public"])
         client.user_followers_v1.assert_awaited_once_with("123", 0)
-        client.user_followers_gql.assert_awaited_once_with("123", 0)
+        client.user_followers_private_gql.assert_awaited_once_with("123", 0)
+
+    async def test_authorized_user_followers_falls_back_to_public(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client._users_followers = {}
+        follower = Mock(pk="456")
+
+        client.user_followers_v1 = AsyncMock(side_effect=ClientError("private lookup failed"))
+        client.user_followers_private_gql = AsyncMock(return_value=[follower])
+        client.user_followers_gql = AsyncMock(
+            side_effect=AssertionError("private GraphQL should answer before legacy lookup")
+        )
+
+        result = await client.user_followers("123", use_cache=False, amount=1)
+
+        self.assertEqual(list(result.keys()), ["456"])
+        client.user_followers_private_gql.assert_awaited_once_with("123", 1)
+
+    async def test_authorized_user_followers_uses_legacy_public_after_private_gql_fails(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client._users_followers = {}
+        follower = Mock(pk="456")
+
+        client.user_followers_v1 = AsyncMock(side_effect=ClientError("private lookup failed"))
+        client.user_followers_private_gql = AsyncMock(side_effect=ClientError("private graphql lookup failed"))
+        client.user_followers_gql = AsyncMock(return_value=[follower])
+
+        result = await client.user_followers("123", use_cache=False, amount=1)
+
+        self.assertEqual(list(result.keys()), ["456"])
+        client.user_followers_gql.assert_awaited_once_with("123", 1)
+
+    async def test_authorized_user_following_falls_back_to_private_gql(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client._users_following = {}
+        following_user = Mock(pk="456")
+
+        client.user_following_v1 = AsyncMock(side_effect=ClientError("private lookup failed"))
+        client.user_following_private_gql = AsyncMock(return_value=[following_user])
+        client.user_following_gql = AsyncMock(
+            side_effect=AssertionError("private GraphQL should answer before legacy lookup")
+        )
+
+        result = await client.user_following("123", use_cache=False, amount=1)
+
+        self.assertEqual(list(result.keys()), ["456"])
+        client.user_following_private_gql.assert_awaited_once_with("123", 1)
+
+    async def test_authorized_user_following_uses_legacy_public_after_private_gql_fails(self):
+        client = Client()
+        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
+        client._users_following = {}
+        following_user = Mock(pk="456")
+
+        client.user_following_v1 = AsyncMock(side_effect=ClientError("private lookup failed"))
+        client.user_following_private_gql = AsyncMock(side_effect=ClientError("private graphql lookup failed"))
+        client.user_following_gql = AsyncMock(return_value=[following_user])
+
+        result = await client.user_following("123", use_cache=False, amount=1)
+
+        self.assertEqual(list(result.keys()), ["456"])
+        client.user_following_gql.assert_awaited_once_with("123", 1)
+
+    async def test_user_following_private_gql_chunk_extracts_following_payload(self):
+        client = Client()
+        client.uuid = "rank-token"
+        client.private_graphql_following_list = AsyncMock(
+            return_value={
+                "data": {
+                    "xdt_api__v1__friendships__following": {
+                        "users": [
+                            {
+                                "pk": "43",
+                                "username": "following",
+                                "full_name": "Following",
+                                "profile_pic_url": None,
+                            }
+                        ],
+                        "next_max_id": "next",
+                    }
+                }
+            }
+        )
+
+        users, max_id = await client.user_following_private_gql_chunk("123")
+
+        self.assertEqual([user.pk for user in users], ["43"])
+        self.assertEqual(max_id, "next")
+        client.private_graphql_following_list.assert_awaited_once_with(
+            "123", "rank-token", max_id=None, order=None, priority="u=3, i"
+        )
+
+    async def test_user_following_private_gql_paginates_until_cursor_end(self):
+        client = Client()
+        client.uuid = "rank-token"
+        first_page = {
+            "data": {
+                "xdt_api__v1__friendships__following": {
+                    "users": [{"pk": "1", "username": "one", "full_name": "One", "profile_pic_url": None}],
+                    "next_max_id": "cursor-1",
+                }
+            }
+        }
+        second_page = {
+            "data": {
+                "xdt_api__v1__friendships__following": {
+                    "users": [{"pk": "2", "username": "two", "full_name": "Two", "profile_pic_url": None}],
+                    "next_max_id": None,
+                }
+            }
+        }
+        client.private_graphql_following_list = AsyncMock(side_effect=[first_page, second_page])
+
+        users = await client.user_following_private_gql("123")
+
+        self.assertEqual([user.pk for user in users], ["1", "2"])
 
     async def test_user_followers_private_gql_chunk_extracts_followers_payload(self):
         client = Client()
