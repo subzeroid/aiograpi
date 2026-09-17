@@ -1651,10 +1651,12 @@ the code:</p>
 <div class="highlight"><pre><span></span><code>pytest<span class="w"> </span>-sv<span class="w"> </span>tests/regression
 ruff<span class="w"> </span>check<span class="w"> </span>.
 ruff<span class="w"> </span>format<span class="w"> </span>--check<span class="w"> </span>.
+./scripts/check-mypy-baseline.sh
 bandit<span class="w"> </span>-c<span class="w"> </span>pyproject.toml<span class="w"> </span>-r<span class="w"> </span>aiograpi
 pip-audit<span class="w"> </span>--strict<span class="w"> </span>.
 mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
 </code></pre></div>
+<p>The mypy gate targets Python 3.10 and runs under Python 3.10 in CI so dependency type stubs match that target. For local parity, create the development environment with <code>python3.10 -m venv .venv</code> or <code>uv venv --python 3.10</code> and install the test extras. The gate compares only completed analysis with <code>.mypy-baseline</code>; aborted analysis and unrecognized output fail instead of being accepted as a low error count.</p>
 <p>To apply automatic lint and formatting fixes locally:</p>
 <div class="highlight"><pre><span></span><code>ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </span>--fix
 ruff<span class="w"> </span>format<span class="w"> </span>.
