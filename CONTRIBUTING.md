@@ -51,6 +51,8 @@ mkdocs build --strict
 pre-commit run --all-files
 ```
 
+For the mypy gate, use a Python 3.10 environment to match its analysis target and CI dependency resolution. Create the development environment with `python3.10 -m venv .venv` or `uv venv --python 3.10`, then install the test extras as above. The script prefers `.venv/bin/python` when present; otherwise it uses `PYTHON` or `python`. An aborted analysis or unrecognized output fails the gate even if the reported error count is below `.mypy-baseline`.
+
 To apply automatic lint and formatting fixes:
 
 ```bash
