@@ -74,6 +74,8 @@ Low level methods:
 | user_followers_private_gql(user_id: str, amount: int = 0, rank_token: str = None, order: Optional[FOLLOWERS_ORDER] = None) | List[UserShort] | Get user's followers information by Private GraphQL API                    |
 | user_following_v1(user_id: str, amount: int = 0)                                    | List[UserShort]             | Get user's following users information by Private Mobile API               |
 | iter_user_following_v1(user_id: str, amount: int = 0, page_size: int = 200)         | AsyncIterator[UserShort]     | Stream following users page by page through `user_following_v1_chunk()` |
+| user_following_private_gql_chunk(user_id: str, max_amount: int = 0, max_id: str = None, rank_token: str = None, order: Optional[FOLLOWERS_ORDER] = None) | Tuple[List[UserShort], str] | Get user's following users information by Private GraphQL API and max_id         |
+| user_following_private_gql(user_id: str, amount: int = 0, rank_token: str = None, order: Optional[FOLLOWERS_ORDER] = None) | List[UserShort] | Get user's following users information by Private GraphQL API                    |
 | user_following_gql(user_id: str, amount: int = 0)                                   | List[UserShort]             | Get user's following information by Public Graphql API                     |
 | user_follow_requests_chunk(max_amount: int = 0, max_id: str = "")                   | Tuple[List[UserShort], str] | Get pending incoming follow requests by Private Mobile API and max_id      |
 | search_followers_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by followers by Private Mobile API                                  |
@@ -84,6 +86,8 @@ Low level methods:
 `user_follow()` returns `True` only when it sends a new follow action and Instagram reports either an immediate follow or a new outgoing follow request for a private account. It returns `False` when the current account already follows the target or already has a pending outgoing follow request. Use `user_friendship_v1()` when you need to distinguish `following` from `outgoing_request`.
 
 `UserShort` objects returned from private GraphQL follow-list payloads preserve selected v2-only fields when Instagram sends them: `friendship_status`, `profile_pic_id`, `fbid_v2`, `interop_messaging_user_fbid`, `strong_id__`, and raw `account_badges`. The legacy `latest_reel_media` property is also populated from Instagram's current `1llatest_reel_media` key.
+
+When the account is authorized, `user_followers()` and `user_following()` prefer the private mobile API and automatically retry through the private mobile GraphQL follow-list surface (`FollowersList`/`FollowingList`) when the private endpoint fails or the followers list is limited. The legacy public GraphQL query is only used as the last resort, because Instagram returns an empty `edges` list for the legacy followers/following query hash. `user_followers_private_gql()` and `user_following_private_gql()` expose that private GraphQL surface directly.
 
 Example:
 
