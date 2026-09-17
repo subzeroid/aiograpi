@@ -6,11 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
-## Unreleased
+## [2.0.4] - 2026-09-17
 
 ### Fixed
 
-- The mypy baseline gate now fails on aborted analysis or unrecognized output instead of reporting a misleading pass. Its CI environment uses the same Python 3.10 version as the analysis target.
+- `get_settings()` now returns `fbns_auth` from the live FBNS auth object when present (falling back to previously saved values), so `dump_settings()`/`load_settings()` preserve the FBNS device auth across a settings round trip (#447).
+
+### Changed
+
+- The mypy baseline gate now fails on aborted analysis or unrecognized output instead of reporting a misleading pass, and its CI job uses the same Python 3.10 version as the analysis target (#440).
 
 ## [2.0.3] - 2026-09-17
 
