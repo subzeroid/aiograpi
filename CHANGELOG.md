@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.3] - 2026-09-17
+
+### Fixed
+
+- `login()` now follows Instagram's CAA fallback instruction (`CAA_LOGIN_FALLBACK:fallback_triggered`) and completes the legacy accounts flow, so typed failure reasons such as `PleaseWaitFewMinutes` or `BadPassword` surface instead of the generic "CAA login did not return a session" error. `ClientError` raised by CAA login carries the observed CAA step markers as `caa_actions` for diagnostics.
+
 ## [2.0.2] - 2026-09-13
 
 ### Fixed
