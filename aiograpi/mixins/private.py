@@ -813,8 +813,11 @@ class PrivateRequestMixin(ClientMixin):
             if self.handle_exception:
                 self.handle_exception(self, e)
             elif isinstance(e, ChallengeRequired):
-                if self.with_challenge_flow:
-                    await self.challenge_resolve(self.last_json)
+                if not self.with_challenge_flow:
+                    # Nothing resolved the challenge, so re-sending the same
+                    # request can only hit the checkpoint a second time.
+                    raise e
+                await self.challenge_resolve(self.last_json)
             else:
                 raise e
             if login and self.user_id:

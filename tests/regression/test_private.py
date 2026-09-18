@@ -10,6 +10,7 @@ from aiograpi.exceptions import (
     AccountEditError,
     AccountSuspended,
     BadPassword,
+    ChallengeRequired,
     ClientConnectionError,
     ClientNotFoundError,
     ClientThrottledError,
@@ -229,6 +230,33 @@ class PrivateRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result, {"status": "ok"})
         self.assertEqual(client.private.post.await_count, 2)
         self.assertEqual(sleep.await_args_list.count(unittest.mock.call(2)), 1)
+
+    async def test_private_request_does_not_resend_unresolved_challenge_without_challenge_flow(self):
+        client = self._build_client()
+        client.delay_range = []
+        client.challenge_resolve = AsyncMock(return_value=True)
+        client._send_private_request = AsyncMock(side_effect=ChallengeRequired(message="challenge_required"))
+
+        with self.assertRaises(ChallengeRequired):
+            await client.private_request("feed/timeline/", login=True)
+
+        self.assertEqual(client._send_private_request.await_count, 1)
+        client.challenge_resolve.assert_not_awaited()
+
+    async def test_private_request_resends_once_after_challenge_flow_resolves(self):
+        client = self._build_client()
+        client.with_challenge_flow = True
+        client.delay_range = []
+        client.challenge_resolve = AsyncMock(return_value=True)
+        client._send_private_request = AsyncMock(
+            side_effect=[ChallengeRequired(message="challenge_required"), {"status": "ok"}]
+        )
+
+        result = await client.private_request("feed/timeline/", login=True)
+
+        self.assertEqual(result, {"status": "ok"})
+        self.assertEqual(client._send_private_request.await_count, 2)
+        client.challenge_resolve.assert_awaited_once()
 
     async def test_send_private_request_promotes_direct_message_requests_disabled_status_fail(self):
         client = self._build_client()
