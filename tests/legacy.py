@@ -5869,7 +5869,7 @@ class ChapiPortedRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             captured["root_field_name"],
             "xdt_api__v1__friendships__following",
         )
-        self.assertEqual(captured["client_doc_id"], "161046392817718486717479294775")
+        self.assertEqual(captured["client_doc_id"], "16104639286363954576550227636")
         self.assertEqual(captured["variables"]["user_id"], "77")
         self.assertEqual(captured["variables"]["order"], "date_followed_earliest")
         self.assertEqual(captured["variables"]["request_data"]["rank_token"], "rank-2")
