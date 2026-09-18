@@ -1024,7 +1024,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         sessionid = self.cookie_dict.get("sessionid")
         if not sessionid and self.authorization_data:
             sessionid = self.authorization_data.get("sessionid")
-        return sessionid
+        return sessionid or ""
 
     @property
     def token(self) -> str:
@@ -1042,7 +1042,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         return self.uuid
 
     @property
-    def user_id(self) -> int:
+    def user_id(self) -> Optional[int]:
         user_id = getattr(self, "_user_id", None)
         if not user_id and self.authorization_data:
             user_id = self.authorization_data.get("ds_user_id")
@@ -1106,8 +1106,10 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         usdid_settings = self.get_usdid_settings()
         if usdid_settings:
             settings["usdid"] = usdid_settings
-        if getattr(self, "fbns", None) and getattr(self.fbns, "auth", None):
-            settings["fbns_auth"] = self.fbns.auth.to_settings()
+        fbns = getattr(self, "fbns", None)
+        fbns_auth = getattr(fbns, "auth", None) if fbns is not None else None
+        if fbns_auth is not None:
+            settings["fbns_auth"] = fbns_auth.to_settings()
             if getattr(self, "settings", None) is not None:
                 self.settings["fbns_auth"] = deepcopy(settings["fbns_auth"])
         elif getattr(self, "settings", None) and self.settings.get("fbns_auth") is not None:
