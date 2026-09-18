@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.5] - 2026-09-18
+
+### Fixed
+
+- Refresh the private GraphQL `FollowersList`/`FollowingList` doc ids to the ones the current Android app sends (`284797047911918316998205836755`, `16104639286363954576550227636`); the previous ids still resolve but are one generation behind.
+- Repair typing regressions from the merged follow-list and fbns ports so the mypy baseline gate passes again.
+
 ## [2.0.4] - 2026-09-17
 
 ### Fixed
