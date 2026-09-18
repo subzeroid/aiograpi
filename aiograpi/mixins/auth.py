@@ -107,7 +107,7 @@ class PreLoginFlowMixin(ClientMixin):
         Dict
             A dictionary of response from the call
         """
-        data = {
+        data: Dict[str, Any] = {
             "id": self.uuid,
             "server_config_retrieval": "1",
             # "experiments": config.LOGIN_EXPERIMENTS,
@@ -1020,11 +1020,11 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         return self.private.cookies_dict()
 
     @property
-    def sessionid(self) -> str:
+    def sessionid(self) -> Optional[str]:
         sessionid = self.cookie_dict.get("sessionid")
         if not sessionid and self.authorization_data:
             sessionid = self.authorization_data.get("sessionid")
-        return sessionid or ""
+        return sessionid
 
     @property
     def token(self) -> str:
