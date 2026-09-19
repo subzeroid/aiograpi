@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.7] - 2026-09-20
+
+### Fixed
+
+- Keep user, media, story, follower, and following caches separate for each `Client`, so one client cannot reuse or clear another client's cached data (#459).
+- Make `user_highlights()` and `user_highlights_v1()` respect positive `amount` limits before parsing the returned tray. `amount=0` continues to return all Highlights (#460).
+- Raise the original `ChallengeRequired` without repeating the request when automatic challenge handling is disabled and no custom handler is configured (#454, thanks to @marnelle1).
+
+## [2.0.6] - 2026-09-19
+
+### Added
+
+- Add async `media_upload_status(post_client_id)` for asynchronous publishing status and `video_refresh_resources(media_id)` for refreshing expired video URLs (#458).
+
+### Changed
+
+- Align Reels configure metadata and story rich text captions with the current Android app, mirroring instagrapi 3.0.6 (#458).
+- Use Instagram Android `448.0.0.0.20` as the default app profile while retaining the 446 and 428 profiles for explicit selection, mirroring instagrapi 3.0.7 (#458).
+
 ## [2.0.5] - 2026-09-18
 
 ### Fixed
