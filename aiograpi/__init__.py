@@ -109,6 +109,13 @@ class Client(
         override_app_version: bool = False,
         **kwargs,
     ):
+        self._users_cache = {}
+        self._userhorts_cache = {}
+        self._usernames_cache = {}
+        self._users_following = {}
+        self._users_followers = {}
+        self._medias_cache = {}
+        self._stories_cache = {}
         self.tls_verify = kwargs.pop("tls_verify", True)
         self.timezone_offset = kwargs.pop("timezone_offset", -14400)
         self.timezone_name = kwargs.pop("timezone_name", "")

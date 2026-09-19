@@ -1,7 +1,7 @@
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from aiograpi import config
@@ -26,7 +26,7 @@ from aiograpi.types import Story, StoryArchiveDay, UserShort, Viewer
 
 
 class StoryMixin(ClientMixin):
-    _stories_cache = {}  # pk -> object
+    _stories_cache: Dict[str, Story]
 
     def story_pk_from_url(self, url: str) -> str:
         """
