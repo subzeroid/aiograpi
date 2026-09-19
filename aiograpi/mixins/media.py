@@ -560,7 +560,7 @@ class MediaMixin(ClientMixin):
                 "GET",
                 url,
                 proxy=self.public.proxy,
-                timeout=self.request_timeout,
+                timeout=self.read_timeout,
                 follow_redirects=False,
             )
             location = response.headers.get("Location") or response.headers.get("location")

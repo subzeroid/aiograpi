@@ -49,7 +49,7 @@ class TrackMixin(ClientMixin):
             raise Exception("The URL must contain the path to the file (m4a or mp3).")
         filename = "%s.%s" % (filename, fname.rsplit(".", 1)[1]) if filename else fname
         path = Path(folder) / filename
-        response = await httpx_ext.request("GET", url, timeout=self.request_timeout)
+        response = await httpx_ext.request("GET", url, timeout=self.read_timeout)
         response.raise_for_status()
         return self._download_response_to_path(response, path)
 
