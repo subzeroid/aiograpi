@@ -8,7 +8,12 @@ import unittest
 from pathlib import Path
 
 from aiograpi import Client
-from aiograpi.exceptions import CrosspostingDestinationError, PhotoConfigureError, PhotoNotUpload
+from aiograpi.exceptions import (
+    ClipConfigureError,
+    CrosspostingDestinationError,
+    PhotoConfigureError,
+    PhotoNotUpload,
+)
 from aiograpi.types import Media, UserShort, Usertag
 from tests.live.auth_helpers import login_with_timeout
 from tests.live.smoke import _fetch_accounts
@@ -276,6 +281,59 @@ class ClientUploadCoauthorLiveTestCase(unittest.IsolatedAsyncioTestCase):
             "No upload-capable test account was available "
             f"(login_failures={login_failures}, upload_failures={upload_failures})"
         )
+
+    async def test_clip_upload_async_publish_status_polling(self):
+        path = self.make_clip_mp4()
+        thumbnail = self.make_cover_fixture((40, 40, 40))
+        accounts = await _fetch_accounts(self.test_accounts_url, count=5)
+        login_failures = {}
+        uploader = None
+        for account in accounts:
+            try:
+                uploader = await _client_from_test_account(account)
+                break
+            except Exception as exc:
+                login_failures[exc.__class__.__name__] = login_failures.get(exc.__class__.__name__, 0) + 1
+        if uploader is None:
+            self.skipTest(f"No usable test account was available (login_failures={login_failures})")
+
+        upload_ids = []
+        original_configure = uploader.clip_configure
+
+        async def recording_configure(upload_id, *args, **kwargs):
+            upload_ids.append(str(upload_id))
+            return await original_configure(upload_id, *args, **kwargs)
+
+        uploader.clip_configure = recording_configure
+        with self.assertRaises(ClipConfigureError):
+            await uploader.clip_upload(
+                path,
+                f"Async publish {int(time.time())}",
+                thumbnail=thumbnail,
+                extra_data={"async_publish": "1"},
+            )
+        self.assertTrue(upload_ids)
+
+        media_pk = None
+        status = None
+        for _ in range(15):
+            result = await uploader.media_upload_status(upload_ids[0])
+            posts = result.get("posts") or []
+            if posts:
+                status = posts[0].get("status")
+                media_ids = posts[0].get("media_ids") or []
+                if status == "COMPLETED" and media_ids:
+                    media_pk = str(media_ids[0])
+                    break
+            await asyncio.sleep(2)
+        self.assertEqual(status, "COMPLETED")
+        self.assertTrue(media_pk)
+
+        media = await uploader.media_info(str(media_pk))
+        self.assertEqual(media.media_type, 2)
+        refreshed = await uploader.video_refresh_resources(str(media.pk))
+        self.assertTrue(refreshed.get("video_versions"))
+        self.assertTrue(await uploader.media_delete(str(media.pk)))
 
     async def test_clip_upload_with_topics(self):
         path = self.make_clip_mp4()

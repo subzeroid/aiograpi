@@ -55,6 +55,8 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | clip_seen(media_ids: List[str], blend_media_ids: List[str] = None) | bool            | Mark Reels/Clips as seen through the Clips seen-state endpoint
 | clip_pin(media_pk: str)                                         | bool               | Pin a Reel to the Reels tab/profile Reels grid
 | clip_unpin(media_pk: str)                                       | bool               | Unpin a Reel from the Reels tab/profile Reels grid
+| media_upload_status(post_client_id: str)                        | dict               | Poll the processing status of an async upload by its client-side upload id until `COMPLETED`
+| video_refresh_resources(media_id: str, should_fetch_all_language_variants: bool = False) | dict | Refresh expired video URLs and get a fresh `video_versions` list (and DASH manifest)
 
 Media notes are separate from Direct inbox Notes. Use `media_note_create()` and `media_note_delete()` for the note surface attached to a post or Reel; use the [Notes guide](notes.md) for Direct inbox Notes.
 

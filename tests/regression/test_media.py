@@ -1,3 +1,4 @@
+import asyncio
 import json
 import unittest
 from pathlib import Path
@@ -609,3 +610,59 @@ class UserPinnedMediasRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             },
         )
         self.assertEqual(client.base_headers["X-IG-Nav-Chain"], original_nav_chain)
+
+
+class MediaUploadResourcesRegressionTestCase(unittest.TestCase):
+    def test_media_upload_status_polls_upload_status_endpoint(self):
+        client = Client()
+        client.uuid = "uuid"
+        expected = {
+            "posts": [
+                {
+                    "id": 3894039944230104734,
+                    "post_client_id": "837060269065",
+                    "status": "COMPLETED",
+                    "media_ids": [3894039944230104734],
+                    "error_info": {"error_type": "NO_ERROR", "message": ""},
+                }
+            ],
+            "status": "ok",
+        }
+        client.private_request = AsyncMock(return_value=expected)
+
+        result = asyncio.run(client.media_upload_status("837060269065"))
+
+        assert result == expected
+        client.private_request.assert_awaited_once_with(
+            "media/get_upload_status_REST/",
+            data={"post_client_id": "837060269065"},
+            with_signature=True,
+        )
+
+    def test_video_refresh_resources_returns_video_versions(self):
+        client = Client()
+        expected = {
+            "video_dash_manifest": "<MPD></MPD>",
+            "video_versions": [{"url": "https://example.com/video.mp4", "type": "video/mp4"}],
+            "status": "ok",
+        }
+        client.private_request = AsyncMock(return_value=expected)
+
+        result = asyncio.run(client.video_refresh_resources("3894039944230104734"))
+
+        assert result == expected
+        client.private_request.assert_awaited_once_with(
+            "video/refresh_resources/3894039944230104734/",
+            params={"should_fetch_all_language_variants": "false"},
+        )
+
+    def test_video_refresh_resources_can_fetch_all_language_variants(self):
+        client = Client()
+        client.private_request = AsyncMock(return_value={"video_versions": [], "status": "ok"})
+
+        asyncio.run(client.video_refresh_resources("3894039944230104734", should_fetch_all_language_variants=True))
+
+        client.private_request.assert_awaited_once_with(
+            "video/refresh_resources/3894039944230104734/",
+            params={"should_fetch_all_language_variants": "true"},
+        )
