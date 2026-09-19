@@ -5,11 +5,11 @@ def test_default_client_uses_current_android_app_profile():
     client = Client()
 
     assert client.device_settings["app_version"] == config.DEFAULT_APP_VERSION
-    assert client.device_settings["version_code"] == "961145276"
-    assert client.bloks_versioning_id == "7189b949425f9bf80ea8bd880cf5a3080b292d9b1c4b38a18d112f7c4b71e7a8"
+    assert client.device_settings["version_code"] == "1065560286"
+    assert client.bloks_versioning_id == "0bc46a03e177bfc9bc8d611918815acf248fa9c77754d807d6a5951dc9ce9432"
     assert client.user_agent == (
-        "Instagram 428.0.0.47.67 Android (34/14; 480dpi; 1344x2992; "
-        "Google/google; Pixel 8 Pro; husky; husky; en_US; 961145276)"
+        "Instagram 448.0.0.0.20 Android (34/14; 480dpi; 1344x2992; "
+        "Google/google; Pixel 8 Pro; husky; husky; en_US; 1065560286)"
     )
 
 
@@ -25,9 +25,9 @@ def test_default_device_profile_matches_current_android_baseline():
         "device": "husky",
         "model": "Pixel 8 Pro",
         "cpu": "husky",
-        "app_version": "428.0.0.47.67",
-        "version_code": "961145276",
-        "bloks_versioning_id": "7189b949425f9bf80ea8bd880cf5a3080b292d9b1c4b38a18d112f7c4b71e7a8",
+        "app_version": "448.0.0.0.20",
+        "version_code": "1065560286",
+        "bloks_versioning_id": "0bc46a03e177bfc9bc8d611918815acf248fa9c77754d807d6a5951dc9ce9432",
     }
 
 
@@ -43,7 +43,7 @@ def test_private_headers_use_current_android_transport_values():
     assert client.private.headers["X-Zero-State"] == "unknown"
     assert client.private.headers["Zero-HTTP-Network-Interface"] == "wifi"
     assert client.private.headers["X-Bloks-Version-Id"] == (
-        "7189b949425f9bf80ea8bd880cf5a3080b292d9b1c4b38a18d112f7c4b71e7a8"
+        "0bc46a03e177bfc9bc8d611918815acf248fa9c77754d807d6a5951dc9ce9432"
     )
 
 
@@ -85,22 +85,22 @@ def test_constructor_override_app_version_replaces_saved_profile_with_current_de
     )
 
     assert client.device_settings["app_version"] == config.DEFAULT_APP_VERSION
-    assert client.device_settings["version_code"] == "961145276"
+    assert client.device_settings["version_code"] == "1065560286"
 
 
 def test_unknown_saved_app_without_bloks_hash_uses_current_default_profile():
     client = Client(
         {
             "device_settings": {
-                "app_version": "431.0.0.47.82",
+                "app_version": "449.0.0.0.1",
                 "version_code": "979332773",
             },
         }
     )
 
     assert client.device_settings["app_version"] == config.DEFAULT_APP_VERSION
-    assert client.device_settings["version_code"] == "961145276"
-    assert client.bloks_versioning_id == "7189b949425f9bf80ea8bd880cf5a3080b292d9b1c4b38a18d112f7c4b71e7a8"
+    assert client.device_settings["version_code"] == "1065560286"
+    assert client.bloks_versioning_id == "0bc46a03e177bfc9bc8d611918815acf248fa9c77754d807d6a5951dc9ce9432"
 
 
 def test_legacy_saved_app_without_bloks_hash_is_not_overridden_by_default():
@@ -121,11 +121,11 @@ def test_legacy_saved_app_without_bloks_hash_is_not_overridden_by_default():
 def test_explicit_set_device_preserves_unknown_incomplete_app_profile():
     client = Client()
     device = {
-        "app_version": "431.0.0.47.82",
+        "app_version": "449.0.0.0.1",
         "version_code": "979332773",
     }
 
     client.set_device(device)
 
-    assert client.device_settings["app_version"] == "431.0.0.47.82"
+    assert client.device_settings["app_version"] == "449.0.0.0.1"
     assert client.device_settings["version_code"] == "979332773"
