@@ -152,3 +152,21 @@ class StoryConfigureRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         endpoint, data = client.private_request.call_args.args
         assert endpoint == "media/configure_to_story/?video=1"
         _assert_story_location_model(data)
+
+    async def test_photo_story_rich_text_format_matches_current_app(self):
+        client = _build_client()
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        await client.photo_configure_to_story(
+            upload_id="1",
+            width=720,
+            height=1280,
+            caption="",
+        )
+
+        endpoint, data = client.private_request.call_args.args
+        assert endpoint == "media/configure_to_story/"
+        assert data["rich_text_format_types"] == '["modern_refreshed_v2"]'
+        text_metadata = json.loads(data["text_metadata"])
+        assert text_metadata[0]["format_type"] == "modern_refreshed_v2"
+        assert text_metadata[0]["effects"] == ["default"]

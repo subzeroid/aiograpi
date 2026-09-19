@@ -22,10 +22,20 @@ DEVICE_SETTINGS = {
     "model": "Pixel 8 Pro",
     "cpu": "husky",
 }
-DEFAULT_APP_VERSION = "428.0.0.47.67"
+DEFAULT_APP_VERSION = "448.0.0.0.20"
 APP_SETTINGS = {
     DEFAULT_APP_VERSION: {
         "app_version": DEFAULT_APP_VERSION,
+        "version_code": "1065560286",
+        "bloks_versioning_id": "0bc46a03e177bfc9bc8d611918815acf248fa9c77754d807d6a5951dc9ce9432",
+    },
+    "446.0.0.49.77": {
+        "app_version": "446.0.0.49.77",
+        "version_code": "385211303",
+        "bloks_versioning_id": "935a519904e9017324cdedb64a283a3c2c1a3d5b0bbc698b451f5aef72cc11df",
+    },
+    "428.0.0.47.67": {
+        "app_version": "428.0.0.47.67",
         "version_code": "961145276",
         "bloks_versioning_id": "7189b949425f9bf80ea8bd880cf5a3080b292d9b1c4b38a18d112f7c4b71e7a8",
     },

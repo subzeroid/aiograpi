@@ -1,3 +1,4 @@
+import asyncio
 import json
 import tempfile
 import types
@@ -1088,3 +1089,51 @@ class ClipUploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         upload_extra = client.clip_upload.call_args.kwargs["extra_data"]
         assert upload_extra["music_params"]["audio_asset_start_time_in_ms"] == 171500
         assert upload_extra["music_params"]["overlap_duration_in_ms"] == 2500
+
+
+class ClipConfigurePayloadRegressionTestCase(unittest.TestCase):
+    def test_clip_configure_payload_matches_current_app_shape(self):
+        client = Client()
+        client._user_id = "1"
+        client.uuid = "uuid"
+        client.photo_rupload = AsyncMock(return_value=("1778346423000", 1080, 1920))
+        client.private_request = AsyncMock(return_value={"status": "ok"})
+
+        asyncio.run(
+            client.clip_configure(
+                "1778346423000",
+                Path("thumbnail.jpg"),
+                1080,
+                1920,
+                5,
+                "caption",
+            )
+        )
+
+        args = client.private_request.call_args.args
+        self.assertEqual(args[0], "media/configure_to_clips/?video=1")
+        payload = args[1]
+
+        segments_metadata = payload["clips_segments_metadata"]
+        self.assertEqual(segments_metadata["num_segments"], 1)
+        segment = segments_metadata["clips_segments"][0]
+        self.assertEqual(segment["index"], 0)
+        self.assertEqual(segment["duration_ms"], 5000)
+        self.assertEqual(segment["audio_type"], "original")
+        self.assertEqual(segment["media_type"], "video")
+        self.assertEqual(segment["original_media_type"], 2)
+
+        self.assertEqual(payload["clips_audio_metadata"]["original"]["volume_level"], 1.0)
+        self.assertEqual(payload["additional_audio_info"], {"has_voiceover_attribution": 0})
+        self.assertEqual(payload["edits"], {"filter_type": 0, "filter_strength": 1.0})
+        self.assertEqual(payload["capture_type"], "clips_v2")
+        self.assertEqual(payload["clips_creation_entry_point"], "clips")
+        self.assertEqual(payload["camera_entry_point"], "71")
+        self.assertEqual(payload["audience"], "default")
+        self.assertEqual(payload["include_e2ee_mentioned_user_list"], "1")
+        self.assertEqual(payload["hide_from_profile_grid"], "false")
+        self.assertEqual(payload["original_width"], 1080)
+        self.assertEqual(payload["original_height"], 1920)
+
+        for legacy_key in ("media_folder", "date_time_original", "clips"):
+            self.assertNotIn(legacy_key, payload)
