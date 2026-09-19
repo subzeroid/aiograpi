@@ -6,16 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
-## [Unreleased]
+## [2.0.8] - 2026-09-20
 
 ### Fixed
 
-- Retry legacy login responses with `error_type="needs_upgrade"` through CAA, forwarding the verification code and retaining the original error and diagnostics when CAA returns no session (instagrapi #2792).
-- Use `read_timeout` for share-link resolution and track downloads so changing the `request_timeout` pacing delay does not change their HTTP timeout (#455).
+- Retry legacy login responses with `error_type="needs_upgrade"` through CAA, forwarding the verification code and retaining the original error and diagnostics when CAA returns no session (#463, port of instagrapi #2792).
+- Use `read_timeout` for share-link resolution and track downloads so changing the `request_timeout` pacing delay does not change their HTTP timeout (#462, fixes #455; thanks to @marnelle1).
 
 ### Changed
 
-- Advance the recorded instagrapi baseline from 2.18.20 to 3.0.8 after completing the omitted legacy-login fallback port; document which ports shipped in aiograpi 2.0.0–2.0.7 and which remain unreleased.
+- Record synchronization through instagrapi 3.0.9 after completing the omitted legacy-login fallback and HTTP-timeout ports. Update the release mapping and clarify server-directed login fallback in the guides.
 
 ## [2.0.7] - 2026-09-20
 
