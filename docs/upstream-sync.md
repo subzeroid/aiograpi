@@ -5,10 +5,10 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.0.8
+instagrapi 3.0.9
 ```
 
-Most runtime ports through this baseline are available in [aiograpi 2.0.7](https://github.com/subzeroid/aiograpi/releases/tag/2.0.7). The current source tree also includes the previously omitted `login_legacy()` fallback for `UnknownError(error_type="needs_upgrade")` from [instagrapi #2792](https://github.com/subzeroid/instagrapi/pull/2792). That fix is unreleased and requires a future aiograpi patch release. The recorded baseline now advances from 2.18.20 to 3.0.8 to reflect the completed source port, rather than claiming every change shipped in 2.0.7.
+The runtime ports through this baseline are available in [aiograpi 2.0.8](https://github.com/subzeroid/aiograpi/releases/tag/2.0.8). This release adds the previously omitted `login_legacy()` fallback for `UnknownError(error_type="needs_upgrade")` from [instagrapi #2792](https://github.com/subzeroid/instagrapi/pull/2792) and separates HTTP helper timeouts from request pacing. Earlier ports shipped in 2.0.0–2.0.7 as shown below.
 
 | instagrapi release | aiograpi release | Ported behavior |
 | --- | --- | --- |
@@ -20,11 +20,12 @@ Most runtime ports through this baseline are available in [aiograpi 2.0.7](https
 | 3.0.5 | 2.0.5 | Updated private GraphQL follower/following document IDs. |
 | 3.0.6–3.0.7 | 2.0.6 | Current Reels configure payloads, story rich text, upload-status and video-resource helpers, and the default Android `448.0.0.0.20` profile. |
 | 3.0.8 | 2.0.7 | Per-client caches and Highlights amount limits. |
-| 3.0.0 (omitted fallback from #2792) | Unreleased | Retry legacy `needs_upgrade` errors through CAA, forwarding the verification code and preserving the original error and diagnostics if CAA returns no session. |
+| 3.0.0 (omitted fallback from #2792) | 2.0.8 | Retry legacy `needs_upgrade` errors through CAA, forwarding the verification code and preserving the original error and diagnostics if CAA returns no session. |
+| 3.0.9 | 2.0.8 | Separate HTTP helper timeouts from request pacing. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
-The unreleased `login_legacy()` fix applies only to a `needs_upgrade` error, including differences in letter case or surrounding whitespace. Unrelated `UnknownError` responses still propagate directly, and typed CAA failures and async cancellation retain their existing behavior.
+The `login_legacy()` fix in 2.0.8 applies only to a `needs_upgrade` error, including differences in letter case or surrounding whitespace. Unrelated `UnknownError` responses still propagate directly, and typed CAA failures and async cancellation retain their existing behavior.
 
 `aiograpi 1.0.x` established the SemVer async baseline through `instagrapi 2.7.17`, including Bloks login fallback
 updates, backup-code 2FA, email and phone helper work, password reset helpers, album per-slide usertags, comment
