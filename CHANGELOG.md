@@ -11,6 +11,7 @@ starting with 1.0.0.
 ### Fixed
 
 - Retry legacy login responses with `error_type="needs_upgrade"` through CAA, forwarding the verification code and retaining the original error and diagnostics when CAA returns no session (instagrapi #2792).
+- Use `read_timeout` for share-link resolution and track downloads so changing the `request_timeout` pacing delay does not change their HTTP timeout (#455).
 
 ### Changed
 

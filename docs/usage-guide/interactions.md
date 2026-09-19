@@ -55,11 +55,19 @@ We recommend using [these proxies](https://soax.com/?r=sEysufQI)
 | Property            | Description
 | ------------------- | --------------------------------------------------------------
 | request\_logger     | Logger in which various actions from Instagram are registered
-| request\_timeout    | Timeout in seconds between requests (1 second by default)
+| request\_timeout    | Delay in seconds before private API requests (1 second by default); controls pacing, not HTTP timeouts
+| read\_timeout       | HTTP timeout in seconds for private API requests, share-link resolution, and track downloads (25 seconds by default)
 | private\_transport | Private mobile transport: native async `curl` by default for HTTP/2; `requests` selects the previous HTTPX transport
 | public\_transport   | Public web transport: `requests`-compatible async transport by default, or `curl` when `aiograpi[curl]` is installed
 | public\_transport\_impersonate | Browser fingerprint used by the optional curl public transport
 | tls\_verify | TLS certificate verification: `True` by default, `False` for temporary trusted MITM debugging, or a CA bundle path
+
+Set `read_timeout` directly on the client at runtime; it is not a constructor option and is not saved or restored in settings. It applies to the private API request sender, the HTTP request for `/share/p/` links in `media_pk_from_url()`, and `track_download_by_url()`. Public requests, including `public_head()`, retain their own timeout behavior.
+
+```python
+client = Client(request_timeout=0)  # Disable the private API pacing delay.
+client.read_timeout = 30  # Allow these HTTP requests up to 30 seconds per network operation.
+```
 
 
 ### Login
