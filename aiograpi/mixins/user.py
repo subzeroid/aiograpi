@@ -62,11 +62,11 @@ class UserMixin(ClientMixin):
     Helpers to manage user
     """
 
-    _users_cache: Dict[str, User] = {}  # user_pk -> User
-    _userhorts_cache: Dict[str, UserShort] = {}  # user_pk -> UserShort
-    _usernames_cache: Dict[str, str] = {}  # username -> user_pk
-    _users_following: Dict[Any, Any] = {}  # user_pk -> dict(user_pk -> "short user object")
-    _users_followers: Dict[Any, Any] = {}  # user_pk -> dict(user_pk -> "short user object")
+    _users_cache: Dict[str, User]
+    _userhorts_cache: Dict[str, UserShort]
+    _usernames_cache: Dict[str, str]
+    _users_following: Dict[Any, Any]
+    _users_followers: Dict[Any, Any]
 
     @staticmethod
     def _normalize_username(username: str) -> str:
