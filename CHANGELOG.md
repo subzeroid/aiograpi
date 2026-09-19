@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [Unreleased]
+
+### Fixed
+
+- Retry legacy login responses with `error_type="needs_upgrade"` through CAA, forwarding the verification code and retaining the original error and diagnostics when CAA returns no session (instagrapi #2792).
+
+### Changed
+
+- Advance the recorded instagrapi baseline from 2.18.20 to 3.0.8 after completing the omitted legacy-login fallback port; document which ports shipped in aiograpi 2.0.0–2.0.7 and which remain unreleased.
+
 ## [2.0.7] - 2026-09-20
 
 ### Fixed

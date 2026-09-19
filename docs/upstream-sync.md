@@ -2,11 +2,29 @@
 
 `aiograpi` is the async port of `instagrapi`. Package versions remain independent, but every sync release records the `instagrapi` tag it has been ported through.
 
-The current recorded API baseline is:
+The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 2.18.20
+instagrapi 3.0.8
 ```
+
+Most runtime ports through this baseline are available in [aiograpi 2.0.7](https://github.com/subzeroid/aiograpi/releases/tag/2.0.7). The current source tree also includes the previously omitted `login_legacy()` fallback for `UnknownError(error_type="needs_upgrade")` from [instagrapi #2792](https://github.com/subzeroid/instagrapi/pull/2792). That fix is unreleased and requires a future aiograpi patch release. The recorded baseline now advances from 2.18.20 to 3.0.8 to reflect the completed source port, rather than claiming every change shipped in 2.0.7.
+
+| instagrapi release | aiograpi release | Ported behavior |
+| --- | --- | --- |
+| 3.0.0 | 2.0.0 | CAA login and private `curl_cffi` HTTP/2 by default; explicit `login_legacy()` and saved transport choices remain supported. |
+| 3.0.1 | 2.0.1 | Configured uploads return without a follow-up `qe/expose/` request. |
+| 3.0.2 | 2.0.2 | Current Reels response parsing, amount limits, cursor progress, and string media-ID stop markers. |
+| 3.0.3 | 2.0.3 | Private GraphQL follow-list fallback and typed errors when Instagram explicitly requests CAA-to-legacy fallback. |
+| 3.0.4 | 2.0.4 | FBNS authentication survives settings round trips; this fix originated in aiograpi. |
+| 3.0.5 | 2.0.5 | Updated private GraphQL follower/following document IDs. |
+| 3.0.6–3.0.7 | 2.0.6 | Current Reels configure payloads, story rich text, upload-status and video-resource helpers, and the default Android `448.0.0.0.20` profile. |
+| 3.0.8 | 2.0.7 | Per-client caches and Highlights amount limits. |
+| 3.0.0 (omitted fallback from #2792) | Unreleased | Retry legacy `needs_upgrade` errors through CAA, forwarding the verification code and preserving the original error and diagnostics if CAA returns no session. |
+
+See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
+
+The unreleased `login_legacy()` fix applies only to a `needs_upgrade` error, including differences in letter case or surrounding whitespace. Unrelated `UnknownError` responses still propagate directly, and typed CAA failures and async cancellation retain their existing behavior.
 
 `aiograpi 1.0.x` established the SemVer async baseline through `instagrapi 2.7.17`, including Bloks login fallback
 updates, backup-code 2FA, email and phone helper work, password reset helpers, album per-slide usertags, comment
@@ -33,7 +51,7 @@ challenge context handling, and clearer Reel/clip upload failure details.
 
 `aiograpi 1.12.14` continues the baseline through `instagrapi 2.18.18`. Its HTTPX transport already exposes the final HTTP response directly, so exhausted `429` responses map to `ClientThrottledError` or `PleaseWaitFewMinutes` without leaking urllib3 retry errors or adding a second transport retry layer.
 
-The `instagrapi` 2.18.19 transport port adds optional native async private HTTP/2 through `curl_cffi`, preserving HTTPX request preparation, redirects and cookies. The private transport API, saved settings, guarded CAA/saved-session live tests and real TLS/HTTP2 CI coverage are mirrored; default login routing remains unchanged.
+The `instagrapi` 2.18.19 transport port introduced optional native async private HTTP/2 through `curl_cffi` in aiograpi 1.12.15, preserving HTTPX request preparation, redirects and cookies. The private transport API, saved settings, guarded CAA/saved-session live tests and real TLS/HTTP2 CI coverage were mirrored; default login routing remained unchanged in that release. aiograpi 1.12.16 recorded the 2.18.20 TLS group update. The aiograpi 2.0.0 defaults supersede those earlier opt-in instructions.
 
 ## Release policy
 
