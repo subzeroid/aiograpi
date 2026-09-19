@@ -1724,7 +1724,11 @@
 </tr>
 <tr>
 <td>request_timeout</td>
-<td>Timeout in seconds between requests (1 second by default)</td>
+<td>Delay in seconds before private API requests (1 second by default); controls pacing, not HTTP timeouts</td>
+</tr>
+<tr>
+<td>read_timeout</td>
+<td>HTTP timeout in seconds for private API requests, share-link resolution, and track downloads (25 seconds by default)</td>
 </tr>
 <tr>
 <td>private_transport</td>
@@ -1744,6 +1748,10 @@
 </tr>
 </tbody>
 </table>
+<p>Set <code>read_timeout</code> directly on the client at runtime; it is not a constructor option and is not saved or restored in settings. It applies to the private API request sender, the HTTP request for <code>/share/p/</code> links in <code>media_pk_from_url()</code>, and <code>track_download_by_url()</code>. Public requests, including <code>public_head()</code>, retain their own timeout behavior.</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">request_timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Disable the private API pacing delay.</span>
+<span class="n">client</span><span class="o">.</span><span class="n">read_timeout</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># Allow these HTTP requests up to 30 seconds per network operation.</span>
+</code></pre></div>
 <h3 id="login">Login</h3>
 <table>
 <thead>
