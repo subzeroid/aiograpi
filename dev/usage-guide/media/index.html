@@ -1830,6 +1830,16 @@
 <td>bool</td>
 <td>Unpin a Reel from the Reels tab/profile Reels grid</td>
 </tr>
+<tr>
+<td>media_upload_status(post_client_id: str)</td>
+<td>dict</td>
+<td>Poll the processing status of an async upload by its client-side upload id until <code>COMPLETED</code></td>
+</tr>
+<tr>
+<td>video_refresh_resources(media_id: str, should_fetch_all_language_variants: bool = False)</td>
+<td>dict</td>
+<td>Refresh expired video URLs and get a fresh <code>video_versions</code> list (and DASH manifest)</td>
+</tr>
 </tbody>
 </table>
 <p>Media notes are separate from Direct inbox Notes. Use <code>media_note_create()</code> and <code>media_note_delete()</code> for the note surface attached to a post or Reel; use the <a href="../notes/">Notes guide</a> for Direct inbox Notes.</p>
