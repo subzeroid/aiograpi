@@ -1496,9 +1496,68 @@
 
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
-<p>The current recorded API baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 2.18.20
+<p>The current recorded upstream synchronization baseline is:</p>
+<div class="highlight"><pre><span></span><code>instagrapi 3.0.8
 </code></pre></div>
+<p>Most runtime ports through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.7">aiograpi 2.0.7</a>. The current source tree also includes the previously omitted <code>login_legacy()</code> fallback for <code>UnknownError(error_type="needs_upgrade")</code> from <a href="https://github.com/subzeroid/instagrapi/pull/2792">instagrapi #2792</a>. That fix is unreleased and requires a future aiograpi patch release. The recorded baseline now advances from 2.18.20 to 3.0.8 to reflect the completed source port, rather than claiming every change shipped in 2.0.7.</p>
+<table>
+<thead>
+<tr>
+<th>instagrapi release</th>
+<th>aiograpi release</th>
+<th>Ported behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3.0.0</td>
+<td>2.0.0</td>
+<td>CAA login and private <code>curl_cffi</code> HTTP/2 by default; explicit <code>login_legacy()</code> and saved transport choices remain supported.</td>
+</tr>
+<tr>
+<td>3.0.1</td>
+<td>2.0.1</td>
+<td>Configured uploads return without a follow-up <code>qe/expose/</code> request.</td>
+</tr>
+<tr>
+<td>3.0.2</td>
+<td>2.0.2</td>
+<td>Current Reels response parsing, amount limits, cursor progress, and string media-ID stop markers.</td>
+</tr>
+<tr>
+<td>3.0.3</td>
+<td>2.0.3</td>
+<td>Private GraphQL follow-list fallback and typed errors when Instagram explicitly requests CAA-to-legacy fallback.</td>
+</tr>
+<tr>
+<td>3.0.4</td>
+<td>2.0.4</td>
+<td>FBNS authentication survives settings round trips; this fix originated in aiograpi.</td>
+</tr>
+<tr>
+<td>3.0.5</td>
+<td>2.0.5</td>
+<td>Updated private GraphQL follower/following document IDs.</td>
+</tr>
+<tr>
+<td>3.0.6–3.0.7</td>
+<td>2.0.6</td>
+<td>Current Reels configure payloads, story rich text, upload-status and video-resource helpers, and the default Android <code>448.0.0.0.20</code> profile.</td>
+</tr>
+<tr>
+<td>3.0.8</td>
+<td>2.0.7</td>
+<td>Per-client caches and Highlights amount limits.</td>
+</tr>
+<tr>
+<td>3.0.0 (omitted fallback from #2792)</td>
+<td>Unreleased</td>
+<td>Retry legacy <code>needs_upgrade</code> errors through CAA, forwarding the verification code and preserving the original error and diagnostics if CAA returns no session.</td>
+</tr>
+</tbody>
+</table>
+<p>See the <a href="../usage-guide/login-migration/">login migration guide</a> for the current defaults and compatibility options. From aiograpi 2.0.3, <code>login()</code> follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.</p>
+<p>The unreleased <code>login_legacy()</code> fix applies only to a <code>needs_upgrade</code> error, including differences in letter case or surrounding whitespace. Unrelated <code>UnknownError</code> responses still propagate directly, and typed CAA failures and async cancellation retain their existing behavior.</p>
 <p><code>aiograpi 1.0.x</code> established the SemVer async baseline through <code>instagrapi 2.7.17</code>, including Bloks login fallback
 updates, backup-code 2FA, email and phone helper work, password reset helpers, album per-slide usertags, comment
 pin/unpin endpoint fixes, username normalization, private GraphQL followers helpers, Story music upload helpers,
@@ -1515,7 +1574,7 @@ challenge context handling, and clearer Reel/clip upload failure details.</p>
 <p><code>aiograpi 1.5.0</code> continues the baseline through <code>instagrapi 2.11.0</code> and ports the <code>user_follow(...)</code> action-count/cache semantics fix so duplicate follow attempts return <code>False</code> when the relationship already exists or is pending.</p>
 <p><code>aiograpi 1.6.0</code> continues the baseline through <code>instagrapi 2.12.0</code> and ports typed preservation for v2-only <code>UserShort</code> fields in private GraphQL follow-list payloads, including <code>friendship_status</code> and normalized <code>latest_reel_media</code>.</p>
 <p><code>aiograpi 1.12.14</code> continues the baseline through <code>instagrapi 2.18.18</code>. Its HTTPX transport already exposes the final HTTP response directly, so exhausted <code>429</code> responses map to <code>ClientThrottledError</code> or <code>PleaseWaitFewMinutes</code> without leaking urllib3 retry errors or adding a second transport retry layer.</p>
-<p>The <code>instagrapi</code> 2.18.19 transport port adds optional native async private HTTP/2 through <code>curl_cffi</code>, preserving HTTPX request preparation, redirects and cookies. The private transport API, saved settings, guarded CAA/saved-session live tests and real TLS/HTTP2 CI coverage are mirrored; default login routing remains unchanged.</p>
+<p>The <code>instagrapi</code> 2.18.19 transport port introduced optional native async private HTTP/2 through <code>curl_cffi</code> in aiograpi 1.12.15, preserving HTTPX request preparation, redirects and cookies. The private transport API, saved settings, guarded CAA/saved-session live tests and real TLS/HTTP2 CI coverage were mirrored; default login routing remained unchanged in that release. aiograpi 1.12.16 recorded the 2.18.20 TLS group update. The aiograpi 2.0.0 defaults supersede those earlier opt-in instructions.</p>
 <h2 id="release-policy">Release policy</h2>
 <ul>
 <li>Use one <code>aiograpi</code> feature release for a large upstream sync.</li>
