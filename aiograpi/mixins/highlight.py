@@ -65,7 +65,10 @@ class HighlightMixin(ClientMixin):
             "will_sound_on": random.randint(0, 1),
         }
         result = await self.private_request(f"highlights/{user_id}/highlights_tray/", params=params)
-        return [extract_highlight_v1(highlight) for highlight in result.get("tray", [])]
+        tray = result.get("tray", [])
+        if amount > 0:
+            tray = tray[:amount]
+        return [extract_highlight_v1(highlight) for highlight in tray]
 
     async def user_highlights(self, user_id: int, amount: int = 0) -> List[Highlight]:
         """
