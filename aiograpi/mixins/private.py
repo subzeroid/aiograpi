@@ -814,8 +814,8 @@ class PrivateRequestMixin(ClientMixin):
                 self.handle_exception(self, e)
             elif isinstance(e, ChallengeRequired):
                 if not self.with_challenge_flow:
-                    # Nothing resolved the challenge, so re-sending the same
-                    # request can only hit the checkpoint a second time.
+                    # Nothing resolved the challenge: re-sending the same
+                    # request would be an unnecessary blind retry.
                     raise e
                 await self.challenge_resolve(self.last_json)
             else:
