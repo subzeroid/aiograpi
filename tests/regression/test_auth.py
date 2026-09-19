@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 from unittest.mock import AsyncMock, Mock
 
@@ -14,6 +15,7 @@ from aiograpi.exceptions import (
     PrivateError,
     RateLimitError,
     TwoFactorRequired,
+    UnknownError,
 )
 from aiograpi.types import UserShort
 
@@ -403,3 +405,114 @@ class AuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             {"two_step_verification_context": "legacy-context"},
             original,
         )
+
+
+class LegacyNeedsUpgradeAuthRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.client = Client()
+        self.client.username = "example"
+        self.client.password = "password"
+        self.client.authorization_data = {}
+        self.legacy_json = {
+            "message": "Your version of Instagram is out of date.",
+            "error_type": "needs_upgrade",
+        }
+        self.legacy_response = Mock(status_code=400)
+        self.original = UnknownError(
+            self.legacy_json["message"], error_type="needs_upgrade", response=self.legacy_response
+        )
+        self.client.last_json = self.legacy_json
+        self.client.last_response = self.legacy_response
+        self.client.pre_login_flow = AsyncMock(return_value=True)
+        self.client.password_encrypt = AsyncMock(return_value="enc-password")
+        self.client.private_request = AsyncMock(side_effect=self.original)
+        self.client.login_flow = AsyncMock()
+        self.client.bloks_caa_login = AsyncMock(return_value={"logged_in": True})
+
+    async def test_needs_upgrade_tries_caa_and_completes_login(self):
+        self.client.last_login = None
+        self.client.relogin_attempt = 1
+
+        result = await self.client.login_legacy(verification_code="654321")
+
+        self.assertTrue(result)
+        self.client.bloks_caa_login.assert_awaited_once_with(verification_code="654321")
+        self.client.login_flow.assert_awaited_once_with()
+        self.assertIsInstance(self.client.last_login, float)
+        self.assertEqual(self.client.relogin_attempt, 0)
+        self.assertEqual(self.client.private_request.await_count, 1)
+
+    async def test_needs_upgrade_normalizes_error_type(self):
+        self.original.error_type = "  NeEdS_UpGrAdE\t"
+
+        result = await self.client.login_legacy()
+
+        self.assertTrue(result)
+        self.client.bloks_caa_login.assert_awaited_once_with(verification_code="")
+        self.client.login_flow.assert_awaited_once_with()
+
+    async def test_needs_upgrade_preserves_legacy_error_when_caa_has_no_session(self):
+        async def caa_without_session(**kwargs):
+            self.client.last_json = {"status": "ok", "step": "caa"}
+            self.client.last_response = Mock(status_code=200)
+            return {"logged_in": False, "two_step_verification_context": "", "reason": "no session"}
+
+        self.client.bloks_caa_login.side_effect = caa_without_session
+
+        with self.assertRaises(UnknownError) as raised:
+            await self.client.login_legacy(verification_code="654321")
+
+        self.assertIs(raised.exception, self.original)
+        self.assertIs(raised.exception.response, self.legacy_response)
+        self.client.bloks_caa_login.assert_awaited_once_with(verification_code="654321")
+        self.assertEqual(self.client.last_json, self.legacy_json)
+        self.assertIs(self.client.last_response, self.legacy_response)
+        self.client.login_flow.assert_not_awaited()
+        self.assertEqual(self.client.private_request.await_count, 1)
+
+    async def test_unrelated_unknown_error_does_not_try_caa(self):
+        for context in ({}, {"error_type": None}, {"error_type": "temporary_error"}):
+            with self.subTest(context=context):
+                original = UnknownError("Login failed", response=self.legacy_response, **context)
+                self.client.private_request.side_effect = original
+
+                with self.assertRaises(UnknownError) as raised:
+                    await self.client.login_legacy(verification_code="654321")
+
+                self.assertIs(raised.exception, original)
+                self.client.bloks_caa_login.assert_not_awaited()
+                self.client.login_flow.assert_not_awaited()
+
+    async def test_needs_upgrade_caa_typed_failures_propagate(self):
+        for error_class in (ChallengeError, TwoFactorRequired, RateLimitError, AccountSuspended):
+            with self.subTest(error_class=error_class):
+                caa_json = {"status": "fail", "step": "caa"}
+                caa_response = Mock(status_code=400)
+                rejection = error_class("CAA login failed", response=caa_response)
+
+                async def rejected_caa(**kwargs):
+                    self.client.last_json = caa_json
+                    self.client.last_response = caa_response
+                    raise rejection
+
+                self.client.bloks_caa_login.side_effect = rejected_caa
+
+                with self.assertRaises(error_class) as raised:
+                    await self.client.login_legacy(verification_code="654321")
+
+                self.assertIs(raised.exception, rejection)
+                self.assertEqual(self.client.last_json, caa_json)
+                self.assertIs(self.client.last_response, caa_response)
+                self.client.login_flow.assert_not_awaited()
+
+    async def test_needs_upgrade_caa_cancellation_propagates(self):
+        cancellation = asyncio.CancelledError()
+        self.client.bloks_caa_login.side_effect = cancellation
+
+        with self.assertRaises(asyncio.CancelledError) as raised:
+            await self.client.login_legacy()
+
+        self.assertIs(raised.exception, cancellation)
+        self.client.bloks_caa_login.assert_awaited_once_with(verification_code="")
+        self.client.login_flow.assert_not_awaited()
+        self.assertEqual(self.client.private_request.await_count, 1)

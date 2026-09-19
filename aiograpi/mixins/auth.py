@@ -936,6 +936,19 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
                 ) from exc
             else:
                 logged = await self._login_with_bloks_two_factor(verification_code, login_json, exc)
+        except UnknownError as exc:
+            # Legacy login can report an obsolete client as needs_upgrade.
+            # Only that error should try CAA; preserve diagnostics if it fails.
+            error_type = str(getattr(exc, "error_type", "") or "").strip().lower()
+            if error_type != "needs_upgrade":
+                raise
+            login_json = deepcopy(self.last_json) if isinstance(self.last_json, dict) else {}
+            login_response = self.last_response
+            logged = await self._try_caa_login(exc, verification_code=verification_code)
+            if not logged:
+                self.last_json = login_json
+                self.last_response = login_response
+                raise
         except TwoFactorRequired as e:
             if not verification_code.strip():
                 raise TwoFactorRequired(f"{e} (you did not provide verification_code for login method)")
