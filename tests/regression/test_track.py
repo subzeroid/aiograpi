@@ -178,6 +178,7 @@ class TrackMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_track_download_by_url_uses_httpx_request(self):
         client = Client()
         client.request_timeout = 7
+        client.read_timeout = 30
         response = Mock()
         response.read.return_value = b"track-bytes"
 
@@ -189,6 +190,6 @@ class TrackMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 )
                 self.assertEqual(path.read_bytes(), b"track-bytes")
 
-        request.assert_awaited_once_with("GET", "https://example.com/audio/test-track.mp3", timeout=7)
+        request.assert_awaited_once_with("GET", "https://example.com/audio/test-track.mp3", timeout=30)
         response.raise_for_status.assert_called_once_with()
         self.assertEqual(path.name, "test-track.mp3")
