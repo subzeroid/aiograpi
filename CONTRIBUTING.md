@@ -67,6 +67,8 @@ credentials, proxies, sessions, or the account URL.
 
 Mixin classes should inherit from `aiograpi.mixins.base.ClientMixin`. It is a typing-only contract for shared client attributes and helper methods provided by sibling mixins; use normal `self.user_id`, `self.private_request`, etc. in feature code instead of `getattr` workarounds for mypy.
 
+The [Package workflow](https://github.com/subzeroid/aiograpi/blob/main/.github/workflows/python-package.yml) runs live tests only for canonical-repository pushes and manual dispatches; pull requests remain offline. For targets that use the account pool, the job fails before running tests if the `TEST_ACCOUNTS_URL` Actions secret is missing, and its summary explicitly states that live validation did not run. The `signup` target uses separate signup configuration and does not require the account-pool secret. Local test skip behavior is unchanged.
+
 ## Pull Request Checklist
 
 1. Branch from `main` and keep the change scoped.
@@ -86,6 +88,8 @@ Maintainers handle release versioning and publishing unless a maintainer asks fo
 - Upstream sync notes: [upstream-sync](https://subzeroid.github.io/aiograpi/latest/upstream-sync/)
 
 ## Release Commands
+
+Before tagging, inspect live job results for the release commit: the smoke must report `LOGIN_OK` and `ALL REQUIRED PASS`, and the collection pagination test must pass rather than skip. For additional selected targets, inspect passed and skipped counts. A green workflow with skipped live tests is not evidence of live validation; report missing configuration, skips, or account limitations explicitly.
 
 Maintainer-only release flow:
 
