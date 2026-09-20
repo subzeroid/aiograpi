@@ -90,9 +90,7 @@ What you can rely on instead:
 - **Deprecated methods stay around for ≥2 minor releases** with
   `DeprecationWarning` before removal — you'll get loud warnings, not
   surprise `AttributeError`s.
-- **Live CI smoke** runs on every push: `tests/live/smoke.py` against a
-  real account through a real proxy. If we ship something that breaks
-  the basic happy path, CI catches it.
+- **Live CI smoke** runs on canonical `main` pushes and selected manual dispatches; pull requests stay offline. Account-based jobs require test-account configuration. Before claiming live validation, check the [release verification guidance](CONTRIBUTING.md#release-commands) for actual success markers and skipped tests.
 - **Migration Guide** at [docs/migration.md](https://subzeroid.github.io/aiograpi/latest/migration/) — breaking changes are documented with before/after examples.
 
 ### What's new in 1.0.0 and recent releases
