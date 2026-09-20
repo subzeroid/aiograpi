@@ -214,7 +214,7 @@ class CurlResponse:
         return self._response.headers
 
     def json(self):
-        return self._response.json()
+        return orjson.loads(self.content)
 
     def raise_for_status(self):
         if self.status_code < 400:

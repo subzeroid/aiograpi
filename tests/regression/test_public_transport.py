@@ -1,8 +1,72 @@
 import sys
 from pathlib import Path
-from unittest import TestCase, mock
+from unittest import IsolatedAsyncioTestCase, TestCase, mock
+
+import orjson
+import requests
 
 from aiograpi import Client
+from aiograpi.exceptions import ClientJSONDecodeError, ClientLoginRequired
+from aiograpi.httpx_ext import CurlResponse
+
+
+def curl_response(content, path="/graphql/query/"):
+    response = requests.Response()
+    response.status_code = 200
+    response.url = f"https://www.instagram.com{path}"
+    response._content = content
+    return CurlResponse(response)
+
+
+class CurlResponseRegressionTestCase(TestCase):
+    def test_json_decodes_valid_utf8_content(self):
+        response = curl_response('{"data":{"title":"café","ok":true}}'.encode())
+
+        self.assertEqual(response.json(), {"data": {"title": "café", "ok": True}})
+
+    def test_json_raises_the_same_decode_error_as_httpx(self):
+        response = curl_response(b"<html>Unexpected response</html>")
+
+        with self.assertRaises(orjson.JSONDecodeError):
+            response.json()
+
+
+class CurlResponsePublicRequestRegressionTestCase(IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.client = Client()
+        self.client.last_response_ts = 0
+        for session in (self.client.public, self.client.private, self.client.graphql):
+            self.addAsyncCleanup(session._client.aclose)
+
+    async def test_invalid_json_keeps_the_response_on_typed_public_error(self):
+        response = curl_response(b"<html>Unexpected response</html>")
+        self.client.public.get = mock.AsyncMock(return_value=response)
+
+        with self.assertRaises(ClientJSONDecodeError) as cm:
+            await self.client.public_request(response.url, return_json=True, retries_count=1)
+
+        self.assertIs(cm.exception.response, response)
+        self.assertEqual(cm.exception.response.status_code, 200)
+
+    async def test_login_redirect_html_raises_login_required(self):
+        response = curl_response(b"<html>Login</html>", path="/accounts/login/")
+        self.client.public.get = mock.AsyncMock(return_value=response)
+
+        with self.assertRaises(ClientLoginRequired) as cm:
+            await self.client.public_request(self.client.GRAPHQL_PUBLIC_API_URL, return_json=True)
+
+        self.assertIs(cm.exception.response, response)
+        self.client.public.get.assert_awaited_once()
+
+    async def test_challenge_redirect_html_raises_login_required(self):
+        response = curl_response(b"<html>Challenge</html>", path="/challenge/")
+        self.client.public.get = mock.AsyncMock(return_value=response)
+
+        with self.assertRaises(ClientLoginRequired) as cm:
+            await self.client.public_request(self.client.GRAPHQL_PUBLIC_API_URL, return_json=True)
+
+        self.assertIs(cm.exception.response, response)
+        self.client.public.get.assert_awaited_once()
 
 
 class PublicTransportRegressionTestCase(TestCase):
