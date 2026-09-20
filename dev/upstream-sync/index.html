@@ -1497,9 +1497,9 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.0.9
+<div class="highlight"><pre><span></span><code>instagrapi 3.0.10
 </code></pre></div>
-<p>The runtime ports through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.8">aiograpi 2.0.8</a>. This release adds the previously omitted <code>login_legacy()</code> fallback for <code>UnknownError(error_type="needs_upgrade")</code> from <a href="https://github.com/subzeroid/instagrapi/pull/2792">instagrapi #2792</a> and separates HTTP helper timeouts from request pacing. Earlier ports shipped in 2.0.0–2.0.7 as shown below.</p>
+<p>The runtime ports through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.9">aiograpi 2.0.9</a>. This release normalizes nullable media crosspost and coauthor fields. CAA fallback error preservation from <a href="https://github.com/subzeroid/instagrapi/pull/2819">instagrapi #2819</a> was already present in aiograpi. Earlier ports shipped in 2.0.0–2.0.8 as shown below.</p>
 <table>
 <thead>
 <tr>
@@ -1558,6 +1558,11 @@
 <td>3.0.9</td>
 <td>2.0.8</td>
 <td>Separate HTTP helper timeouts from request pacing.</td>
+</tr>
+<tr>
+<td>3.0.10</td>
+<td>2.0.9</td>
+<td>Normalize nullable media crosspost and coauthor fields; retain the existing typed CAA fallback errors.</td>
 </tr>
 </tbody>
 </table>
