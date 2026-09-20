@@ -8,16 +8,22 @@ anonymous web requests, and we don't want a flaky CI gate.
 Required env: TEST_ACCOUNTS_URL pointing at an accounts endpoint
 that returns at least one usable account (with TOTP seed if 2FA is
 enabled). Skips cleanly if unset.
+
+Reports only operation labels, attempt indices, collection counts, exception
+classes, and numeric HTTP status codes. Dependency output is suppressed;
+account data, endpoint responses, and raw exception messages are never printed.
 """
 
 import asyncio
 import json
+import logging
 import os
 import ssl
 import sys
 import tempfile
 import urllib.request
 import uuid
+from contextlib import ExitStack, contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -29,10 +35,6 @@ from tests.live.auth_helpers import login_with_timeout
 
 
 def _summarize(out):
-    if hasattr(out, "username"):
-        return f"{out.username}/{out.pk}"
-    if hasattr(out, "name"):
-        return out.name
     if isinstance(out, tuple) and out:
         first = out[0]
         if isinstance(first, (list, dict, set, tuple)):
@@ -40,7 +42,16 @@ def _summarize(out):
             return f"len={len(first)} cursor={bool(cursor)}"
     if isinstance(out, (list, dict, set, tuple)):
         return f"len={len(out)}"
-    return str(out)[:50]
+    return "ok"
+
+
+def _error_summary(exc):
+    name = type(exc).__name__
+    response = getattr(exc, "response", None)
+    for status in (getattr(response, "status_code", None), getattr(exc, "code", None)):
+        if type(status) is int and 100 <= status <= 599:
+            return f"{name} HTTP {status}"
+    return name
 
 
 async def _fetch_accounts(url, count=10):
@@ -56,7 +67,7 @@ async def _fetch_accounts(url, count=10):
         return json.loads(r.read())
 
 
-async def _login_first_usable(accs):
+async def _login_first_usable(accs, report=print):
     for i, acc in enumerate(accs, 1):
         try:
             c = Client()
@@ -73,11 +84,47 @@ async def _login_first_usable(accs):
             if totp_seed:
                 kwargs["verification_code"] = c.totp_generate_code(totp_seed)
             await login_with_timeout(c, **kwargs)
-            print(f"LOGIN_OK acc{i} {acc['username']} (user_id={c.user_id})")
+            report(f"LOGIN_OK acc{i}")
             return c
         except Exception as e:
-            print(f"acc{i} {acc.get('username', '?')}: {type(e).__name__}: {str(e)[:120]}")
+            report(f"acc{i}: {_error_summary(e)}")
     return None
+
+
+@contextmanager
+def _quiet_output():
+    stdout = sys.stdout
+    streams = [stream for stream in (stdout, sys.stderr, sys.__stdout__, sys.__stderr__) if stream is not None]
+    for stream in streams:
+        stream.flush()
+    with ExitStack() as cleanup:
+        try:
+            output_fd = stdout.fileno()
+        except (AttributeError, OSError, ValueError):
+            output = stdout  # StringIO and pytest's capsys have no descriptor.
+        else:
+            report_fd = os.dup(output_fd)
+            cleanup.callback(os.close, report_fd)
+            output = cleanup.enter_context(
+                os.fdopen(report_fd, "w", encoding=stdout.encoding or "utf-8", closefd=False)
+            )
+
+        def report(message):
+            print(message, file=output, flush=True)
+
+        discard = cleanup.enter_context(open(os.devnull, "w", encoding="utf-8"))
+        for fd in (1, 2):
+            saved_fd = os.dup(fd)
+            cleanup.callback(os.close, saved_fd)
+            cleanup.callback(os.dup2, saved_fd, fd)
+            os.dup2(discard.fileno(), fd)
+        with redirect_stdout(discard), redirect_stderr(discard):
+            try:
+                yield report
+            finally:
+                # Flush retained stream references while their descriptors are muted.
+                for stream in streams:
+                    stream.flush()
 
 
 async def main():
@@ -85,8 +132,26 @@ async def main():
         print("SKIP: TEST_ACCOUNTS_URL not set")
         return 0
 
-    accs = await _fetch_accounts(os.environ["TEST_ACCOUNTS_URL"])
-    print(f"pool: {len(accs)} accs")
+    previous_logging_level = logging.root.manager.disable
+    logging.disable(max(logging.CRITICAL, previous_logging_level))
+    try:
+        with _quiet_output() as report:
+            try:
+                return await _run_smoke(report)
+            except Exception as exc:
+                report(f"FAILED smoke: {_error_summary(exc)}")
+                return 1
+    finally:
+        logging.disable(previous_logging_level)
+
+
+async def _run_smoke(report):
+    try:
+        accs = await _fetch_accounts(os.environ["TEST_ACCOUNTS_URL"])
+        report(f"pool: {len(accs)} accs")
+    except Exception as exc:
+        report(f"REQ account_allocation FAIL: {_error_summary(exc)}")
+        return 1
 
     failures = []
 
@@ -96,9 +161,9 @@ async def main():
         c = Client()
         u = await c.user_info_by_username_gql("instagram")
         assert u.username == "instagram" and u.pk == "25025320"
-        print(f"opt anonymous_public_gql: {u.username}/{u.pk}")
+        report("opt anonymous_public_gql: ok")
     except Exception as e:
-        print(f"opt anonymous_public_gql: {type(e).__name__}: {str(e)[:140]}")
+        report(f"opt anonymous_public_gql: {_error_summary(e)}")
 
     try:
         import curl_adapter  # noqa: F401
@@ -106,14 +171,14 @@ async def main():
         c = Client(public_transport="curl", public_request_retries_count=2)
         u = await c.user_info_by_username_gql("instagram")
         assert u.username == "instagram" and u.pk == "25025320"
-        print(f"opt curl_public_gql: {u.username}/{u.pk}")
+        report("opt curl_public_gql: ok")
     except ImportError:
-        print("opt curl_public_gql: skipped (install aiograpi[curl])")
+        report("opt curl_public_gql: skipped (install aiograpi[curl])")
     except Exception as e:
-        print(f"opt curl_public_gql: {type(e).__name__}: {str(e)[:140]}")
+        report(f"opt curl_public_gql: {_error_summary(e)}")
 
     # REQUIRED: login (TOTP) + private path
-    cl = await _login_first_usable(accs)
+    cl = await _login_first_usable(accs, report)
     if cl is None:
         failures.append(("login", "all pool accounts unusable"))
     else:
@@ -142,9 +207,10 @@ async def main():
             assert logged_in
             assert validation_calls == 1
             assert str(restored.user_id) == str(cl.user_id)
-            print("REQ saved_session_login: validated/reused")
+            report("REQ saved_session_login: validated/reused")
         except Exception as e:
-            failures.append(("saved_session_login", f"{type(e).__name__}: {str(e)[:140]}"))
+            failures.append(("saved_session_login", e))
+            report(f"REQ saved_session_login FAIL: {_error_summary(e)}")
 
         try:
             if not cl.sessionid:
@@ -157,9 +223,10 @@ async def main():
             account = await by_session.account_info()
             assert str(account.pk) == str(cl.user_id)
             await by_session.get_timeline_feed("cold_start_fetch")
-            print("REQ sessionid_login: account_info/timeline")
+            report("REQ sessionid_login: account_info/timeline")
         except Exception as e:
-            failures.append(("sessionid_login", f"{type(e).__name__}: {str(e)[:140]}"))
+            failures.append(("sessionid_login", e))
+            report(f"REQ sessionid_login FAIL: {_error_summary(e)}")
 
         for name, fn in [
             ("private_v1", lambda: cl.user_info_by_username_v1("instagram")),
@@ -179,10 +246,10 @@ async def main():
         ]:
             try:
                 out = await fn()
-                print(f"REQ {name}: {_summarize(out)}")
+                report(f"REQ {name}: {_summarize(out)}")
             except Exception as e:
                 failures.append((name, e))
-                print(f"REQ {name} FAIL: {type(e).__name__}: {str(e)[:140]}")
+                report(f"REQ {name} FAIL: {_error_summary(e)}")
 
         try:
             followers = await cl.user_followers_v1("25025320", amount=5)
@@ -191,20 +258,20 @@ async def main():
             assert isinstance(follower.is_verified, bool)
             assert isinstance(follower.latest_reel_media, int)
             assert isinstance(follower.has_anonymous_profile_picture, bool)
-            print("REQ user_followers_extended_fields: ok")
+            report("REQ user_followers_extended_fields: ok")
         except Exception as e:
             failures.append(("user_followers_extended_fields", e))
-            print(f"REQ user_followers_extended_fields FAIL: {type(e).__name__}: {str(e)[:140]}")
+            report(f"REQ user_followers_extended_fields FAIL: {_error_summary(e)}")
 
         try:
             suggested = await cl.fbsearch_suggested_profiles("25025320")
             assert suggested
             assert isinstance(suggested[0], UserShort)
             assert isinstance(suggested[0].stories, list)
-            print(f"REQ fbsearch_suggested_profiles: {_summarize(suggested)}")
+            report(f"REQ fbsearch_suggested_profiles: {_summarize(suggested)}")
         except Exception as e:
             failures.append(("fbsearch_suggested_profiles", e))
-            print(f"REQ fbsearch_suggested_profiles FAIL: {type(e).__name__}: {str(e)[:140]}")
+            report(f"REQ fbsearch_suggested_profiles FAIL: {_error_summary(e)}")
 
     # OPTIONAL: chapi-ported endpoints — record but don't fail
     if cl is not None:
@@ -350,22 +417,23 @@ async def main():
             fn = getattr(cl, attr, None)
             if fn is None:
                 opt_skipped += 1
-                print(f"opt {name}: skipped (not implemented)")
+                report(f"opt {name}: skipped (not implemented)")
                 continue
             try:
                 await fn(*args, **kwargs)
-                print(f"opt {name}: PASS")
+                report(f"opt {name}: PASS")
                 opt_pass += 1
             except Exception as e:
-                print(f"opt {name}: {type(e).__name__}: {str(e)[:140]}")
-        print(f"OPTIONAL: {opt_pass}/{len(opt_checks)} chapi methods OK ({opt_skipped} skipped)")
+                report(f"opt {name}: {_error_summary(e)}")
+        report(f"OPTIONAL: {opt_pass}/{len(opt_checks)} chapi methods OK ({opt_skipped} skipped)")
 
     if failures:
-        print(f"\nFAILED: {len(failures)} required check(s)")
+        report(f"\nFAILED: {len(failures)} required check(s)")
         return 1
-    print("\nALL REQUIRED PASS")
+    report("\nALL REQUIRED PASS")
     return 0
 
 
 if __name__ == "__main__":
+    logging.disable(logging.CRITICAL)
     sys.exit(asyncio.run(main()))
