@@ -5,10 +5,10 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.0.9
+instagrapi 3.0.10
 ```
 
-The runtime ports through this baseline are available in [aiograpi 2.0.8](https://github.com/subzeroid/aiograpi/releases/tag/2.0.8). This release adds the previously omitted `login_legacy()` fallback for `UnknownError(error_type="needs_upgrade")` from [instagrapi #2792](https://github.com/subzeroid/instagrapi/pull/2792) and separates HTTP helper timeouts from request pacing. Earlier ports shipped in 2.0.0–2.0.7 as shown below.
+The runtime ports through this baseline are available in [aiograpi 2.0.9](https://github.com/subzeroid/aiograpi/releases/tag/2.0.9). This release normalizes nullable media crosspost and coauthor fields. CAA fallback error preservation from [instagrapi #2819](https://github.com/subzeroid/instagrapi/pull/2819) was already present in aiograpi. Earlier ports shipped in 2.0.0–2.0.8 as shown below.
 
 | instagrapi release | aiograpi release | Ported behavior |
 | --- | --- | --- |
@@ -22,6 +22,7 @@ The runtime ports through this baseline are available in [aiograpi 2.0.8](https:
 | 3.0.8 | 2.0.7 | Per-client caches and Highlights amount limits. |
 | 3.0.0 (omitted fallback from #2792) | 2.0.8 | Retry legacy `needs_upgrade` errors through CAA, forwarding the verification code and preserving the original error and diagnostics if CAA returns no session. |
 | 3.0.9 | 2.0.8 | Separate HTTP helper timeouts from request pacing. |
+| 3.0.10 | 2.0.9 | Normalize nullable media crosspost and coauthor fields; retain the existing typed CAA fallback errors. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 

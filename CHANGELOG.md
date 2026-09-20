@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.9] - 2026-09-21
+
+### Fixed
+
+- Parse media responses with `crosspost: null` or `coauthor_producers: null` as empty lists, avoiding validation and extraction errors while preserving valid values and rejecting malformed values (#468, #469; mirrors instagrapi #2821, #2822).
+- Preserve `ClientJSONDecodeError` for invalid JSON returned through the optional public curl transport, matching the default public transport (#467). This preserves the error type; it does not resolve upstream HTML responses.
+
+### Changed
+
+- Record synchronization through instagrapi 3.0.10. CAA fallback error preservation from instagrapi #2819 was already present in aiograpi.
+
+### For contributors
+
+- Sanitize automatic live validation output and fail live CI jobs when test account configuration is missing, so logs avoid account details and unconfigured runs cannot appear to validate live behavior (#465, #466).
+
 ## [2.0.8] - 2026-09-20
 
 ### Fixed
