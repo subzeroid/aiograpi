@@ -279,7 +279,8 @@ jobs:
         run: PYTHONPATH=. python tests/live/smoke.py
       - name: Run collection pagination live test
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.test_target == 'smoke' || github.event.inputs.test_target == 'all'
-        run: PYTHONPATH=. pytest -q tests/live/test_collection.py::ClientCollectionLiveTestCase::test_collection_medias_by_name_pagination_live
+        # Publish result counts and exit status without account diagnostics.
+        run: PYTHONPATH=. pytest -q --capture=fd --tb=no --show-capture=no --disable-warnings -rN -o log_cli=false tests/live/test_collection.py::ClientCollectionLiveTestCase::test_collection_medias_by_name_pagination_live
       - name: Run comment write test
         if: github.event_name == 'workflow_dispatch' && (github.event.inputs.test_target == 'comment' || github.event.inputs.test_target == 'all')
         run: |
