@@ -70,7 +70,8 @@ async def _fetch_accounts(url, count=10):
 async def _login_first_usable(accs, report=print):
     for i, acc in enumerate(accs, 1):
         try:
-            c = Client()
+            # Fresh login tests use the supported app profile while retaining the supplied device.
+            c = Client(override_app_version=True)
             settings = dict(acc.get("client_settings") or acc.get("settings") or {})
             totp_seed = settings.pop("totp_seed", None) or acc.get("totp_seed")
             c.set_settings(settings)

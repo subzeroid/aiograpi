@@ -69,6 +69,8 @@ Mixin classes should inherit from `aiograpi.mixins.base.ClientMixin`. It is a ty
 
 The [Package workflow](https://github.com/subzeroid/aiograpi/blob/main/.github/workflows/python-package.yml) runs live tests only for canonical-repository pushes and manual dispatches; pull requests remain offline. For targets that use the account pool, the job fails before running tests if the `TEST_ACCOUNTS_URL` Actions secret is missing, and its summary explicitly states that live validation did not run. The `signup` target uses separate signup configuration and does not require the account-pool secret. Local test skip behavior is unchanged.
 
+The fresh-login helper in [tests/live/smoke.py](tests/live/smoke.py), also used by collection tests, selects the current supported app profile with `override_app_version=True`. This keeps the app version, version code and Bloks hash consistent when supplied settings reference an older app. Device hardware, UUIDs and the supplied proxy are retained; the source settings are not modified.
+
 ## Pull Request Checklist
 
 1. Branch from `main` and keep the change scoped.
