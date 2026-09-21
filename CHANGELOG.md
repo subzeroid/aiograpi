@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.10] - 2026-09-21
+
+### Fixed
+
+- Reuse an available saved private session before the first `user_related_profiles_gql()` request, so related-profile lookup no longer depends on an earlier public lookup having copied the session (#471; mirrors instagrapi #2824).
+- Restore authenticated `user_short_gql()` and `user_info_v2_gql()` lookups with the current shared web profile query and complete Relay variables. Remove the short-profile friendly-name override that caused HTML responses in verified requests (#472; mirrors instagrapi #2825).
+
+### Changed
+
+- Record synchronization through instagrapi 3.0.11, including the related-profile session and current web profile query fixes.
+
 ## [2.0.9] - 2026-09-21
 
 ### Fixed
