@@ -1497,9 +1497,9 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.0.11
+<div class="highlight"><pre><span></span><code>instagrapi 3.0.12
 </code></pre></div>
-<p>The runtime ports through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.10">aiograpi 2.0.10</a>. This release reuses an available private session for related-profile requests and updates authenticated profile lookups to the current web profile query. Earlier ports shipped in 2.0.0–2.0.9 as shown below.</p>
+<p>The changes through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.11">aiograpi 2.0.11</a>. This release requires curl-adapter 1.2.3 for the optional public curl transport to support response-body reading with urllib3 2.8. Earlier ports shipped in 2.0.0–2.0.10 as shown below.</p>
 <table>
 <thead>
 <tr>
@@ -1568,6 +1568,11 @@
 <td>3.0.11</td>
 <td>2.0.10</td>
 <td>Reuse the saved session for related profiles and update the shared web profile query, variables, and short-profile headers.</td>
+</tr>
+<tr>
+<td>3.0.12</td>
+<td>2.0.11</td>
+<td>Require curl-adapter 1.2.3 for optional public curl response-body compatibility with urllib3 2.8.</td>
 </tr>
 </tbody>
 </table>
