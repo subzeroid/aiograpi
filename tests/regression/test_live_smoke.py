@@ -144,6 +144,54 @@ class _LoginClient:
 
 
 class LiveSmokeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_fresh_smoke_login_uses_supported_app_without_changing_device(self):
+        from copy import deepcopy
+
+        from aiograpi import Client, config
+
+        smoke = _load_live_smoke_module()
+        settings = {
+            "device_settings": {
+                **config.DEVICE_SETTINGS,
+                "app_version": "410.0.0.53.71",
+                "version_code": "410000000",
+                "model": "SM-G991B",
+            },
+            "uuids": {
+                "uuid": "11111111-1111-4111-8111-111111111111",
+                "phone_id": "22222222-2222-4222-8222-222222222222",
+                "android_device_id": "android-0123456789abcdef",
+            },
+        }
+        settings["device_settings"].pop("bloks_versioning_id", None)
+        account = {
+            "username": "example",
+            "password": "password",
+            "client_settings": settings,
+            "proxy": "http://proxy.example.test:8080",
+        }
+        original = deepcopy(account)
+        reports = []
+        with (
+            patch.object(Client, "bloks_caa_login", new=AsyncMock(return_value={"logged_in": True})) as caa,
+            patch.object(Client, "login_flow", new=AsyncMock()),
+        ):
+            client = await smoke._login_first_usable([account], report=reports.append)
+
+        self.assertIsNotNone(client)
+        caa.assert_awaited_once_with(verification_code="")
+        expected_app = config.APP_SETTINGS[config.DEFAULT_APP_VERSION]
+        for key in ("app_version", "version_code", "bloks_versioning_id"):
+            self.assertEqual(client.device_settings[key], expected_app[key])
+        for key, value in settings["device_settings"].items():
+            if key not in ("app_version", "version_code", "bloks_versioning_id"):
+                self.assertEqual(client.device_settings[key], value)
+        for key, value in settings["uuids"].items():
+            self.assertEqual(client.get_settings()["uuids"][key], value)
+        self.assertEqual(client.proxy, account["proxy"])
+        self.assertEqual(account, original)
+        self.assertEqual(reports, ["LOGIN_OK acc1"])
+
     async def test_legacy_live_account_helper_reuses_saved_session_before_relogin(self):
         from tests import legacy
 
