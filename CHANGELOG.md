@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.11] - 2026-09-21
+
+### Fixed
+
+- Require curl-adapter 1.2.3 for the optional `[curl]` extra, restoring public curl response-body reading with urllib3 2.8, including compressed and streamed responses (#476, fixes #473; thanks to @marnelle1).
+
+### Changed
+
+- Record synchronization through instagrapi 3.0.12, including the optional public curl dependency fix.
+
+### For contributors
+
+- Use the supported app profile for fresh live-test logins while preserving the supplied device and proxy (#475).
+- Test the optional public curl transport with minimum and current dependencies on Python 3.10 and 3.14, including real plain, gzip, and deflate response bodies (#476).
+
 ## [2.0.10] - 2026-09-21
 
 ### Fixed
