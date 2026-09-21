@@ -5,10 +5,10 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.0.11
+instagrapi 3.0.12
 ```
 
-The runtime ports through this baseline are available in [aiograpi 2.0.10](https://github.com/subzeroid/aiograpi/releases/tag/2.0.10). This release reuses an available private session for related-profile requests and updates authenticated profile lookups to the current web profile query. Earlier ports shipped in 2.0.0–2.0.9 as shown below.
+The changes through this baseline are available in [aiograpi 2.0.11](https://github.com/subzeroid/aiograpi/releases/tag/2.0.11). This release requires curl-adapter 1.2.3 for the optional public curl transport to support response-body reading with urllib3 2.8. Earlier ports shipped in 2.0.0–2.0.10 as shown below.
 
 | instagrapi release | aiograpi release | Ported behavior |
 | --- | --- | --- |
@@ -24,6 +24,7 @@ The runtime ports through this baseline are available in [aiograpi 2.0.10](https
 | 3.0.9 | 2.0.8 | Separate HTTP helper timeouts from request pacing. |
 | 3.0.10 | 2.0.9 | Normalize nullable media crosspost and coauthor fields; retain the existing typed CAA fallback errors. |
 | 3.0.11 | 2.0.10 | Reuse the saved session for related profiles and update the shared web profile query, variables, and short-profile headers. |
+| 3.0.12 | 2.0.11 | Require curl-adapter 1.2.3 for optional public curl response-body compatibility with urllib3 2.8. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
