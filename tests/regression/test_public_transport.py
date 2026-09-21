@@ -1,9 +1,10 @@
 import sys
-from pathlib import Path
+from importlib.metadata import requires
 from unittest import IsolatedAsyncioTestCase, TestCase, mock
 
 import orjson
 import requests
+from packaging.requirements import Requirement
 
 from aiograpi import Client
 from aiograpi.exceptions import ClientJSONDecodeError, ClientLoginRequired
@@ -79,13 +80,17 @@ class PublicTransportRegressionTestCase(TestCase):
         self.assertEqual(client.public.headers["User-Agent"], "custom-public-agent")
 
     def test_curl_adapter_is_optional_extra(self):
-        pyproject = Path("pyproject.toml").read_text()
-        required_dependencies = pyproject.split("[project.optional-dependencies]", 1)[0]
-        optional_dependencies = pyproject.split("[project.optional-dependencies]", 1)[1]
+        requirements = [Requirement(value) for value in requires("aiograpi")]
+        adapters = [requirement for requirement in requirements if requirement.name == "curl-adapter"]
 
-        self.assertNotIn("curl-adapter", required_dependencies)
-        self.assertIn("curl = [", optional_dependencies)
-        self.assertIn('"curl-adapter>=1.2.1"', optional_dependencies)
+        self.assertEqual(len(adapters), 1)
+        adapter = adapters[0]
+        self.assertIsNotNone(adapter.marker)
+        self.assertFalse(adapter.marker.evaluate({"extra": ""}))
+        self.assertTrue(adapter.marker.evaluate({"extra": "curl"}))
+        self.assertNotIn("1.2.2", adapter.specifier)
+        self.assertIn("1.2.3", adapter.specifier)
+        self.assertIn("1.2.4", adapter.specifier)
 
     def test_curl_public_transport_uses_optional_adapter(self):
         adapter = mock.Mock()
