@@ -115,18 +115,23 @@ more_accounts = await cl.fbsearch_accounts_v2(
 
 ## Calling unwrapped doc_ids directly
 
-When you have a `doc_id` from a Charles capture or from
-[instaloader](https://github.com/instaloader/instaloader)'s registry,
-go through the primitive:
+Prefer `user_short_gql()` or `user_info_v2_gql()` for typed profile results. Both use the current web profile query and its required Relay variables; `user_info_by_username_v2_gql()` resolves a username before using the same query.
+
+When calling a captured `doc_id` directly, supply all variables required by that query:
 
 ```python
 # Public host (PolarisProfilePageContentQuery family)
 data = await cl.public_doc_id_graphql_request(
-    doc_id="25980296051578533",  # PolarisProfilePageContentQuery
+    doc_id="28036671149327607",  # PolarisProfilePageContentQuery
     variables={
         "id": "25025320",
         "render_surface": "PROFILE",
-        # ... relay provider flags
+        "enable_integrity_filters": True,
+        "__relay_internal__pv__PolarisCannesGuardianExperienceEnabledrelayprovider": True,
+        "__relay_internal__pv__PolarisCASB976ProfileEnabledrelayprovider": False,
+        "__relay_internal__pv__PolarisWebSchoolsEnabledrelayprovider": False,
+        "__relay_internal__pv__PolarisRepostsConsumptionEnabledrelayprovider": False,
+        "__relay_internal__pv__PolarisShortDramaEnabledrelayprovider": False,
     },
 )
 user_data = data["user"]
