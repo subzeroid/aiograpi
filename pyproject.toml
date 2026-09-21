@@ -101,7 +101,7 @@ test = [
     # mike implicitly imports pkg_resources from setuptools.
     "setuptools==83.0.0",
     "markdown-include==0.8.1",
-    "mkdocs-material==9.7.6",
+    "mkdocs-material==9.7.7",
     "mkdocs-minify-plugin==0.8.0",
     "mkdocstrings[python]==1.0.4",
     "numpy>=1.25.0",
