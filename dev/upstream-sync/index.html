@@ -1497,9 +1497,9 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.0.10
+<div class="highlight"><pre><span></span><code>instagrapi 3.0.11
 </code></pre></div>
-<p>The runtime ports through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.9">aiograpi 2.0.9</a>. This release normalizes nullable media crosspost and coauthor fields. CAA fallback error preservation from <a href="https://github.com/subzeroid/instagrapi/pull/2819">instagrapi #2819</a> was already present in aiograpi. Earlier ports shipped in 2.0.0–2.0.8 as shown below.</p>
+<p>The runtime ports through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.10">aiograpi 2.0.10</a>. This release reuses an available private session for related-profile requests and updates authenticated profile lookups to the current web profile query. Earlier ports shipped in 2.0.0–2.0.9 as shown below.</p>
 <table>
 <thead>
 <tr>
@@ -1563,6 +1563,11 @@
 <td>3.0.10</td>
 <td>2.0.9</td>
 <td>Normalize nullable media crosspost and coauthor fields; retain the existing typed CAA fallback errors.</td>
+</tr>
+<tr>
+<td>3.0.11</td>
+<td>2.0.10</td>
+<td>Reuse the saved session for related profiles and update the shared web profile query, variables, and short-profile headers.</td>
 </tr>
 </tbody>
 </table>
