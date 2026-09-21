@@ -1805,16 +1805,20 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <span class="p">)</span>
 </code></pre></div>
 <h2 id="calling-unwrapped-doc_ids-directly">Calling unwrapped doc_ids directly</h2>
-<p>When you have a <code>doc_id</code> from a Charles capture or from
-<a href="https://github.com/instaloader/instaloader">instaloader</a>'s registry,
-go through the primitive:</p>
+<p>Prefer <code>user_short_gql()</code> or <code>user_info_v2_gql()</code> for typed profile results. Both use the current web profile query and its required Relay variables; <code>user_info_by_username_v2_gql()</code> resolves a username before using the same query.</p>
+<p>When calling a captured <code>doc_id</code> directly, supply all variables required by that query:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Public host (PolarisProfilePageContentQuery family)</span>
 <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">public_doc_id_graphql_request</span><span class="p">(</span>
-    <span class="n">doc_id</span><span class="o">=</span><span class="s2">"25980296051578533"</span><span class="p">,</span>  <span class="c1"># PolarisProfilePageContentQuery</span>
+    <span class="n">doc_id</span><span class="o">=</span><span class="s2">"28036671149327607"</span><span class="p">,</span>  <span class="c1"># PolarisProfilePageContentQuery</span>
     <span class="n">variables</span><span class="o">=</span><span class="p">{</span>
         <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"25025320"</span><span class="p">,</span>
         <span class="s2">"render_surface"</span><span class="p">:</span> <span class="s2">"PROFILE"</span><span class="p">,</span>
-        <span class="c1"># ... relay provider flags</span>
+        <span class="s2">"enable_integrity_filters"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"__relay_internal__pv__PolarisCannesGuardianExperienceEnabledrelayprovider"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"__relay_internal__pv__PolarisCASB976ProfileEnabledrelayprovider"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"__relay_internal__pv__PolarisWebSchoolsEnabledrelayprovider"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"__relay_internal__pv__PolarisRepostsConsumptionEnabledrelayprovider"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"__relay_internal__pv__PolarisShortDramaEnabledrelayprovider"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">},</span>
 <span class="p">)</span>
 <span class="n">user_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"user"</span><span class="p">]</span>
