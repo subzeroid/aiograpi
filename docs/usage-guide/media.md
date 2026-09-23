@@ -73,9 +73,9 @@ Low level methods:
 | --------------------------------------------------------------- | ------------ | --------------------------------------------
 | media_info_gql(media_pk: int)                                   | Media        | Get Media from PK by Public Graphql API
 | media_info_v1(media_pk: int)                                    | Media        | Get Media from PK by Private Mobile API
-| user_medias_gql(user_id: str, amount: int = 50, sleep: int = 2) | List\[Media] | Get a user's media by Public Graphql API
-| user_medias_chunk_gql(user_id: str, sleep: int = 2, end_cursor=None) | Tuple\[List\[Media], str] | Get a page of user's media by Public Graphql API
-| user_medias_paginated_gql(user_id: str, amount: int = 0, sleep: int = 2, end_cursor=None) | Tuple\[List\[Media], str] | Get one GraphQL page of user's media; compatibility alias for `instagrapi`
+| user_medias_gql(user_id: int, amount: int = 0, sleep: int = 0) | List\[Media] | Get user media from the private app GraphQL timeline, falling back to public GraphQL on a client error
+| user_medias_chunk_gql(user_id: int, sleep: int = 2, end_cursor=None, amount: int = 0) | Tuple\[List\[Media], str] | Get one page from the private app GraphQL timeline, falling back to public GraphQL on a client error
+| user_medias_paginated_gql(user_id: str, amount: int = 0, sleep: int = 2, end_cursor=None) | Tuple\[List\[Media], str] | Compatibility alias for `user_medias_chunk_gql`
 | user_medias_v1(user_id: str, amount: int = 18)                  | List\[Media] | Get a user's media by Private Mobile API
 | user_medias_chunk_v1(user_id: str, end_cursor: str = "") | Tuple\[List\[Media], str] | Get a page of user's media by Private Mobile API
 | user_medias_paginated_v1(user_id: str, amount: int = 33, end_cursor: str = "") | Tuple\[List\[Media], str] | Get one private API page of user's media; compatibility alias for `instagrapi`
