@@ -5,10 +5,10 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.0.12
+instagrapi 3.0.13
 ```
 
-The changes through this baseline are available in [aiograpi 2.0.11](https://github.com/subzeroid/aiograpi/releases/tag/2.0.11). This release requires curl-adapter 1.2.3 for the optional public curl transport to support response-body reading with urllib3 2.8. Earlier ports shipped in 2.0.0–2.0.10 as shown below.
+The changes through this baseline are available in [aiograpi 2.0.12](https://github.com/subzeroid/aiograpi/releases/tag/2.0.12). This release normalizes carousel resource IDs in app profile timeline responses. The optional public curl transport continues to require curl-adapter 1.2.3 for response-body reading with urllib3 2.8. Earlier ports shipped in 2.0.0–2.0.11 as shown below.
 
 | instagrapi release | aiograpi release | Ported behavior |
 | --- | --- | --- |
@@ -25,6 +25,7 @@ The changes through this baseline are available in [aiograpi 2.0.11](https://git
 | 3.0.10 | 2.0.9 | Normalize nullable media crosspost and coauthor fields; retain the existing typed CAA fallback errors. |
 | 3.0.11 | 2.0.10 | Reuse the saved session for related profiles and update the shared web profile query, variables, and short-profile headers. |
 | 3.0.12 | 2.0.11 | Require curl-adapter 1.2.3 for optional public curl response-body compatibility with urllib3 2.8. |
+| 3.0.13 | 2.0.12 | Normalize carousel resource IDs in app profile timeline responses before extraction. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
