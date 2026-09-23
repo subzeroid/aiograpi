@@ -1696,14 +1696,14 @@
 <ul>
 <li>Client(settings: dict = {}, proxy: str = "", tls_verify: Union[bool, str] = True): bool - Init <code>aiograpi</code> client</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s2">"aiograpi"</span><span class="p">,</span> <span class="s2">"42"</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s2">"aiograpi"</span><span class="p">,</span> <span class="s2">"42"</span><span class="p">)</span>
 <span class="c1"># await cl.login("aiograpi", "42", verification_code="123456")  # with 2FA verification_code</span>
 <span class="c1"># await cl.login_by_sessionid("peiWooShooghahdi2Eip7phohph0eeng")</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">set_proxy</span><span class="p">(</span><span class="s2">"socks5://127.0.0.1:30235"</span><span class="p">)</span>
-<span class="c1"># cl.set_proxy("http://username:password@127.0.0.1:8080")</span>
-<span class="c1"># cl.set_proxy("socks5://username:password@127.0.0.1:30235")</span>
-<span class="c1"># when addressing the proxy via hostname:</span>
-<span class="c1"># cl.set_proxy("socks5h://username:password@exampleproxy.tld:30235")</span>
+<span class="c1"># For an authenticated proxy, read its URL from the environment:</span>
+<span class="c1"># cl.set_proxy(os.environ["INSTAGRAM_PROXY_URL"])</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">get_settings</span><span class="p">())</span>
 <span class="nb">print</span><span class="p">(</span><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">user_info</span><span class="p">(</span><span class="n">cl</span><span class="o">.</span><span class="n">user_id</span><span class="p">))</span>
@@ -1892,7 +1892,7 @@
 <tr>
 <td>set_proxy(dsn: str)</td>
 <td>dict</td>
-<td>Support socks and http/https proxy "scheme://username:password@host:port". We recommend using <a href="https://soax.com/?r=sEysufQI">these proxies</a></td>
+<td>Supports SOCKS and HTTP(S) proxies, including authenticated URLs; keep credentials in environment variables.</td>
 </tr>
 <tr>
 <td>private.proxy</td>
@@ -1966,10 +1966,13 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<p>Set <code>INSTAGRAM_PROXY_URL_US</code> and <code>INSTAGRAM_PROXY_URL_RU</code> to the corresponding proxy URLs in your environment before running this example.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-<span class="c1"># Los Angles user:</span>
-<span class="n">cl</span><span class="o">.</span><span class="n">set_proxy</span><span class="p">(</span><span class="s1">'http://los:angeles@proxy.address:8080'</span><span class="p">)</span>
+<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+
+<span class="c1"># Los Angeles user:</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">set_proxy</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"INSTAGRAM_PROXY_URL_US"</span><span class="p">])</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">set_locale</span><span class="p">(</span><span class="s1">'en_US'</span><span class="p">)</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">set_timezone_offset</span><span class="p">(</span><span class="o">-</span><span class="mi">7</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>  <span class="c1"># Los Angeles UTC (GMT) -7 hours == -25200 seconds</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">get_settings</span><span class="p">()</span>
@@ -1983,7 +1986,7 @@
 <span class="p">}</span>
 
 <span class="c1"># Moscow user:</span>
-<span class="n">cl</span><span class="o">.</span><span class="n">set_proxy</span><span class="p">(</span><span class="s1">'socks5://moscow:proxy@address:8080'</span><span class="p">)</span>
+<span class="n">cl</span><span class="o">.</span><span class="n">set_proxy</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"INSTAGRAM_PROXY_URL_RU"</span><span class="p">])</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">set_locale</span><span class="p">(</span><span class="s1">'ru_RU'</span><span class="p">)</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">set_country_code</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>  <span class="c1"># +7</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">set_timezone_offset</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">)</span>  <span class="c1"># Moscow UTC+3</span>
