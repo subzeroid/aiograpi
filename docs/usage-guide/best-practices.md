@@ -20,12 +20,16 @@ From our experience, here are safe limits we've seen for various actions:
 
 We recommend using the [SOAX](https://soax.com/?r=sEysufQI) proxy service. Here's an example of using it with `aiograpi`
 
+Store the proxy URL supplied by your provider in `INSTAGRAM_PROXY_URL` so credentials stay out of source code.
+
 ``` python
+import os
+
 from aiograpi import Client
 
 cl = Client()
 before_ip = await cl._send_public_request("https://api.ipify.org/")
-cl.set_proxy("http://<api_key>:wifi;ca;;;toronto@proxy.soax.com:9137")
+cl.set_proxy(os.environ["INSTAGRAM_PROXY_URL"])
 after_ip = await cl._send_public_request("https://api.ipify.org/")
 
 print(f"Before: {before_ip}")

@@ -34,7 +34,7 @@ That's it. You're talking to Instagram's private API.
   accounts within a few requests.
 - **(Strongly recommended) A residential proxy.** Datacenter IPs get
   rate-limited and challenge-walled fast. Pass it via
-  `client.set_proxy("http://user:pass@host:port")`.
+  `client.set_proxy(proxy_url)` after loading `proxy_url` from an environment variable.
 - **(If 2FA is on) A TOTP code or seed.** Pass `verification_code=`
   to `login()`, or pre-generate from a seed via
   `client.totp_generate_code(seed)`.

@@ -35,14 +35,14 @@
 * Client(settings: dict = {}, proxy: str = "", tls_verify: Union[bool, str] = True): bool - Init `aiograpi` client
 
 ``` python
+import os
+
 await cl.login("aiograpi", "42")
 # await cl.login("aiograpi", "42", verification_code="123456")  # with 2FA verification_code
 # await cl.login_by_sessionid("peiWooShooghahdi2Eip7phohph0eeng")
 cl.set_proxy("socks5://127.0.0.1:30235")
-# cl.set_proxy("http://username:password@127.0.0.1:8080")
-# cl.set_proxy("socks5://username:password@127.0.0.1:30235")
-# when addressing the proxy via hostname:
-# cl.set_proxy("socks5h://username:password@exampleproxy.tld:30235")
+# For an authenticated proxy, read its URL from the environment:
+# cl.set_proxy(os.environ["INSTAGRAM_PROXY_URL"])
 
 print(cl.get_settings())
 print(await cl.user_info(cl.user_id))
@@ -157,7 +157,7 @@ cl.dump_settings('/tmp/dump.json')
 
 | Method                                   | Return | Description
 |------------------------------------------|------|----------------------------------------------------------------------------
-| set_proxy(dsn: str)                      | dict | Support socks and http/https proxy "scheme://username:password@host:port". We recommend using [these proxies](https://soax.com/?r=sEysufQI)
+| set_proxy(dsn: str)                      | dict | Supports SOCKS and HTTP(S) proxies, including authenticated URLs; keep credentials in environment variables.
 | private.proxy                            | dict | Stores used proxy server for private (mobile, v1) requests
 | public.proxy                             | dict | Stores used proxy server for public (web, graphql) requests
 | set_device(device: dict)                 | bool | Change device settings ([Android Device Information Generator Online](https://www.myfakeinfo.com/mobile/get-android-device-information.php))
@@ -173,11 +173,15 @@ cl.dump_settings('/tmp/dump.json')
 | set_retry_config(...)                    | bool | Configure request timing, retry settings and public/private transport choices
 | set_tls_verify(tls_verify: bool \| str)  | bool | Update TLS certificate verification for existing public, private and GraphQL sessions
 
+Set `INSTAGRAM_PROXY_URL_US` and `INSTAGRAM_PROXY_URL_RU` to the corresponding proxy URLs in your environment before running this example.
+
 ``` python
+import os
+
 cl = Client()
 
-# Los Angles user:
-cl.set_proxy('http://los:angeles@proxy.address:8080')
+# Los Angeles user:
+cl.set_proxy(os.environ["INSTAGRAM_PROXY_URL_US"])
 cl.set_locale('en_US')
 cl.set_timezone_offset(-7 * 60 * 60)  # Los Angeles UTC (GMT) -7 hours == -25200 seconds
 cl.get_settings()
@@ -191,7 +195,7 @@ cl.get_settings()
 }
 
 # Moscow user:
-cl.set_proxy('socks5://moscow:proxy@address:8080')
+cl.set_proxy(os.environ["INSTAGRAM_PROXY_URL_RU"])
 cl.set_locale('ru_RU')
 cl.set_country_code(7)  # +7
 cl.set_timezone_offset(3 * 3600)  # Moscow UTC+3
