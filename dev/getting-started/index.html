@@ -1599,7 +1599,7 @@
   accounts within a few requests.</li>
 <li><strong>(Strongly recommended) A residential proxy.</strong> Datacenter IPs get
   rate-limited and challenge-walled fast. Pass it via
-  <code>client.set_proxy("http://user:pass@host:port")</code>.</li>
+  <code>client.set_proxy(proxy_url)</code> after loading <code>proxy_url</code> from an environment variable.</li>
 <li><strong>(If 2FA is on) A TOTP code or seed.</strong> Pass <code>verification_code=</code>
   to <code>login()</code>, or pre-generate from a seed via
   <code>client.totp_generate_code(seed)</code>.</li>
