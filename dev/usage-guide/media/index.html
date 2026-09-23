@@ -1868,19 +1868,19 @@ background image, or omit <code>background</code> to generate a temporary black 
 <td>Get Media from PK by Private Mobile API</td>
 </tr>
 <tr>
-<td>user_medias_gql(user_id: str, amount: int = 50, sleep: int = 2)</td>
+<td>user_medias_gql(user_id: int, amount: int = 0, sleep: int = 0)</td>
 <td>List[Media]</td>
-<td>Get a user's media by Public Graphql API</td>
+<td>Get user media from the private app GraphQL timeline, falling back to public GraphQL on a client error</td>
 </tr>
 <tr>
-<td>user_medias_chunk_gql(user_id: str, sleep: int = 2, end_cursor=None)</td>
+<td>user_medias_chunk_gql(user_id: int, sleep: int = 2, end_cursor=None, amount: int = 0)</td>
 <td>Tuple[List[Media], str]</td>
-<td>Get a page of user's media by Public Graphql API</td>
+<td>Get one page from the private app GraphQL timeline, falling back to public GraphQL on a client error</td>
 </tr>
 <tr>
 <td>user_medias_paginated_gql(user_id: str, amount: int = 0, sleep: int = 2, end_cursor=None)</td>
 <td>Tuple[List[Media], str]</td>
-<td>Get one GraphQL page of user's media; compatibility alias for <code>instagrapi</code></td>
+<td>Compatibility alias for <code>user_medias_chunk_gql</code></td>
 </tr>
 <tr>
 <td>user_medias_v1(user_id: str, amount: int = 18)</td>
