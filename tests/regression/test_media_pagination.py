@@ -1,10 +1,13 @@
 import unittest
+from copy import deepcopy
 from unittest.mock import AsyncMock
 
 import orjson
+from pydantic import ValidationError
 
 from aiograpi import Client
 from aiograpi.exceptions import ClientError, ClientForbiddenError
+from aiograpi.extractors import extract_media_v1
 
 
 class UsertagMediasPaginationRegressionTestCase(unittest.IsolatedAsyncioTestCase):
@@ -127,6 +130,62 @@ class UserMediasGraphQLRegressionTestCase(unittest.IsolatedAsyncioTestCase):
                 "scrubber_spritesheet_info_candidates": {"default": {"video_length": 15.4}},
             },
         }
+
+    def _xdt_carousel_payload(self):
+        media = self._xdt_media_payload()
+        media["media_type"] = 8
+        media["carousel_media"] = [
+            {
+                "id": "3_2",
+                "media_type": 1,
+                "image_versions2": {
+                    "candidates": [{"url": "https://example.com/photo.jpg", "width": 100, "height": 100}]
+                },
+            },
+            {
+                "id": 4,
+                "media_type": 2,
+                "video_versions": [{"url": "https://example.com/video.mp4", "width": 100, "height": 100}],
+            },
+            {"id": "5_2", "pk": "7", "media_type": 1},
+        ]
+        return media
+
+    async def test_user_medias_gql_normalizes_carousel_resource_ids(self):
+        client = Client()
+        response = {
+            "data": {
+                "xdt_api__v1__profile_timeline": {
+                    "profile_grid_items": [{"media": self._xdt_carousel_payload()}],
+                    "more_available": True,
+                    "next_max_id": "next-page",
+                }
+            }
+        }
+        original = deepcopy(response)
+        client.private_graphql_request = AsyncMock(return_value=response)
+        client.public_graphql_request = AsyncMock(side_effect=AssertionError("unexpected public fallback"))
+        medias, cursor = await client.user_medias_chunk_gql("123", amount=1)
+        client.private_graphql_request.assert_awaited_once()
+        client.public_graphql_request.assert_not_called()
+
+        self.assertEqual(cursor, "next-page")
+        self.assertEqual([media.pk for media in medias], ["1"])
+        self.assertEqual([resource.pk for resource in medias[0].resources], ["3", "4", "7"])
+        self.assertEqual([resource.media_type for resource in medias[0].resources], [1, 2, 1])
+        self.assertEqual(str(medias[0].resources[0].thumbnail_url), "https://example.com/photo.jpg")
+        self.assertEqual(str(medias[0].resources[1].video_url), "https://example.com/video.mp4")
+        self.assertEqual(response, original)
+
+    def test_xdt_carousel_without_resource_identifier_still_fails_validation(self):
+        media = self._xdt_carousel_payload()
+        del media["carousel_media"][0]["id"]
+
+        with self.assertRaises(ValidationError) as raised:
+            extract_media_v1(Client._normalize_xdt_profile_media(media))
+
+        errors = raised.exception.errors(include_input=False)
+        self.assertEqual([(error["loc"], error["type"]) for error in errors], [(("pk",), "missing")])
 
     async def test_user_medias_chunk_gql_uses_app_timeline_doc_id(self):
         client = Client()
