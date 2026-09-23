@@ -1497,9 +1497,9 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.0.12
+<div class="highlight"><pre><span></span><code>instagrapi 3.0.13
 </code></pre></div>
-<p>The changes through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.11">aiograpi 2.0.11</a>. This release requires curl-adapter 1.2.3 for the optional public curl transport to support response-body reading with urllib3 2.8. Earlier ports shipped in 2.0.0–2.0.10 as shown below.</p>
+<p>The changes through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.12">aiograpi 2.0.12</a>. This release normalizes carousel resource IDs in app profile timeline responses. The optional public curl transport continues to require curl-adapter 1.2.3 for response-body reading with urllib3 2.8. Earlier ports shipped in 2.0.0–2.0.11 as shown below.</p>
 <table>
 <thead>
 <tr>
@@ -1573,6 +1573,11 @@
 <td>3.0.12</td>
 <td>2.0.11</td>
 <td>Require curl-adapter 1.2.3 for optional public curl response-body compatibility with urllib3 2.8.</td>
+</tr>
+<tr>
+<td>3.0.13</td>
+<td>2.0.12</td>
+<td>Normalize carousel resource IDs in app profile timeline responses before extraction.</td>
 </tr>
 </tbody>
 </table>
