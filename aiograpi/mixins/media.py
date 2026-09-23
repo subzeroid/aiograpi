@@ -1021,7 +1021,7 @@ class MediaMixin(ClientMixin):
         self, user_id: int, sleep: int = 2, end_cursor=None, amount: int = 0
     ) -> Tuple[List[Media], str]:
         """
-        Get a page of a user's media by Public Graphql API
+        Get a page of a user's media via private app GraphQL, with public GraphQL fallback on ClientError
 
         Parameters
         ----------
@@ -1048,7 +1048,7 @@ class MediaMixin(ClientMixin):
         self, user_id: str, amount: int = 0, sleep: int = 2, end_cursor=None
     ) -> Tuple[List[Media], str]:
         """
-        Get a page of a user's media by Public Graphql API.
+        Get a page of a user's media via the private-first GraphQL path.
 
         Compatibility alias for instagrapi's paginated naming.
         """
@@ -1056,7 +1056,7 @@ class MediaMixin(ClientMixin):
 
     async def user_medias_gql(self, user_id: int, amount: int = 0, sleep: int = 0) -> List[Media]:
         """
-        Get a user's media by Public Graphql API
+        Get a user's media via private app GraphQL, with public GraphQL fallback on ClientError
 
         Parameters
         ----------
