@@ -1479,10 +1479,10 @@
 <a href="../../getting-started/">Getting Started</a> page provides a gradual introduction of the basic functionality with examples.</p>
 <h2 id="public-vs-private-requests">Public vs Private Requests</h2>
 <ul>
-<li><code>Public</code> web methods have a suffix <code>_gql</code> (Instagram <code>GraphQL</code>). Legacy <code>?__a=1</code> helpers were removed because that public web response is no longer reliable.</li>
+<li>Many <code>_gql</code> methods use public web GraphQL, while <code>user_medias*_gql()</code> first uses the private app timeline and falls back to public GraphQL on <code>ClientError</code>. Legacy <code>?__a=1</code> helpers were removed because that public web response is no longer reliable.</li>
 <li><code>Private</code> (authorized request via mobile api) methods have <code>_v1</code> suffix</li>
 </ul>
-<p>The first request to fetch media/user is <code>public</code> (anonymous), if instagram raise exception, then use <code>private</code> (authorized).</p>
+<p>With private authorization or a saved session, <code>media_info()</code> and <code>user_info()</code> try the private mobile API first and fall back to public web lookup. Without it, they try public web lookup first, then the private API if that lookup fails. Cached results can avoid a new request.</p>
 <h2 id="detailed-sections">Detailed Sections</h2>
 <ul>
 <li><a href="../../">Index</a></li>

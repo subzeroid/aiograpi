@@ -1497,9 +1497,9 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.0.13
+<div class="highlight"><pre><span></span><code>instagrapi 3.0.14
 </code></pre></div>
-<p>The changes through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.12">aiograpi 2.0.12</a>. This release normalizes carousel resource IDs in app profile timeline responses. The optional public curl transport continues to require curl-adapter 1.2.3 for response-body reading with urllib3 2.8. Earlier ports shipped in 2.0.0–2.0.11 as shown below.</p>
+<p>The applicable runtime changes through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.13">aiograpi 2.0.13</a>. This release restores the optional public curl media-info query. The default <code>requests</code> public transport still received HTML for the sampled GraphQL call. The standalone instagrapi login diagnostic script is not an aiograpi runtime change. Earlier ports shipped in 2.0.0–2.0.12 as shown below.</p>
 <table>
 <thead>
 <tr>
@@ -1578,6 +1578,11 @@
 <td>3.0.13</td>
 <td>2.0.12</td>
 <td>Normalize carousel resource IDs in app profile timeline responses before extraction.</td>
+</tr>
+<tr>
+<td>3.0.14</td>
+<td>2.0.13</td>
+<td>Restore the optional public curl media-info PostRoot query; the instagrapi login diagnostic helper change is sync-only.</td>
 </tr>
 </tbody>
 </table>

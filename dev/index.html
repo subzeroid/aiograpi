@@ -1715,18 +1715,10 @@ pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="
 </code></pre></div>
 <h3 id="requests">Requests</h3>
 <ul>
-<li><code>Public</code> or <code>Graphql</code> (anonymous request via web api) methods have a suffix <code>_gql</code></li>
+<li>Many <code>_gql</code> methods use public web GraphQL and may work anonymously; <code>user_medias*_gql()</code> first uses the private app timeline and falls back to public GraphQL on <code>ClientError</code>.</li>
 <li><code>Private</code> (authorized request via mobile api) methods have <code>_v1</code> suffix</li>
 </ul>
-<p>The first request to fetch media/user is <code>public</code> (anonymous), if instagram raise exception, then use <code>private</code> (authorized). Example (pseudo-code):</p>
-<div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">media_info</span><span class="p">(</span><span class="n">media_pk</span><span class="p">):</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">media_info_gql</span><span class="p">(</span><span class="n">media_pk</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">ClientError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="c1"># Restricted Video: This video is not available in your country.</span>
-        <span class="c1"># Or media from private account</span>
-        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">media_info_v1</span><span class="p">(</span><span class="n">media_pk</span><span class="p">)</span>
-</code></pre></div>
+<p>With private authorization or a saved session, <code>media_info()</code> and <code>user_info()</code> try the private mobile API first and fall back to public web lookup. Without it, they try public web lookup first, then the private API if that lookup fails. <code>media_info()</code> may also return a cached result.</p>
 <h2 id="detailed-documentation">Detailed Documentation</h2>
 <p>To learn more about the various ways <code>aiograpi</code> can be used, read the <a href="usage-guide/fundamentals/">Usage Guide</a> page.</p>
 <ul>

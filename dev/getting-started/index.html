@@ -1622,8 +1622,7 @@ credentials. Saving the settings again persists any refreshed session.</p>
 <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">user_info_by_username_gql</span><span class="p">(</span><span class="s2">"instagram"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>  <span class="c1"># → "instagram", "25025320"</span>
 </code></pre></div>
-<p>Methods with the <code>_gql</code> suffix hit the public web GraphQL surface and
-work anonymously. Methods with <code>_v1</code> need login.</p>
+<p>Some <code>_gql</code> methods use public web GraphQL and can work anonymously. <code>user_medias*_gql()</code> uses the private app GraphQL timeline first and falls back to public GraphQL on <code>ClientError</code>. Methods with <code>_v1</code> need login.</p>
 <h2 id="whats-next">What's Next?</h2>
 <ul>
 <li><a href="../usage-guide/examples/">Runnable examples</a> — practical async scripts</li>
