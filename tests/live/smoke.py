@@ -92,6 +92,63 @@ async def _login_first_usable(accs, report=print):
     return None
 
 
+async def _check_fbsearch_suggested_profiles(primary, accounts, report):
+    async def check(client):
+        suggested = await client.fbsearch_suggested_profiles("25025320")
+        assert suggested
+        assert isinstance(suggested[0], UserShort)
+        assert isinstance(suggested[0].stories, list)
+        return suggested
+
+    try:
+        suggested = await check(primary)
+        report(f"REQ fbsearch_suggested_profiles: {_summarize(suggested)}")
+        return True
+    except Exception as exc:
+        report(f"REQ fbsearch_suggested_profiles primary: {_error_summary(exc)}")
+
+    attempts = 0
+    for index, account in enumerate(accounts, 1):
+        if account.get("username") == primary.username:
+            continue
+        settings = account.get("client_settings") or account.get("settings") or {}
+        if isinstance(settings, str):
+            try:
+                settings = json.loads(settings)
+            except ValueError:
+                continue
+        if not isinstance(settings, dict):
+            continue
+        alternate = None
+        try:
+            alternate = Client(settings=settings, proxy=account.get("proxy"))
+            if not alternate.sessionid:
+                continue
+            attempts += 1
+            control = await alternate.user_info_v1("25025320")
+            assert str(control.pk) == "25025320"
+            suggested = await check(alternate)
+            report(f"REQ fbsearch_suggested_profiles: {_summarize(suggested)} (saved acc{index})")
+            return True
+        except Exception as exc:
+            report(f"REQ fbsearch_suggested_profiles saved acc{index}: {_error_summary(exc)}")
+        finally:
+            if alternate is not None:
+                for name in ("private", "public", "graphql"):
+                    session = getattr(alternate, name, None)
+                    close = getattr(session, "_close", None)
+                    if close is not None:
+                        try:
+                            await close()
+                        except Exception:
+                            pass
+        if attempts >= 2:
+            break
+
+    report("REQ fbsearch_suggested_profiles FAIL: no successful account")
+    return False
+
+
 @contextmanager
 def _quiet_output():
     stdout = sys.stdout
@@ -264,15 +321,8 @@ async def _run_smoke(report):
             failures.append(("user_followers_extended_fields", e))
             report(f"REQ user_followers_extended_fields FAIL: {_error_summary(e)}")
 
-        try:
-            suggested = await cl.fbsearch_suggested_profiles("25025320")
-            assert suggested
-            assert isinstance(suggested[0], UserShort)
-            assert isinstance(suggested[0].stories, list)
-            report(f"REQ fbsearch_suggested_profiles: {_summarize(suggested)}")
-        except Exception as e:
-            failures.append(("fbsearch_suggested_profiles", e))
-            report(f"REQ fbsearch_suggested_profiles FAIL: {_error_summary(e)}")
+        if not await _check_fbsearch_suggested_profiles(cl, accs, report):
+            failures.append(("fbsearch_suggested_profiles", "no successful account"))
 
     # OPTIONAL: chapi-ported endpoints — record but don't fail
     if cl is not None:

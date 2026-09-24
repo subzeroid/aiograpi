@@ -349,3 +349,62 @@ print(sys.modules["aiograpi"].__file__)
         ]:
             self.assertNotIn(f"REQ {public_name}:", smoke_output)
         self.assertNotIn("AttributeError", smoke_output)
+
+    async def test_fbsearch_required_check_uses_another_saved_account_after_primary_error(self):
+        smoke = _load_live_smoke_module()
+        primary = _FakeLiveClient()
+        primary.username = "first"
+        primary.fbsearch_suggested_profiles = AsyncMock(side_effect=RuntimeError("secret response"))
+        alternate = _FakeLiveClient()
+        alternate.sessionid = "saved-session"
+        alternate.private = types.SimpleNamespace(_close=AsyncMock())
+        alternate.public = types.SimpleNamespace(_close=AsyncMock())
+        alternate.graphql = types.SimpleNamespace(_close=AsyncMock())
+        alternate.user_info_v1 = AsyncMock(return_value=types.SimpleNamespace(pk="25025320"))
+        alternate.fbsearch_suggested_profiles = AsyncMock(
+            return_value=[UserShort(pk="2", username="suggested", stories=[])]
+        )
+        reports = []
+        accounts = [
+            {"username": "first", "client_settings": {"authorization_data": {"sessionid": "first"}}},
+            {
+                "username": "second",
+                "client_settings": {"authorization_data": {"sessionid": "saved-session"}},
+                "proxy": "http://secret-proxy",
+            },
+        ]
+
+        with patch.object(smoke, "Client", return_value=alternate) as client_factory:
+            passed = await smoke._check_fbsearch_suggested_profiles(primary, accounts, reports.append)
+
+        self.assertTrue(passed)
+        client_factory.assert_called_once_with(settings=accounts[1]["client_settings"], proxy="http://secret-proxy")
+        primary.fbsearch_suggested_profiles.assert_awaited_once_with("25025320")
+        alternate.fbsearch_suggested_profiles.assert_awaited_once_with("25025320")
+        for session in (alternate.private, alternate.public, alternate.graphql):
+            session._close.assert_awaited_once()
+        self.assertIn("REQ fbsearch_suggested_profiles primary: RuntimeError", reports)
+        self.assertTrue(any("REQ fbsearch_suggested_profiles: len=1" in line for line in reports))
+        self.assertNotIn("secret", " ".join(reports))
+
+    async def test_fbsearch_required_check_fails_when_all_saved_accounts_fail(self):
+        smoke = _load_live_smoke_module()
+        primary = _FakeLiveClient()
+        primary.username = "first"
+        primary.fbsearch_suggested_profiles = AsyncMock(side_effect=RuntimeError("primary secret"))
+        alternate = _FakeLiveClient()
+        alternate.sessionid = "saved-session"
+        alternate.user_info_v1 = AsyncMock(return_value=types.SimpleNamespace(pk="25025320"))
+        alternate.fbsearch_suggested_profiles = AsyncMock(side_effect=RuntimeError("alternate secret"))
+        reports = []
+        accounts = [
+            {"username": "first", "client_settings": {}},
+            {"username": "second", "client_settings": {"authorization_data": {"sessionid": "saved-session"}}},
+        ]
+
+        with patch.object(smoke, "Client", return_value=alternate):
+            passed = await smoke._check_fbsearch_suggested_profiles(primary, accounts, reports.append)
+
+        self.assertFalse(passed)
+        self.assertIn("REQ fbsearch_suggested_profiles FAIL: no successful account", reports)
+        self.assertNotIn("secret", " ".join(reports))
