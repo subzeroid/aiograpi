@@ -296,9 +296,9 @@ jobs:
           test: "true"
       - name: Run end-to-end smoke
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.test_target == 'smoke' || github.event.inputs.test_target == 'all'
-        # Required: login(TOTP) + private_v1 + private_v2_gql +
-        # user_short_gql + hashtag_info_v1 + user_medias_v1 +
-        # user_medias_gql + user_followers + highlight_info.
+        # Required: login(TOTP), saved-session reuse, private profile,
+        # search, media, followers, stories, highlights, and account-
+        # aware fbsearch suggested profiles.
         # Optional (reports but never fails): anonymous public web
         # lookup + all chapi-ported endpoints.
         # PYTHONPATH=. so `from aiograpi import Client` resolves without

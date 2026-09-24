@@ -71,6 +71,8 @@ The [Package workflow](https://github.com/subzeroid/aiograpi/blob/main/.github/w
 
 The fresh-login helper in [tests/live/smoke.py](tests/live/smoke.py), also used by collection tests, selects the current supported app profile with `override_app_version=True`. This keeps the app version, version code and Bloks hash consistent when supplied settings reference an older app. Device hardware, UUIDs and the supplied proxy are retained; the source settings are not modified.
 
+If the required `fbsearch_suggested_profiles` smoke check fails on the freshly logged-in account, the smoke tries at most two other supplied saved sessions with their own proxies. It passes only when the same endpoint returns valid results for at least one account; failures are reported by account index without response bodies or account data.
+
 ## Pull Request Checklist
 
 1. Branch from `main` and keep the change scoped.
