@@ -66,8 +66,7 @@ user = await client.user_info_by_username_gql("instagram")
 print(user.username, user.pk)  # → "instagram", "25025320"
 ```
 
-Methods with the `_gql` suffix hit the public web GraphQL surface and
-work anonymously. Methods with `_v1` need login.
+Some `_gql` methods use public web GraphQL and can work anonymously. `user_medias*_gql()` uses the private app GraphQL timeline first and falls back to public GraphQL on `ClientError`. Methods with `_v1` need login.
 
 ## What's Next?
 

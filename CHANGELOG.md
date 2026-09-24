@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.13] - 2026-09-25
+
+### Fixed
+
+- Restore `media_info_gql()` for the optional `public_transport="curl"` path using the current PostRoot document, `fb_dtsg` token, and browser headers (#483; mirrors instagrapi #2835). The default `requests` transport still received HTML for the sampled GraphQL call; private media lookup is unchanged.
+
+### Changed
+
+- Record synchronization of applicable runtime behavior through instagrapi 3.0.14. Its standalone login diagnostic script change is specific to instagrapi and does not change login behavior here.
+- Clarify the app-first/public-fallback media GraphQL flow (#481) and read proxy credentials from environment variables in documentation examples (#482).
+- Keep the required live `fbsearch_suggested_profiles` check while allowing a second saved account when Instagram rejects the first account (#484).
+
 ## [2.0.12] - 2026-09-23
 
 ### Fixed

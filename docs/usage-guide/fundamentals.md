@@ -5,10 +5,10 @@ This section provides detailed descriptions of all the ways `aiograpi` can be us
 
 ## Public vs Private Requests
 
-* `Public` web methods have a suffix `_gql` (Instagram `GraphQL`). Legacy `?__a=1` helpers were removed because that public web response is no longer reliable.
+* Many `_gql` methods use public web GraphQL, while `user_medias*_gql()` first uses the private app timeline and falls back to public GraphQL on `ClientError`. Legacy `?__a=1` helpers were removed because that public web response is no longer reliable.
 * `Private` (authorized request via mobile api) methods have `_v1` suffix
 
-The first request to fetch media/user is `public` (anonymous), if instagram raise exception, then use `private` (authorized).
+With private authorization or a saved session, `media_info()` and `user_info()` try the private mobile API first and fall back to public web lookup. Without it, they try public web lookup first, then the private API if that lookup fails. Cached results can avoid a new request.
 
 ## Detailed Sections
 

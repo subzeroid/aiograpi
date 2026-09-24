@@ -110,20 +110,10 @@ await cl.video_upload_to_story(
 
 ### Requests
 
-* `Public` or `Graphql` (anonymous request via web api) methods have a suffix `_gql`
+* Many `_gql` methods use public web GraphQL and may work anonymously; `user_medias*_gql()` first uses the private app timeline and falls back to public GraphQL on `ClientError`.
 * `Private` (authorized request via mobile api) methods have `_v1` suffix
 
-The first request to fetch media/user is `public` (anonymous), if instagram raise exception, then use `private` (authorized). Example (pseudo-code):
-
-``` python
-async def media_info(media_pk):
-    try:
-        return await self.media_info_gql(media_pk)
-    except ClientError as e:
-        # Restricted Video: This video is not available in your country.
-        # Or media from private account
-        return await self.media_info_v1(media_pk)
-```
+With private authorization or a saved session, `media_info()` and `user_info()` try the private mobile API first and fall back to public web lookup. Without it, they try public web lookup first, then the private API if that lookup fails. `media_info()` may also return a cached result.
 
 ## Detailed Documentation
 
