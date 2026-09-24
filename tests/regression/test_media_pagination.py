@@ -318,14 +318,16 @@ class MediaInfoGraphQLRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         media = await client.media_info_gql("1")
 
         client.public_doc_id_graphql_request.assert_awaited_once_with(
-            "27128499623469141",
+            "27830990013244856",
             {
                 "shortcode": "B",
-                "__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider": False,
+                "__relay_internal__pv__PolarisShortDramaEnabledrelayprovider": False,
+                "__relay_internal__pv__PolarisMultiCaptionCarouselEnabledrelayprovider": True,
             },
             referer="https://www.instagram.com/p/B/",
             url=client.GRAPHQL_PUBLIC_WEB_API_URL,
             include_lsd=True,
+            include_fb_dtsg=True,
             headers={"X-FB-Friendly-Name": "PolarisPostRootQuery"},
         )
         assert media.pk == "1"
@@ -377,14 +379,16 @@ class MediaInfoGraphQLRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         media = await client.media_info_gql("3929128837042014584")
 
         client.public_doc_id_graphql_request.assert_awaited_once_with(
-            "27128499623469141",
+            "27830990013244856",
             {
                 "shortcode": "DaHEdwgogl4",
-                "__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider": False,
+                "__relay_internal__pv__PolarisShortDramaEnabledrelayprovider": False,
+                "__relay_internal__pv__PolarisMultiCaptionCarouselEnabledrelayprovider": True,
             },
             referer="https://www.instagram.com/p/DaHEdwgogl4/",
             url=client.GRAPHQL_PUBLIC_WEB_API_URL,
             include_lsd=True,
+            include_fb_dtsg=True,
             headers={"X-FB-Friendly-Name": "PolarisPostRootQuery"},
         )
         assert media.pk == "3929128837042014584"

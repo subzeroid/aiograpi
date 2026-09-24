@@ -95,3 +95,18 @@ class PublicRequestRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(kwargs["headers"]["X-IG-App-ID"], "936619743392459")
         self.assertFalse(kwargs["update_headers"])
         self.assertTrue(kwargs["return_json"])
+
+    async def test_public_doc_id_graphql_request_posts_current_dtsg_from_html(self):
+        client = Client()
+        html = '<script>["LSD",[],{"token":"lsd-token"}]</script><script>["DTSGInitData",[],{"token":"dtsg-token"}]</script>'
+        client.public_request = AsyncMock(side_effect=[html, {"data": {"ok": True}}])
+
+        result = await client.public_doc_id_graphql_request(
+            "27830990013244856",
+            {"shortcode": "DaHEdwgogl4"},
+            include_lsd=True,
+            include_fb_dtsg=True,
+        )
+
+        self.assertEqual(result, {"ok": True})
+        self.assertEqual(client.public_request.await_args_list[1].kwargs["data"]["fb_dtsg"], "dtsg-token")

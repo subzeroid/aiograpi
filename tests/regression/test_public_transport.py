@@ -93,21 +93,23 @@ class PublicTransportRegressionTestCase(TestCase):
         self.assertIn("1.2.4", adapter.specifier)
 
     def test_curl_public_transport_uses_optional_adapter(self):
-        adapter = mock.Mock()
-        adapter_cls = mock.Mock(return_value=adapter)
+        class FakeAdapter:
+            def __init__(self, *, impersonate_browser_type):
+                self.impersonate_browser_type = impersonate_browser_type
 
         with mock.patch.dict(
             sys.modules,
             {
-                "curl_adapter": mock.Mock(CurlCffiAdapter=adapter_cls),
+                "curl_adapter": mock.Mock(CurlCffiAdapter=FakeAdapter),
             },
         ):
             client = Client(public_transport="curl", public_transport_impersonate="chrome136")
 
         self.assertEqual(client.public_transport, "curl")
         self.assertEqual(client.public_transport_impersonate, "chrome136")
-        adapter_cls.assert_any_call(impersonate_browser_type="chrome136")
-        self.assertIs(client.public._client.adapters["https://"], adapter)
+        adapter = client.public._client.adapters["https://"]
+        self.assertIsInstance(adapter, FakeAdapter)
+        self.assertEqual(adapter.impersonate_browser_type, "chrome136")
         self.assertIs(client.public._client.adapters["http://"], adapter)
 
     def test_curl_public_transport_missing_extra_has_clear_error(self):
