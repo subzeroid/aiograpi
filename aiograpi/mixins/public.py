@@ -424,6 +424,13 @@ class PublicRequestMixin(ClientMixin):
         match = re.search(r'"LSD",\[\],\{"token":"([^"]+)"', html)
         return match.group(1) if match else None
 
+    @staticmethod
+    def _extract_public_fb_dtsg_token(html: str) -> Optional[str]:
+        if not html:
+            return None
+        match = re.search(r'\["DTSG(?:Init|Initial)Data",\[\],\{"token":"([^"]+)"', html)
+        return match.group(1) if match else None
+
     async def public_doc_id_graphql_request(
         self,
         doc_id: str,
@@ -432,6 +439,7 @@ class PublicRequestMixin(ClientMixin):
         headers: Optional[Dict[str, str]] = None,
         url: Optional[str] = None,
         include_lsd: bool = False,
+        include_fb_dtsg: bool = False,
     ) -> Dict[str, Any]:
         """
         POST a doc_id-based GraphQL query to Instagram's public web endpoints.
@@ -463,11 +471,15 @@ class PublicRequestMixin(ClientMixin):
         query_url = url or self.GRAPHQL_PUBLIC_API_URL
         referer_url = referer or "https://www.instagram.com/"
         lsd = None
-        if include_lsd:
+        if include_lsd or include_fb_dtsg:
             html = await self.public_request(referer_url, return_json=False)
             lsd = self._extract_public_lsd_token(html)
             if lsd:
                 data["lsd"] = lsd
+            if include_fb_dtsg:
+                fb_dtsg = self._extract_public_fb_dtsg_token(html)
+                if fb_dtsg:
+                    data["fb_dtsg"] = fb_dtsg
         merged_headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",

@@ -2,6 +2,7 @@
 
 import asyncio
 import gzip
+import json
 import threading
 import zlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -18,6 +19,14 @@ PAYLOAD = {"status": "ok", "title": "café"}
 def public_server():
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
+            if self.path == "/browser-headers":
+                body = json.dumps({"browser_headers": "Sec-Fetch-Mode" in self.headers}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             body = BODY
             encoding = self.path.removeprefix("/")
             if encoding == "gzip":
@@ -83,5 +92,27 @@ def test_public_curl_request_decodes_json(curl_adapter, public_server, encoding)
         async with client.public, client.private, client.graphql:
             payload = await client.public_request(f"{public_server}/{encoding}", return_json=True, retries_count=1)
             assert payload == PAYLOAD
+
+    asyncio.run(check())
+
+
+def test_public_curl_sends_browser_headers(curl_adapter, public_server):
+    async def check():
+        client = Client(public_transport="curl")
+        client.public._client.trust_env = False
+        async with client.public, client.private, client.graphql:
+            payload = await client.public_request(f"{public_server}/browser-headers", return_json=True, retries_count=1)
+            assert payload == {"browser_headers": True}
+
+    asyncio.run(check())
+
+
+def test_public_curl_browser_alias_sends_browser_headers(curl_adapter, public_server):
+    async def check():
+        client = Client(public_transport="curl", public_transport_impersonate="chrome")
+        client.public._client.trust_env = False
+        async with client.public, client.private, client.graphql:
+            payload = await client.public_request(f"{public_server}/browser-headers", return_json=True, retries_count=1)
+            assert payload == {"browser_headers": True}
 
     asyncio.run(check())

@@ -233,6 +233,10 @@ class CurlSession:
             raise RuntimeError(
                 "curl public transport requires the optional curl extra: pip install aiograpi[curl]"
             ) from exc
+        try:
+            from curl_cffi.requests.impersonate import resolve_latest_browser_type as normalize_browser_type
+        except ImportError:
+            from curl_cffi.requests.impersonate import normalize_browser_type
 
         self.headers = {}
         self.verify = verify
@@ -241,7 +245,14 @@ class CurlSession:
         self._requests = requests
         self._client = requests.Session()
         self._client.verify = verify
-        adapter = CurlCffiAdapter(impersonate_browser_type=impersonate)
+
+        class BrowserCurlAdapter(CurlCffiAdapter):
+            def set_curl_options(self, curl, *args, **kwargs):
+                super().set_curl_options(curl, *args, **kwargs)
+                # curl-adapter disables browser defaults; public web GraphQL requires them.
+                curl.impersonate(normalize_browser_type(self.impersonate_browser_type), default_headers=True)
+
+        adapter = BrowserCurlAdapter(impersonate_browser_type=impersonate)
         self._client.mount("https://", adapter)
         self._client.mount("http://", adapter)
 
