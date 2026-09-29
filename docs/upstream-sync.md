@@ -5,10 +5,10 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.0.14
+instagrapi 3.0.15
 ```
 
-The applicable runtime changes through this baseline are available in [aiograpi 2.0.13](https://github.com/subzeroid/aiograpi/releases/tag/2.0.13). This release restores the optional public curl media-info query. The default `requests` public transport still received HTML for the sampled GraphQL call. The standalone instagrapi login diagnostic script is not an aiograpi runtime change. Earlier ports shipped in 2.0.0–2.0.12 as shown below.
+The applicable runtime changes through this baseline are available in [aiograpi 2.0.14](https://github.com/subzeroid/aiograpi/releases/tag/2.0.14). This release fixes literal context extraction from nested static `server_params` maps during CAA profile-code verification. It does not establish a general fix for `needs_upgrade` or other challenge routes. Earlier ports shipped in 2.0.0–2.0.13 as shown below.
 
 | instagrapi release | aiograpi release | Ported behavior |
 | --- | --- | --- |
@@ -27,6 +27,7 @@ The applicable runtime changes through this baseline are available in [aiograpi 
 | 3.0.12 | 2.0.11 | Require curl-adapter 1.2.3 for optional public curl response-body compatibility with urllib3 2.8. |
 | 3.0.13 | 2.0.12 | Normalize carousel resource IDs in app profile timeline responses before extraction. |
 | 3.0.14 | 2.0.13 | Restore the optional public curl media-info PostRoot query; the instagrapi login diagnostic helper change is sync-only. |
+| 3.0.15 | 2.0.14 | Extract literal CAA profile-code contexts from nested static server parameters while preserving operand positions. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
