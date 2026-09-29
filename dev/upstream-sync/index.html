@@ -1497,9 +1497,9 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.0.14
+<div class="highlight"><pre><span></span><code>instagrapi 3.0.15
 </code></pre></div>
-<p>The applicable runtime changes through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.13">aiograpi 2.0.13</a>. This release restores the optional public curl media-info query. The default <code>requests</code> public transport still received HTML for the sampled GraphQL call. The standalone instagrapi login diagnostic script is not an aiograpi runtime change. Earlier ports shipped in 2.0.0–2.0.12 as shown below.</p>
+<p>The applicable runtime changes through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.14">aiograpi 2.0.14</a>. This release fixes literal context extraction from nested static <code>server_params</code> maps during CAA profile-code verification. It does not establish a general fix for <code>needs_upgrade</code> or other challenge routes. Earlier ports shipped in 2.0.0–2.0.13 as shown below.</p>
 <table>
 <thead>
 <tr>
@@ -1583,6 +1583,11 @@
 <td>3.0.14</td>
 <td>2.0.13</td>
 <td>Restore the optional public curl media-info PostRoot query; the instagrapi login diagnostic helper change is sync-only.</td>
+</tr>
+<tr>
+<td>3.0.15</td>
+<td>2.0.14</td>
+<td>Extract literal CAA profile-code contexts from nested static server parameters while preserving operand positions.</td>
 </tr>
 </tbody>
 </table>
