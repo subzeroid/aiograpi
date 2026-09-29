@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.15] - 2026-09-30
+
+### Fixed
+
+- Fix `highlight_info()` validation when the top-level owner’s `friendship_status` omits `user_id`. Normalize the owner with the existing short-user extractor while preserving relationship values and story order (#488; mirrors instagrapi #2844).
+
+### Changed
+
+- Record synchronization through instagrapi 3.0.16, including the Highlight owner normalization fix.
+
 ## [2.0.14] - 2026-09-29
 
 ### Fixed

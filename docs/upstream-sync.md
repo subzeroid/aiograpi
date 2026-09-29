@@ -5,10 +5,10 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.0.15
+instagrapi 3.0.16
 ```
 
-The applicable runtime changes through this baseline are available in [aiograpi 2.0.14](https://github.com/subzeroid/aiograpi/releases/tag/2.0.14). This release fixes literal context extraction from nested static `server_params` maps during CAA profile-code verification. It does not establish a general fix for `needs_upgrade` or other challenge routes. Earlier ports shipped in 2.0.0–2.0.13 as shown below.
+The applicable runtime changes through this baseline are available in [aiograpi 2.0.15](https://github.com/subzeroid/aiograpi/releases/tag/2.0.15). This release normalizes the top-level Highlight owner before validation, fixing responses whose friendship status omits `user_id`. Earlier ports shipped in 2.0.0–2.0.14 as shown below.
 
 | instagrapi release | aiograpi release | Ported behavior |
 | --- | --- | --- |
@@ -28,6 +28,7 @@ The applicable runtime changes through this baseline are available in [aiograpi 
 | 3.0.13 | 2.0.12 | Normalize carousel resource IDs in app profile timeline responses before extraction. |
 | 3.0.14 | 2.0.13 | Restore the optional public curl media-info PostRoot query; the instagrapi login diagnostic helper change is sync-only. |
 | 3.0.15 | 2.0.14 | Extract literal CAA profile-code contexts from nested static server parameters while preserving operand positions. |
+| 3.0.16 | 2.0.15 | Normalize raw Highlight owners before validation, preserving relationship values and story order. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
