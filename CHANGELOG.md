@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.14] - 2026-09-29
+
+### Fixed
+
+- Read nested `server_params` contexts during CAA profile-code verification, avoiding `missing code_entry context_data` for that response shape (#486; mirrors instagrapi #2841). Preserve operand positions and ignore non-literal or unrelated contexts. This does not establish a general fix for `needs_upgrade` or other challenge routes.
+
+### Changed
+
+- Record synchronization through instagrapi 3.0.15, including the nested CAA context parser fix.
+
 ## [2.0.13] - 2026-09-25
 
 ### Fixed
