@@ -1497,9 +1497,9 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.0.16
+<div class="highlight"><pre><span></span><code>instagrapi 3.0.18
 </code></pre></div>
-<p>The applicable runtime changes through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.15">aiograpi 2.0.15</a>. This release normalizes the top-level Highlight owner before validation, fixing responses whose friendship status omits <code>user_id</code>. Earlier ports shipped in 2.0.0–2.0.14 as shown below.</p>
+<p>The applicable runtime changes through this baseline are available in <a href="https://github.com/subzeroid/aiograpi/releases/tag/2.0.16">aiograpi 2.0.16</a>. This release pairs CAA two-step context keys and values correctly when parameter fields are reordered. Earlier ports shipped in 2.0.0–2.0.15 as shown below.</p>
 <table>
 <thead>
 <tr>
@@ -1593,6 +1593,16 @@
 <td>3.0.16</td>
 <td>2.0.15</td>
 <td>Normalize raw Highlight owners before validation, preserving relationship values and story order.</td>
+</tr>
+<tr>
+<td>3.0.17</td>
+<td>Not applicable</td>
+<td>The requests-response HTTP-status fix and per-attempt login diagnostic helper are sync-specific; native async responses already preserve HTTP status.</td>
+</tr>
+<tr>
+<td>3.0.18</td>
+<td>2.0.16</td>
+<td>Pair CAA two-step contexts with their parameter keys, preserve scalar positions, and match exact quoted app references.</td>
 </tr>
 </tbody>
 </table>
