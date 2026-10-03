@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.17] - 2026-10-03
+
+### Fixed
+
+- Clear stale account routing and claim headers when authorization is reset for relogin or successful logout. Preserve device identifiers, valid saved-session reuse and cookie-only cleanup (#492).
+- Include the CAA context-pairing fix prepared for unpublished 2.0.16.
+
+### Changed
+
+- Record synchronization through instagrapi 3.0.19.
+
 ## [2.0.16] - 2026-10-02
 
 ### Fixed
