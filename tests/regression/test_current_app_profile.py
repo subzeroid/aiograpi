@@ -5,11 +5,11 @@ def test_default_client_uses_current_android_app_profile():
     client = Client()
 
     assert client.device_settings["app_version"] == config.DEFAULT_APP_VERSION
-    assert client.device_settings["version_code"] == "1065560286"
-    assert client.bloks_versioning_id == "0bc46a03e177bfc9bc8d611918815acf248fa9c77754d807d6a5951dc9ce9432"
+    assert client.device_settings["version_code"] == "1079242191"
+    assert client.bloks_versioning_id == "799db3e387d7a21a19c72918b8698b6cd28a1516ade363792c100ed45a0f9f0b"
     assert client.user_agent == (
-        "Instagram 448.0.0.0.20 Android (34/14; 480dpi; 1344x2992; "
-        "Google/google; Pixel 8 Pro; husky; husky; en_US; 1065560286)"
+        "Instagram 449.0.0.52.84 Android (34/14; 480dpi; 1344x2992; "
+        "Google/google; Pixel 8 Pro; husky; husky; en_US; 1079242191)"
     )
 
 
@@ -25,9 +25,9 @@ def test_default_device_profile_matches_current_android_baseline():
         "device": "husky",
         "model": "Pixel 8 Pro",
         "cpu": "husky",
-        "app_version": "448.0.0.0.20",
-        "version_code": "1065560286",
-        "bloks_versioning_id": "0bc46a03e177bfc9bc8d611918815acf248fa9c77754d807d6a5951dc9ce9432",
+        "app_version": "449.0.0.52.84",
+        "version_code": "1079242191",
+        "bloks_versioning_id": "799db3e387d7a21a19c72918b8698b6cd28a1516ade363792c100ed45a0f9f0b",
     }
 
 
@@ -43,7 +43,7 @@ def test_private_headers_use_current_android_transport_values():
     assert client.private.headers["X-Zero-State"] == "unknown"
     assert client.private.headers["Zero-HTTP-Network-Interface"] == "wifi"
     assert client.private.headers["X-Bloks-Version-Id"] == (
-        "0bc46a03e177bfc9bc8d611918815acf248fa9c77754d807d6a5951dc9ce9432"
+        "799db3e387d7a21a19c72918b8698b6cd28a1516ade363792c100ed45a0f9f0b"
     )
 
 
@@ -85,22 +85,33 @@ def test_constructor_override_app_version_replaces_saved_profile_with_current_de
     )
 
     assert client.device_settings["app_version"] == config.DEFAULT_APP_VERSION
+    assert client.device_settings["version_code"] == "1079242191"
+
+
+def test_saved_previous_app_profile_receives_matching_bloks_hash():
+    client = Client({"device_settings": {"app_version": "448.0.0.0.20", "version_code": "1065560286"}})
+
+    assert client.device_settings["app_version"] == "448.0.0.0.20"
     assert client.device_settings["version_code"] == "1065560286"
+    assert client.bloks_versioning_id == "0bc46a03e177bfc9bc8d611918815acf248fa9c77754d807d6a5951dc9ce9432"
+    assert client.private.headers["X-Bloks-Version-Id"] == client.bloks_versioning_id
+    assert client.user_agent.startswith("Instagram 448.0.0.0.20 Android (")
+    assert client.user_agent.endswith("; 1065560286)")
 
 
 def test_unknown_saved_app_without_bloks_hash_uses_current_default_profile():
     client = Client(
         {
             "device_settings": {
-                "app_version": "449.0.0.0.1",
-                "version_code": "979332773",
+                "app_version": "450.0.0.0.1",
+                "version_code": "385511872",
             },
         }
     )
 
     assert client.device_settings["app_version"] == config.DEFAULT_APP_VERSION
-    assert client.device_settings["version_code"] == "1065560286"
-    assert client.bloks_versioning_id == "0bc46a03e177bfc9bc8d611918815acf248fa9c77754d807d6a5951dc9ce9432"
+    assert client.device_settings["version_code"] == "1079242191"
+    assert client.bloks_versioning_id == "799db3e387d7a21a19c72918b8698b6cd28a1516ade363792c100ed45a0f9f0b"
 
 
 def test_legacy_saved_app_without_bloks_hash_is_not_overridden_by_default():
