@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 from urllib.parse import parse_qs, urlsplit
 
+from aiograpi.exceptions import UnknownError
 from aiograpi.types import UserShort
 
 
@@ -144,6 +145,53 @@ class _LoginClient:
 
 
 class LiveSmokeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    def test_error_summary_labels_only_the_exact_known_eligibility_denial(self):
+        smoke = _load_live_smoke_module()
+        for response, expected in [
+            (None, "UnknownError reason=not_eligible_for_chaining"),
+            (
+                types.SimpleNamespace(status_code=400),
+                "UnknownError HTTP 400 reason=not_eligible_for_chaining",
+            ),
+        ]:
+            with self.subTest(has_response=response is not None):
+                exc = UnknownError("Not eligible for chaining.", response=response)
+                self.assertEqual(smoke._error_summary(exc), expected)
+
+    def test_error_summary_withholds_other_messages_and_untrusted_fields(self):
+        smoke = _load_live_smoke_module()
+        for exc, expected in [
+            (UnknownError("Not eligible for chaining"), "UnknownError"),
+            (UnknownError("Not eligible for chaining. secret-account"), "UnknownError"),
+            (RuntimeError("Not eligible for chaining."), "RuntimeError"),
+            (
+                UnknownError(
+                    "secret-account secret-password secret-session https://example.test/private",
+                    error_type="secret-error-type",
+                    response=types.SimpleNamespace(status_code=400),
+                ),
+                "UnknownError HTTP 400",
+            ),
+        ]:
+            with self.subTest(expected=expected):
+                self.assertEqual(smoke._error_summary(exc), expected)
+
+    async def test_known_eligibility_denial_still_fails_the_required_check(self):
+        smoke = _load_live_smoke_module()
+        primary = _FakeLiveClient()
+        primary.fbsearch_suggested_profiles = AsyncMock(side_effect=UnknownError("Not eligible for chaining."))
+        reports = []
+
+        passed = await smoke._check_fbsearch_suggested_profiles(primary, [], reports.append)
+
+        self.assertFalse(passed)
+        primary.fbsearch_suggested_profiles.assert_awaited_once_with("25025320")
+        self.assertIn(
+            "REQ fbsearch_suggested_profiles primary: UnknownError reason=not_eligible_for_chaining",
+            reports,
+        )
+        self.assertIn("REQ fbsearch_suggested_profiles FAIL: no successful account", reports)
+
     async def test_fresh_smoke_login_uses_supported_app_without_changing_device(self):
         from copy import deepcopy
 

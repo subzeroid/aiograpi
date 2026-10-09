@@ -73,6 +73,8 @@ The fresh-login helper in [tests/live/smoke.py](tests/live/smoke.py), also used 
 
 If the required `fbsearch_suggested_profiles` smoke check fails on the freshly logged-in account, the smoke tries at most two other supplied saved sessions with their own proxies. It passes only when the same endpoint returns valid results for at least one account; failures are reported by account index without response bodies or account data.
 
+The smoke labels the exact known `UnknownError` eligibility denial with the fixed category `reason=not_eligible_for_chaining`. It does not print the raw exception message or infer which account, target or server condition caused the denial. The category remains a failure; the required check still needs a nonempty recommendation result with valid `UserShort` and `stories` fields.
+
 ## Pull Request Checklist
 
 1. Branch from `main` and keep the change scoped.

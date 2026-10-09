@@ -10,7 +10,7 @@ that returns at least one usable account (with TOTP seed if 2FA is
 enabled). Skips cleanly if unset.
 
 Reports only operation labels, attempt indices, collection counts, exception
-classes, and numeric HTTP status codes. Dependency output is suppressed;
+classes, numeric HTTP status codes, and fixed error categories. Dependency output is suppressed;
 account data, endpoint responses, and raw exception messages are never printed.
 """
 
@@ -30,6 +30,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from aiograpi import Client
+from aiograpi.exceptions import UnknownError
 from aiograpi.types import UserShort
 from tests.live.auth_helpers import login_with_timeout
 
@@ -50,7 +51,10 @@ def _error_summary(exc):
     response = getattr(exc, "response", None)
     for status in (getattr(response, "status_code", None), getattr(exc, "code", None)):
         if type(status) is int and 100 <= status <= 599:
-            return f"{name} HTTP {status}"
+            name = f"{name} HTTP {status}"
+            break
+    if isinstance(exc, UnknownError) and exc.message == "Not eligible for chaining.":
+        name += " reason=not_eligible_for_chaining"
     return name
 
 
