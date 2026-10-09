@@ -245,7 +245,7 @@ Transport selection is saved in settings. An explicit saved choice overrides the
 
 Requirements: `curl_cffi>=0.15.0` and its bundled libcurl >= 8.10.0. No system `curl` executable is needed. Availability depends on curl_cffi wheels for your platform; Android/Termux has not been verified.
 
-The TLS offer includes the hybrid `X25519MLKEM768` group alongside `X25519`, `P-256` and `P-384` to address connection failures on some proxy paths. Servers without hybrid support can still select a classical group, while ALPN offers only `h2`.
+The private curl transport requires TLS 1.3 or newer and excludes older versions from its ClientHello. HTTPS targets and TLS-intercepting proxies must support TLS 1.3; ordinary CONNECT proxies forward the target TLS handshake unchanged. The TLS offer includes the hybrid `X25519MLKEM768` group alongside `X25519`, `P-256` and `P-384` to address connection failures on some proxy paths. Servers without hybrid support can still select a classical group, while ALPN offers only `h2`.
 
 HTTPX prepares requests, scopes cookies, follows redirects and decodes responses. Curl maintains native asynchronous connections with no automatic retries, so an interrupted password POST is not resubmitted by the legacy incomplete-read handler. Curl network errors become the existing `ConnectProxyError`; an HTTP 429 remains `ClientThrottledError` with its response.
 

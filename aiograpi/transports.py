@@ -16,7 +16,7 @@ class CurlH2Transport(httpx.AsyncBaseTransport):
     def __init__(self, proxy=None, verify=True):
         try:
             import curl_cffi
-            from curl_cffi import CurlHttpVersion, CurlOpt, ffi
+            from curl_cffi import CurlHttpVersion, CurlOpt, CurlSslVersion, ffi
             from curl_cffi import requests as curl_requests
         except ImportError as exc:
             raise RuntimeError(
@@ -36,6 +36,8 @@ class CurlH2Transport(httpx.AsyncBaseTransport):
         self._curl_options = {
             CurlOpt.HTTP_CONTENT_DECODING: 0,
             CurlOpt.NOPROXY: "",
+            # Keep legacy TLS versions out of the private mobile ClientHello.
+            CurlOpt.SSLVERSION: CurlSslVersion.TLSv1_3,
             # Some proxy paths reject the default classical-only ClientHello.
             # Keep classical groups available for peers without hybrid support.
             CurlOpt.SSL_EC_CURVES: "X25519MLKEM768:X25519:P-256:P-384",
