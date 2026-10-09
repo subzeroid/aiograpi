@@ -6,10 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
-## [2.0.17] - 2026-10-04
+## [2.0.17] - 2026-10-09
 
 ### Fixed
 
+- Require TLS 1.3 for private curl requests while retaining hybrid/classical groups, HTTP/2, certificate verification and proxy handling (#499). HTTPS targets and TLS-intercepting proxies must support TLS 1.3; see the [private transport guide](https://subzeroid.github.io/aiograpi/usage-guide/interactions/#private-http2-transport).
 - Clear stale account routing and claim headers when authorization is reset for relogin or successful logout. Preserve device identifiers, valid saved-session reuse and cookie-only cleanup (#492).
 - Include the CAA context-pairing fix prepared for unpublished 2.0.16.
 
@@ -17,7 +18,7 @@ starting with 1.0.0.
 
 - Update the default Android app profile to 449.0.0.52.84 with the native User-Agent build and API Bloks version; retain the 448 profile for saved settings and explicit selection (#496).
 - Preserve the existing CAA request body and add serialized-payload regression coverage for both profiles.
-- Record synchronization through instagrapi 3.0.20.
+- Record synchronization through instagrapi 3.0.21.
 
 ## [2.0.16] - 2026-10-02
 

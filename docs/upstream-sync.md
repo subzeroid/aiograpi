@@ -5,10 +5,10 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.0.20
+instagrapi 3.0.21
 ```
 
-The applicable runtime changes through this baseline are included in aiograpi 2.0.17. This release updates the default Android app profile to 449 while retaining saved 448 settings, clears stale account headers when authorization is reset, and includes the CAA context-pairing fix prepared for unpublished 2.0.16. Earlier ports shipped in 2.0.0–2.0.15 as shown below.
+The applicable runtime changes through this baseline are included in aiograpi 2.0.17. This release requires TLS 1.3 for private curl requests, updates the default Android app profile to 449 while retaining saved 448 settings, clears stale account headers when authorization is reset, and includes the CAA context-pairing fix prepared for unpublished 2.0.16. Earlier ports shipped in 2.0.0–2.0.15 as shown below.
 
 | instagrapi release | aiograpi release | Ported behavior |
 | --- | --- | --- |
@@ -33,6 +33,7 @@ The applicable runtime changes through this baseline are included in aiograpi 2.
 | 3.0.18 | 2.0.17 (prepared in unpublished 2.0.16) | Pair CAA two-step contexts with their parameter keys, preserve scalar positions, and match exact quoted app references. |
 | 3.0.19 | 2.0.17 | Clear stale account routing and claim headers on authorization reset while preserving device identity and valid-session reuse. |
 | 3.0.20 | 2.0.17 | Use the native Android 449 profile, retain saved 448 settings, and preserve the existing CAA login payload. |
+| 3.0.21 | 2.0.17 | Require TLS 1.3 for private curl requests while retaining hybrid/classical groups and HTTP/2. Standalone login diagnostics and development-tool changes are sync-specific. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
