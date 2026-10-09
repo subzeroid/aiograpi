@@ -2,6 +2,7 @@
 
 import asyncio
 import base64
+import ssl
 from contextlib import asynccontextmanager
 
 import httpx
@@ -11,7 +12,7 @@ pytest.importorskip("curl_cffi")
 pytest.importorskip("h2")
 pytest.importorskip("cryptography")
 
-from curl_cffi import CurlHttpVersion
+from curl_cffi import CurlHttpVersion, CurlOpt, CurlSslVersion
 
 from aiograpi import Client
 from aiograpi.exceptions import ClientThrottledError
@@ -65,6 +66,42 @@ def test_mixed_alpn_control_negotiates_h2_but_offers_http1(lab):
             response = await client.private.get(url(lab), timeout=2)
             assert response.http_version == "HTTP/2"
             assert lab.records[0]["alpn_offers"] == ["h2", "http/1.1"]
+
+    asyncio.run(scenario())
+
+
+def test_actual_clienthello_offers_tls13_without_legacy_versions(lab):
+    async def scenario():
+        async with client_for(lab) as client:
+            for _ in range(2):
+                assert (await client.private.get(url(lab), timeout=2)).status_code == 200
+        assert [r["supported_versions"] for r in lab.records] == [[0x0304], [0x0304]]
+        assert [r["tls_version"] for r in lab.records] == ["TLSv1.3", "TLSv1.3"]
+        assert [r["connection_id"] for r in lab.records] == [1, 1]
+
+    asyncio.run(scenario())
+
+
+def test_default_tls_control_negotiates_tls13_but_also_offers_tls12(lab):
+    async def scenario():
+        async with client_for(lab) as client:
+            transport = client.private._client._transport
+            transport.client.curl_options[CurlOpt.SSLVERSION] = CurlSslVersion.DEFAULT
+            assert (await client.private.get(url(lab), timeout=2)).status_code == 200
+            assert lab.records[0]["tls_version"] == "TLSv1.3"
+            assert 0x0303 in lab.records[0]["supported_versions"]
+
+    asyncio.run(scenario())
+
+
+def test_tls12_only_peer_is_rejected_before_sending_http_body(lab):
+    lab.server.tls.maximum_version = ssl.TLSVersion.TLSv1_2
+
+    async def scenario():
+        async with client_for(lab) as client:
+            with pytest.raises(httpx.ConnectError):
+                await client.private.post(url(lab), content=b"synthetic_password=test", timeout=2)
+        assert lab.records == []
 
     asyncio.run(scenario())
 
@@ -330,7 +367,9 @@ def test_hybrid_group_reaches_peer_through_proxy(hybrid_lab, proxy_scheme):
             proxy = stack.enter_context(proxy_type(lab))
             proxy_url = f"{proxy_scheme}://synthetic:password@127.0.0.1:{proxy.port}"
         asyncio.run(scenario(proxy_url))
-        assert hellos == [{"alpn_offers": ["h2"], "supported_groups": [4588, 29, 23, 24]}]
+        assert hellos == [
+            {"alpn_offers": ["h2"], "supported_groups": [4588, 29, 23, 24], "supported_versions": [0x0304]}
+        ]
         assert [r["connection_id"] for r in lab.records] == [1, 1]
         if proxy_scheme:
             assert len(proxy.records) == 1
