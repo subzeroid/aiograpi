@@ -103,7 +103,10 @@ test = [
     "markdown-include==0.8.1",
     "mkdocs-material==9.7.7",
     "mkdocs-minify-plugin==0.8.0",
-    "mkdocstrings[python]==1.0.4",
+    # 1.0.7 supports pymdown-extensions 12.2 and requires Python >=3.11.
+    # Documentation builds use Python 3.13; keep test extras installable on 3.10.
+    "mkdocstrings[python]==1.0.7; python_version >= '3.11'",
+    "mkdocstrings[python]==1.0.6; python_version < '3.11'",
     "numpy>=1.25.0",
     "pre-commit==4.6.0",
     "proglog<=1.0.0",
