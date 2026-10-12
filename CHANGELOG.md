@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.18] - 2026-10-12
+
+### Fixed
+
+- Reuse one runtime `X-Pigeon-Session-Id` per `Client` and omit fabricated `X-IG-SALT-IDS` defaults. Preserve fresh timestamps, saved-settings boundaries and explicit header overrides (#501).
+- Fix documentation builds with pymdown-extensions 12.2 while keeping test extras installable on Python 3.10 (#501), and use Python 3.13 for versioned documentation publishing.
+- Document the separate MoviePy installation required by the regression suite.
+
+### Changed
+
+- Record synchronization through instagrapi 3.0.22, including the private header lifetime correction.
+
 ## [2.0.17] - 2026-10-10
 
 ### Fixed

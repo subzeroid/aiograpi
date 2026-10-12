@@ -107,7 +107,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.10"
+          python-version: "3.13"
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:
