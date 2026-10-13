@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.20] - 2026-10-13
+
+### Fixed
+
+- Raise actionable `ChallengeRequired` errors when built-in code or password prompts reach EOF, preserving challenge context and valid piped input. Accept the challenge URL and session metadata already supplied to the built-in code callback (#505).
+- Await asynchronous generic exception hooks before retaining their existing propagation or replay behavior; synchronous hooks remain supported and automatic challenge handling stays disabled by default (#505).
+
+### Changed
+
+- Record synchronization through instagrapi 3.0.24, including compatible challenge handling controls.
+
 ## [2.0.19] - 2026-10-13
 
 ### Fixed
