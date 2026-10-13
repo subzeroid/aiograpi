@@ -1746,10 +1746,7 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 </table>
 <p>All of the above are convenience wrappers around two primitives:</p>
 <ul>
-<li><code>Client.public_doc_id_graphql_request(doc_id, variables)</code> — public host
-  (<code>www.instagram.com/graphql/query/</code>). Uses iPhone Instagram-app
-  <code>User-Agent</code> and forwards logged-in cookies (<code>sessionid</code>,
-  <code>ds_user_id</code>) so doc_ids that need authenticated context still work.</li>
+<li><code>Client.public_doc_id_graphql_request(doc_id, variables)</code> — public host (<code>www.instagram.com/graphql/query/</code>). Non-LSD requests use the existing iPhone Instagram-app <code>User-Agent</code> by default; configure <code>public_graphql_user_agent</code> or set it to <code>None</code> to follow the web UA. <code>include_lsd=True</code> uses the web UA. See <a href="../public-transport/#user-agent-configuration">User-Agent configuration</a> for per-call overrides and saved settings. The helper forwards logged-in cookies (<code>sessionid</code>, <code>ds_user_id</code>) so doc_ids that need authenticated context still work.</li>
 <li><code>Client.private_graphql_query_request(friendly_name, root_field_name, variables, client_doc_id)</code>
    — mobile host (<code>i.instagram.com/graphql/query</code>). Uses the
   authenticated <code>self.private</code> session so all standard mobile
