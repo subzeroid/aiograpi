@@ -200,13 +200,21 @@ class PublicUserAgentTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client._recorded[-1]["agents"], ["fixture-explicit-web"])
 
     async def test_legacy_settings_keep_the_selected_transport_default(self):
-        for transport in ["requests", "curl"]:
-            with self.subTest(transport=transport):
-                client = await self.build_client(settings={"public_transport": transport})
-                self.assertEqual(client.public_user_agent, client._default_public_user_agent(transport, "chrome136"))
-                self.assertEqual(client.public.headers["User-Agent"], client.public_user_agent)
-                await client.public_doc_id_graphql_request("1", {})
-                self.assertEqual(client._recorded[-1]["agents"], [LEGACY_GRAPHQL_UA])
+        # This settings test records prepared requests without requiring the optional curl adapter.
+        class Adapter(HTTPAdapter):
+            def __init__(self, *, impersonate_browser_type):
+                super().__init__()
+
+        with mock.patch.dict("sys.modules", {"curl_adapter": SimpleNamespace(CurlCffiAdapter=Adapter)}):
+            for transport in ["requests", "curl"]:
+                with self.subTest(transport=transport):
+                    client = await self.build_client(settings={"public_transport": transport})
+                    self.assertEqual(
+                        client.public_user_agent, client._default_public_user_agent(transport, "chrome136")
+                    )
+                    self.assertEqual(client.public.headers["User-Agent"], client.public_user_agent)
+                    await client.public_doc_id_graphql_request("1", {})
+                    self.assertEqual(client._recorded[-1]["agents"], [LEGACY_GRAPHQL_UA])
 
     async def test_setter_shares_agent_and_updates_saved_settings(self):
         client = await self.build_client()
