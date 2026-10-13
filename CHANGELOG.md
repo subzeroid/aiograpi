@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.21] - 2026-10-14
+
+### Fixed
+
+- Configure non-LSD public GraphQL User-Agent profiles with `public_graphql_user_agent`; use `None` to share the web UA or the synchronous `set_public_user_agent(...)` method to update both profiles. Keep existing route defaults (#507).
+- Preserve public and GraphQL UA choices in saved settings and file round trips, retain explicit constructor UAs with older settings, and collapse case-insensitive per-request doc_id UA overrides into one HTTPX header without changing the session (#507).
+
+### Changed
+
+- Record synchronization through instagrapi 3.0.25, including compatible public/GraphQL UA configuration and persistence.
+
 ## [2.0.20] - 2026-10-13
 
 ### Fixed
