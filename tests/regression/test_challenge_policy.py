@@ -15,7 +15,8 @@ CHALLENGE = {
     "challenge": {"api_path": "/challenge/12345/nonce/", "challenge_context": "synthetic-context"},
 }
 CODE_STEP = {"status": "ok", "step_name": "verify_email", "challenge_context": "synthetic-code-context"}
-PASSWORD_STEP = {"status": "ok", "step_name": "change_password", "challenge_context": "synthetic-password-context"}
+# Server step metadata only; no replacement password is present.
+RESET_STEP = {"status": "ok", "step_name": "change_password", "challenge_context": "synthetic-password-context"}
 CLOSED = {"status": "ok", "action": "close"}
 OK = {"status": "ok", "result": "original-request"}
 
@@ -105,14 +106,14 @@ class ChallengePolicyRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([r.method for r in sent], ["GET", "GET"])
 
     async def test_password_eof_is_actionable_challenge_without_submission_or_replay(self):
-        client, sent = await self.make_client([(400, CHALLENGE), (200, PASSWORD_STEP)], with_challenge_flow=True)
+        client, sent = await self.make_client([(400, CHALLENGE), (200, RESET_STEP)], with_challenge_flow=True)
         with patch("builtins.input", side_effect=EOFError("synthetic EOF")), self.assertRaises(ChallengeRequired) as cm:
             await client.private_request("feed/timeline/", login=True)
         self.assertIn("change_password_handler", str(cm.exception))
         self.assertIsInstance(cm.exception.__cause__, EOFError)
         self.assertEqual(cm.exception.step_name, "change_password")
-        self.assertEqual(cm.exception.challenge_context, PASSWORD_STEP["challenge_context"])
-        self.assertEqual(client.last_json, PASSWORD_STEP)
+        self.assertEqual(cm.exception.challenge_context, RESET_STEP["challenge_context"])
+        self.assertEqual(client.last_json, RESET_STEP)
         self.assertEqual([r.method for r in sent], ["GET", "GET"])
 
     async def test_code_handler_accepts_non_tty_input(self):
@@ -153,7 +154,7 @@ class ChallengePolicyRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_custom_password_handler_keeps_its_contract(self):
         client, _ = await self.make_client([])
-        client.last_json = PASSWORD_STEP.copy()
+        client.last_json = RESET_STEP.copy()
         client.change_password_handler = AsyncMock(return_value="synthetic-password")
         client.bloks_change_password = AsyncMock(return_value=True)
         with patch("builtins.input") as read:
@@ -161,10 +162,10 @@ class ChallengePolicyRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result)
         read.assert_not_called()
         client.change_password_handler.assert_awaited_once_with(client.username)
-        client.bloks_change_password.assert_awaited_once_with("synthetic-password", PASSWORD_STEP["challenge_context"])
+        client.bloks_change_password.assert_awaited_once_with("synthetic-password", RESET_STEP["challenge_context"])
 
     async def test_custom_handler_errors_are_not_rewritten(self):
-        for step, name in ((CODE_STEP, "challenge_code_handler"), (PASSWORD_STEP, "change_password_handler")):
+        for step, name in ((CODE_STEP, "challenge_code_handler"), (RESET_STEP, "change_password_handler")):
             with self.subTest(handler=name):
                 client, sent = await self.make_client([(400, CHALLENGE), (200, step)], with_challenge_flow=True)
                 original = EOFError("custom handler error")
