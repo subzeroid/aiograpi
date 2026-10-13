@@ -5,10 +5,10 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.0.22
+instagrapi 3.0.23
 ```
 
-The applicable runtime changes through this baseline are included through aiograpi 2.0.18. The latest release reuses one runtime Pigeon ID per client and omits fabricated SALT values while preserving fresh timestamps and explicit header overrides. The TLS 1.3 minimum, Android 449 profile with saved 448 support, authorization-header cleanup and CAA context-pairing correction shipped in 2.0.17. Earlier ports are shown below.
+The applicable runtime changes through this baseline are included through aiograpi 2.0.19. The latest release deduplicates follower/following iterators by user ID, retains the first occurrence and counts unique users toward `amount`; it preserves server order without guaranteeing chronological sorting or a complete snapshot. Aiograpi 2.0.18 corrected the private header lifetime. The TLS 1.3 minimum, Android 449 profile with saved 448 support, authorization-header cleanup and CAA context-pairing correction shipped in 2.0.17. Earlier ports are shown below.
 
 | instagrapi release | aiograpi release | Ported behavior |
 | --- | --- | --- |
@@ -35,6 +35,7 @@ The applicable runtime changes through this baseline are included through aiogra
 | 3.0.20 | 2.0.17 | Use the native Android 449 profile, retain saved 448 settings, and preserve the existing CAA login payload. |
 | 3.0.21 | 2.0.17 | Require TLS 1.3 for private curl requests while retaining hybrid/classical groups and HTTP/2. Standalone login diagnostics and development-tool changes are sync-specific. |
 | 3.0.22 | 2.0.18 | Reuse one runtime Pigeon ID per client, omit fabricated SALT defaults, and preserve explicit header overrides. Documentation service links and app-profile guidance are sync-specific. |
+| 3.0.23 | 2.0.19 | Follower/following iterators yield unique user IDs and count unique users toward `amount`, preserving first-seen data and server order. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
