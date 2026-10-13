@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.19] - 2026-10-13
+
+### Fixed
+
+- Deduplicate users across pages in `iter_user_followers_v1()` and `iter_user_following_v1()`, preserving the first occurrence and counting unique users toward `amount`. Continue across duplicate-only pages with an advancing cursor (#503).
+
+### Changed
+
+- Record synchronization through instagrapi 3.0.23, including user iterator deduplication.
+
 ## [2.0.18] - 2026-10-12
 
 ### Fixed
