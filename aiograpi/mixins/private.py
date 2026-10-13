@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import json
 import logging
 import random
@@ -100,7 +101,7 @@ def _is_direct_message_requests_disabled(endpoint: str, message: str) -> bool:
     return any(marker in normalized for marker in _DIRECT_MESSAGE_REQUESTS_DISABLED_MARKERS)
 
 
-async def manual_input_code(self, username: str, choice=None):
+async def manual_input_code(self, username: str, choice=None, challenge_url=None, sessionid=None):
     """
     Manual security code helper
 
@@ -110,6 +111,8 @@ async def manual_input_code(self, username: str, choice=None):
         User name of a Instagram account
     choice: optional
         Whether sms or email
+    challenge_url, sessionid: optional
+        Resolver metadata accepted for compatibility with custom code handlers
 
     Returns
     -------
@@ -117,17 +120,31 @@ async def manual_input_code(self, username: str, choice=None):
         Code
     """
     code = None
-    while True:
-        code = input(f"Enter code (6 digits) for {username} ({choice}): ").strip()
-        if code and code.isdigit():
-            break
+    try:
+        while True:
+            code = input(f"Enter code (6 digits) for {username} ({choice}): ").strip()
+            if code and code.isdigit():
+                break
+    except EOFError as e:
+        raise ChallengeRequired(
+            "Challenge code input is unavailable. Provide a challenge_code_handler "
+            "or disable automatic resolution with with_challenge_flow=False.",
+            **{key: value for key, value in self.last_json.items() if key != "message"},
+        ) from e
     return code  # is not int, because it can start from 0
 
 
 async def manual_change_password(self, username: str):
     pwd = None
-    while not pwd:
-        pwd = input(f"Enter password for {username}: ").strip()
+    try:
+        while not pwd:
+            pwd = input(f"Enter password for {username}: ").strip()
+    except EOFError as e:
+        raise ChallengeRequired(
+            "Password input is unavailable. Provide a change_password_handler "
+            "or disable automatic resolution with with_challenge_flow=False.",
+            **{key: value for key, value in self.last_json.items() if key != "message"},
+        ) from e
     return pwd
 
 
@@ -811,7 +828,9 @@ class PrivateRequestMixin(ClientMixin):
         #     raise e
         except Exception as e:
             if self.handle_exception:
-                self.handle_exception(self, e)
+                result = self.handle_exception(self, e)
+                if inspect.isawaitable(result):
+                    await result
             elif isinstance(e, ChallengeRequired):
                 if not self.with_challenge_flow:
                     # Nothing resolved the challenge: re-sending the same
