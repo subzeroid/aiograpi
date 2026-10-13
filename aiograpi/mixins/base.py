@@ -52,6 +52,7 @@ if TYPE_CHECKING:
         public_transport_impersonate: str
         push_disabled: bool
         public_user_agent: str
+        public_graphql_user_agent: Optional[str]
         read_timeout: int
         request_id: str
         request_timeout: int
@@ -265,6 +266,8 @@ if TYPE_CHECKING:
         def set_timezone_offset(self, *args: Any, **kwargs: Any) -> Any: ...
 
         def set_user_agent(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        def set_public_user_agent(self, user_agent: str, graphql_user_agent: Optional[str] = None) -> bool: ...
 
         def set_usdid_settings(self, *args: Any, **kwargs: Any) -> bool: ...
 
