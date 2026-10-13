@@ -1497,9 +1497,9 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.0.22
+<div class="highlight"><pre><span></span><code>instagrapi 3.0.23
 </code></pre></div>
-<p>The applicable runtime changes through this baseline are included through aiograpi 2.0.18. The latest release reuses one runtime Pigeon ID per client and omits fabricated SALT values while preserving fresh timestamps and explicit header overrides. The TLS 1.3 minimum, Android 449 profile with saved 448 support, authorization-header cleanup and CAA context-pairing correction shipped in 2.0.17. Earlier ports are shown below.</p>
+<p>The applicable runtime changes through this baseline are included through aiograpi 2.0.19. The latest release deduplicates follower/following iterators by user ID, retains the first occurrence and counts unique users toward <code>amount</code>; it preserves server order without guaranteeing chronological sorting or a complete snapshot. Aiograpi 2.0.18 corrected the private header lifetime. The TLS 1.3 minimum, Android 449 profile with saved 448 support, authorization-header cleanup and CAA context-pairing correction shipped in 2.0.17. Earlier ports are shown below.</p>
 <table>
 <thead>
 <tr>
@@ -1623,6 +1623,11 @@
 <td>3.0.22</td>
 <td>2.0.18</td>
 <td>Reuse one runtime Pigeon ID per client, omit fabricated SALT defaults, and preserve explicit header overrides. Documentation service links and app-profile guidance are sync-specific.</td>
+</tr>
+<tr>
+<td>3.0.23</td>
+<td>2.0.19</td>
+<td>Follower/following iterators yield unique user IDs and count unique users toward <code>amount</code>, preserving first-seen data and server order.</td>
 </tr>
 </tbody>
 </table>
