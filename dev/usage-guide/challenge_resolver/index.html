@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#new-password-challenge" class="md-skip">
+        <a href="#controlling-automatic-resolution" class="md-skip">
           Skip to content
         </a>
       
@@ -609,6 +609,17 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#controlling-automatic-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlling automatic resolution
+      
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#new-password-challenge" class="md-nav__link">
@@ -1427,6 +1438,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#controlling-automatic-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlling automatic resolution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#new-password-challenge" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1470,6 +1492,10 @@
 
   <h1>Challenge Resolver</h1>
 
+<h2 id="controlling-automatic-resolution">Controlling automatic resolution</h2>
+<p><code>Client()</code> defaults to <code>with_challenge_flow=False</code>. When <code>private_request(...)</code> encounters a challenge, it raises the original <code>ChallengeRequired</code> before calling the resolver, reading stdin, or replaying the request. You can set <code>cl.with_challenge_flow</code> on an existing client. Explicit calls to challenge helpers remain available.</p>
+<p>To opt into automatic resolution, use <code>Client(with_challenge_flow=True)</code>. With this option, the default code and password handlers read stdin and can block the event loop while waiting. Valid piped input remains supported. End of input raises <code>ChallengeRequired</code> with the current challenge context and a hint to configure <code>challenge_code_handler</code> or <code>change_password_handler</code>. For unattended applications, keep automatic resolution disabled or provide asynchronous code/password handlers. Exceptions raised by custom handlers are propagated unchanged.</p>
+<p>A custom <code>handle_exception(client, error)</code> takes precedence over this policy. Both synchronous handlers and handlers returning an awaitable are supported; awaitables are awaited before processing continues. Raise the error from that handler to stop the request. Returning normally retains the existing request replay behavior. When automatic resolution succeeds, the original request may also be replayed. See <a href="../handle_exception/">exception handling</a>.</p>
 <h2 id="new-password-challenge">New password challenge</h2>
 <p>You can automatically change your password to solve the challenge from Instagram.</p>
 <p>Declare <code>change_password_handler</code> which will return a new password.</p>
@@ -1479,7 +1505,7 @@
     <span class="n">password</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">chars</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">password</span>
 
-<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">with_challenge_flow</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">change_password_handler</span> <span class="o">=</span> <span class="n">change_password_handler</span>
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">IG_USERNAME</span><span class="p">,</span> <span class="n">IG_PASSWORD</span><span class="p">)</span>
 </code></pre></div>
@@ -1489,18 +1515,19 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi.mixins.challenge</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChallengeChoice</span>
 
 
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">challenge_code_handler</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">choice</span><span class="p">):</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">challenge_code_handler</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">choice</span><span class="p">,</span> <span class="n">challenge_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sessionid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">choice</span> <span class="o">==</span> <span class="n">ChallengeChoice</span><span class="o">.</span><span class="n">SMS</span><span class="p">:</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">get_code_from_sms</span><span class="p">(</span><span class="n">username</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">choice</span> <span class="o">==</span> <span class="n">ChallengeChoice</span><span class="o">.</span><span class="n">EMAIL</span><span class="p">:</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">get_code_from_email</span><span class="p">(</span><span class="n">username</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">False</span>
 
-<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">with_challenge_flow</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">phone_number</span> <span class="o">=</span> <span class="s2">"+15551234567"</span>  <span class="c1"># required for submit_phone challenges</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">challenge_code_handler</span> <span class="o">=</span> <span class="n">challenge_code_handler</span>
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">IG_USERNAME</span><span class="p">,</span> <span class="n">IG_PASSWORD</span><span class="p">)</span>
 </code></pre></div>
+<p>Code handlers can receive optional <code>challenge_url</code> and <code>sessionid</code> keyword arguments from legacy challenge steps. Keep these parameters (or accept <code>**kwargs</code>) in custom handlers used with those steps. The built-in manual code handler accepts the same metadata.</p>
 <p>Login <code>submit_phone</code> challenges use <code>client.phone_number</code>, then call <code>challenge_code_handler(username, ChallengeChoice.SMS)</code> for the received code.
 Signup SMS challenges use the <code>phone_number</code> passed to <code>signup(...)</code> and call <code>challenge_code_handler(username, ChallengeChoice.SMS)</code> for the received code.</p>
 <p>Phone-only signup is supported with <code>await cl.signup(username, password, email="", phone_number="+15551234567")</code>. If both <code>email</code> and <code>phone_number</code> are provided, aiograpi keeps the email signup flow and uses the phone number only for signup challenges.</p>
@@ -1542,8 +1569,7 @@ Signup SMS challenges use the <code>phone_number</code> passed to <code>signup(.
                 <span class="k">return</span> <span class="n">code</span>
     <span class="k">return</span> <span class="kc">False</span>
 </code></pre></div>
-<p>All challenges solved in the module <a href="https://github.com/subzeroid/aiograpi/blob/main/aiograpi/mixins/challenge.py">challenge.py</a></p>
-<p>Automatic submission code from SMS/Email in examples <a href="https://github.com/subzeroid/aiograpi/blob/main/examples/challenge_resolvers.py">here</a></p>
+<p>Challenge resolution helpers are implemented in <a href="https://github.com/subzeroid/aiograpi/blob/main/aiograpi/mixins/challenge.py">challenge.py</a>.</p>
 
 
 

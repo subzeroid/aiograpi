@@ -1378,70 +1378,23 @@
 
   <h1>Handle Exceptions</h1>
 
-<p>You can handle any exceptions using a generic handler:</p>
+<p>You can handle exceptions centrally with <code>client.handle_exception</code>. A handler receives the client and the original exception. It may be synchronous or return an awaitable; aiograpi awaits that result before continuing.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BadPassword</span><span class="p">,</span> <span class="n">ReloginAttemptExceeded</span><span class="p">,</span> <span class="n">ChallengeRequired</span><span class="p">,</span>
-    <span class="n">SelectContactPointRecoveryForm</span><span class="p">,</span> <span class="n">RecaptchaChallengeForm</span><span class="p">,</span>
-    <span class="n">FeedbackRequired</span><span class="p">,</span> <span class="n">PleaseWaitFewMinutes</span><span class="p">,</span> <span class="n">LoginRequired</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChallengeRequired</span>
 
 
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle_exception</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">BadPassword</span><span class="p">):</span>
-        <span class="n">client</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-        <span class="n">client</span><span class="o">.</span><span class="n">set_proxy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">next_proxy</span><span class="p">()</span><span class="o">.</span><span class="n">href</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">client</span><span class="o">.</span><span class="n">relogin_attempt</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">freeze</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="n">ReloginAttemptExceeded</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-        <span class="n">client</span><span class="o">.</span><span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rebuild_client_settings</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_client_settings</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">get_settings</span><span class="p">())</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">LoginRequired</span><span class="p">):</span>
-        <span class="n">client</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-        <span class="n">client</span><span class="o">.</span><span class="n">relogin</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_client_settings</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">get_settings</span><span class="p">())</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">ChallengeRequired</span><span class="p">):</span>
-        <span class="n">api_path</span> <span class="o">=</span> <span class="n">json_value</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">last_json</span><span class="p">,</span> <span class="s2">"challenge"</span><span class="p">,</span> <span class="s2">"api_path"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">api_path</span> <span class="o">==</span> <span class="s2">"/challenge/"</span><span class="p">:</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">set_proxy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">next_proxy</span><span class="p">()</span><span class="o">.</span><span class="n">href</span><span class="p">)</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rebuild_client_settings</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">client</span><span class="o">.</span><span class="n">challenge_resolve</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">last_json</span><span class="p">)</span>
-            <span class="k">except</span> <span class="n">ChallengeRequired</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">freeze</span><span class="p">(</span><span class="s1">'Manual Challenge Required'</span><span class="p">,</span> <span class="n">days</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-                <span class="k">raise</span> <span class="n">e</span>
-            <span class="k">except</span> <span class="p">(</span><span class="n">ChallengeRequired</span><span class="p">,</span> <span class="n">SelectContactPointRecoveryForm</span><span class="p">,</span> <span class="n">RecaptchaChallengeForm</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">freeze</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">days</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-                <span class="k">raise</span> <span class="n">e</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">update_client_settings</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">get_settings</span><span class="p">())</span>
-        <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">FeedbackRequired</span><span class="p">):</span>
-        <span class="n">message</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">last_json</span><span class="p">[</span><span class="s2">"feedback_message"</span><span class="p">]</span>
-        <span class="k">if</span> <span class="s2">"This action was blocked. Please try again later"</span> <span class="ow">in</span> <span class="n">message</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">freeze</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">hours</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-            <span class="c1"># client.settings = self.rebuild_client_settings()</span>
-            <span class="c1"># return self.update_client_settings(client.get_settings())</span>
-        <span class="k">elif</span> <span class="s2">"We restrict certain activity to protect our community"</span> <span class="ow">in</span> <span class="n">message</span><span class="p">:</span>
-            <span class="c1"># 6 hours is not enough</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">freeze</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">hours</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="s2">"Your account has been temporarily blocked"</span> <span class="ow">in</span> <span class="n">message</span><span class="p">:</span>
-<span class="w">            </span><span class="sd">"""</span>
-<span class="sd">            Based on previous use of this feature, your account has been temporarily</span>
-<span class="sd">            blocked from taking this action.</span>
-<span class="sd">            This block will expire on 2020-03-27.</span>
-<span class="sd">            """</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">freeze</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">PleaseWaitFewMinutes</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">freeze</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">raise</span> <span class="n">e</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle_exception</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">ChallengeRequired</span><span class="p">):</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Manual verification required; pausing this account"</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="n">error</span>
+
 
 <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
 <span class="n">cl</span><span class="o">.</span><span class="n">handle_exception</span> <span class="o">=</span> <span class="n">handle_exception</span>
 <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
 </code></pre></div>
-<p>In this way, you can centrally handle errors and not repeat handlers throughout your code.</p>
-<p>Full example <a href="https://github.com/subzeroid/aiograpi/blob/main/examples/handle_exception.py">here</a></p>
+<p>Raising from the handler stops processing and propagates the error. Returning normally tells <code>private_request(...)</code> to continue with its existing replay behavior, so a handler should return only after it has handled the error. A custom handler takes precedence over <code>with_challenge_flow</code>, including when that option is <code>False</code>.</p>
+<p>If your application deliberately resolves a challenge in this handler, use <code>await client.challenge_resolve(client.last_json)</code> and let unresolved exceptions propagate. Configure code and password handlers as described in <a href="../challenge_resolver/">challenge resolution</a>.</p>
 
 
 
