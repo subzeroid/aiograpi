@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import json
 import socket
 from contextlib import asynccontextmanager
 from copy import deepcopy
@@ -15,6 +17,24 @@ PIGEON = "X-Pigeon-Session-Id"
 RAWTIME = "X-Pigeon-Rawclienttime"
 SALT = "X-IG-SALT-IDS"
 ACCOUNT_SETTINGS = {"authorization_data": {"ds_user_id": "123", "sessionid": "synthetic-session"}}
+
+
+def _authorization_header(auth_data: dict) -> str:
+    payload = base64.b64encode(json.dumps(auth_data).encode()).decode()
+    return f"Bearer IGT:2:{payload}"
+
+
+async def _client_with_responder(settings, respond):
+    client = Client(settings=settings, private_transport="requests", request_timeout=0)
+    await client.private._client.aclose()
+    client.private._client = httpx.AsyncClient(transport=httpx.MockTransport(respond), trust_env=False)
+    return client
+
+
+async def _close_client(client):
+    for session in (client.private, client.public, client.graphql):
+        await session._close()
+        await session._client.aclose()
 
 
 @pytest.fixture(autouse=True)
@@ -122,6 +142,67 @@ def test_authorization_cleanup_preserves_runtime_id():
             assert records[1].headers["IG-INTENDED-USER-ID"] == "0"
             same_pigeon = records[0].headers[PIGEON] == records[1].headers[PIGEON]
             assert same_pigeon, "Authorization cleanup must preserve the runtime Pigeon ID"
+
+    asyncio.run(scenario())
+
+
+def test_private_request_applies_rotated_authorization_and_reuses_it():
+    async def scenario():
+        rotated = {"ds_user_id": "999", "sessionid": "rotated-session"}
+        outgoing_auth = []
+
+        def respond(request):
+            outgoing_auth.append(request.headers.get("Authorization"))
+            return httpx.Response(
+                200,
+                json={"status": "ok"},
+                headers={"ig-set-authorization": _authorization_header(rotated)},
+            )
+
+        client = await _client_with_responder(deepcopy(ACCOUNT_SETTINGS), respond)
+        try:
+            await client.private_request("test/", login=True)
+            # rotation is merged into the live session
+            assert client.authorization_data["ds_user_id"] == "999"
+            assert client.authorization_data["sessionid"] == "rotated-session"
+            # persisted settings carry the rotation
+            assert client.get_settings()["authorization_data"] == rotated
+            # the next outgoing request uses the rotated token
+            await client.private_request("test/", login=True)
+            sent = json.loads(base64.b64decode(outgoing_auth[-1].rsplit(":", 1)[-1]))
+            assert sent["sessionid"] == "rotated-session"
+        finally:
+            await _close_client(client)
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "header_value",
+    [
+        None,  # absent
+        "",  # empty
+        "Bearer IGT:2:!!!not-base64!!!",  # malformed base64
+        "Bearer IGT:2:" + base64.b64encode(b"not-json").decode(),  # malformed JSON
+        "Bearer IGT:2:" + base64.b64encode(b'["a", "b"]').decode(),  # non-mapping: list
+        "Bearer IGT:2:"
+        + base64.b64encode(b'[["k", "v"], ["k2", "v2"]]').decode(),  # non-mapping: list of key/value pairs
+        "Bearer IGT:2:" + base64.b64encode(b'"just-a-string"').decode(),  # non-mapping: string
+        "Bearer IGT:2:" + base64.b64encode(b"null").decode(),  # non-mapping: null
+    ],
+)
+def test_private_request_ignores_invalid_authorization_header(header_value):
+    async def scenario():
+        def respond(request):
+            headers = {"ig-set-authorization": header_value} if header_value is not None else {}
+            return httpx.Response(200, json={"status": "ok"}, headers=headers)
+
+        client = await _client_with_responder(deepcopy(ACCOUNT_SETTINGS), respond)
+        try:
+            await client.private_request("test/", login=True)
+            assert client.authorization_data == ACCOUNT_SETTINGS["authorization_data"]
+        finally:
+            await _close_client(client)
 
     asyncio.run(scenario())
 
