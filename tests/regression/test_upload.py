@@ -110,6 +110,25 @@ class UploadRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(extra_data["publish_mode"], "scheduled")
         self.assertEqual(json.loads(extra_data["content_scheduling_metadata"]), {"scheduled_publish_time": schedule_at})
 
+    async def test_photo_upload_uses_configure_return_value_for_media_extraction(self):
+        client = self.build_client()
+        client.photo_rupload = AsyncMock(return_value=("1", 720, 720))
+        configure_return = {"status": "ok", "media": self.build_media_payload(media_type=1)}
+        client.photo_configure = AsyncMock(return_value=configure_return)
+
+        captured = {}
+
+        async def fake_extract(configured, *args, **kwargs):
+            captured["configured"] = configured
+            return self.build_media(media_type=1)
+
+        client._extract_configured_media_or_recent = fake_extract
+
+        with unittest.mock.patch("asyncio.sleep", new=AsyncMock()):
+            await client.photo_upload(Path("example.jpg"), "caption")
+
+        self.assertIs(captured["configured"], configure_return)
+
     async def test_photo_upload_accepts_datetime_schedule_at(self):
         client = self.build_client()
         schedule_at = datetime.fromtimestamp(1779808917, tz=timezone.utc)
