@@ -525,6 +525,11 @@ class PrivateRequestMixin(ClientMixin):
             mid = response.headers.get("ig-set-x-mid")
             if mid:
                 self.mid = mid
+            authorization = response.headers.get("ig-set-authorization")
+            if authorization:
+                parsed = self.parse_authorization(authorization)
+                if isinstance(parsed, dict):
+                    self.authorization_data.update(parsed)
             self.request_log(response)
             self.last_response = response
             # hack for re-request without paging cursor if cursor is broken

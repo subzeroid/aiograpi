@@ -1395,12 +1395,14 @@ class AuthAndStoryRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         client = Client()
         sessionid = "1234567890123456789012345678901%3Atoken"
         client.user_info_v1 = AsyncMock(side_effect=PrivateError("boom"))
+        client._user_short_from_private_stream = AsyncMock(side_effect=PrivateError("boom"))
         client.user_short_gql = AsyncMock(return_value=UserShort(pk="1234567890123456789", username="example"))
 
         result = await client.login_by_sessionid(sessionid)
 
         self.assertTrue(result)
         client.user_info_v1.assert_called_once_with(1234567890123456789012345678901)
+        client._user_short_from_private_stream.assert_called_once_with("1234567890123456789012345678901")
         client.user_short_gql.assert_called_once_with(1234567890123456789012345678901)
         self.assertEqual(client.username, "example")
         self.assertEqual(client.authorization_data["sessionid"], sessionid)

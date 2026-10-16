@@ -331,7 +331,7 @@ class UploadPhotoMixin(ClientMixin):
         for attempt in range(10):
             self.logger.debug(f"Attempt #{attempt} to configure Photo: {path}")
             await asyncio.sleep(3)
-            if await self.photo_configure(
+            if configure_result := await self.photo_configure(
                 upload_id,
                 width,
                 height,
@@ -341,7 +341,7 @@ class UploadPhotoMixin(ClientMixin):
                 extra_data=extra_data,
             ):
                 media = await self._extract_configured_media_or_recent(
-                    self.last_json,
+                    configure_result,
                     PhotoConfigureError,
                     "Photo upload",
                     previous_media_ids,
