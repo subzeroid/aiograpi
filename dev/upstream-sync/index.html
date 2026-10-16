@@ -1497,9 +1497,9 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.0.24
+<div class="highlight"><pre><span></span><code>instagrapi 3.0.25
 </code></pre></div>
-<p>The applicable runtime changes through this baseline are included through aiograpi 2.0.20. The latest release preserves the disabled automatic challenge default, reports built-in prompt EOF as <code>ChallengeRequired</code>, accepts existing challenge callback metadata and awaits asynchronous generic exception hooks. Aiograpi 2.0.19 deduplicates follower/following iterators by user ID while preserving first-seen data and server order. Aiograpi 2.0.18 corrected the private header lifetime. The TLS 1.3 minimum, Android 449 profile with saved 448 support, authorization-header cleanup and CAA context-pairing correction shipped in 2.0.17. Earlier ports are shown below.</p>
+<p>The applicable runtime changes through this baseline are included through aiograpi 2.0.21. The latest release adds configurable and persistent public/non-LSD GraphQL User-Agent profiles while retaining existing route defaults. Aiograpi 2.0.20 preserves the disabled automatic challenge default, reports built-in prompt EOF as <code>ChallengeRequired</code>, accepts existing challenge callback metadata and awaits asynchronous generic exception hooks. Aiograpi 2.0.19 deduplicates follower/following iterators by user ID while preserving first-seen data and server order. Aiograpi 2.0.18 corrected the private header lifetime. The TLS 1.3 minimum, Android 449 profile with saved 448 support, authorization-header cleanup and CAA context-pairing correction shipped in 2.0.17. Earlier ports are shown below.</p>
 <table>
 <thead>
 <tr>
@@ -1633,6 +1633,11 @@
 <td>3.0.24</td>
 <td>2.0.20</td>
 <td>Compatible challenge handling controls and actionable built-in prompt EOF errors; async callback metadata and awaited generic hooks retain the disabled automatic handling default.</td>
+</tr>
+<tr>
+<td>3.0.25</td>
+<td>2.0.21</td>
+<td>Configurable independent/shared public and non-LSD GraphQL User-Agent profiles, settings persistence and case-insensitive per-call overrides; existing defaults retained.</td>
 </tr>
 </tbody>
 </table>
