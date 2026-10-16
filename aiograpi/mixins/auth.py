@@ -1278,6 +1278,13 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         """
         Helper to set a device for login
 
+        Each call starts from library defaults and overlays ``device``; it
+        does not merge with the current profile. For hardware-only changes,
+        pass ``{**self.device_settings, **hardware_updates}`` to retain the
+        existing app fields, then call ``set_user_agent()`` to rebuild the
+        User-Agent. ``override_app_version=True`` still selects the current
+        default app profile.
+
         Parameters
         ----------
         device: Dict, optional
