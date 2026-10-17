@@ -344,10 +344,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#why-migrate" class="md-nav__link">
+  <a href="#early-migration-benefits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why migrate
+        Early migration benefits
       
     </span>
   </a>
@@ -355,15 +355,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#version-by-version-breaking-changes" class="md-nav__link">
+  <a href="#historical-breaking-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Version-by-version breaking changes
+        Historical breaking changes
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Version-by-version breaking changes">
+    <nav class="md-nav" aria-label="Historical breaking changes">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1525,10 +1525,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#why-migrate" class="md-nav__link">
+  <a href="#early-migration-benefits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why migrate
+        Early migration benefits
       
     </span>
   </a>
@@ -1536,15 +1536,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#version-by-version-breaking-changes" class="md-nav__link">
+  <a href="#historical-breaking-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Version-by-version breaking changes
+        Historical breaking changes
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Version-by-version breaking changes">
+    <nav class="md-nav" aria-label="Historical breaking changes">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1661,9 +1661,8 @@
 
 
 <h1 id="migration-guide">Migration Guide</h1>
-<p>If you're on <code>aiograpi==0.0.x</code>, here's how to move to the current
-<code>0.7.x</code> line.</p>
-<h2 id="why-migrate">Why migrate</h2>
+<p>The current aiograpi release line is <code>2.x</code>. The notes below cover historical breaking changes from <code>0.1.x</code> through <code>0.7.x</code> for integrations using <code>0.0.x</code> or other early releases. For subsequent changes, including the current login and transport defaults, use the <a href="https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md">CHANGELOG</a> and <a href="../upstream-sync/">Upstream Sync</a>.</p>
+<h2 id="early-migration-benefits">Early migration benefits</h2>
 <ul>
 <li><strong>Sync with <code>instagrapi==2.4.4</code></strong> — months of upstream auth/session
   hardening, media configure fixes, new mixins
@@ -1675,7 +1674,7 @@
 <li><strong>Active maintenance.</strong> PyPI releases on every tag via trusted
   publishing CI.</li>
 </ul>
-<h2 id="version-by-version-breaking-changes">Version-by-version breaking changes</h2>
+<h2 id="historical-breaking-changes">Historical breaking changes</h2>
 <h3 id="070-preloginrequired-on-private-endpoints">0.7.0 — <code>PreLoginRequired</code> on private endpoints</h3>
 <p>Calling any private method (anything via <code>private_request</code> — most <code>_v1</code>
 methods, <code>private_graphql_*</code>, account/comment/direct mutations) without

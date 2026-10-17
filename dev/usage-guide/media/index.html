@@ -1682,12 +1682,12 @@
 </tr>
 <tr>
 <td>media_pk_from_code(code: str)</td>
-<td>int</td>
+<td>str</td>
 <td>Return media_pk</td>
 </tr>
 <tr>
 <td>media_pk_from_url(url: str)</td>
-<td>int</td>
+<td>str</td>
 <td>Return media_pk</td>
 </tr>
 <tr>
@@ -1949,14 +1949,14 @@ background image, or omit <code>background</code> to generate a temporary black 
 <span class="o">&gt;&gt;&gt;</span> <span class="n">cl</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
 
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_code</span><span class="p">(</span><span class="s2">"B-fKL9qpeab"</span><span class="p">)</span>
-<span class="mi">2278584739065882267</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_code</span><span class="p">(</span><span class="s2">"B-fKL9qpeab"</span><span class="p">)</span>
+<span class="s1">'2278584739065882267'</span>
 
-<span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_code</span><span class="p">(</span><span class="s2">"B8jnuB2HAbyc0q001y3F9CHRSoqEljK_dgkJjo0"</span><span class="p">)</span>
-<span class="mi">2243811726252050162</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_code</span><span class="p">(</span><span class="s2">"B8jnuB2HAbyc0q001y3F9CHRSoqEljK_dgkJjo0"</span><span class="p">)</span>
+<span class="s1">'2243811726252050162'</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_url</span><span class="p">(</span><span class="s2">"https://www.instagram.com/p/BjNLpA1AhXM/"</span><span class="p">)</span>
-<span class="mi">1787135824035452364</span>
+<span class="s1">'1787135824035452364'</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="p">(</span><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_info</span><span class="p">(</span><span class="mi">1787135824035452364</span><span class="p">))</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
 <span class="p">{</span><span class="s1">'pk'</span><span class="p">:</span> <span class="mi">1787135824035452364</span><span class="p">,</span>
@@ -2156,7 +2156,7 @@ endpoint is gated. It does not rewrite CDN URLs manually.</p>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">)</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_url</span><span class="p">(</span><span class="s2">"https://www.instagram.com/p/BqNQJleFoSJ/"</span><span class="p">)</span>
-<span class="mi">1913256444155036809</span>
+<span class="s1">'1913256444155036809'</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="n">video_url</span> <span class="o">=</span> <span class="p">(</span><span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_info</span><span class="p">(</span><span class="mi">1913256444155036809</span><span class="p">))</span><span class="o">.</span><span class="n">video_url</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">video_download_by_url</span><span class="p">(</span><span class="n">video_url</span><span class="p">,</span> <span class="n">folder</span><span class="o">=</span><span class="s1">'/tmp'</span><span class="p">)</span>
@@ -2164,7 +2164,7 @@ endpoint is gated. It does not rewrite CDN URLs manually.</p>
 </code></pre></div>
 <p>If Instagram returns a <code>Content-Length</code> header and the downloaded file is shorter, download helpers remove the partial file and raise <code>ClientIncompleteReadError</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">media_pk_from_url</span><span class="p">(</span><span class="s2">"http://www.instagram.com/p/BjNLpA1AhXM/"</span><span class="p">)</span>
-<span class="mi">1787135824035452364</span>
+<span class="s1">'1787135824035452364'</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">album_download</span><span class="p">(</span><span class="mi">1787135824035452364</span><span class="p">)</span>
 <span class="p">[</span><span class="n">PosixPath</span><span class="p">(</span><span class="s1">'/app/example_1787135361353462176.mp4'</span><span class="p">),</span>
