@@ -1,9 +1,8 @@
 # Migration Guide
 
-If you're on `aiograpi==0.0.x`, here's how to move to the current
-`0.7.x` line.
+The current aiograpi release line is `2.x`. The notes below cover historical breaking changes from `0.1.x` through `0.7.x` for integrations using `0.0.x` or other early releases. For subsequent changes, including the current login and transport defaults, use the [CHANGELOG](https://github.com/subzeroid/aiograpi/blob/main/CHANGELOG.md) and [Upstream Sync](upstream-sync.md).
 
-## Why migrate
+## Early migration benefits
 
 - **Sync with `instagrapi==2.4.4`** — months of upstream auth/session
   hardening, media configure fixes, new mixins
@@ -15,7 +14,7 @@ If you're on `aiograpi==0.0.x`, here's how to move to the current
 - **Active maintenance.** PyPI releases on every tag via trusted
   publishing CI.
 
-## Version-by-version breaking changes
+## Historical breaking changes
 
 ### 0.7.0 — `PreLoginRequired` on private endpoints
 

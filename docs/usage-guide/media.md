@@ -25,8 +25,8 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | --------------------------------------------------------------- | ------------------ | --------------------------------------------
 | media_id(media_pk: int)                                         | str                | Return media_id by media_pk (e.g. 2277033926878261772 -> 2277033926878261772_1903424587)
 | media_pk(media_id: str)                                         | int                | Return media_pk by media_id (e.g. 2277033926878261772_1903424587 -> 2277033926878261772)
-| media_pk_from_code(code: str)                                   | int                | Return media_pk
-| media_pk_from_url(url: str)                                     | int                | Return media_pk
+| media_pk_from_code(code: str)                                   | str                | Return media_pk
+| media_pk_from_url(url: str)                                     | str                | Return media_pk
 | user_medias(user_id: str, amount: int = 20)                     | List\[Media]       | Get list of medias by user_id
 | iter_user_medias(user_id: str, amount: int = 0, page_size: int = 0) | AsyncIterator\[Media] | Stream user feed media page by page without building a full list
 | user_medias_chunk(user_id: str, end_cursor: str = "")           | Tuple\[List\[Media], str] | Get one page of medias by user_id
@@ -96,14 +96,14 @@ Low level methods:
 >>> cl = Client()
 >>> await cl.login(USERNAME, PASSWORD)
 
->>> await cl.media_pk_from_code("B-fKL9qpeab")
-2278584739065882267
+>>> cl.media_pk_from_code("B-fKL9qpeab")
+'2278584739065882267'
 
->>> await cl.media_pk_from_code("B8jnuB2HAbyc0q001y3F9CHRSoqEljK_dgkJjo0")
-2243811726252050162
+>>> cl.media_pk_from_code("B8jnuB2HAbyc0q001y3F9CHRSoqEljK_dgkJjo0")
+'2243811726252050162'
 
 >>> await cl.media_pk_from_url("https://www.instagram.com/p/BjNLpA1AhXM/")
-1787135824035452364
+'1787135824035452364'
 
 >>> (await cl.media_info(1787135824035452364)).dict()
 {'pk': 1787135824035452364,
@@ -262,7 +262,7 @@ endpoint is gated. It does not rewrite CDN URLs manually.
 >>> await cl.login(USERNAME, PASSWORD)
 
 >>> await cl.media_pk_from_url("https://www.instagram.com/p/BqNQJleFoSJ/")
-1913256444155036809
+'1913256444155036809'
 
 >>> video_url = (await cl.media_info(1913256444155036809)).video_url
 >>> await cl.video_download_by_url(video_url, folder='/tmp')
@@ -275,7 +275,7 @@ If Instagram returns a `Content-Length` header and the downloaded file is shorte
 ``` python
 
 >>> await cl.media_pk_from_url("http://www.instagram.com/p/BjNLpA1AhXM/")
-1787135824035452364
+'1787135824035452364'
 
 >>> await cl.album_download(1787135824035452364)
 [PosixPath('/app/example_1787135361353462176.mp4'),

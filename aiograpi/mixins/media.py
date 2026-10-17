@@ -521,8 +521,8 @@ class MediaMixin(ClientMixin):
 
         Returns
         -------
-        int
-            Full media id
+        str
+            Media PK as a string
 
         Examples
         --------
@@ -549,8 +549,8 @@ class MediaMixin(ClientMixin):
 
         Returns
         -------
-        int
-            Media PK
+        str
+            Media PK as a string
 
         Examples
         --------
