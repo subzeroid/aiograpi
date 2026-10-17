@@ -23,6 +23,7 @@ from aiograpi.exceptions import (
     ClientForbiddenError,
     ClientIncompleteReadError,
     ClientJSONDecodeError,
+    ClientNeedsUpgradeError,
     ClientNotFoundError,
     ClientRequestTimeout,
     ClientStatusFail,
@@ -701,6 +702,8 @@ class PrivateRequestMixin(ClientMixin):
                         "Instagram has blocked your IP address, use a quality proxy provider (not free, not shared)"
                     )
                     raise ProxyAddressIsBlocked(**last_json)
+                elif error_type == "needs_upgrade":
+                    raise ClientNeedsUpgradeError(**dict(last_json, response=response))
                 elif error_type or message:
                     self.logger.warning("UnkNownError %r (%r)", last_json, response)
                     raise UnknownError(**last_json)

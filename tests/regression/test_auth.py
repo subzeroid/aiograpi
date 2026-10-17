@@ -1,7 +1,11 @@
 import asyncio
+import base64
+import json
 import unittest
+from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, Mock
 
+import httpx
 from pydantic import ValidationError
 
 from aiograpi import Client
@@ -10,6 +14,8 @@ from aiograpi.exceptions import (
     BadPassword,
     ChallengeError,
     ClientNotFoundError,
+    ClientThrottledError,
+    FeedbackRequired,
     LoginRequired,
     PleaseWaitFewMinutes,
     PrivateError,
@@ -516,3 +522,157 @@ class LegacyNeedsUpgradeAuthRegressionTestCase(unittest.IsolatedAsyncioTestCase)
         self.client.bloks_caa_login.assert_awaited_once_with(verification_code="")
         self.client.login_flow.assert_not_awaited()
         self.assertEqual(self.client.private_request.await_count, 1)
+
+
+# Value: protects=typed legacy rejection through real CAA fallback requests;
+# fails_when=typed rejection breaks success, masks CAA failures, or loses cancellation;
+# why_new=existing async fallback tests inject generic exceptions; seam=none
+class LegacyNeedsUpgradeTransportRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    @asynccontextmanager
+    async def login_responses(self, entrypoint, caa_status, caa_body):
+        client = Client(private_transport="requests", settings={"session_retry_total": 0, "request_timeout": 0})
+        client.caa_aac = '{"aaccs":"synthetic-context"}'
+        client.pre_login_flow = AsyncMock(return_value=True)
+        client.password_encrypt = AsyncMock(return_value="#PWD_INSTAGRAM:4:1:synthetic")
+        client.bloks_caa_login_prepare = AsyncMock(return_value=True)
+        client.login_flow = AsyncMock()
+        client.small_delay = AsyncMock()
+        legacy_json = {"status": "fail", "error_type": "needs_upgrade", "message": "Legacy login rejected"}
+        login = "https://i.instagram.com/api/v1/accounts/login/"
+        caa = "https://b.i.instagram.com/api/v1/bloks/async_action/com.bloks.www.bloks.caa.login.async.send_login_request/"
+        sequence = []
+        if entrypoint == "login":
+            sequence.append(
+                (caa, 200, {"status": "ok", "layout": {"bloks_payload": {"data": ["CAA_LOGIN_FALLBACK:synthetic"]}}})
+            )
+        sequence.extend([(login, 400, legacy_json), (caa, caa_status, caa_body)])
+        requests = []
+        responses = []
+
+        def stop_on_error(_client, exc):
+            raise exc
+
+        client.handle_exception = stop_on_error
+
+        def handle(request):
+            assert len(requests) < len(sequence), "Unexpected extra login request"
+            url, status, body = sequence[len(requests)]
+            assert str(request.url) == url
+            assert request.method == "POST"
+            requests.append(request)
+            if isinstance(body, BaseException):
+                raise body
+            response = httpx.Response(status, json=body)
+            responses.append(response)
+            return response
+
+        client.private._client = httpx.AsyncClient(transport=httpx.MockTransport(handle))
+        try:
+            yield client, requests, responses, sequence
+        finally:
+            await client.private._close()
+            await client.public._close()
+            await client.graphql._close()
+
+    async def test_caa_without_usable_session_keeps_typed_legacy_error(self):
+        for entrypoint in ("login", "login_legacy"):
+            for status, body in (
+                (404, {"status": "fail", "message": "Not found"}),
+                (400, {"status": "fail", "error_type": "field_exception", "message": "Payload returned is null."}),
+                (200, {"status": "ok", "layout": {"bloks_payload": {"data": []}}}),
+            ):
+                with self.subTest(entrypoint=entrypoint, status=status):
+                    async with self.login_responses(entrypoint, status, body) as (
+                        client,
+                        requests,
+                        responses,
+                        sequence,
+                    ):
+                        with self.assertRaises(UnknownError) as raised:
+                            await getattr(client, entrypoint)("synthetic-user", "synthetic-password")
+
+                        self.assertEqual(type(raised.exception).__name__, "ClientNeedsUpgradeError")
+                        self.assertIs(raised.exception.response, responses[-2])
+                        self.assertEqual(raised.exception.code, 400)
+                        self.assertEqual(raised.exception.message, "Legacy login rejected")
+                        self.assertEqual(raised.exception.error_type, "needs_upgrade")
+                        self.assertIs(client.last_response, responses[-2])
+                        self.assertEqual(client.last_json, sequence[-2][2])
+                        self.assertEqual(len(requests), len(sequence))
+                        self.assertIsNone(client.user_id)
+                        client.login_flow.assert_not_awaited()
+
+    async def test_needs_upgrade_still_completes_successful_caa_fallback(self):
+        for entrypoint in ("login", "login_legacy"):
+            with self.subTest(entrypoint=entrypoint):
+                authorization = (
+                    "Bearer IGT:2:"
+                    + base64.b64encode(
+                        json.dumps({"ds_user_id": "123", "sessionid": "synthetic-session"}).encode()
+                    ).decode()
+                )
+                body = {
+                    "status": "ok",
+                    "headers": {"IG-Set-Authorization": authorization},
+                    "cookies": {"sessionid": "synthetic-session", "ds_user_id": "123"},
+                }
+                async with self.login_responses(entrypoint, 200, body) as (client, requests, responses, sequence):
+                    self.assertTrue(await getattr(client, entrypoint)("synthetic-user", "synthetic-password"))
+
+                    self.assertEqual(client.user_id, 123)
+                    self.assertEqual(client.sessionid, "synthetic-session")
+                    self.assertEqual(len(requests), len(sequence))
+                    client.login_flow.assert_awaited_once_with()
+
+    async def test_later_caa_failure_dominates_typed_legacy_rejection(self):
+        for entrypoint in ("login", "login_legacy"):
+            for status, body, expected in (
+                (429, {"status": "fail", "message": "Request limited"}, ClientThrottledError),
+                (
+                    400,
+                    {"status": "fail", "error_type": "rate_limit_error", "message": "Request limited"},
+                    RateLimitError,
+                ),
+                (400, {"status": "fail", "message": "feedback_required"}, FeedbackRequired),
+                (
+                    400,
+                    {"status": "fail", "error_type": "field_exception", "message": "Different server error"},
+                    UnknownError,
+                ),
+                (
+                    400,
+                    {"status": "fail", "error_type": "needs_upgrade", "message": "CAA login requires upgrade"},
+                    UnknownError,
+                ),
+            ):
+                with self.subTest(entrypoint=entrypoint, status=status, expected=expected):
+                    async with self.login_responses(entrypoint, status, body) as (
+                        client,
+                        requests,
+                        responses,
+                        sequence,
+                    ):
+                        with self.assertRaises(expected) as raised:
+                            await getattr(client, entrypoint)("synthetic-user", "synthetic-password")
+
+                        if body.get("error_type") == "needs_upgrade":
+                            self.assertEqual(type(raised.exception).__name__, "ClientNeedsUpgradeError")
+                            self.assertIs(raised.exception.response, responses[-1])
+                            self.assertEqual(raised.exception.message, body["message"])
+                        else:
+                            self.assertIs(type(raised.exception), expected)
+                        self.assertIs(client.last_response, responses[-1])
+                        self.assertEqual(client.last_json, body)
+                        self.assertEqual(getattr(raised.exception, "error_type", None), body.get("error_type"))
+                        self.assertEqual(len(requests), len(sequence))
+                        client.login_flow.assert_not_awaited()
+
+    async def test_caa_transport_cancellation_propagates_without_resend(self):
+        cancellation = asyncio.CancelledError()
+        async with self.login_responses("login_legacy", None, cancellation) as (client, requests, responses, sequence):
+            with self.assertRaises(asyncio.CancelledError) as raised:
+                await client.login_legacy("synthetic-user", "synthetic-password")
+
+            self.assertIs(raised.exception, cancellation)
+            self.assertEqual(len(requests), len(sequence))
+            client.login_flow.assert_not_awaited()
