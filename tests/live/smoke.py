@@ -27,9 +27,11 @@ from contextlib import ExitStack, contextmanager, redirect_stderr, redirect_stdo
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+import httpx
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from aiograpi import Client
+from aiograpi import Client, config
 from aiograpi.exceptions import UnknownError
 from aiograpi.types import UserShort
 from tests.live.auth_helpers import login_with_timeout
@@ -46,9 +48,33 @@ def _summarize(out):
     return "ok"
 
 
-def _error_summary(exc):
+def _error_summary(exc, endpoint=None):
     name = type(exc).__name__
     response = getattr(exc, "response", None)
+    cause = exc.__cause__
+    if cause is None and not exc.__suppress_context__:
+        cause = exc.__context__
+    if endpoint and isinstance(exc, UnknownError) and isinstance(cause, httpx.HTTPStatusError):
+        # Generic SDK errors can omit the response. Use only their own transport
+        # failure for this GET, never mutable last_response from another request.
+        if isinstance(cause.response, httpx.Response):
+            try:
+                request = cause.response.request
+            except RuntimeError:
+                pass
+            else:
+                if (
+                    request is cause.request
+                    and request.method == "GET"
+                    and request.url.scheme == "https"
+                    and request.url.host == config.API_DOMAIN
+                    and request.url.path == f"/api/v1/{endpoint}"
+                    and (
+                        endpoint != "fbsearch/accounts_recs/"
+                        or request.url.params.get_list("target_user_id") == ["25025320"]
+                    )
+                ):
+                    response = cause.response
     for status in (getattr(response, "status_code", None), getattr(exc, "code", None)):
         if type(status) is int and 100 <= status <= 599:
             name = f"{name} HTTP {status}"
@@ -109,7 +135,7 @@ async def _check_fbsearch_suggested_profiles(primary, accounts, report):
         report(f"REQ fbsearch_suggested_profiles: {_summarize(suggested)}")
         return True
     except Exception as exc:
-        report(f"REQ fbsearch_suggested_profiles primary: {_error_summary(exc)}")
+        report(f"REQ fbsearch_suggested_profiles primary: {_error_summary(exc, endpoint='fbsearch/accounts_recs/')}")
 
     attempts = 0
     for index, account in enumerate(accounts, 1):
@@ -124,18 +150,26 @@ async def _check_fbsearch_suggested_profiles(primary, accounts, report):
         if not isinstance(settings, dict):
             continue
         alternate = None
+        stage = "session_setup"
+        endpoint = None
         try:
             alternate = Client(settings=settings, proxy=account.get("proxy"))
             if not alternate.sessionid:
                 continue
             attempts += 1
+            stage = "profile_control"
+            endpoint = "users/25025320/info/"
             control = await alternate.user_info_v1("25025320")
             assert str(control.pk) == "25025320"
+            stage = "recommendations"
+            endpoint = "fbsearch/accounts_recs/"
             suggested = await check(alternate)
             report(f"REQ fbsearch_suggested_profiles: {_summarize(suggested)} (saved acc{index})")
             return True
         except Exception as exc:
-            report(f"REQ fbsearch_suggested_profiles saved acc{index}: {_error_summary(exc)}")
+            report(
+                f"REQ fbsearch_suggested_profiles saved acc{index} {stage}: {_error_summary(exc, endpoint=endpoint)}"
+            )
         finally:
             if alternate is not None:
                 for name in ("private", "public", "graphql"):
