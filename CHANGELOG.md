@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.22] - 2026-10-17
+
+### Fixed
+
+- Catch HTTP 400 `error_type=needs_upgrade` as `ClientNeedsUpgradeError`, an `UnknownError` subclass that preserves existing handlers, original response diagnostics and CAA fallback behavior (#514). This improves error handling; it does not establish recovery from a CAA response without a session.
+- Correct synchronous `media_pk_from_code()` examples, string results and helper return documentation; retain `await` for asynchronous URL resolution. Align migration and installation guidance with the current 2.x line, Python 3.10+ and supported HTTPX versions (#515).
+
+### Changed
+
+- Record synchronization through instagrapi 3.0.26, including compatible typed `needs_upgrade` errors.
+
 ## [2.0.21] - 2026-10-16
 
 ### Fixed

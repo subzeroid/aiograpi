@@ -5,10 +5,10 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.0.25
+instagrapi 3.0.26
 ```
 
-The applicable runtime changes through this baseline are included through aiograpi 2.0.21. The latest release adds configurable and persistent public/non-LSD GraphQL User-Agent profiles while retaining existing route defaults. Aiograpi 2.0.20 preserves the disabled automatic challenge default, reports built-in prompt EOF as `ChallengeRequired`, accepts existing challenge callback metadata and awaits asynchronous generic exception hooks. Aiograpi 2.0.19 deduplicates follower/following iterators by user ID while preserving first-seen data and server order. Aiograpi 2.0.18 corrected the private header lifetime. The TLS 1.3 minimum, Android 449 profile with saved 448 support, authorization-header cleanup and CAA context-pairing correction shipped in 2.0.17. Earlier ports are shown below.
+The applicable runtime changes through this baseline are included through aiograpi 2.0.22. This release adds compatible typed `needs_upgrade` errors while preserving the existing CAA fallback behavior. It does not establish recovery from CAA responses without a session. Aiograpi 2.0.21 added configurable and persistent public/non-LSD GraphQL User-Agent profiles while retaining existing route defaults. Aiograpi 2.0.20 preserves the disabled automatic challenge default, reports built-in prompt EOF as `ChallengeRequired`, accepts existing challenge callback metadata and awaits asynchronous generic exception hooks. Aiograpi 2.0.19 deduplicates follower/following iterators by user ID while preserving first-seen data and server order. Aiograpi 2.0.18 corrected the private header lifetime. The TLS 1.3 minimum, Android 449 profile with saved 448 support, authorization-header cleanup and CAA context-pairing correction shipped in 2.0.17. Earlier ports are shown below.
 
 | instagrapi release | aiograpi release | Ported behavior |
 | --- | --- | --- |
@@ -38,6 +38,7 @@ The applicable runtime changes through this baseline are included through aiogra
 | 3.0.23 | 2.0.19 | Follower/following iterators yield unique user IDs and count unique users toward `amount`, preserving first-seen data and server order. |
 | 3.0.24 | 2.0.20 | Compatible challenge handling controls and actionable built-in prompt EOF errors; async callback metadata and awaited generic hooks retain the disabled automatic handling default. |
 | 3.0.25 | 2.0.21 | Configurable independent/shared public and non-LSD GraphQL User-Agent profiles, settings persistence and case-insensitive per-call overrides; existing defaults retained. |
+| 3.0.26 | 2.0.22 | Typed HTTP 400 `needs_upgrade` errors with existing `UnknownError` compatibility and CAA fallback behavior preserved. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
