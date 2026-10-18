@@ -1,3 +1,6 @@
+# Value: protects=operation-bound recommendation diagnostics without weakening the live gate;
+# fails_when=HTTP evidence is lost or stale, saved stages collapse, or denials pass;
+# why_new=existing smoke coverage cannot distinguish the observed failures; seam=none
 import importlib.util
 import io
 import os
@@ -9,6 +12,9 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 from urllib.parse import parse_qs, urlsplit
 
+import httpx
+
+from aiograpi import Client
 from aiograpi.exceptions import UnknownError
 from aiograpi.types import UserShort
 
@@ -145,6 +151,179 @@ class _LoginClient:
 
 
 class LiveSmokeRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_primary_recommendation_denial_retains_its_transport_status(self):
+        smoke = _load_live_smoke_module()
+        for extra in ({}, {"response": {}, "code": 503}):
+            with self.subTest(extra=extra):
+                client = Client(private_transport="requests", settings={"request_timeout": 0})
+                client._user_id = 1
+                requests = []
+
+                def handle(request):
+                    requests.append(request)
+                    return httpx.Response(
+                        400, json={"status": "fail", "message": "Not eligible for chaining.", **extra}
+                    )
+
+                await client.private._close()
+                client.private._client = httpx.AsyncClient(transport=httpx.MockTransport(handle))
+                reports = []
+                try:
+                    passed = await smoke._check_fbsearch_suggested_profiles(client, [], reports.append)
+                finally:
+                    await client.private._close()
+
+                self.assertFalse(passed)
+                self.assertEqual(len(requests), 1)
+                self.assertEqual(requests[0].method, "GET")
+                self.assertEqual(requests[0].url.path, "/api/v1/fbsearch/accounts_recs/")
+                self.assertEqual(requests[0].url.params["target_user_id"], "25025320")
+                self.assertIn(
+                    "REQ fbsearch_suggested_profiles primary: UnknownError HTTP 400 reason=not_eligible_for_chaining",
+                    reports,
+                )
+
+    async def test_primary_diagnostics_reject_unrelated_or_suppressed_http_context(self):
+        smoke = _load_live_smoke_module()
+        url = "https://i.instagram.com/api/v1/fbsearch/accounts_recs/?target_user_id=25025320"
+        cases = [
+            (url, "GET", "explicit", " HTTP 400"),
+            (url, "GET", "suppressed", ""),
+            (url, "GET", "different_cause", ""),
+            (url.replace("i.instagram.com", "example.test"), "GET", "implicit", ""),
+            (url.replace("accounts_recs/", "other/"), "GET", "implicit", ""),
+            (url.replace("25025320", "999"), "GET", "implicit", ""),
+            (url.replace("https:", "http:"), "GET", "implicit", ""),
+            (url + "&target_user_id=25025320", "GET", "implicit", ""),
+            (url.split("?")[0], "GET", "implicit", ""),
+            (url, "POST", "implicit", ""),
+            (url, "GET", "missing_request", ""),
+            (url, "GET", "different_request", ""),
+        ]
+        for request_url, method, mode, status in cases:
+            with self.subTest(mode=mode, method=method, url=request_url):
+                request = httpx.Request(method, request_url)
+                response = httpx.Response(400, request=None if mode == "missing_request" else request)
+                if mode == "different_request":
+                    response.request = httpx.Request(method, request_url)
+                transport_error = httpx.HTTPStatusError("secret-transport-body", request=request, response=response)
+                try:
+                    raise transport_error
+                except httpx.HTTPStatusError:
+                    try:
+                        if mode == "suppressed":
+                            raise UnknownError("Not eligible for chaining.") from None
+                        if mode == "different_cause":
+                            raise UnknownError("Not eligible for chaining.") from RuntimeError("secret-cause")
+                        if mode == "explicit":
+                            raise UnknownError("Not eligible for chaining.") from transport_error
+                        raise UnknownError("Not eligible for chaining.")
+                    except UnknownError as error:
+                        failure = error
+                primary = _FakeLiveClient()
+                primary.last_response = httpx.Response(429, request=httpx.Request("GET", url))
+                primary.fbsearch_suggested_profiles = AsyncMock(side_effect=failure)
+                reports = []
+
+                passed = await smoke._check_fbsearch_suggested_profiles(primary, [], reports.append)
+
+                self.assertFalse(passed)
+                self.assertIn(
+                    f"REQ fbsearch_suggested_profiles primary: UnknownError{status} reason=not_eligible_for_chaining",
+                    reports,
+                )
+                self.assertNotIn("secret", " ".join(reports))
+                if not status:
+                    self.assertNotIn("HTTP", " ".join(reports))
+
+    async def test_saved_failures_identify_the_stage_and_preserve_attempt_bounds(self):
+        smoke = _load_live_smoke_module()
+        for stage in ("profile_control", "recommendations"):
+            with self.subTest(stage=stage):
+                primary = _FakeLiveClient()
+                primary.fbsearch_suggested_profiles = AsyncMock(side_effect=RuntimeError("secret-primary"))
+                alternates = []
+                for _ in range(3):
+                    alternate = _FakeLiveClient()
+                    alternate.user_info_v1 = AsyncMock(return_value=types.SimpleNamespace(pk="25025320"))
+                    alternate.fbsearch_suggested_profiles = AsyncMock(
+                        side_effect=UnknownError("Not eligible for chaining.")
+                    )
+                    if stage == "profile_control":
+                        alternate.user_info_v1.side_effect = UnknownError("Not eligible for chaining.")
+                    alternate.last_response = httpx.Response(503)
+                    for name in ("private", "public", "graphql"):
+                        setattr(alternate, name, types.SimpleNamespace(_close=AsyncMock()))
+                    alternates.append(alternate)
+                reports = []
+                accounts = [{"username": f"saved-{index}", "client_settings": {}} for index in range(3)]
+
+                with patch.object(smoke, "Client", side_effect=alternates) as factory:
+                    passed = await smoke._check_fbsearch_suggested_profiles(primary, accounts, reports.append)
+
+                self.assertFalse(passed)
+                self.assertEqual(factory.call_count, 2)
+                for index, alternate in enumerate(alternates[:2], 1):
+                    self.assertIn(
+                        f"REQ fbsearch_suggested_profiles saved acc{index} {stage}: UnknownError reason=not_eligible_for_chaining",
+                        reports,
+                    )
+                    self.assertEqual(alternate.fbsearch_suggested_profiles.await_count, int(stage == "recommendations"))
+                    for name in ("private", "public", "graphql"):
+                        getattr(alternate, name)._close.assert_awaited_once()
+                self.assertIn("REQ fbsearch_suggested_profiles FAIL: no successful account", reports)
+                self.assertNotIn("HTTP", " ".join(reports))
+                self.assertNotIn("secret", " ".join(reports))
+
+    async def test_saved_session_setup_failure_is_distinct_and_sanitized(self):
+        smoke = _load_live_smoke_module()
+        primary = _FakeLiveClient()
+        primary.fbsearch_suggested_profiles = AsyncMock(side_effect=RuntimeError("secret-primary"))
+        reports = []
+        with patch.object(smoke, "Client", side_effect=RuntimeError("secret-settings")):
+            passed = await smoke._check_fbsearch_suggested_profiles(
+                primary, [{"username": "saved", "client_settings": {}}], reports.append
+            )
+
+        self.assertFalse(passed)
+        self.assertIn("REQ fbsearch_suggested_profiles saved acc1 session_setup: RuntimeError", reports)
+        self.assertNotIn("secret", " ".join(reports))
+
+    async def test_saved_transport_denials_keep_the_status_of_the_failed_stage(self):
+        smoke = _load_live_smoke_module()
+        for stage, endpoint in [
+            ("profile_control", "users/25025320/info/"),
+            ("recommendations", "fbsearch/accounts_recs/"),
+        ]:
+            with self.subTest(stage=stage):
+                primary = _FakeLiveClient()
+                primary.fbsearch_suggested_profiles = AsyncMock(side_effect=RuntimeError("secret-primary"))
+                alternate = Client(private_transport="requests", settings={"request_timeout": 0})
+                alternate.authorization_data = {"ds_user_id": "1", "sessionid": "synthetic-session"}
+                if stage == "recommendations":
+                    alternate.user_info_v1 = AsyncMock(return_value=types.SimpleNamespace(pk="25025320"))
+                requests = []
+
+                def handle(request):
+                    requests.append(request)
+                    return httpx.Response(400, json={"status": "fail", "message": "Not eligible for chaining."})
+
+                await alternate.private._close()
+                alternate.private._client = httpx.AsyncClient(transport=httpx.MockTransport(handle))
+                reports = []
+                with patch.object(smoke, "Client", return_value=alternate):
+                    passed = await smoke._check_fbsearch_suggested_profiles(
+                        primary, [{"username": "saved", "client_settings": {}}], reports.append
+                    )
+
+                self.assertFalse(passed)
+                self.assertEqual(len(requests), 1)
+                self.assertEqual(requests[0].url.path, f"/api/v1/{endpoint}")
+                self.assertIn(
+                    f"REQ fbsearch_suggested_profiles saved acc1 {stage}: UnknownError HTTP 400 reason=not_eligible_for_chaining",
+                    reports,
+                )
+
     def test_error_summary_labels_only_the_exact_known_eligibility_denial(self):
         smoke = _load_live_smoke_module()
         for response, expected in [
