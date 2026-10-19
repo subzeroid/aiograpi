@@ -1076,6 +1076,8 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         user_id = getattr(self, "_user_id", None)
         if not user_id and self.authorization_data:
             user_id = self.authorization_data.get("ds_user_id")
+        if not user_id:
+            user_id = self.cookie_dict.get("ds_user_id")
         if user_id:
             return int(user_id)
         return None
