@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## [2.0.23] - 2026-10-20
+
+### Fixed
+
+- Restore `user_id` from the private `ds_user_id` cookie when explicit identity and Authorization data are absent. Cookie-only sessions can retain their account identity after login or a settings round trip; existing identity precedence and reset behavior remain unchanged (#519).
+- Correct Git identity selection for generated documentation commits (#518).
+
 ## [2.0.22] - 2026-10-17
 
 ### Fixed
