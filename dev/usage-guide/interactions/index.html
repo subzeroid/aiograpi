@@ -1166,6 +1166,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../utls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Optional uTLS Transport
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../story/" class="md-nav__link">
         
   
@@ -1732,7 +1760,11 @@
 </tr>
 <tr>
 <td>private_transport</td>
-<td>Private mobile transport: native async <code>curl</code> by default for HTTP/2; <code>requests</code> selects the previous HTTPX transport</td>
+<td>Private mobile transport: native async <code>curl</code> by default; <code>requests</code> selects HTTPX; <code>utls</code> selects the optional explicitly built native TLS/HTTP2 profile</td>
+</tr>
+<tr>
+<td>utls_library_path</td>
+<td>Deployment path printed by the explicit uTLS installer; required for <code>utls</code> and excluded from saved account settings</td>
 </tr>
 <tr>
 <td>public_transport</td>
@@ -2021,6 +2053,7 @@
 </code></pre></div>
 <p>The default remains <code>public_transport="requests"</code>. Configure private mobile API requests separately with <code>private_transport</code>. See <a href="../public-transport/">Public Transport</a> for live comparison results and caveats.</p>
 <h3 id="private-http2-transport">Private HTTP/2 transport</h3>
+<p>An optional explicitly built <code>private_transport="utls"</code> is also available. Its installation, total deadline and worker cancellation rules differ from curl; see <a href="../utls/">optional uTLS transport</a>.</p>
 <p>The standard installation includes <code>curl_cffi</code>. <code>Client()</code> sends private mobile API requests over HTTP/2 with an ALPN offer containing only <code>h2</code>, including CAA login. Mobile request headers and account device settings are preserved.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">aiograpi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
 

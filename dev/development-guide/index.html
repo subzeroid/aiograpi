@@ -1001,6 +1001,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../usage-guide/utls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Optional uTLS Transport
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../usage-guide/story/" class="md-nav__link">
         
   
@@ -1658,7 +1686,7 @@ bandit<span class="w"> </span>-c<span class="w"> </span>pyproject.toml<span clas
 pip-audit<span class="w"> </span>--strict<span class="w"> </span>.
 mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
 </code></pre></div>
-<p>The mypy gate targets Python 3.10 and runs under Python 3.10 in CI so dependency type stubs match that target. For local parity, create the development environment with <code>python3.10 -m venv .venv</code> or <code>uv venv --python 3.10</code> and install the test extras. The gate compares only completed analysis with <code>.mypy-baseline</code>; aborted analysis and unrecognized output fail instead of being accepted as a low error count.</p>
+<p>The mypy gate targets Python 3.11 and runs under Python 3.11 in CI so dependency type stubs match that target. For local parity, create the development environment with <code>python3.11 -m venv .venv</code> or <code>uv venv --python 3.11</code> and install the test extras. The gate compares only completed analysis with <code>.mypy-baseline</code>; aborted analysis and unrecognized output fail instead of being accepted as a low error count.</p>
 <p>To apply automatic lint and formatting fixes locally:</p>
 <div class="highlight"><pre><span></span><code>ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </span>--fix
 ruff<span class="w"> </span>format<span class="w"> </span>.
@@ -1687,7 +1715,7 @@ coverage rather than decreasing it.</p>
 <p>Publishing is handled by the tag-based <code>publish.yml</code> workflow. Pushes and pull requests run the package workflow first;
 maintainers cut a version tag only after the checks are green.</p>
 <h2 id="continuous-integration-pipeline">Continuous Integration Pipeline</h2>
-<p>The <code>Package</code> workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs builds. Its private curl job checks minimum and current curl_cffi on Python 3.10 and 3.14. On canonical repository pushes it also runs <code>tests/live/smoke.py</code> against the pooled live-account endpoint configured in <code>TEST_ACCOUNTS_URL</code>.</p>
+<p>The <code>Package</code> workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs builds. Its private curl job checks minimum and current curl_cffi on Python 3.11 and 3.14. On canonical repository pushes it also runs <code>tests/live/smoke.py</code> against the pooled live-account endpoint configured in <code>TEST_ACCOUNTS_URL</code>.</p>
 <p>Realtime MQTT/FBNS live tests also use <code>TEST_ACCOUNTS_URL</code> for pooled accounts. Set <code>IG_REALTIME_PROXY</code> when the account
 HTTP proxy can log in but cannot open a CONNECT tunnel to Instagram's MQTT hosts; the realtime tests use that proxy only
 for the MQTT socket and keep the account proxy for normal private API calls.</p>
