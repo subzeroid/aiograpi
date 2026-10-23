@@ -8,6 +8,8 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-23
+
 ### Added
 
 - Select optional private `utls` transport with an explicit verified native build, strict TLS 1.3/HTTP2, asynchronous request deadlines and cancellation-safe shutdown. Curl remains the default; the transport does not automatically replay failed POSTs.
@@ -15,8 +17,6 @@ starting with 1.0.0.
 ### Changed
 
 - Require Python 3.11 or newer and Pillow 13.0.0 or newer to include its security fixes. Python 3.10 is no longer supported.
-
-## [2.0.23] - 2026-10-20
 
 ### Fixed
 
