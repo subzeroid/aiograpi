@@ -3,14 +3,14 @@ revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'android'",
-    "python_full_version < '3.15' and sys_platform == 'android'",
     "python_full_version >= '3.15' and sys_platform != 'android'",
+    "python_full_version < '3.15' and sys_platform == 'android'",
     "python_full_version < '3.15' and sys_platform != 'android'",
 ]
 
 [[package]]
 name = "aiograpi"
-version = "2.0.23"
+version = "2.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "curl-cffi" },
