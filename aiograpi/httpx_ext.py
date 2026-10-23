@@ -136,7 +136,19 @@ class Session:
 
     async def _close_retired_clients(self):
         while self._retired_clients:
-            await self._retired_clients.pop().aclose()
+            client = self._retired_clients[-1]
+            try:
+                await client.aclose()
+            except asyncio.CancelledError:
+                # Preserve the joinable uTLS drain for the next close waiter.
+                raise
+            except Exception:
+                if client in self._retired_clients:
+                    self._retired_clients.remove(client)
+                raise
+            else:
+                if client in self._retired_clients:
+                    self._retired_clients.remove(client)
 
     async def request(self, *args, headers=None, proxy=None, **kwargs):
         await self._close_retired_clients()
@@ -184,6 +196,59 @@ class CurlPrivateSession(Session):
             kwargs["timeout"] = DEFAULT_TIMEOUT
         headers = {key: value for key, value in (self.headers | (headers or {})).items() if value is not None}
         return await self._client.request(*args, headers=headers, **kwargs)
+
+
+class _UtlsAsyncClient(httpx.AsyncClient):
+    async def aclose(self):
+        await super().aclose()
+        # HTTPX marks itself CLOSED before awaiting transport close. A caller
+        # cancelled during that await must still be able to join the drain.
+        await self._transport.aclose()
+
+
+class UtlsPrivateSession(CurlPrivateSession):
+    """Private HTTPX session with explicit verified uTLS and draining close."""
+
+    def __init__(self, verify=True, library_path=None):
+        self.library_path = library_path
+        super().__init__(verify=verify)
+
+    @property
+    def proxy(self):
+        return self._proxy
+
+    @proxy.setter
+    def proxy(self, value):
+        previous = self._proxy
+        try:
+            self._proxy = value
+            self._set_client()
+        except Exception:
+            self._proxy = previous
+            raise
+
+    def _set_client(self):
+        from aiograpi.utls import UtlsH2Transport
+
+        old = self._client
+        replacement = _UtlsAsyncClient(
+            transport=UtlsH2Transport(proxy=self._proxy, verify=self.verify, library_path=self.library_path),
+            follow_redirects=True,
+            trust_env=False,
+            cookies=old.cookies if old is not None else None,
+        )
+        self._client = replacement
+        if old is not None:
+            self._retired_clients.append(old)
+
+    def set_verify(self, verify):
+        if verify != self.verify:
+            previous = self.verify
+            try:
+                super().set_verify(verify)
+            except Exception:
+                self.verify = previous
+                raise
 
 
 class CurlResponse:

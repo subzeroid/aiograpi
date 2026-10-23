@@ -230,6 +230,43 @@ jobs:
       - name: Check private transport and real TLS/HTTP2 behavior
         run: python -m pytest -q tests/regression/test_default_transport.py tests/regression/test_private_transport.py tests/regression/test_private_transport_wire.py
 
+  private-utls-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.27.2"
+          cache: false
+      - name: Install packaged native sources and test dependencies
+        run: |
+          python -m pip install build
+          python -m build
+          python -m venv "$RUNNER_TEMP/aiograpi-utls-env"
+          "$RUNNER_TEMP/aiograpi-utls-env/bin/python" -m pip install dist/*.whl pytest h2 cryptography
+          echo "$RUNNER_TEMP/aiograpi-utls-env/bin" >> "$GITHUB_PATH"
+      - name: Build verified native library from the installed package
+        env:
+          XDG_CACHE_HOME: ${{ runner.temp }}/aiograpi-native-cache
+        run: |
+          cd "$RUNNER_TEMP"
+          python -c 'import importlib.util, pathlib, sys, aiograpi; assert importlib.util.find_spec("requests") is None; assert pathlib.Path(aiograpi.__file__).is_relative_to(pathlib.Path(sys.prefix))'
+          python -m aiograpi.utls_native "$RUNNER_TEMP/aiograpi-native" > "$RUNNER_TEMP/aiograpi-native-path"
+          echo "AIOGRAPI_UTLS_TEST_LIBRARY=$(cat "$RUNNER_TEMP/aiograpi-native-path")" >> "$GITHUB_ENV"
+          echo "XDG_CACHE_HOME=$XDG_CACHE_HOME" >> "$GITHUB_ENV"
+      - name: Check installed async transport and actual TLS/HTTP2 behavior
+        run: |
+          cp -R tests "$RUNNER_TEMP/aiograpi-native-tests"
+          cd "$RUNNER_TEMP"
+          mv aiograpi-native-tests tests
+          python -m pytest -q tests/regression/test_utls_*.py
+
   public-curl-test:
     runs-on: ubuntu-latest
     strategy:

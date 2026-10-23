@@ -175,8 +175,9 @@ class PrivateRequestMixin(ClientMixin):
         self.private_transport = self._normalize_private_transport(
             kwargs.pop("private_transport", self.private_transport)
         )
-        session = httpx_ext.CurlPrivateSession if self.private_transport == "curl" else httpx_ext.Session
-        self.private = session(verify=getattr(self, "tls_verify", True))
+        # Deployment paths belong to this process, never to account settings.
+        self.utls_library_path = kwargs.pop("utls_library_path", None)
+        self.private = self._private_session(self.private_transport, getattr(self, "tls_verify", True))
         self.email = kwargs.pop("email", None)
         self.phone_number = kwargs.pop("phone_number", None)
         self.request_timeout = kwargs.pop("request_timeout", getattr(self, "request_timeout", self.request_timeout))
@@ -207,17 +208,22 @@ class PrivateRequestMixin(ClientMixin):
 
     @staticmethod
     def _normalize_private_transport(private_transport):
-        if private_transport not in {"requests", "curl"}:
-            raise ValueError("private_transport must be 'requests' or 'curl'")
+        if private_transport not in {"requests", "curl", "utls"}:
+            raise ValueError("private_transport must be 'requests', 'curl' or 'utls'")
         return private_transport
+
+    def _private_session(self, selected, verify):
+        if selected == "utls":
+            return httpx_ext.UtlsPrivateSession(verify=verify, library_path=self.utls_library_path)
+        session = httpx_ext.CurlPrivateSession if selected == "curl" else httpx_ext.Session
+        return session(verify=verify)
 
     def _configure_private_transport(self, private_transport):
         selected = self._normalize_private_transport(private_transport)
         if selected == self.private_transport:
             return
         old = self.private
-        session = httpx_ext.CurlPrivateSession if selected == "curl" else httpx_ext.Session
-        replacement = session(verify=old.verify)
+        replacement = self._private_session(selected, old.verify)
         replacement.proxy = old.proxy
         replacement.headers.update(old.headers)
         replacement._client.cookies = httpx.Cookies(old.cookies)

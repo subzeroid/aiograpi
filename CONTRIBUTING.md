@@ -79,6 +79,13 @@ The smoke labels the exact known `UnknownError` eligibility denial with the fixe
 
 ## Pull Request Checklist
 
+For uTLS changes, install Go 1.27.2 or newer and a C compiler, then explicitly build the native source bundle and run the loopback tests. The normal regression run skips these wire cases when no library path is supplied; those skips do not establish native behavior. The dedicated native CI job builds from the installed wheel and runs on Python 3.10 and 3.14 without Instagram account configuration. See [uTLS setup and deadline behavior](docs/usage-guide/utls.md).
+
+```bash
+export AIOGRAPI_UTLS_TEST_LIBRARY="$(python -m aiograpi.utls_native /tmp/aiograpi-native)"
+pytest -q tests/regression/test_utls_transport_wire.py tests/regression/test_utls_failures_wire.py tests/regression/test_utls_peer_wire.py tests/regression/test_utls_lifecycle_wire.py
+```
+
 1. Branch from `main` and keep the change scoped.
 2. Add or update regression tests for changed behavior.
 3. Add focused live tests when the change depends on Instagram's live API behavior.

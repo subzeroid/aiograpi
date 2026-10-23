@@ -123,6 +123,9 @@ include-package-data = true
 where = ["."]
 include = ["aiograpi*"]
 
+[tool.setuptools.package-data]
+aiograpi = ["native/*"]
+
 [tool.ruff]
 line-length = 120
 target-version = "py310"

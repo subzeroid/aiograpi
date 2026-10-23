@@ -160,6 +160,8 @@ See the [public transport guide](docs/usage-guide/public-transport.md) for live 
 
 Private mobile API requests use curl and HTTP/2 by default. See the [private HTTP/2 transport guide](docs/usage-guide/interactions.md#private-http2-transport) for saved-session setup, requirements and limitations.
 
+The optional `private_transport="utls"` uses an explicitly built, verified native TLS/HTTP2 profile through an asynchronous HTTPX boundary. See [uTLS setup and cancellation behavior](docs/usage-guide/utls.md) before selecting it.
+
 TLS certificate verification is enabled by default. For a trusted debugging MITM proxy, prefer `Client(tls_verify="/path/to/proxy-ca.pem")`; use `Client(tls_verify=False)` only for temporary local debugging because it allows session interception.
 
 ### Realtime MQTT and Direct
