@@ -17,7 +17,7 @@ pip install "aiograpi[video]"
 pip install --no-deps "moviepy==2.2.1"
 ```
 
-MoviePy `2.2.1` currently declares `Pillow<12`, but aiograpi keeps `Pillow>=12.3.0` for security fixes; the `--no-deps` install keeps the safe Pillow version. If your project imports MoviePy directly, migrate any MoviePy `1.x` code from `moviepy.editor`, `set_*`, `resize`, and `subclip` APIs to the MoviePy `2.x` API before upgrading.
+MoviePy `2.2.1` currently declares `Pillow<12`, but aiograpi keeps `Pillow>=13.0.0` for security fixes; the `--no-deps` install keeps the safe Pillow version. If your project imports MoviePy directly, migrate any MoviePy `1.x` code from `moviepy.editor`, `set_*`, `resize`, and `subclip` APIs to the MoviePy `2.x` API before upgrading.
 
 Android users should see [Pydroid and ffmpeg](docs/usage-guide/pydroid.md) and [Termux](docs/usage-guide/termux.md).
 
@@ -55,7 +55,7 @@ Features:
 
 Asynchronous Instagram Private API wrapper without selenium. Use the most recent version of the API from Instagram, which was obtained using reverse-engineering with Charles Proxy and [Proxyman](https://proxyman.io/).
 
-Support **Python >= 3.10**
+Support **Python >= 3.11**
 
 For any other languages (e.g. C++, C#, F#, D, [Golang](https://github.com/subzeroid/instagrapi-rest/tree/main/golang), Erlang, Elixir, Nim, Haskell, Lisp, Closure, Julia, R, Java, Kotlin, Scala, OCaml, JavaScript, Crystal, Ruby, Rust, [Swift](https://github.com/subzeroid/instagrapi-rest/tree/main/swift), Objective-C, Visual Basic, .NET, Pascal, Perl, Lua, PHP and others), I suggest using [instagrapi-rest](https://github.com/subzeroid/instagrapi-rest)
 
@@ -159,6 +159,8 @@ cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
 See the [public transport guide](docs/usage-guide/public-transport.md) for live comparison results and caveats.
 
 Private mobile API requests use curl and HTTP/2 by default. See the [private HTTP/2 transport guide](docs/usage-guide/interactions.md#private-http2-transport) for saved-session setup, requirements and limitations.
+
+The optional `private_transport="utls"` uses an explicitly built, verified native TLS/HTTP2 profile through an asynchronous HTTPX boundary. See [uTLS setup and cancellation behavior](docs/usage-guide/utls.md) before selecting it.
 
 TLS certificate verification is enabled by default. For a trusted debugging MITM proxy, prefer `Client(tls_verify="/path/to/proxy-ca.pem")`; use `Client(tls_verify=False)` only for temporary local debugging because it allows session interception.
 

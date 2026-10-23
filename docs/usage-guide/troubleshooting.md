@@ -197,7 +197,7 @@ on `0.0.x`, upgrade.
 
 ### `pip install aiograpi` succeeds but `import aiograpi` fails on `httpx`
 
-aiograpi `2.x` requires Python 3.10 or later. Check the supported HTTPX range in [pyproject.toml](https://github.com/subzeroid/aiograpi/blob/main/pyproject.toml) when resolving conflicting project constraints. The current compatible requirements are:
+The current aiograpi development version requires Python 3.11 or later. Check the supported HTTPX range in [pyproject.toml](https://github.com/subzeroid/aiograpi/blob/main/pyproject.toml) when resolving conflicting project constraints. The current compatible requirements are:
 
 ```
 aiograpi>=2,<3

@@ -57,7 +57,8 @@ We recommend using [these proxies](https://soax.com/?r=sEysufQI)
 | request\_logger     | Logger in which various actions from Instagram are registered
 | request\_timeout    | Delay in seconds before private API requests (1 second by default); controls pacing, not HTTP timeouts
 | read\_timeout       | HTTP timeout in seconds for private API requests, share-link resolution, and track downloads (25 seconds by default)
-| private\_transport | Private mobile transport: native async `curl` by default for HTTP/2; `requests` selects the previous HTTPX transport
+| private\_transport | Private mobile transport: native async `curl` by default; `requests` selects HTTPX; `utls` selects the optional explicitly built native TLS/HTTP2 profile
+| utls\_library\_path | Deployment path printed by the explicit uTLS installer; required for `utls` and excluded from saved account settings
 | public\_transport   | Public web transport: `requests`-compatible async transport by default, or `curl` when `aiograpi[curl]` is installed
 | public\_transport\_impersonate | Browser fingerprint used by the optional curl public transport
 | tls\_verify | TLS certificate verification: `True` by default, `False` for temporary trusted MITM debugging, or a CA bundle path
@@ -246,6 +247,8 @@ cl = Client(public_transport="curl", public_transport_impersonate="chrome136")
 The default remains `public_transport="requests"`. Configure private mobile API requests separately with `private_transport`. See [Public Transport](public-transport.md) for live comparison results and caveats.
 
 ### Private HTTP/2 transport
+
+An optional explicitly built `private_transport="utls"` is also available. Its installation, total deadline and worker cancellation rules differ from curl; see [optional uTLS transport](utls.md).
 
 The standard installation includes `curl_cffi`. `Client()` sends private mobile API requests over HTTP/2 with an ALPN offer containing only `h2`, including CAA login. Mobile request headers and account device settings are preserved.
 

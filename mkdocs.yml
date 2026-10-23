@@ -34,6 +34,7 @@ nav:
     - Notes: usage-guide/notes.md
     - Pydroid and ffmpeg: usage-guide/pydroid.md
     - Public Transport: usage-guide/public-transport.md
+    - Optional uTLS Transport: usage-guide/utls.md
     - Story: usage-guide/story.md
     - Termux: usage-guide/termux.md
     - TOTP: usage-guide/totp.md

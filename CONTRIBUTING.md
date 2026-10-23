@@ -53,7 +53,7 @@ mkdocs build --strict
 pre-commit run --all-files
 ```
 
-For the mypy gate, use a Python 3.10 environment to match its analysis target and CI dependency resolution. Create the development environment with `python3.10 -m venv .venv` or `uv venv --python 3.10`, then install the test extras as above. The script prefers `.venv/bin/python` when present; otherwise it uses `PYTHON` or `python`. An aborted analysis or unrecognized output fails the gate even if the reported error count is below `.mypy-baseline`.
+For the mypy gate, use a Python 3.11 environment to match its analysis target and CI dependency resolution. Create the development environment with `python3.11 -m venv .venv` or `uv venv --python 3.11`, then install the test extras as above. The script prefers `.venv/bin/python` when present; otherwise it uses `PYTHON` or `python`. An aborted analysis or unrecognized output fails the gate even if the reported error count is below `.mypy-baseline`.
 
 To apply automatic lint and formatting fixes:
 
@@ -78,6 +78,13 @@ If the required `fbsearch_suggested_profiles` smoke check fails on the freshly l
 The smoke labels the exact known `UnknownError` eligibility denial with the fixed category `reason=not_eligible_for_chaining`. It does not print the raw exception message or infer which account, target or server condition caused the denial. The category remains a failure; the required check still needs a nonempty recommendation result with valid `UserShort` and `stories` fields.
 
 ## Pull Request Checklist
+
+For uTLS changes, install Go 1.27.2 or newer and a C compiler, then explicitly build the native source bundle and run the loopback tests. The normal regression run skips these wire cases when no library path is supplied; those skips do not establish native behavior. The dedicated native CI job builds from the installed wheel and runs on Python 3.11 and 3.14 without Instagram account configuration. See [uTLS setup and deadline behavior](docs/usage-guide/utls.md).
+
+```bash
+export AIOGRAPI_UTLS_TEST_LIBRARY="$(python -m aiograpi.utls_native /tmp/aiograpi-native)"
+pytest -q tests/regression/test_utls_transport_wire.py tests/regression/test_utls_failures_wire.py tests/regression/test_utls_peer_wire.py tests/regression/test_utls_lifecycle_wire.py
+```
 
 1. Branch from `main` and keep the change scoped.
 2. Add or update regression tests for changed behavior.

@@ -94,7 +94,7 @@ jobs:
             "orjson==3.11.8" \
             "PySocks==1.7.1" \
             "pydantic==2.12.5" \
-            "Pillow==12.3.0" \
+            "Pillow==13.0.0" \
             "pycryptodomex==3.23.0" \
             "zstandard==0.25.0"
           python -m pip install .
@@ -116,7 +116,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           # Resolve dependency stubs for the same version mypy checks.
-          python-version: "3.10"
+          python-version: "3.11"
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
     steps:
       - name: Check out code
         uses: actions/checkout@v7
@@ -174,7 +174,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.10", "3.14"]
+        python-version: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -212,7 +212,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.14"]
+        python-version: ["3.11", "3.14"]
         curl-version: [minimum, current]
     steps:
       - uses: actions/checkout@v7
@@ -230,11 +230,48 @@ jobs:
       - name: Check private transport and real TLS/HTTP2 behavior
         run: python -m pytest -q tests/regression/test_default_transport.py tests/regression/test_private_transport.py tests/regression/test_private_transport_wire.py
 
+  private-utls-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.27.2"
+          cache: false
+      - name: Install packaged native sources and test dependencies
+        run: |
+          python -m pip install build
+          python -m build
+          python -m venv "$RUNNER_TEMP/aiograpi-utls-env"
+          "$RUNNER_TEMP/aiograpi-utls-env/bin/python" -m pip install dist/*.whl pytest h2 cryptography
+          echo "$RUNNER_TEMP/aiograpi-utls-env/bin" >> "$GITHUB_PATH"
+      - name: Build verified native library from the installed package
+        env:
+          XDG_CACHE_HOME: ${{ runner.temp }}/aiograpi-native-cache
+        run: |
+          cd "$RUNNER_TEMP"
+          python -c 'import importlib.util, pathlib, sys, aiograpi; assert importlib.util.find_spec("requests") is None; assert pathlib.Path(aiograpi.__file__).is_relative_to(pathlib.Path(sys.prefix))'
+          python -m aiograpi.utls_native "$RUNNER_TEMP/aiograpi-native" > "$RUNNER_TEMP/aiograpi-native-path"
+          echo "AIOGRAPI_UTLS_TEST_LIBRARY=$(cat "$RUNNER_TEMP/aiograpi-native-path")" >> "$GITHUB_ENV"
+          echo "XDG_CACHE_HOME=$XDG_CACHE_HOME" >> "$GITHUB_ENV"
+      - name: Check installed async transport and actual TLS/HTTP2 behavior
+        run: |
+          cp -R tests "$RUNNER_TEMP/aiograpi-native-tests"
+          cd "$RUNNER_TEMP"
+          mv aiograpi-native-tests tests
+          python -m pytest -q tests/regression/test_utls_*.py
+
   public-curl-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.14"]
+        python-version: ["3.11", "3.14"]
         dependencies: [minimum, current]
     steps:
       - uses: actions/checkout@v7
@@ -263,7 +300,7 @@ jobs:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.repository == 'subzeroid/aiograpi'
     strategy:
       matrix:
-        python-version: [ "3.10" ]
+        python-version: [ "3.11" ]
     env:
       TEST_ACCOUNTS_URL: ${{ secrets.TEST_ACCOUNTS_URL }}
       IG_REALTIME_PROXY: ${{ secrets.IG_REALTIME_PROXY }}

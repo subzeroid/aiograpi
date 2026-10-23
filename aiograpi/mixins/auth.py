@@ -1204,8 +1204,12 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         return True
 
     def set_tls_verify(self, tls_verify: Union[bool, str]) -> bool:
-        self.tls_verify = tls_verify
-        for name in ("public", "private", "graphql"):
+        # uTLS can reject a policy or fail verification of its local binary.
+        # Prepare it before mutating the independent public sessions.
+        names = (
+            ("private", "public", "graphql") if self.private_transport == "utls" else ("public", "private", "graphql")
+        )
+        for name in names:
             session = getattr(self, name, None)
             if session is None:
                 continue
@@ -1213,6 +1217,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
                 session.set_verify(tls_verify)
             else:
                 session.verify = tls_verify
+        self.tls_verify = tls_verify
         if self.settings is not None:
             self.settings["tls_verify"] = tls_verify
         return True
@@ -1227,7 +1232,7 @@ class LoginMixin(PreLoginFlowMixin, PostLoginFlowMixin):
         session_retry_statuses: list = None,
         public_transport: Optional[Literal["requests", "curl"]] = None,
         public_transport_impersonate: Optional[str] = None,
-        private_transport: Optional[Literal["requests", "curl"]] = None,
+        private_transport: Optional[Literal["requests", "curl", "utls"]] = None,
     ) -> bool:
         if request_timeout is not None:
             self.request_timeout = request_timeout

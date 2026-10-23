@@ -48,7 +48,7 @@ from aiograpi.mixins.video import DownloadVideoMixin, UploadVideoMixin
 # Used as fallback logger if another is not provided.
 DEFAULT_LOGGER = logging.getLogger("aiograpi")
 
-__upstream_instagrapi_version__ = "3.0.26"
+__upstream_instagrapi_version__ = "3.1.0"
 
 
 class Client(
@@ -129,6 +129,15 @@ class Client(
         self.init()
 
     def set_proxy(self, dsn: Optional[str]):
+        if self.private_transport == "utls":
+            if dsn:
+                assert isinstance(dsn, str), f'Proxy must been string (URL), but now "{dsn}" ({type(dsn)})'
+            proxy_href = (dsn if urlparse(dsn).scheme else f"http://{dsn}") if dsn else None
+            # A rejected local uTLS rebuild must preserve every session route.
+            self.private.proxy = proxy_href
+            self.public.proxy = self.graphql.proxy = proxy_href
+            self.proxy = dsn or None
+            return bool(dsn)
         if not dsn:
             self.public.proxy = self.private.proxy = self.graphql.proxy = None
             return False
