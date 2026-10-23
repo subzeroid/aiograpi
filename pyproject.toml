@@ -11,17 +11,17 @@ authors = [
 description = "Asynchronous Instagram Private API wrapper"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "MIT"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Framework :: AsyncIO",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 keywords = [
     "instagram private api",
@@ -63,7 +63,7 @@ dependencies = [
     "pydantic>=2.12.5,<2.14; sys_platform != 'android'",
     "pycryptodomex>=3.23.0,<4",
     "zstandard>=0.25.0,<0.26",
-    "Pillow>=12.3.0,<13",
+    "Pillow>=13.0.0,<14",
 ]
 
 [project.urls]
@@ -78,7 +78,7 @@ curl = [
     "curl-adapter>=1.2.3",
 ]
 video = [
-    # MoviePy 2.2.1 still declares pillow<12, while aiograpi requires Pillow 12.3.0
+    # MoviePy 2.2.1 still declares pillow<12, while aiograpi requires Pillow 13.0.0
     # for security fixes. Install MoviePy itself with --no-deps after this extra.
     "decorator>=4.0.2,<6.0",
     "imageio>=2.5,<3.0",
@@ -91,7 +91,7 @@ test = [
     "h2>=4.3.0",
     "cryptography>=46.0.5",
     "mypy==1.20.2",
-    "Pillow==12.3.0",
+    "Pillow==13.0.0",
     "bandit==1.9.4",
     "decorator>=4.0.2,<6.0",
     "imageio>=2.5,<3.0",
@@ -104,9 +104,7 @@ test = [
     "mkdocs-material==9.7.7",
     "mkdocs-minify-plugin==0.8.0",
     # 1.0.7 supports pymdown-extensions 12.2 and requires Python >=3.11.
-    # Documentation builds use Python 3.13; keep test extras installable on 3.10.
-    "mkdocstrings[python]==1.0.7; python_version >= '3.11'",
-    "mkdocstrings[python]==1.0.6; python_version < '3.11'",
+    "mkdocstrings[python]==1.0.7",
     "numpy>=1.25.0",
     "pre-commit==4.6.0",
     "proglog<=1.0.0",
@@ -128,7 +126,7 @@ aiograpi = ["native/*"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py311"
 exclude = [
     ".eggs",
     ".git",

@@ -59,7 +59,7 @@ pip-audit --strict .
 mkdocs build --strict
 ```
 
-The mypy gate targets Python 3.10 and runs under Python 3.10 in CI so dependency type stubs match that target. For local parity, create the development environment with `python3.10 -m venv .venv` or `uv venv --python 3.10` and install the test extras. The gate compares only completed analysis with `.mypy-baseline`; aborted analysis and unrecognized output fail instead of being accepted as a low error count.
+The mypy gate targets Python 3.11 and runs under Python 3.11 in CI so dependency type stubs match that target. For local parity, create the development environment with `python3.11 -m venv .venv` or `uv venv --python 3.11` and install the test extras. The gate compares only completed analysis with `.mypy-baseline`; aborted analysis and unrecognized output fail instead of being accepted as a low error count.
 
 To apply automatic lint and formatting fixes locally:
 
@@ -101,7 +101,7 @@ maintainers cut a version tag only after the checks are green.
 
 ## Continuous Integration Pipeline
 
-The `Package` workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs builds. Its private curl job checks minimum and current curl_cffi on Python 3.10 and 3.14. On canonical repository pushes it also runs `tests/live/smoke.py` against the pooled live-account endpoint configured in `TEST_ACCOUNTS_URL`.
+The `Package` workflow runs pip-audit, Bandit, Ruff, the mypy regression gate, network-free regression tests, and docs builds. Its private curl job checks minimum and current curl_cffi on Python 3.11 and 3.14. On canonical repository pushes it also runs `tests/live/smoke.py` against the pooled live-account endpoint configured in `TEST_ACCOUNTS_URL`.
 
 Realtime MQTT/FBNS live tests also use `TEST_ACCOUNTS_URL` for pooled accounts. Set `IG_REALTIME_PROXY` when the account
 HTTP proxy can log in but cannot open a CONNECT tunnel to Instagram's MQTT hosts; the realtime tests use that proxy only

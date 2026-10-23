@@ -24,7 +24,7 @@ fi
 # Mypy exits 1 for completed analysis with type errors, and 2 for fatal
 # failures. Only completed analysis can be compared with the baseline.
 set +e
-OUTPUT=$(cd "$ROOT" && "$PYTHON_BIN" -m mypy --python-version 3.10 aiograpi/ 2>&1)
+OUTPUT=$(cd "$ROOT" && "$PYTHON_BIN" -m mypy --python-version 3.11 aiograpi/ 2>&1)
 STATUS=$?
 set -e
 

@@ -53,7 +53,7 @@ mkdocs build --strict
 pre-commit run --all-files
 ```
 
-For the mypy gate, use a Python 3.10 environment to match its analysis target and CI dependency resolution. Create the development environment with `python3.10 -m venv .venv` or `uv venv --python 3.10`, then install the test extras as above. The script prefers `.venv/bin/python` when present; otherwise it uses `PYTHON` or `python`. An aborted analysis or unrecognized output fails the gate even if the reported error count is below `.mypy-baseline`.
+For the mypy gate, use a Python 3.11 environment to match its analysis target and CI dependency resolution. Create the development environment with `python3.11 -m venv .venv` or `uv venv --python 3.11`, then install the test extras as above. The script prefers `.venv/bin/python` when present; otherwise it uses `PYTHON` or `python`. An aborted analysis or unrecognized output fails the gate even if the reported error count is below `.mypy-baseline`.
 
 To apply automatic lint and formatting fixes:
 
@@ -79,7 +79,7 @@ The smoke labels the exact known `UnknownError` eligibility denial with the fixe
 
 ## Pull Request Checklist
 
-For uTLS changes, install Go 1.27.2 or newer and a C compiler, then explicitly build the native source bundle and run the loopback tests. The normal regression run skips these wire cases when no library path is supplied; those skips do not establish native behavior. The dedicated native CI job builds from the installed wheel and runs on Python 3.10 and 3.14 without Instagram account configuration. See [uTLS setup and deadline behavior](docs/usage-guide/utls.md).
+For uTLS changes, install Go 1.27.2 or newer and a C compiler, then explicitly build the native source bundle and run the loopback tests. The normal regression run skips these wire cases when no library path is supplied; those skips do not establish native behavior. The dedicated native CI job builds from the installed wheel and runs on Python 3.11 and 3.14 without Instagram account configuration. See [uTLS setup and deadline behavior](docs/usage-guide/utls.md).
 
 ```bash
 export AIOGRAPI_UTLS_TEST_LIBRARY="$(python -m aiograpi.utls_native /tmp/aiograpi-native)"
