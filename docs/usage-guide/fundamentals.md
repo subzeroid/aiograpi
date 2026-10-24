@@ -10,6 +10,10 @@ This section provides detailed descriptions of all the ways `aiograpi` can be us
 
 With private authorization or a saved session, `media_info()` and `user_info()` try the private mobile API first and fall back to public web lookup. Without it, they try public web lookup first, then the private API if that lookup fails. Cached results can avoid a new request.
 
+## Private bandwidth metadata
+
+Private requests default to `X-IG-Bandwidth-Speed-KBPS: -1.000`, `X-IG-Bandwidth-TotalBytes-B: 0` and `X-IG-Bandwidth-TotalTime-MS: 0` because the library does not measure download bandwidth. Speed represents an estimate; byte and time counters represent cumulative accepted download samples, so speed need not equal their ratio. Existing explicit `headers` on `private_request()` and `private_headers({...})` for uploads can override these defaults without changing later default requests. These values do not guarantee rate-limit avoidance or account recovery.
+
 ## Detailed Sections
 
 * [Index](../index.md)
