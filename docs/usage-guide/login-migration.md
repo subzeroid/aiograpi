@@ -83,6 +83,20 @@ cl.dump_settings("session.json")
 
 Continue to pass `verification_code` for supported two-factor challenges. The CAA profile-code flow also supports `challenge_code_handler`; see [TOTP](totp.md). Native CAA exceptions propagate. If CAA returns neither a usable session, a supported verification context, nor an explicit fallback instruction, `login()` raises `ClientError` with the CAA failure reason. Curl does not automatically retry a failed password POST.
 
+## Shareable login diagnostics
+
+Run the standalone [diagnose_login.py example](https://github.com/subzeroid/aiograpi/blob/main/examples/diagnose_login.py) with the same aiograpi version, saved settings and proxy as the failing application:
+
+```bash
+python examples/diagnose_login.py --settings session.json --report login-diagnostic.json
+```
+
+Use `--relogin` to request password login despite an authorized saved session, `--proxy` to enter the existing proxy privately, and `--two-factor` to enter a current verification code privately. Saved uTLS settings also require `--utls-library-path` for the already verified local build. Credentials use `IG_USERNAME`/`IG_PASSWORD` or interactive input. The example awaits one high-level login attempt, stops automatic challenge input, bounds request timeouts, disables transport retries, and quietly closes its sessions. Normal login flow can make multiple requests.
+
+The sanitized report includes response order, error categories, parsed-context booleans and CAA outcomes captured before fallback overwrites state. Marker and dialog presence flags record references. They do not prove callback execution, credential validity, verification-code acceptance or a usable session; HTTP 200 alone does not prove these either. Review only the report before sharing. Keep the settings file private: it contains session credentials and is updated even after failure. Both files are written atomically with mode 0600; saved retry preferences are retained.
+
+Applications can `await diagnose(client, username, password)` from the repository example. The helper restores its temporary request methods and callbacks even after cancellation, and leaves cleanup and settings persistence to the caller. Use a dedicated client/process because output suppression affects the process during observation. See the [examples README](https://github.com/subzeroid/aiograpi/blob/main/examples/README.md#login-diagnostics) for async usage.
+
 ## Installation requirements
 
 Private HTTP/2 requires `curl_cffi>=0.15.0` and libcurl 8.10 or newer. `curl_cffi` normally supplies libcurl in its wheels; a system `curl` executable and the Python `h2` package are not required for this transport. A compatible wheel or a supported native build is required for your platform. Android/Termux has not been verified.
