@@ -586,6 +586,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#shareable-login-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shareable login diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installation-requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1560,6 +1571,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#shareable-login-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shareable login diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installation-requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1640,6 +1662,13 @@
 <p><code>override_app_version=True</code> updates the app version, version code and Bloks hash. It retains hardware settings and device identifiers. Keep using the account's existing proxy. Alternatively, provide the correct Bloks hash for the original profile or explicitly use <code>login_legacy()</code>.</p>
 <h2 id="verification-and-failures">Verification and failures</h2>
 <p>Continue to pass <code>verification_code</code> for supported two-factor challenges. The CAA profile-code flow also supports <code>challenge_code_handler</code>; see <a href="../totp/">TOTP</a>. Native CAA exceptions propagate. If CAA returns neither a usable session, a supported verification context, nor an explicit fallback instruction, <code>login()</code> raises <code>ClientError</code> with the CAA failure reason. Curl does not automatically retry a failed password POST.</p>
+<h2 id="shareable-login-diagnostics">Shareable login diagnostics</h2>
+<p>Run the standalone <a href="https://github.com/subzeroid/aiograpi/blob/main/examples/diagnose_login.py">diagnose_login.py example</a> with the same aiograpi version, saved settings and proxy as the failing application:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>examples/diagnose_login.py<span class="w"> </span>--settings<span class="w"> </span>session.json<span class="w"> </span>--report<span class="w"> </span>login-diagnostic.json
+</code></pre></div>
+<p>Use <code>--relogin</code> to request password login despite an authorized saved session, <code>--proxy</code> to enter the existing proxy privately, and <code>--two-factor</code> to enter a current verification code privately. Saved uTLS settings also require <code>--utls-library-path</code> for the already verified local build. Credentials use <code>IG_USERNAME</code>/<code>IG_PASSWORD</code> or interactive input. The example awaits one high-level login attempt, stops automatic challenge input, bounds request timeouts, disables transport retries, and quietly closes its sessions. Normal login flow can make multiple requests.</p>
+<p>The sanitized report includes response order, error categories, parsed-context booleans and CAA outcomes captured before fallback overwrites state. Marker and dialog presence flags record references. They do not prove callback execution, credential validity, verification-code acceptance or a usable session; HTTP 200 alone does not prove these either. Review only the report before sharing. Keep the settings file private: it contains session credentials and is updated even after failure. Both files are written atomically with mode 0600; saved retry preferences are retained.</p>
+<p>Applications can <code>await diagnose(client, username, password)</code> from the repository example. The helper restores its temporary request methods and callbacks even after cancellation, and leaves cleanup and settings persistence to the caller. Use a dedicated client/process because output suppression affects the process during observation. See the <a href="https://github.com/subzeroid/aiograpi/blob/main/examples/README.md#login-diagnostics">examples README</a> for async usage.</p>
 <h2 id="installation-requirements">Installation requirements</h2>
 <p>Private HTTP/2 requires <code>curl_cffi&gt;=0.15.0</code> and libcurl 8.10 or newer. <code>curl_cffi</code> normally supplies libcurl in its wheels; a system <code>curl</code> executable and the Python <code>h2</code> package are not required for this transport. A compatible wheel or a supported native build is required for your platform. Android/Termux has not been verified.</p>
 <p>The optional <code>aiograpi[curl]</code> extra remains available for public web browser impersonation through <code>curl-adapter</code>. It is not required for private HTTP/2. See <a href="../interactions/#private-http2-transport">private HTTP/2 transport</a> for TLS, proxy and timeout behavior.</p>

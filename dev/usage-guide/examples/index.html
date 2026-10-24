@@ -1434,6 +1434,10 @@
 </thead>
 <tbody>
 <tr>
+<td><a href="https://github.com/subzeroid/aiograpi/blob/main/examples/diagnose_login.py"><code>diagnose_login.py</code></a></td>
+<td>Standalone async login diagnostic with a sanitized report and private settings.</td>
+</tr>
+<tr>
 <td><a href="https://github.com/subzeroid/aiograpi/blob/main/examples/public_lookup.py"><code>public_lookup.py</code></a></td>
 <td>Public profile lookup with optional <code>public_transport="curl"</code>.</td>
 </tr>
@@ -1460,7 +1464,8 @@
 </tbody>
 </table>
 <p>Examples:</p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>examples/public_lookup.py<span class="w"> </span>instagram
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>examples/diagnose_login.py<span class="w"> </span>--settings<span class="w"> </span>session.json<span class="w"> </span>--report<span class="w"> </span>login-diagnostic.json
+python<span class="w"> </span>examples/public_lookup.py<span class="w"> </span>instagram
 <span class="nv">IG_PUBLIC_TRANSPORT</span><span class="o">=</span>curl<span class="w"> </span>python<span class="w"> </span>examples/public_lookup.py<span class="w"> </span>instagram
 python<span class="w"> </span>examples/download_user_media.py<span class="w"> </span>instagram<span class="w"> </span>--amount<span class="w"> </span><span class="m">5</span><span class="w"> </span>--folder<span class="w"> </span>./downloads
 python<span class="w"> </span>examples/upload_media.py<span class="w"> </span>reel<span class="w"> </span>./reel.mp4<span class="w"> </span>--thumbnail<span class="w"> </span>./thumb.jpg<span class="w"> </span>--caption<span class="w"> </span><span class="s2">"Reel"</span>
@@ -1468,6 +1473,7 @@ python<span class="w"> </span>examples/upload_story.py<span class="w"> </span>ph
 python<span class="w"> </span>examples/direct_message.py<span class="w"> </span>--user-ids<span class="w"> </span><span class="m">123456789</span><span class="w"> </span>--text<span class="w"> </span><span class="s2">"Hello"</span>
 python<span class="w"> </span>examples/realtime_direct.py<span class="w"> </span>--limit<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
+<p>For the diagnostic, share only the reviewed report and keep its settings file private. See <a href="../login-migration/#shareable-login-diagnostics">login diagnostics</a> for interpretation and supported controls.</p>
 <p>Video uploads in Android environments should pass <code>--thumbnail</code> or install the optional video dependencies, MoviePy <code>2.2.1</code>, and executable <code>ffmpeg</code>. See <a href="../pydroid/">Pydroid and ffmpeg</a> and <a href="../termux/">Termux</a>.</p>
 
 
