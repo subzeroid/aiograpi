@@ -98,8 +98,7 @@ test = [
     "imageio-ffmpeg>=0.2.0",
     "pip-audit==2.10.0",
     "mike==2.2.0",
-    # mike implicitly imports pkg_resources from setuptools.
-    "setuptools==83.0.0",
+    "setuptools==84.2.1",
     "markdown-include==0.8.1",
     "mkdocs-material==9.7.7",
     "mkdocs-minify-plugin==0.8.0",
@@ -111,7 +110,7 @@ test = [
     "pytest-xdist==3.8.0",
     "pytest==9.0.3",
     "python-dotenv>=0.10",
-    "ruff==0.15.16",
+    "ruff==0.17.1",
 ]
 
 [tool.setuptools]
