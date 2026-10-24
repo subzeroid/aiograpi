@@ -5,10 +5,14 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.1.0
+instagrapi 3.2.0
 ```
 
-In aiograpi 2.1.0, the optional [uTLS transport](usage-guide/utls.md) ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The standalone synchronous login diagnostic has no async example counterpart and is outside this runtime port; its changes are not claimed as async diagnostic parity. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.
+In aiograpi 2.1.0, the optional [uTLS transport](usage-guide/utls.md) ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.
+
+The standalone [async login diagnostic](usage-guide/login-migration.md#shareable-login-diagnostics) was added to development main after aiograpi 2.1.0 in [#524](https://github.com/subzeroid/aiograpi/pull/524). It includes the exact error-dialog reference labels added upstream between 3.1.0 and 3.2.0; these references do not establish credential validity or login success.
+
+The [instagrapi 3.1.0 to 3.2.0 review](https://github.com/subzeroid/instagrapi/compare/3.1.0...3.2.0) requires no additional client runtime port: Python 3.11+, Pillow >=13,<14 and the strict runtime dependency audit already shipped in aiograpi 2.1.0. This maintenance update records the 3.2.0 baseline and aligns the test-only setuptools and Ruff pins. The package version remains 2.1.0; no separate package release is needed for this synchronization review.
 
 Aiograpi 2.1.0 includes cookie-only session identity restoration and the documentation Git identity correction prepared for unpublished 2.0.23. Aiograpi 2.0.22 added compatible typed `needs_upgrade` errors while preserving the existing CAA fallback behavior. It does not establish recovery from CAA responses without a session. Aiograpi 2.0.21 added configurable and persistent public/non-LSD GraphQL User-Agent profiles while retaining existing route defaults. Aiograpi 2.0.20 preserves the disabled automatic challenge default, reports built-in prompt EOF as `ChallengeRequired`, accepts existing challenge callback metadata and awaits asynchronous generic exception hooks. Aiograpi 2.0.19 deduplicates follower/following iterators by user ID while preserving first-seen data and server order. Aiograpi 2.0.18 corrected the private header lifetime. The TLS 1.3 minimum, Android 449 profile with saved 448 support, authorization-header cleanup and CAA context-pairing correction shipped in 2.0.17. Earlier ports are shown below.
 
@@ -35,13 +39,14 @@ Aiograpi 2.1.0 includes cookie-only session identity restoration and the documen
 | 3.0.18 | 2.0.17 (prepared in unpublished 2.0.16) | Pair CAA two-step contexts with their parameter keys, preserve scalar positions, and match exact quoted app references. |
 | 3.0.19 | 2.0.17 | Clear stale account routing and claim headers on authorization reset while preserving device identity and valid-session reuse. |
 | 3.0.20 | 2.0.17 | Use the native Android 449 profile, retain saved 448 settings, and preserve the existing CAA login payload. |
-| 3.0.21 | 2.0.17 | Require TLS 1.3 for private curl requests while retaining hybrid/classical groups and HTTP/2. Standalone login diagnostics and development-tool changes are sync-specific. |
+| 3.0.21 | 2.0.17 | Require TLS 1.3 for private curl requests while retaining hybrid/classical groups and HTTP/2. The original standalone diagnostic and development-tool changes were outside that runtime port. |
 | 3.0.22 | 2.0.18 | Reuse one runtime Pigeon ID per client, omit fabricated SALT defaults, and preserve explicit header overrides. Documentation service links and app-profile guidance are sync-specific. |
 | 3.0.23 | 2.0.19 | Follower/following iterators yield unique user IDs and count unique users toward `amount`, preserving first-seen data and server order. |
 | 3.0.24 | 2.0.20 | Compatible challenge handling controls and actionable built-in prompt EOF errors; async callback metadata and awaited generic hooks retain the disabled automatic handling default. |
 | 3.0.25 | 2.0.21 | Configurable independent/shared public and non-LSD GraphQL User-Agent profiles, settings persistence and case-insensitive per-call overrides; existing defaults retained. |
 | 3.0.26 | 2.0.22 | Typed HTTP 400 `needs_upgrade` errors with existing `UnknownError` compatibility and CAA fallback behavior preserved. |
-| 3.1.0 | 2.1.0 | Optional strict uTLS/native peer validation with explicit verified builds, HTTPX async deadlines, cancellation and draining shutdown; curl default retained. Synchronous standalone diagnostics are outside this runtime port. |
+| 3.1.0 | 2.1.0 | Optional strict uTLS/native peer validation with explicit verified builds, HTTPX async deadlines, cancellation and draining shutdown; curl default retained. The standalone async diagnostic was added separately in #524 after this release. |
+| 3.2.0 | Development main (package version 2.1.0) | Python 3.11+, Pillow >=13,<14 and the strict runtime dependency audit were already present; the async diagnostic includes the upstream error-dialog references. Update the recorded baseline and test-only tool pins without a new runtime port or package release. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
