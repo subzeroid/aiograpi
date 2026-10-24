@@ -8,6 +8,11 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Record synchronization through instagrapi 3.2.0. Its Python 3.11+/Pillow 13 requirements and strict runtime dependency audit are already present; the standalone async diagnostic was added separately in #524. No additional client runtime port is required.
+- Align the test-only setuptools and Ruff pins with upstream at 84.2.1 and 0.17.1.
+
 ## [2.1.0] - 2026-10-23
 
 ### Added
