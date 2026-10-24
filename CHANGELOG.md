@@ -8,6 +8,10 @@ starting with 1.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Report unmeasured private bandwidth as `-1.000` speed and zero byte/time counters instead of randomized values, preserving explicit request and upload header overrides.
+
 ## [2.1.0] - 2026-10-23
 
 ### Added
