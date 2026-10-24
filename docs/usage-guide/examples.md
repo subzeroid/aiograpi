@@ -17,6 +17,7 @@ Common scripts:
 
 | Script | Purpose |
 | --- | --- |
+| [`diagnose_login.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/diagnose_login.py) | Standalone async login diagnostic with a sanitized report and private settings. |
 | [`public_lookup.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/public_lookup.py) | Public profile lookup with optional `public_transport="curl"`. |
 | [`download_user_media.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/download_user_media.py) | Login, list recent media for a username, and download photos/videos/albums. |
 | [`upload_media.py`](https://github.com/subzeroid/aiograpi/blob/main/examples/upload_media.py) | Upload a feed photo, feed video, Reel, or Trial Reel. |
@@ -27,6 +28,7 @@ Common scripts:
 Examples:
 
 ```bash
+python examples/diagnose_login.py --settings session.json --report login-diagnostic.json
 python examples/public_lookup.py instagram
 IG_PUBLIC_TRANSPORT=curl python examples/public_lookup.py instagram
 python examples/download_user_media.py instagram --amount 5 --folder ./downloads
@@ -35,5 +37,7 @@ python examples/upload_story.py photo ./story.jpg --caption "Story"
 python examples/direct_message.py --user-ids 123456789 --text "Hello"
 python examples/realtime_direct.py --limit 1
 ```
+
+For the diagnostic, share only the reviewed report and keep its settings file private. See [login diagnostics](login-migration.md#shareable-login-diagnostics) for interpretation and supported controls.
 
 Video uploads in Android environments should pass `--thumbnail` or install the optional video dependencies, MoviePy `2.2.1`, and executable `ffmpeg`. See [Pydroid and ffmpeg](pydroid.md) and [Termux](termux.md).
