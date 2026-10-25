@@ -1525,11 +1525,11 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.2.0
+<div class="highlight"><pre><span></span><code>instagrapi 3.2.1
 </code></pre></div>
 <p>In aiograpi 2.1.0, the optional <a href="../usage-guide/utls/">uTLS transport</a> ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.</p>
-<p>The standalone <a href="../usage-guide/login-migration/#shareable-login-diagnostics">async login diagnostic</a> was added to development main after aiograpi 2.1.0 in <a href="https://github.com/subzeroid/aiograpi/pull/524">#524</a>. It includes the exact error-dialog reference labels added upstream between 3.1.0 and 3.2.0; these references do not establish credential validity or login success.</p>
-<p>The <a href="https://github.com/subzeroid/instagrapi/compare/3.1.0...3.2.0">instagrapi 3.1.0 to 3.2.0 review</a> requires no additional client runtime port: Python 3.11+, Pillow &gt;=13,&lt;14 and the strict runtime dependency audit already shipped in aiograpi 2.1.0. This maintenance update records the 3.2.0 baseline and aligns the test-only setuptools and Ruff pins. The package version remains 2.1.0; no separate package release is needed for this synchronization review.</p>
+<p>Aiograpi 2.1.1 includes the standalone <a href="../usage-guide/login-migration/#shareable-login-diagnostics">async login diagnostic</a> added in <a href="https://github.com/subzeroid/aiograpi/pull/524">#524</a>. It includes the exact error-dialog reference labels added upstream between 3.1.0 and 3.2.0; these references do not establish credential validity or login success. This release also reports unmeasured private bandwidth as <code>-1.000</code> speed and zero byte/time counters, preserving explicit request and upload header overrides.</p>
+<p>The <a href="https://github.com/subzeroid/instagrapi/compare/3.1.0...3.2.0">instagrapi 3.1.0 to 3.2.0 review</a> required no additional client runtime port: Python 3.11+, Pillow &gt;=13,&lt;14 and the strict runtime dependency audit already shipped in aiograpi 2.1.0. The maintenance review recorded the 3.2.0 baseline and aligned the test-only setuptools and Ruff pins without a separate package release. Aiograpi 2.1.1 records synchronization through instagrapi 3.2.1; the matching bandwidth fix and pinned PyPI publisher are already present.</p>
 <p>Aiograpi 2.1.0 includes cookie-only session identity restoration and the documentation Git identity correction prepared for unpublished 2.0.23. Aiograpi 2.0.22 added compatible typed <code>needs_upgrade</code> errors while preserving the existing CAA fallback behavior. It does not establish recovery from CAA responses without a session. Aiograpi 2.0.21 added configurable and persistent public/non-LSD GraphQL User-Agent profiles while retaining existing route defaults. Aiograpi 2.0.20 preserves the disabled automatic challenge default, reports built-in prompt EOF as <code>ChallengeRequired</code>, accepts existing challenge callback metadata and awaits asynchronous generic exception hooks. Aiograpi 2.0.19 deduplicates follower/following iterators by user ID while preserving first-seen data and server order. Aiograpi 2.0.18 corrected the private header lifetime. The TLS 1.3 minimum, Android 449 profile with saved 448 support, authorization-header cleanup and CAA context-pairing correction shipped in 2.0.17. Earlier ports are shown below.</p>
 <table>
 <thead>
@@ -1684,6 +1684,11 @@
 <td>3.2.0</td>
 <td>Development main (package version 2.1.0)</td>
 <td>Python 3.11+, Pillow &gt;=13,&lt;14 and the strict runtime dependency audit were already present; the async diagnostic includes the upstream error-dialog references. Update the recorded baseline and test-only tool pins without a new runtime port or package release.</td>
+</tr>
+<tr>
+<td>3.2.1</td>
+<td>2.1.1</td>
+<td>Unmeasured-bandwidth defaults, standalone async login diagnostic, recorded upstream baseline and pinned PyPI publisher.</td>
 </tr>
 </tbody>
 </table>
