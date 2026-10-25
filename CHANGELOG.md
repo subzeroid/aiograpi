@@ -6,11 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
-## [Unreleased]
+## [2.1.1] - 2026-10-25
+
+### Added
+
+- Provide a standalone async login diagnostic with shareable, sanitized phase and response details, including exact CAA error-dialog references (#524). These references do not establish credential validity or login success.
 
 ### Changed
 
-- Record synchronization through instagrapi 3.2.0. Its Python 3.11+/Pillow 13 requirements and strict runtime dependency audit are already present; the standalone async diagnostic was added separately in #524. No additional client runtime port is required.
+- Record synchronization through instagrapi 3.2.1, including the unmeasured-bandwidth fix. Its Python 3.11+/Pillow 13 requirements and strict runtime dependency audit are already present; no additional client runtime port is required.
 - Align the test-only setuptools and Ruff pins with upstream at 84.2.1 and 0.17.1.
 
 ### Fixed
