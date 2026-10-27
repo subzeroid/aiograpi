@@ -6,11 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
-## [Unreleased]
+## [2.1.2] - 2026-10-27
 
 ### Changed
 
 - Allow Pydantic 2.14 on non-Android interpreters while keeping Android pinned to 2.12.5 for its available Python 3.13 and 3.14 core wheels.
+- Record synchronization through instagrapi 3.2.2; the matching dependency metadata and native repost documentation are already present.
 
 ## [2.1.1] - 2026-10-25
 
