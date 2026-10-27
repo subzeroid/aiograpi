@@ -60,7 +60,7 @@ dependencies = [
     "orjson>=3.11.8,<4",
     "PySocks>=1.7.1,<2",
     "pydantic==2.12.5; sys_platform == 'android'",
-    "pydantic>=2.12.5,<2.14; sys_platform != 'android'",
+    "pydantic>=2.12.5,<2.15; sys_platform != 'android'",
     "pycryptodomex>=3.23.0,<4",
     "zstandard>=0.25.0,<0.26",
     "Pillow>=13.0.0,<14",
