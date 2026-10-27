@@ -3594,7 +3594,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(user.username, "instagram")
         client.user_web_profile_info_gql.assert_called_once_with("25025320")
 
-    async def test_user_info_by_username_gql_parses_web_profile_without_update_headers_kwarg(
+    async def test_user_info_by_username_gql_parses_web_profile_with_request_headers(
         self,
     ):
         class DummyClient(UserMixin):
@@ -3613,7 +3613,7 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(user.pk, "123")
         self.assertEqual(user.username, "example")
         self.assertEqual(len(client.public_request_calls), 1)
-        self.assertEqual(client.public_request_calls[0]["kwargs"], {})
+        self.assertEqual(client.public_request_calls[0]["kwargs"], {"update_headers": False})
         self.assertIn(
             "web_profile_info/?username=example",
             client.public_request_calls[0]["url"],
