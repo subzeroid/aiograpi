@@ -5,7 +5,6 @@ import asyncio
 import base64
 import functools
 import importlib.util
-import io
 import json
 import logging
 import stat
@@ -19,7 +18,6 @@ import httpx
 import pytest
 import requests
 from Cryptodome.PublicKey import RSA
-from urllib3.response import HTTPResponse
 
 from aiograpi import Client
 from aiograpi.transports import CurlH2Transport
@@ -104,53 +102,46 @@ def configure_login(client):
 
 
 @pytest.mark.parametrize("route", ["direct", "redirect", "redirect-failure"])
-def test_cli_public_curl_fetches_real_password_keys_through_requests_timeout_boundary(
+def test_cli_fetches_launcher_keys_through_private_transport_with_sanitized_observation(
     diagnostic, clients, monkeypatch, tmp_path, route
 ):
     public_calls, private_calls = [], []
-    publickey = base64.b64encode(RSA.generate(1024).public_key().export_key(format="DER")).decode()
-
-    class OfflineConnection:
-        def urlopen(self, method, url, **kwargs):
-            public_calls.append((method, url, kwargs["timeout"]))
-            if route != "direct" and len(public_calls) == 1:
-                return HTTPResponse(
-                    status=302,
-                    body=io.BytesIO(SECRET.encode()),
-                    preload_content=False,
-                    headers={"location": "https://i.instagram.com/api/v1/qe/sync/?private=" + SECRET},
-                )
-            if route == "redirect-failure":
-                raise requests.exceptions.ConnectionError(SECRET)
-            return HTTPResponse(
-                status=200,
-                body=io.BytesIO(b"{}"),
-                preload_content=False,
-                headers={
-                    "content-type": "application/json",
-                    "ig-set-password-encryption-key-id": "1",
-                    "ig-set-password-encryption-pub-key": publickey,
-                },
-            )
+    publickey = base64.b64encode(RSA.generate(2048).public_key().export_key(format="DER")).decode()
+    keys = "https://i.instagram.com/api/v1/launcher/sync/"
 
     class OfflineAdapter(requests.adapters.HTTPAdapter):
         def __init__(self, *, impersonate_browser_type):
             super().__init__()
 
-        def get_connection_with_tls_context(self, *args, **kwargs):
-            return OfflineConnection()
+        def send(self, request, **kwargs):
+            public_calls.append(request)
+            raise AssertionError("Password-key acquisition must not use the public transport")
 
-    # Keep the optional package boundary offline while retaining Requests'
-    # real send/timeout conversion and CurlSession's real async request path.
     monkeypatch.setitem(sys.modules, "curl_adapter", SimpleNamespace(CurlCffiAdapter=OfflineAdapter))
     client = clients(private_transport="requests", public_transport="curl")
 
     async def send(request):
-        private_calls.append(str(request.url))
+        private_calls.append((request.method, request.url.path, request.extensions["timeout"]))
+        if request.url.path == "/api/v1/launcher/sync/":
+            if route != "direct" and len(private_calls) == 1:
+                return httpx.Response(
+                    302, request=request, content=SECRET.encode(), headers={"location": keys + "?private=" + SECRET}
+                )
+            if route == "redirect-failure":
+                raise httpx.ConnectError(SECRET, request=request)
+            return httpx.Response(
+                200,
+                request=request,
+                content=b"{}",
+                headers={
+                    "ig-set-password-encryption-key-id": "1",
+                    "ig-set-password-encryption-pub-key": publickey,
+                },
+            )
         return response(request, 400, b'{"status":"fail","error_type":"bad_password"}')
 
     install_transport(client, send)
-    del client.password_encrypt  # Exercise password_publickeys and RSA encryption.
+    del client.password_encrypt  # Exercise the real launcher lookup and RSA encryption.
     monkeypatch.setattr(diagnostic, "Client", Mock(return_value=client))
     monkeypatch.setenv("IG_USERNAME", "synthetic-user")
     monkeypatch.setenv("IG_PASSWORD", SECRET)
@@ -159,19 +150,23 @@ def test_cli_public_curl_fetches_real_password_keys_through_requests_timeout_bou
     settings.write_text('{"public_transport":"curl"}')
     assert diagnostic.main(["--settings", str(settings), "--report", str(output)]) == 1
     report = json.loads(output.read_text())
-    assert report["exception"]["type"] == ("ConnectError" if route == "redirect-failure" else "BadPassword")
-    assert len(public_calls) == (1 if route == "direct" else 2)
-    assert public_calls[0][0:2] == ("GET", "/api/v1/qe/sync/")
-    assert public_calls[0][2].connect_timeout == 10
-    assert public_calls[0][2].read_timeout == 30
-    assert private_calls == ([] if route == "redirect-failure" else [CAA])
+    assert report["exception"]["type"] == ("ClientError" if route == "redirect-failure" else "BadPassword")
+    assert public_calls == []
+    assert private_calls[0][0:2] == ("POST", "/api/v1/launcher/sync/")
+    assert private_calls[0][2]["connect"] == 10
+    assert private_calls[0][2]["read"] == 30
+    expected_paths = ["/api/v1/launcher/sync/"] * (1 if route == "direct" else 2)
+    if route != "redirect-failure":
+        expected_paths.append(httpx.URL(CAA).path)
+    assert [item[1] for item in private_calls] == expected_paths
     assert [item["http_status"] for item in report["responses"]] == {
         "direct": [200, 400],
         "redirect": [302, 200, 400],
         "redirect-failure": [302],
     }[route]
-    assert report["responses"][0]["endpoint"] == "qe/sync"
+    assert report["responses"][0]["endpoint"] == "launcher/sync"
     assert client.public._client.hooks["response"] == []
+    assert client.private._client.event_hooks["response"] == []
     assert SECRET not in output.read_text()
 
 
