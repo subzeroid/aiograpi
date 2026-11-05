@@ -12,6 +12,17 @@ starting with 1.0.0.
 
 - Keep legacy web-profile lookup headers scoped to that request so later public requests retain their configured session headers.
 
+## [2.1.3] - 2026-11-05
+
+### Fixed
+
+- Fetch password encryption keys from `launcher/sync/` and read error-response headers before automatic timeout retries, challenge handling or JSON parsing can discard them. Raise `ClientError` with response diagnostics when the key is absent.
+- Keep async login diagnostics on the private launcher path, preserving timeout budgets, response ordering and secret redaction.
+
+### Changed
+
+- Record runtime synchronization through instagrapi 3.2.3.
+
 ## [2.1.2] - 2026-10-27
 
 ### Changed
