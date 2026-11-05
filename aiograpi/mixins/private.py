@@ -471,6 +471,7 @@ class PrivateRequestMixin(ClientMixin):
         headers=None,
         extra_sig=None,
         domain: str | None = None,
+        return_response=False,
     ):
         self.last_response = None
         self.last_json = last_json = {}  # for Sentry context in traceback
@@ -540,6 +541,8 @@ class PrivateRequestMixin(ClientMixin):
                     self.authorization_data.update(parsed)
             self.request_log(response)
             self.last_response = response
+            if return_response:
+                return response
             # hack for re-request without paging cursor if cursor is broken
             if response.status_code == 500 and params and (params.get("min_id") or params.get("max_id")):
                 params.pop("min_id", None)
