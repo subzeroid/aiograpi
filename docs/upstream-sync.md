@@ -5,10 +5,12 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.2.2
+instagrapi 3.2.3
 ```
 
 In aiograpi 2.1.0, the optional [uTLS transport](usage-guide/utls.md) ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.
+
+Aiograpi 2.1.3 ports the password encryption-key lookup to `launcher/sync/`. It reads response headers independently of JSON parsing, automatic timeout retries and challenge handling, and retains response diagnostics when keys are missing. Anonymous live key retrieval validates this lookup; it does not establish successful login. Dependency constraints and the Android pin are unchanged.
 
 Aiograpi 2.1.2 allows Pydantic 2.14 on non-Android interpreters and records synchronization through instagrapi 3.2.2. Android retains the 2.12.5 pin; the matching native repost guidance and dependency metadata are already present.
 
@@ -51,6 +53,7 @@ Aiograpi 2.1.0 includes cookie-only session identity restoration and the documen
 | 3.2.0 | Development main (package version 2.1.0) | Python 3.11+, Pillow >=13,<14 and the strict runtime dependency audit were already present; the async diagnostic includes the upstream error-dialog references. Update the recorded baseline and test-only tool pins without a new runtime port or package release. |
 | 3.2.1 | 2.1.1 | Unmeasured-bandwidth defaults, standalone async login diagnostic, recorded upstream baseline and pinned PyPI publisher. |
 | 3.2.2 | 2.1.2 | Pydantic 2.14 support on non-Android interpreters, the preserved Android 2.12.5 pin and matching native repost guidance. |
+| 3.2.3 | 2.1.3 | Private launcher password-key retrieval with header-only error handling and sanitized async diagnostic coverage. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
