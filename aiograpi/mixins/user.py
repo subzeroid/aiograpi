@@ -269,6 +269,7 @@ class UserMixin(ClientMixin):
                 await self.public_request(
                     f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}",
                     headers=temporary_public_headers,
+                    update_headers=False,
                 )
             )["data"]["user"]
         )
