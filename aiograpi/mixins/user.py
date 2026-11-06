@@ -74,11 +74,11 @@ class UserMixin(ClientMixin):
 
     async def _user_info_by_username_public(self, username: str) -> User:
         try:
-            return await self.user_info_by_username_gql(username)
+            return await self.user_info_by_username_v2_gql(username)
         except ClientLoginRequired as e:
             if not self.inject_sessionid_to_public():
                 raise e
-            return await self.user_info_by_username_gql(username)
+            return await self.user_info_by_username_v2_gql(username)
 
     async def _user_info_public(self, user_id: str) -> User:
         try:
@@ -456,8 +456,7 @@ class UserMixin(ClientMixin):
         """
         user_id = str(user_id)
         try:
-            # GraphQL haven't method to receive user by id
-            return await self.user_info_by_username_gql(await self.username_from_user_id_gql(user_id))
+            return await self.user_info_v2_gql(user_id)
         except JSONDecodeError as e:
             raise ClientJSONDecodeError(e, user_id=user_id)
 
