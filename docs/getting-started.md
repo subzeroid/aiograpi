@@ -56,17 +56,18 @@ The saved session is validated during `login()`. If Instagram rejects it with
 `login_required`, aiograpi performs a fresh login with the supplied
 credentials. Saving the settings again persists any refreshed session.
 
-## Public, anonymous calls (no login)
+## Public web profile calls
 
-For some endpoints you can skip login entirely:
+Public describes the web API surface; profile queries may require session cookies. Reuse a saved session with the modern username resolver:
 
 ```python
 client = Client()
-user = await client.user_info_by_username_gql("instagram")
-print(user.username, user.pk)  # → "instagram", "25025320"
+client.load_settings("session.json")
+user = await client.user_info_by_username_v2_gql("instagram")
+print(user.username, user.pk)
 ```
 
-Some `_gql` methods use public web GraphQL and can work anonymously. `user_medias*_gql()` uses the private app GraphQL timeline first and falls back to public GraphQL on `ClientError`. Methods with `_v1` need login.
+The resolver searches for an exact username match, then fetches the profile by ID. `user_info_v2_gql(user_id)` performs that profile fetch directly. The older `user_info_by_username_gql()` helper remains available explicitly; it is not used by automatic profile routing. Other public methods can have different session requirements. `user_medias*_gql()` uses the private app GraphQL timeline first and falls back to public GraphQL on `ClientError`. Methods with `_v1` need login.
 
 ## What's Next?
 

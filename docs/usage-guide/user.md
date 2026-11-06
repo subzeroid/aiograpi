@@ -180,3 +180,7 @@ except InvalidTargetUser:
     # Instagram refuses chaining for locked-down / private targets
     suggested = {"users": []}
 ```
+
+### Public profile routing
+
+The public branches of `user_info()`, `user_info_by_username()` and `user_id_from_username()` use modern profile GraphQL. `user_info_gql(user_id)` fetches the profile directly by ID. Private-first selection and caches are preserved; `user_info_by_username_gql()` remains an explicit legacy method. See [public profile routing and remaining legacy queries](public-transport.md#modern-profile-routing-and-remaining-legacy-queries) for session requirements and migration limits.
