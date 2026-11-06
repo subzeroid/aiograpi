@@ -204,19 +204,19 @@ class HashtagRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(medias, ["m1"])
         self.assertEqual(end_cursor, "next-page")
 
-    async def test_hashtag_medias_paginated_falls_back_to_private(self):
+    async def test_hashtag_medias_paginated_falls_back_to_private_on_first_page(self):
         client = Client()
         client.hashtag_medias_paginated_gql = AsyncMock(side_effect=ClientError("public unavailable"))
         client.hashtag_medias_paginated_v1 = AsyncMock(return_value=(["m1"], "next-page"))
 
-        medias, end_cursor = await client.hashtag_medias_paginated("python", amount=5, end_cursor="cursor-1")
+        medias, end_cursor = await client.hashtag_medias_paginated("python", amount=5, end_cursor=None)
 
-        client.hashtag_medias_paginated_gql.assert_awaited_once_with("python", amount=5, end_cursor="cursor-1")
+        client.hashtag_medias_paginated_gql.assert_awaited_once_with("python", amount=5, end_cursor=None)
         client.hashtag_medias_paginated_v1.assert_awaited_once_with(
             "python",
             amount=5,
             tab_key="recent",
-            end_cursor="cursor-1",
+            end_cursor=None,
         )
         self.assertEqual(medias, ["m1"])
         self.assertEqual(end_cursor, "next-page")

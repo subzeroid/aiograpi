@@ -78,17 +78,17 @@ class UsertagMediasPaginationRegressionTestCase(unittest.IsolatedAsyncioTestCase
         assert end_cursor == "next-page"
         assert [media.pk for media in medias] == ["1"]
 
-    async def test_usertag_medias_paginated_falls_back_to_v1(self):
+    async def test_usertag_medias_paginated_falls_back_to_v1_on_first_page(self):
         client = Client()
         client.usertag_medias_paginated_gql = AsyncMock(side_effect=ClientError("public unavailable"))
         client.usertag_medias_paginated_v1 = AsyncMock(return_value=(["m1"], "next-page"))
 
-        medias, end_cursor = await client.usertag_medias_paginated("123", amount=5, end_cursor="cursor-1")
+        medias, end_cursor = await client.usertag_medias_paginated("123", amount=5, end_cursor="")
 
-        client.usertag_medias_paginated_gql.assert_awaited_once_with(123, 5, end_cursor="cursor-1")
-        client.usertag_medias_paginated_v1.assert_awaited_once_with(123, 5, end_cursor="cursor-1")
+        client.usertag_medias_paginated_gql.assert_awaited_once_with(123, 5, end_cursor="")
+        client.usertag_medias_paginated_v1.assert_awaited_once_with(123, 5, end_cursor="")
         assert medias == ["m1"]
-        assert end_cursor == "next-page"
+        assert end_cursor == "ig-route:tagged-v1:next-page"
 
 
 class LocationPaginationRegressionTestCase(unittest.IsolatedAsyncioTestCase):

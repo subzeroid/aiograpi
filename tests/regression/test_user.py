@@ -533,20 +533,19 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(list(result.keys()), ["456"])
         client.user_followers_private_gql.assert_awaited_once_with("123", 1)
 
-    async def test_authorized_user_followers_uses_legacy_public_after_private_gql_fails(self):
+    async def test_authorized_user_followers_preserves_final_private_graphql_error(self):
         client = Client()
-        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
-        client._users_followers = {}
-        follower = Mock(pk="456")
-
-        client.user_followers_v1 = AsyncMock(side_effect=ClientError("private lookup failed"))
-        client.user_followers_private_gql = AsyncMock(side_effect=ClientError("private graphql lookup failed"))
-        client.user_followers_gql = AsyncMock(return_value=[follower])
-
-        result = await client.user_followers("123", use_cache=False, amount=1)
-
-        self.assertEqual(list(result.keys()), ["456"])
-        client.user_followers_gql.assert_awaited_once_with("123", 1)
+        client.authorization_data = {"ds_user_id": "1"}
+        with (
+            unittest.mock.patch.object(client, "user_followers_v1", side_effect=ClientError("primary unavailable")),
+            unittest.mock.patch.object(
+                client, "user_followers_private_gql", side_effect=ClientError("modern unavailable")
+            ),
+            unittest.mock.patch.object(client, "user_followers_gql") as legacy,
+        ):
+            with self.assertRaisesRegex(ClientError, "modern unavailable"):
+                await client.user_followers("123", use_cache=False, amount=1)
+        legacy.assert_not_called()
 
     async def test_authorized_user_following_falls_back_to_private_gql(self):
         client = Client()
@@ -565,20 +564,19 @@ class UserMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(list(result.keys()), ["456"])
         client.user_following_private_gql.assert_awaited_once_with("123", 1)
 
-    async def test_authorized_user_following_uses_legacy_public_after_private_gql_fails(self):
+    async def test_authorized_user_following_preserves_final_private_graphql_error(self):
         client = Client()
-        client.authorization_data = {"sessionid": "sessionid-value", "ds_user_id": "1"}
-        client._users_following = {}
-        following_user = Mock(pk="456")
-
-        client.user_following_v1 = AsyncMock(side_effect=ClientError("private lookup failed"))
-        client.user_following_private_gql = AsyncMock(side_effect=ClientError("private graphql lookup failed"))
-        client.user_following_gql = AsyncMock(return_value=[following_user])
-
-        result = await client.user_following("123", use_cache=False, amount=1)
-
-        self.assertEqual(list(result.keys()), ["456"])
-        client.user_following_gql.assert_awaited_once_with("123", 1)
+        client.authorization_data = {"ds_user_id": "1"}
+        with (
+            unittest.mock.patch.object(client, "user_following_v1", side_effect=ClientError("primary unavailable")),
+            unittest.mock.patch.object(
+                client, "user_following_private_gql", side_effect=ClientError("modern unavailable")
+            ),
+            unittest.mock.patch.object(client, "user_following_gql") as legacy,
+        ):
+            with self.assertRaisesRegex(ClientError, "modern unavailable"):
+                await client.user_following("123", use_cache=False, amount=1)
+        legacy.assert_not_called()
 
     async def test_user_following_private_gql_chunk_extracts_following_payload(self):
         client = Client()
