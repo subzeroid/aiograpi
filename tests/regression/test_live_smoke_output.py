@@ -100,6 +100,16 @@ class SensitiveClient(_FakeLiveClient):
             raise SensitiveHttpError()
         return await super().user_medias(user_id, amount)
 
+    async def user_followers_v1(self, user_id, amount=0, use_cache=True):
+        followers = await super().user_followers_v1(user_id, amount, use_cache)
+        if self.mode == "followers_count":
+            return followers[:4]
+        fields = {"is_verified", "latest_reel_media", "has_anonymous_profile_picture"}
+        field = self.mode.removeprefix("followers_")
+        if field in fields:
+            setattr(followers[0], field, None)
+        return followers
+
     async def music_search_v2(self, query):
         noisy_dependency()
         raise SensitiveHttpError(503)
@@ -292,4 +302,32 @@ def test_missing_configuration_keeps_local_skip_behavior():
 
     assert result.returncode == 0
     assert result.stdout.strip() == "SKIP: TEST_ACCOUNTS_URL not set"
+    assert result.stderr == ""
+
+
+@pytest.mark.parametrize("failure", ["count", "is_verified", "latest_reel_media", "has_anonymous_profile_picture"])
+def test_follower_gate_reports_safe_count_and_types_without_accepting_failures(failure):
+    script = """
+import runpy
+import sys
+from tests.regression.test_live_smoke_output import install_cli_fakes
+install_cli_fakes("followers_" + sys.argv[1])
+runpy.run_path("tests/live/smoke.py", run_name="__main__")
+"""
+    env = dict(os.environ, TEST_ACCOUNTS_URL="https://example.test/" + SENSITIVE_VALUES["url"])
+    result = subprocess.run(
+        [sys.executable, "-c", script, failure], cwd=REPO_ROOT, env=env, capture_output=True, text=True, timeout=10
+    )
+    output = result.stdout + result.stderr
+    assert result.returncode == 1
+    assert "ALL REQUIRED PASS" not in output
+    assert "REQ user_followers_extended_fields FAIL: AssertionError" in output
+    assert "DIAG user_followers_extended_fields: count=" in output
+    if failure == "count":
+        assert "count=4 expected=5" in output
+    else:
+        assert "count=5 expected=5" in output
+        assert failure + "=NoneType" in output
+    for value in SENSITIVE_VALUES.values():
+        assert value not in output
     assert result.stderr == ""

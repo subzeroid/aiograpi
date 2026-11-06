@@ -10,7 +10,7 @@ that returns at least one usable account (with TOTP seed if 2FA is
 enabled). Skips cleanly if unset.
 
 Reports only operation labels, attempt indices, collection counts, exception
-classes, numeric HTTP status codes, and fixed error categories. Dependency output is suppressed;
+classes, numeric HTTP status codes, follower field type labels, and fixed error categories. Dependency output is suppressed;
 account data, endpoint responses, and raw exception messages are never printed.
 """
 
@@ -349,8 +349,14 @@ async def _run_smoke(report):
 
         try:
             followers = await cl.user_followers_v1("25025320", amount=5)
+            report(f"DIAG user_followers_extended_fields: count={len(followers)} expected=5")
             assert len(followers) == 5
             follower = followers[0]
+            field_types = []
+            for field in ("is_verified", "latest_reel_media", "has_anonymous_profile_picture"):
+                name = type(getattr(follower, field, None)).__name__
+                field_types.append(f"{field}={name if name in {'bool', 'int', 'NoneType'} else 'other'}")
+            report("DIAG user_followers_extended_fields types: " + " ".join(field_types))
             assert isinstance(follower.is_verified, bool)
             assert isinstance(follower.latest_reel_media, int)
             assert isinstance(follower.has_anonymous_profile_picture, bool)
