@@ -1525,9 +1525,10 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.2.5
+<div class="highlight"><pre><span></span><code>instagrapi 3.2.6
 </code></pre></div>
 <p>In aiograpi 2.1.0, the optional <a href="../usage-guide/utls/">uTLS transport</a> ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.</p>
+<p>Aiograpi 2.1.6 records synchronization through instagrapi 3.2.6. Authenticated collection reads stay on private/mobile or existing app GraphQL routes, failures propagate, and fallback cursors retain their endpoint. Public story batches preserve every response. Explicit legacy contracts and unvalidated location replacements remain separate.</p>
 <p>Aiograpi 2.1.5 uses modern queries for automatic public profile lookups and direct public media retrieval, with private-first selection and caches preserved. It records synchronization through instagrapi 3.2.5. Query IDs remain unchanged; explicit legacy compatibility and operation-specific fallbacks remain available.</p>
 <p>Aiograpi 2.1.4 isolates legacy web-profile request headers so later public requests retain their configured headers after success or failure. It records synchronization through instagrapi 3.2.4. Modern profile GraphQL methods and IDs are unchanged; this does not resolve legacy endpoint rate limits.</p>
 <p>Aiograpi 2.1.3 ports the password encryption-key lookup to <code>launcher/sync/</code>. It reads response headers independently of JSON parsing, automatic timeout retries and challenge handling, and retains response diagnostics when keys are missing. Anonymous live key retrieval validates this lookup; it does not establish successful login. Dependency constraints and the Android pin are unchanged.</p>
@@ -1713,6 +1714,11 @@
 <td>3.2.5</td>
 <td>2.1.5</td>
 <td>Modern automatic public profile and media routing with preserved private-first selection and caches.</td>
+</tr>
+<tr>
+<td>3.2.6</td>
+<td>2.1.6</td>
+<td>Authenticated collection routing, preserved failures, endpoint-owned media cursors and complete public story batches.</td>
 </tr>
 </tbody>
 </table>
