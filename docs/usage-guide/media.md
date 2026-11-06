@@ -645,3 +645,7 @@ Timeline helpers:
 ....
 }
 ```
+
+### Modern public media lookup
+
+`media_info_gql(media_pk)` uses the current web `doc_id` query directly and returns a typed `Media`. It no longer sends the legacy media `query_hash` first. It can reuse a saved session; anonymous availability is not guaranteed. The high-level `media_info()` keeps its private-first behavior for authenticated clients. See [public web routing](public-transport.md#modern-profile-routing-and-remaining-legacy-queries) for the remaining legacy operations.
