@@ -32,7 +32,7 @@ export IG_PUBLIC_TRANSPORT_IMPERSONATE="chrome136"
 | --- | --- |
 | [`_common.py`](_common.py) | Shared async login, proxy, session, and environment helpers used by the examples. |
 | [`diagnose_login.py`](diagnose_login.py) | Standalone async login diagnostic with a shareable sanitized report. |
-| [`public_lookup.py`](public_lookup.py) | Public profile lookup with optional `public_transport="curl"`. |
+| [`public_lookup.py`](public_lookup.py) | Modern public profile lookup with optional saved session and `public_transport="curl"`. |
 | [`download_user_media.py`](download_user_media.py) | Login, list recent media for a username, and download photos/videos/albums. |
 | [`upload_media.py`](upload_media.py) | Upload a feed photo, feed video, Reel, or Trial Reel. |
 | [`upload_story.py`](upload_story.py) | Upload a photo or video story, optionally with a link sticker. |
@@ -79,8 +79,8 @@ The reusable helper restores its temporary request methods, exception handler an
 ## Public lookup
 
 ```bash
-python examples/public_lookup.py instagram
-IG_PUBLIC_TRANSPORT=curl python examples/public_lookup.py instagram
+python examples/public_lookup.py instagram --session-file ig_settings.json
+IG_PUBLIC_TRANSPORT=curl python examples/public_lookup.py instagram --session-file ig_settings.json
 ```
 
 ## Download media
