@@ -1213,6 +1213,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#public-profile-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public profile routing
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1454,6 +1465,17 @@
     <span class="md-ellipsis">
       
         Option types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#public-profile-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public profile routing
       
     </span>
   </a>
@@ -1891,6 +1913,8 @@ Pass <code>None</code> to keep Instagram's default follower order.</p>
     <span class="c1"># Instagram refuses chaining for locked-down / private targets</span>
     <span class="n">suggested</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"users"</span><span class="p">:</span> <span class="p">[]}</span>
 </code></pre></div>
+<h3 id="public-profile-routing">Public profile routing</h3>
+<p>The public branches of <code>user_info()</code>, <code>user_info_by_username()</code> and <code>user_id_from_username()</code> use modern profile GraphQL. <code>user_info_gql(user_id)</code> fetches the profile directly by ID. Private-first selection and caches are preserved; <code>user_info_by_username_gql()</code> remains an explicit legacy method. See <a href="../public-transport/#modern-profile-routing-and-remaining-legacy-queries">public profile routing and remaining legacy queries</a> for session requirements and migration limits.</p>
 
 
 
