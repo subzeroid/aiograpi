@@ -108,6 +108,8 @@ class SensitiveClient(_FakeLiveClient):
         field = self.mode.removeprefix("followers_")
         if field in fields:
             setattr(followers[0], field, None)
+        if self.mode == "followers_latest_reel_media_invalid":
+            followers[0].latest_reel_media = SENSITIVE_VALUES["response"]
         return followers
 
     async def music_search_v2(self, query):
@@ -305,7 +307,9 @@ def test_missing_configuration_keeps_local_skip_behavior():
     assert result.stderr == ""
 
 
-@pytest.mark.parametrize("failure", ["count", "is_verified", "latest_reel_media", "has_anonymous_profile_picture"])
+@pytest.mark.parametrize(
+    "failure", ["count", "is_verified", "latest_reel_media_invalid", "has_anonymous_profile_picture"]
+)
 def test_follower_gate_reports_safe_count_and_types_without_accepting_failures(failure):
     script = """
 import runpy
@@ -327,7 +331,34 @@ runpy.run_path("tests/live/smoke.py", run_name="__main__")
         assert "count=4 expected=5" in output
     else:
         assert "count=5 expected=5" in output
-        assert failure + "=NoneType" in output
+        if failure == "latest_reel_media_invalid":
+            assert "latest_reel_media=other" in output
+        else:
+            assert failure + "=NoneType" in output
+    for value in SENSITIVE_VALUES.values():
+        assert value not in output
+    assert result.stderr == ""
+
+
+def test_follower_gate_accepts_nullable_reel_timestamp_from_user_short_contract():
+    from aiograpi.types import UserShort
+
+    assert UserShort(pk="123", latest_reel_media=None).latest_reel_media is None
+    script = """
+import runpy
+from tests.regression.test_live_smoke_output import install_cli_fakes
+install_cli_fakes("followers_latest_reel_media")
+runpy.run_path("tests/live/smoke.py", run_name="__main__")
+"""
+    env = dict(os.environ, TEST_ACCOUNTS_URL="https://example.test/" + SENSITIVE_VALUES["url"])
+    result = subprocess.run(
+        [sys.executable, "-c", script], cwd=REPO_ROOT, env=env, capture_output=True, text=True, timeout=10
+    )
+    output = result.stdout + result.stderr
+    assert result.returncode == 0, output
+    assert "latest_reel_media=NoneType" in output
+    assert "REQ user_followers_extended_fields: ok" in output
+    assert "ALL REQUIRED PASS" in output
     for value in SENSITIVE_VALUES.values():
         assert value not in output
     assert result.stderr == ""

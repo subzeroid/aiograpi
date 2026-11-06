@@ -358,7 +358,7 @@ async def _run_smoke(report):
                 field_types.append(f"{field}={name if name in {'bool', 'int', 'NoneType'} else 'other'}")
             report("DIAG user_followers_extended_fields types: " + " ".join(field_types))
             assert isinstance(follower.is_verified, bool)
-            assert isinstance(follower.latest_reel_media, int)
+            assert follower.latest_reel_media is None or isinstance(follower.latest_reel_media, int)
             assert isinstance(follower.has_anonymous_profile_picture, bool)
             report("REQ user_followers_extended_fields: ok")
         except Exception as e:
