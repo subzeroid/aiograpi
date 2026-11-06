@@ -5,10 +5,12 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.2.4
+instagrapi 3.2.5
 ```
 
 In aiograpi 2.1.0, the optional [uTLS transport](usage-guide/utls.md) ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.
+
+Aiograpi 2.1.5 uses modern queries for automatic public profile lookups and direct public media retrieval, with private-first selection and caches preserved. It records synchronization through instagrapi 3.2.5. Query IDs remain unchanged; explicit legacy compatibility and operation-specific fallbacks remain available.
 
 Aiograpi 2.1.4 isolates legacy web-profile request headers so later public requests retain their configured headers after success or failure. It records synchronization through instagrapi 3.2.4. Modern profile GraphQL methods and IDs are unchanged; this does not resolve legacy endpoint rate limits.
 
@@ -57,6 +59,7 @@ Aiograpi 2.1.0 includes cookie-only session identity restoration and the documen
 | 3.2.2 | 2.1.2 | Pydantic 2.14 support on non-Android interpreters, the preserved Android 2.12.5 pin and matching native repost guidance. |
 | 3.2.3 | 2.1.3 | Private launcher password-key retrieval with header-only error handling and sanitized async diagnostic coverage. |
 | 3.2.4 | 2.1.4 | Request-scoped legacy web-profile headers on success and failure; existing modern profile methods and IDs preserved. |
+| 3.2.5 | 2.1.5 | Modern automatic public profile and media routing with preserved private-first selection and caches. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
