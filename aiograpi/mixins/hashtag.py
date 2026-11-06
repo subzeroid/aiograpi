@@ -320,21 +320,14 @@ class HashtagMixin(ClientMixin):
             return await self.hashtag_medias_paginated_v1(name, amount=amount, tab_key=tab_key, end_cursor=end_cursor)
 
         if self._has_private_auth() or private_required:
-            try:
-                return await private_lookup()
-            except PrivateError:
-                raise
-            except Exception as e:
-                if private_required:
-                    raise e
-                if not isinstance(e, ClientError):
-                    logger.exception(e)
-                return await public_lookup()
+            return await private_lookup()
         try:
             return await public_lookup()
         except PrivateError:
             raise
         except Exception as e:
+            if end_cursor or not self._can_use_private_graphql_fallback(e):
+                raise
             if not isinstance(e, ClientError):
                 logger.exception(e)
             return await private_lookup()

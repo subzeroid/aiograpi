@@ -87,7 +87,7 @@ Low level methods:
 
 `UserShort` objects returned from private GraphQL follow-list payloads preserve selected v2-only fields when Instagram sends them: `friendship_status`, `profile_pic_id`, `fbid_v2`, `interop_messaging_user_fbid`, `strong_id__`, and raw `account_badges`. The legacy `latest_reel_media` property is also populated from Instagram's current `1llatest_reel_media` key.
 
-When the account is authorized, `user_followers()` and `user_following()` prefer the private mobile API and automatically retry through the private mobile GraphQL follow-list surface (`FollowersList`/`FollowingList`) when the private endpoint fails or the followers list is limited. The legacy public GraphQL query is only used as the last resort, because Instagram returns an empty `edges` list for the legacy followers/following query hash. `user_followers_private_gql()` and `user_following_private_gql()` expose that private GraphQL surface directly.
+When authenticated, `user_followers()` and `user_following()` use the private mobile API and may restart through private GraphQL (`FollowersList`/`FollowingList`) for endpoint/schema failures or a limited followers response. They do not fall back to legacy public queries. Authorization, challenge, throttling, transport and programming errors propagate.
 
 Example:
 
