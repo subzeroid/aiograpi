@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## Unreleased
+
+### Fixed
+
+- Resolve locations from complete private place identity before legacy name search, including location serialization for uploads and edits. Recognize explicit Facebook place IDs without inventing missing coordinates or changing explicit provider sources.
+
 ## 2.1.6 — 2026-11-07
 
 ### Fixed
