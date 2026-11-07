@@ -13,6 +13,19 @@ Viewing location info and medias by location
 | fbsearch_places(query: str, lat: float = 40.74, lng: float = -73.94) | List[Location] | >Search places via Facebook Search (40.74/-73.94 - New York, default GEO)
 
 
+`location_info()` identifies `external_id_source` as `facebook_places` when its
+private response selects a positive `facebook_places_id` and has neither
+`external_id_source` nor `external_source`. A truthy generic `external_id` takes
+precedence over `facebook_places_id` and does not identify a provider. Explicit
+source fields are preserved, including `None` and empty values.
+
+`location_search_pk()` returns matching private info directly when it includes a
+positive external ID and a nonempty source. This also avoids legacy name search
+when `location_build()` or `location_complete()` resolves that PK. Missing
+coordinates stay `None`; the library does not invent them. Incomplete private
+identity still uses the existing name-search fallback. `location_search_name()`
+continues to use legacy `top_search`.
+
 Example:
 
 ``` python
