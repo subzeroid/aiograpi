@@ -5,10 +5,12 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.2.6
+instagrapi 3.2.7
 ```
 
 In aiograpi 2.1.0, the optional [uTLS transport](usage-guide/utls.md) ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.
+
+Aiograpi 2.1.7 records synchronization through instagrapi 3.2.7. Complete matching private location identity bypasses legacy name search during PK resolution and location serialization. Explicit provider sources and missing coordinates are preserved; name-only and incomplete-identity fallback remain separate.
 
 Aiograpi 2.1.6 records synchronization through instagrapi 3.2.6. Authenticated collection reads stay on private/mobile or existing app GraphQL routes, failures propagate, and fallback cursors retain their endpoint. Public story batches preserve every response. Explicit legacy contracts and unvalidated location replacements remain separate.
 
@@ -63,6 +65,7 @@ Aiograpi 2.1.0 includes cookie-only session identity restoration and the documen
 | 3.2.4 | 2.1.4 | Request-scoped legacy web-profile headers on success and failure; existing modern profile methods and IDs preserved. |
 | 3.2.5 | 2.1.5 | Modern automatic public profile and media routing with preserved private-first selection and caches. |
 | 3.2.6 | 2.1.6 | Authenticated collection routing, preserved failures, endpoint-owned media cursors and complete public story batches. |
+| 3.2.7 | 2.1.7 | Complete private location identity bypass with preserved provider precedence and nullable coordinates. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
