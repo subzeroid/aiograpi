@@ -1,11 +1,12 @@
 import json
 import unittest
 from copy import deepcopy
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 from aiograpi import Client
 from aiograpi.exceptions import ClientGraphqlError, ClientNotFoundError, UserNotFound
 from aiograpi.extractors import extract_story_v1, extract_story_web
+from aiograpi.mixins.graphql import GraphQLRequestMixin
 
 
 def web_story_payload():
@@ -366,6 +367,18 @@ class StoryMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             with self.subTest(kind=kind):
                 with self.assertRaises(KeyError):
                     extract_story_web(payload)
+
+    async def test_graphql_fetch_fb_dtsg_uses_instagram_homepage(self):
+        client = Client()
+        response = AsyncMock()
+        response.content = b'<html><script id="__eqmc">{"f":"synthetic-dtsg"}</script></html>'
+        with (
+            patch.object(client, "inject_sessionid_to_public") as inject,
+            patch.object(client.graphql, "get", new=AsyncMock(return_value=response)) as get,
+        ):
+            self.assertEqual(await GraphQLRequestMixin.fetch_fb_dtsg(client), "synthetic-dtsg")
+        get.assert_awaited_once_with("https://www.instagram.com/")
+        inject.assert_called_once_with()
 
     async def test_user_stories_web_uses_modern_query_and_typed_response(self):
         client = Client()
