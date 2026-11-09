@@ -143,8 +143,8 @@ class StoryMixin(ClientMixin):
             return []
 
         users = []
-        for start in range(0, len(user_ids), 50):
-            batch = [str(user_id) for user_id in user_ids[start : start + 50]]
+        for start in range(0, len(user_ids), 25):
+            batch = [str(user_id) for user_id in user_ids[start : start + 25]]
             body = await self.graphql_request(
                 data={
                     "variables": json.dumps(
