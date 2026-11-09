@@ -97,6 +97,12 @@ class SessionHeaderResetTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client.user_id, 123)
         self.assertEqual(client.ig_u_rur, "OLD-ROUTE")
 
+    def test_cookie_only_reset_clears_graphql_session(self):
+        client = self.client_with_session()
+        client.graphql.set_cookies({"sessionid": "old-session"})
+        client._clear_session_state(clear_private_cookies=True, clear_public_cookies=True)
+        self.assertEqual(len(client.graphql.cookies), 0)
+
     def test_new_authorization_uses_new_account_headers(self):
         client = self.client_with_session()
         client._clear_session_state(clear_authorization_data=True, clear_authorization_header=True)

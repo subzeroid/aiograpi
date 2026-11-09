@@ -18,6 +18,7 @@ from aiograpi.extractors import (
     extract_story_archive_day,
     extract_story_gql,
     extract_story_v1,
+    extract_story_web,
     extract_user_short,
     extract_viewer,
 )
@@ -188,6 +189,36 @@ class StoryMixin(ClientMixin):
         stories = deepcopy(user.stories)
         if amount:
             stories = stories[:amount]
+        return stories
+
+    async def user_stories_web(self, user_id: str, amount: Optional[int] = None) -> List[Story]:
+        """Get a user's stories through the modern web GraphQL API."""
+        data = {
+            "variables": json.dumps(
+                {
+                    "reel_ids_arr": [str(user_id)],
+                    "__relay_internal__pv__PolarisCommunityNoteStoriesLabelEnabledrelayprovider": True,
+                }
+            ),
+            "doc_id": "29184890191114309",
+            "fb_dtsg": await self.fb_dtsg,
+            "fb_api_caller_class": "RelayModern",
+            "fb_api_req_friendly_name": "PolarisStoriesV3ReelPageStandaloneQuery",
+            "server_timestamps": "true",
+        }
+        body = await self.graphql_request(data=data)
+        try:
+            root = body["data"]["xdt_api__v1__feed__reels_media"]
+        except (KeyError, TypeError) as exc:
+            raise ClientGraphqlError("Malformed web stories response") from exc
+        if not isinstance(root, dict) or not isinstance(root.get("reels_media"), list):
+            raise ClientGraphqlError("Malformed web stories response")
+        reels = root["reels_media"]
+        if any(not isinstance(reel, dict) or not isinstance(reel.get("items"), list) for reel in reels):
+            raise ClientGraphqlError("Malformed web stories response")
+        stories = [extract_story_web(item) for reel in reels for item in reel["items"]]
+        if amount:
+            stories = stories[: int(amount)]
         return stories
 
     async def _user_stories_public(self, user_id: str, amount: Optional[int] = None) -> List[Story]:

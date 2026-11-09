@@ -158,7 +158,7 @@ class GraphQLRequestMixin(ClientMixin):
 
     async def fetch_fb_dtsg(self):
         self.inject_sessionid_to_public()
-        response = await self.graphql.get(GRAPHQL_API_URL)
+        response = await self.graphql.get("https://www.instagram.com/")
         if html := response.content.decode():
             s = html.find("__eqmc")
             e = s + 1000
