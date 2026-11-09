@@ -7,6 +7,7 @@ from aiograpi import Client
 from aiograpi.exceptions import ClientGraphqlError, ClientNotFoundError, UserNotFound
 from aiograpi.extractors import extract_story_v1, extract_story_web
 from aiograpi.mixins.graphql import GraphQLRequestMixin
+from aiograpi.utils.ids import InstagramIdCodec
 
 
 def web_story_payload():
@@ -388,6 +389,35 @@ class StoryMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(str(story.thumbnail_url), "https://example.com/thumb.jpg")
         for field in ("locations", "hashtags", "links", "sponsor_tags", "medias", "stickers"):
             self.assertEqual(getattr(story, field), [])
+
+    async def test_extract_story_web_normalizes_feed_media(self):
+        payload = web_story_payload()
+        media_pk = payload["pk"]
+        payload["story_feed_media"] = [
+            {
+                "id": f"{media_pk}_1",
+                "media_code": InstagramIdCodec.encode(media_pk),
+                "product_type": "feed",
+                "x": 0.1,
+                "y": 0.2,
+                "width": 0.3,
+                "height": 0.4,
+                "rotation": 0,
+            },
+            {
+                "media_id": "123",
+                "product_type": "feed",
+                "x": 0.1,
+                "y": 0.2,
+                "width": 0.3,
+                "height": 0.4,
+                "rotation": 0,
+            },
+        ]
+
+        story = extract_story_web(payload)
+
+        self.assertEqual([media.media_pk for media in story.medias], [media_pk, 123])
 
     async def test_extract_story_web_requires_identifiers(self):
         for kind in ("story", "user"):
