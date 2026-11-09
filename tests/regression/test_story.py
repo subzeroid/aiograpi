@@ -94,6 +94,7 @@ class StoryMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(users[0].pk, "271828182845904")
         self.assertEqual(len(users[0].stories), 1)
         self.assertEqual(users[0].stories[0].pk, "314159265358979")
+        self.assertIsNot(users[0], users[0].stories[0].user)
         client.graphql_request.assert_awaited_once_with(
             data={
                 "variables": json.dumps(
