@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## 2.1.8 — 2026-11-09
+
+### Added
+
+- Add awaited typed `user_stories_web()` results from the modern web stories GraphQL query, including authenticated `fb_dtsg` bootstrap and normalized media, owner, link and location metadata (#546).
+
+### Fixed
+
+- Inject the saved session into GraphQL requests and clear it during session reset. Existing private/default story routes and explicit raw legacy helpers remain unchanged (#546).
+
+### Changed
+
+- Record runtime synchronization through instagrapi 3.2.8.
+
 ## 2.1.7 — 2026-11-07
 
 ### Fixed
