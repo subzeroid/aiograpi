@@ -16,7 +16,6 @@ from aiograpi.exceptions import (
 )
 from aiograpi.extractors import (
     extract_story_archive_day,
-    extract_story_gql,
     extract_story_v1,
     extract_story_web,
     extract_user_short,
@@ -142,31 +141,41 @@ class StoryMixin(ClientMixin):
         """
         if user_ids is not None and not user_ids:
             return []
-        self.inject_sessionid_to_public()
 
-        def _userid_chunks():
-            if user_ids is None:
-                raise Exception("Undefined user_ids")
-            user_ids_per_query = 50
-            for i in range(0, len(user_ids), user_ids_per_query):
-                end = i + user_ids_per_query
-                yield user_ids[i:end]
-
-        reels = []
-        for userid_chunk in _userid_chunks():
-            res = await self.public_graphql_request(
-                query_hash="303a4ae99711322310f25250d988f3b7",
-                variables={"reel_ids": userid_chunk, "precomposed_overlay": False},
-            )
-            reels.extend(res["reels_media"])
         users = []
-        for media in reels:
-            user = extract_user_short(media["owner"])
-            items = media["items"]
-            if amount:
-                items = items[:amount]
-            user.stories = [extract_story_gql(m) for m in items]
-            users.append(user)
+        for start in range(0, len(user_ids), 50):
+            batch = [str(user_id) for user_id in user_ids[start : start + 50]]
+            body = await self.graphql_request(
+                data={
+                    "variables": json.dumps(
+                        {
+                            "reel_ids_arr": batch,
+                            "__relay_internal__pv__PolarisCommunityNoteStoriesLabelEnabledrelayprovider": True,
+                        }
+                    ),
+                    "doc_id": "29184890191114309",
+                    "fb_dtsg": await self.fb_dtsg,
+                    "fb_api_caller_class": "RelayModern",
+                    "fb_api_req_friendly_name": "PolarisStoriesV3ReelPageStandaloneQuery",
+                    "server_timestamps": "true",
+                }
+            )
+            try:
+                root = body["data"]["xdt_api__v1__feed__reels_media"]
+            except (KeyError, TypeError) as exc:
+                raise ClientGraphqlError("Malformed web stories response") from exc
+            if not isinstance(root, dict) or not isinstance(root.get("reels_media"), list):
+                raise ClientGraphqlError("Malformed web stories response")
+            for reel in root["reels_media"]:
+                if not isinstance(reel, dict) or not isinstance(reel.get("items"), list):
+                    raise ClientGraphqlError("Malformed web stories response")
+                items = reel["items"][:amount] if amount else reel["items"]
+                if not items:
+                    continue
+                stories = [extract_story_web(item) for item in items]
+                user = stories[0].user
+                user.stories = stories
+                users.append(user)
         return users
 
     async def user_stories_gql(self, user_id: str, amount: Optional[int] = None) -> List[Story]:
