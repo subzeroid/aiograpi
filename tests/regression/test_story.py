@@ -7,6 +7,7 @@ from aiograpi import Client
 from aiograpi.exceptions import ClientGraphqlError, ClientNotFoundError, UserNotFound
 from aiograpi.extractors import extract_story_v1, extract_story_web
 from aiograpi.mixins.graphql import GraphQLRequestMixin
+from aiograpi.utils.ids import InstagramIdCodec
 
 
 def web_story_payload():
@@ -76,32 +77,66 @@ class StoryMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_users_stories_gql_populates_user_short_stories(self):
         client = Client()
-        story_payload = {
-            "id": "1234567890",
-            "owner": {
-                "id": "123",
-                "username": "alice",
-                "full_name": "Alice",
-                "profile_pic_url": "https://example.com/alice.jpg",
-                "is_private": False,
-            },
-            "display_url": "https://example.com/story.jpg",
-            "taken_at_timestamp": 1_700_000_000,
-            "is_video": False,
-            "tappable_objects": [],
-            "edge_media_to_sponsor_user": {"edges": []},
+        client.public_graphql_request = AsyncMock(side_effect=AssertionError("legacy query must not be used"))
+        client._fb_dtsg = "token"
+        body = {
+            "data": {
+                "xdt_api__v1__feed__reels_media": {
+                    "reels_media": [{"items": [web_story_payload(), web_story_payload()]}]
+                }
+            }
         }
+        client.graphql_request = AsyncMock(return_value=body)
 
-        client.public_graphql_request = AsyncMock(
-            return_value={"reels_media": [{"owner": story_payload["owner"], "items": [story_payload]}]}
-        )
-
-        users = await client.users_stories_gql(["123"])
+        users = await client.users_stories_gql(["271828182845904"], amount=1)
 
         self.assertEqual(len(users), 1)
-        self.assertEqual(users[0].pk, "123")
+        self.assertEqual(users[0].pk, "271828182845904")
         self.assertEqual(len(users[0].stories), 1)
-        self.assertEqual(users[0].stories[0].id, "1234567890_123")
+        self.assertEqual(users[0].stories[0].pk, "314159265358979")
+        self.assertIsNot(users[0], users[0].stories[0].user)
+        client.graphql_request.assert_awaited_once_with(
+            data={
+                "variables": json.dumps(
+                    {
+                        "reel_ids_arr": ["271828182845904"],
+                        "__relay_internal__pv__PolarisCommunityNoteStoriesLabelEnabledrelayprovider": True,
+                    }
+                ),
+                "doc_id": "29184890191114309",
+                "fb_dtsg": "token",
+                "fb_api_caller_class": "RelayModern",
+                "fb_api_req_friendly_name": "PolarisStoriesV3ReelPageStandaloneQuery",
+                "server_timestamps": "true",
+            }
+        )
+
+    async def test_users_stories_gql_validates_modern_response_and_preserves_errors(self):
+        client = Client()
+        client.public_graphql_request = AsyncMock(side_effect=AssertionError("legacy query must not be used"))
+        client._fb_dtsg = "token"
+        empty = {"data": {"xdt_api__v1__feed__reels_media": {"reels_media": [{"items": []}]}}}
+        client.graphql_request = AsyncMock(return_value=empty)
+        self.assertEqual(await client.users_stories_gql(["123"]), [])
+
+        bodies = [
+            {},
+            {"data": {}},
+            {"data": {"xdt_api__v1__feed__reels_media": None}},
+            {"data": {"xdt_api__v1__feed__reels_media": {"reels_media": None}}},
+            {"data": {"xdt_api__v1__feed__reels_media": {"reels_media": [{}]}}},
+        ]
+        for body in bodies:
+            with self.subTest(body=body):
+                client.graphql_request = AsyncMock(return_value=body)
+                with self.assertRaises(ClientGraphqlError):
+                    await client.users_stories_gql(["123"])
+
+        error = ClientGraphqlError("request failed")
+        client.graphql_request = AsyncMock(side_effect=error)
+        with self.assertRaises(ClientGraphqlError) as caught:
+            await client.users_stories_gql(["123"])
+        self.assertIs(caught.exception, error)
 
     async def test_extract_story_v1_reads_poll_stickers(self):
         story = extract_story_v1(
@@ -355,6 +390,35 @@ class StoryMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(str(story.thumbnail_url), "https://example.com/thumb.jpg")
         for field in ("locations", "hashtags", "links", "sponsor_tags", "medias", "stickers"):
             self.assertEqual(getattr(story, field), [])
+
+    async def test_extract_story_web_normalizes_feed_media(self):
+        payload = web_story_payload()
+        media_pk = payload["pk"]
+        payload["story_feed_media"] = [
+            {
+                "id": f"{media_pk}_1",
+                "media_code": InstagramIdCodec.encode(media_pk),
+                "product_type": "feed",
+                "x": 0.1,
+                "y": 0.2,
+                "width": 0.3,
+                "height": 0.4,
+                "rotation": 0,
+            },
+            {
+                "media_id": "123",
+                "product_type": "feed",
+                "x": 0.1,
+                "y": 0.2,
+                "width": 0.3,
+                "height": 0.4,
+                "rotation": 0,
+            },
+        ]
+
+        story = extract_story_web(payload)
+
+        self.assertEqual([media.media_pk for media in story.medias], [media_pk, 123])
 
     async def test_extract_story_web_requires_identifiers(self):
         for kind in ("story", "user"):
