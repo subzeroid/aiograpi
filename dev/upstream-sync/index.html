@@ -1525,9 +1525,10 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.2.8
+<div class="highlight"><pre><span></span><code>instagrapi 3.2.9
 </code></pre></div>
 <p>In aiograpi 2.1.0, the optional <a href="../usage-guide/utls/">uTLS transport</a> ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.</p>
+<p>Aiograpi 2.1.9 records synchronization through instagrapi 3.2.9. Awaited batched user stories use the modern XDT web GraphQL query with at most 25 IDs per request, per-user limits, normalized story media identifiers and independent owner objects.</p>
 <p>Aiograpi 2.1.8 records synchronization through instagrapi 3.2.8. Awaited typed web stories use the modern GraphQL query with authenticated <code>fb_dtsg</code> bootstrap and normalized Story metadata. Saved sessions are injected into GraphQL requests and cleared on reset; private/default story routes and raw legacy helpers remain unchanged.</p>
 <p>Aiograpi 2.1.7 records synchronization through instagrapi 3.2.7. Complete matching private location identity bypasses legacy name search during PK resolution and location serialization. Explicit provider sources and missing coordinates are preserved; name-only and incomplete-identity fallback remain separate.</p>
 <p>Aiograpi 2.1.6 records synchronization through instagrapi 3.2.6. Authenticated collection reads stay on private/mobile or existing app GraphQL routes, failures propagate, and fallback cursors retain their endpoint. Public story batches preserve every response. Explicit legacy contracts and unvalidated location replacements remain separate.</p>
@@ -1731,6 +1732,11 @@
 <td>3.2.8</td>
 <td>2.1.8</td>
 <td>Typed modern web stories, authenticated GraphQL token bootstrap, saved-session injection and reset cleanup.</td>
+</tr>
+<tr>
+<td>3.2.9</td>
+<td>2.1.9</td>
+<td>Modern batched user stories with 25-ID requests, per-user limits and normalized media identifiers.</td>
 </tr>
 </tbody>
 </table>
