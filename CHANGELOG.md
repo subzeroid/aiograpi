@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## 2.1.9 — 2026-11-10
+
+### Fixed
+
+- Replace the rejected legacy `users_stories_gql()` query with modern XDT web GraphQL, cap requests at 25 user IDs per batch, preserve per-user limits, and normalize web story media identifiers without cyclic owner graphs (#548).
+
+### Changed
+
+- Record runtime synchronization through instagrapi 3.2.9.
+
 ## 2.1.8 — 2026-11-09
 
 ### Added
