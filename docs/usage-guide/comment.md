@@ -23,7 +23,12 @@ when Instagram returns feedback/challenge responses.
 | comment_pin(media_id: str,comment_pk: int)                                              | bool               | Pin a comment
 | comment_unpin(media_id: str,comment_pk: int)                                            | bool               | Unpin a comment
 | comment_bulk_delete(media_id: str, comment_pks: List[int])                              | bool               | Delete a comment
+| comment_likers(comment_pk: str, amount: int = 0) | List\[dict] | Get comment likers through the private mobile API
+| comment_likers_v1(comment_pk: str, amount: int = 0) | List\[dict] | Get comment likers through the private mobile API
+| comment_likers_gql(comment_pk: str, amount: int = 0) | List\[dict] | Get comment likers through public GraphQL
+| comment_likers_gql_chunk(comment_pk: str, end_cursor: str = "") | Tuple[List\[dict], str] | Get one public GraphQL comment-likers page
 
+The private comment-likers helpers return the one-shot `users` response. A positive `amount` truncates that list; no private pagination cursor is exposed. The explicit GraphQL helpers retain their separate cursor contract.
 
 Example:
 

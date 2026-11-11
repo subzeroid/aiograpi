@@ -412,3 +412,36 @@ class CommentRepliesRegressionTestCase(unittest.IsolatedAsyncioTestCase):
             {"min_id": "cursor-2"},
         )
         assert [reply.pk for reply in replies] == ["101", "102"]
+
+
+class CommentLikersRegressionTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_v1_fetches_private_comment_likers(self):
+        client = Client()
+        users = [{"pk": "1", "username": "alice"}]
+        client.private_request = AsyncMock(return_value={"users": users, "status": "ok"})
+
+        result = await client.comment_likers_v1("100")
+
+        self.assertEqual(result, users)
+        client.private_request.assert_awaited_once_with("media/100/comment_likers/")
+
+    async def test_v1_applies_amount_to_one_shot_users(self):
+        client = Client()
+        users = [
+            {"pk": "1", "username": "alice"},
+            {"pk": "2", "username": "bob"},
+        ]
+        client.private_request = AsyncMock(return_value={"users": users, "status": "ok"})
+
+        result = await client.comment_likers_v1("100", amount=1)
+
+        self.assertEqual(result, users[:1])
+
+    async def test_unsuffixed_helper_delegates_to_v1(self):
+        client = Client()
+        client.comment_likers_v1 = AsyncMock(return_value=[{"pk": "1"}])
+
+        result = await client.comment_likers("100", amount=1)
+
+        self.assertEqual(result, [{"pk": "1"}])
+        client.comment_likers_v1.assert_awaited_once_with("100", 1)
