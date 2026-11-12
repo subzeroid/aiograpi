@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## 2.1.10 — 2026-11-12
+
+### Added
+
+- Add awaitable `comment_likers_v1()` and route `comment_likers()` through the private comment-likers endpoint, returning raw user dictionaries with optional amount truncation (#550). Explicit GraphQL helpers and cursors remain available.
+
+### Changed
+
+- Record runtime synchronization through instagrapi 3.2.10.
+
 ## 2.1.9 — 2026-11-10
 
 ### Fixed
