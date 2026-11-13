@@ -1525,9 +1525,10 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.2.11
+<div class="highlight"><pre><span></span><code>instagrapi 3.2.12
 </code></pre></div>
 <p>In aiograpi 2.1.0, the optional <a href="../usage-guide/utls/">uTLS transport</a> ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.</p>
+<p>Aiograpi 2.1.12 records synchronization through instagrapi 3.2.12. Awaited <code>direct_send()</code> shares one request-local navigation chain between the header and body and supports inbox attribution while retaining existing values and the historical default chain. This request-shape fix does not guarantee recovery from Direct restrictions.</p>
 <p>Aiograpi 2.1.11 records synchronization through instagrapi 3.2.11. USDID key IDs derive from the public key without rotating saved identities. Awaited media search distinguishes malformed or missing grids from valid empty results and stops repeated cursors; server-side search availability is unchanged.</p>
 <p>Aiograpi 2.1.10 records synchronization through instagrapi 3.2.10. Awaited <code>comment_likers_v1()</code> and <code>comment_likers()</code> use the private endpoint and return raw user dictionaries with optional amount truncation. Explicit GraphQL helpers and cursors remain unchanged.</p>
 <p>Aiograpi 2.1.9 records synchronization through instagrapi 3.2.9. Awaited batched user stories use the modern XDT web GraphQL query with at most 25 IDs per request, per-user limits, normalized story media identifiers and independent owner objects.</p>
@@ -1749,6 +1750,11 @@
 <td>3.2.11</td>
 <td>2.1.11</td>
 <td>Public-key-derived USDID key IDs, explicit media-search grid errors and repeated-cursor termination.</td>
+</tr>
+<tr>
+<td>3.2.12</td>
+<td>2.1.12</td>
+<td>Request-local Direct navigation header/body alignment, optional custom chains and inbox attribution; historical default chain retained.</td>
 </tr>
 </tbody>
 </table>
