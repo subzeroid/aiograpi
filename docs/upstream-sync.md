@@ -5,10 +5,12 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.2.10
+instagrapi 3.2.11
 ```
 
 In aiograpi 2.1.0, the optional [uTLS transport](usage-guide/utls.md) ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.
+
+Aiograpi 2.1.11 records synchronization through instagrapi 3.2.11. USDID key IDs derive from the public key without rotating saved identities. Awaited media search distinguishes malformed or missing grids from valid empty results and stops repeated cursors; server-side search availability is unchanged.
 
 Aiograpi 2.1.10 records synchronization through instagrapi 3.2.10. Awaited `comment_likers_v1()` and `comment_likers()` use the private endpoint and return raw user dictionaries with optional amount truncation. Explicit GraphQL helpers and cursors remain unchanged.
 
@@ -75,6 +77,7 @@ Aiograpi 2.1.0 includes cookie-only session identity restoration and the documen
 | 3.2.8 | 2.1.8 | Typed modern web stories, authenticated GraphQL token bootstrap, saved-session injection and reset cleanup. |
 | 3.2.9 | 2.1.9 | Modern batched user stories with 25-ID requests, per-user limits and normalized media identifiers. |
 | 3.2.10 | 2.1.10 | Private comment-likers endpoint, awaited raw user dictionaries and optional amount truncation; explicit GraphQL helpers retained. |
+| 3.2.11 | 2.1.11 | Public-key-derived USDID key IDs, explicit media-search grid errors and repeated-cursor termination. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 

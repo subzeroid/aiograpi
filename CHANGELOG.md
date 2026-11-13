@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## 2.1.11 — 2026-11-13
+
+### Fixed
+
+- Derive the USDID registration key ID from the public key and repair legacy random IDs without rotating the saved UUID or key pair (#552).
+- Raise `PrivateError` when `media_search()` receives a missing, null or malformed media grid instead of silently returning empty or partial results. Preserve valid empty results, skip malformed individual nodes, and stop repeated pagination cursors (#553). This improves response validation; it does not restore server-side search availability.
+
+### Changed
+
+- Record runtime synchronization through instagrapi 3.2.11.
+
 ## 2.1.10 — 2026-11-12
 
 ### Added
