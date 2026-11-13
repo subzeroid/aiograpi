@@ -110,6 +110,8 @@ more_accounts = await cl.fbsearch_accounts_v2(
 )
 ```
 
+`media_search()` raises `PrivateError` when the response omits `media_grid`, returns `null`, or has a malformed grid or sections payload. A valid empty grid still returns `[]`. The exception also propagates on later pages instead of returning partial results. Repeated pagination cursor pairs stop further requests. These checks do not guarantee that Instagram will return search results.
+
 ## Calling unwrapped doc_ids directly
 
 Prefer `user_short_gql()` or `user_info_v2_gql()` for typed profile results. Both use the current web profile query and its required Relay variables; `user_info_by_username_v2_gql()` resolves a username before using the same query.
