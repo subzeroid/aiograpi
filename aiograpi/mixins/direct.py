@@ -34,7 +34,7 @@ from aiograpi.utils.video import read_video_metadata, read_video_metadata_with_m
 
 SELECTED_FILTERS = ("flagged", "unread")
 SEARCH_MODES = ("raven", "universal")
-SEND_ATTRIBUTES = ("message_button", "inbox_search")
+SEND_ATTRIBUTES = ("message_button", "inbox_search", "inbox")
 SEND_ATTRIBUTES_MEDIA = (
     "feed_timeline",
     "feed_contextual_chain",
@@ -55,7 +55,7 @@ def _direct_id_list(ids) -> List[int]:
 
 SELECTED_FILTER = Literal["flagged", "unread"]
 SEARCH_MODE = Literal["raven", "universal"]
-SEND_ATTRIBUTE = Literal["message_button", "inbox_search"]
+SEND_ATTRIBUTE = Literal["message_button", "inbox_search", "inbox"]
 SEND_ATTRIBUTE_MEDIA = Literal[
     "feed_timeline",
     "feed_contextual_chain",
@@ -556,6 +556,8 @@ class DirectMixin(ClientMixin):
         thread_ids: List[int] = [],
         send_attribute: SEND_ATTRIBUTE = "message_button",
         reply_to_message: Optional[DirectMessage] = None,
+        *,
+        nav_chain: Optional[str] = None,
     ) -> DirectMessage:
         """
         Send a direct message to list of users or threads
@@ -572,7 +574,11 @@ class DirectMixin(ClientMixin):
             List of unique identifier of Direct Message thread id
 
         send_attribute: str, optional
-            Sending option. Default is "message_button"
+            "message_button" (default), "inbox_search", or "inbox"
+
+        nav_chain: str, optional
+            Request navigation chain shared by the header and body.
+            Defaults to the existing Direct body chain; does not update session headers.
 
         Returns
         -------
@@ -586,6 +592,18 @@ class DirectMixin(ClientMixin):
             "Specify user_ids or thread_ids, but not both"
         )
         assert send_attribute in SEND_ATTRIBUTES, f'Unsupported send_attribute="{send_attribute}" {SEND_ATTRIBUTES}'
+        if nav_chain is None:
+            nav_chain = (
+                "1qT:feed_timeline:1,1qT:feed_timeline:2,1qT:feed_timeline:3,"
+                "7Az:direct_inbox:4,7Az:direct_inbox:5,5rG:direct_thread:7"
+            )
+        elif (
+            not isinstance(nav_chain, str)
+            or not nav_chain
+            or nav_chain[0].isspace()
+            or any(ord(char) < 32 or ord(char) == 127 for char in nav_chain)
+        ):
+            raise ValueError("nav_chain must be a non-empty string without leading whitespace or control characters")
         method = "text"
         token = self.generate_mutation_token()
 
@@ -600,10 +618,7 @@ class DirectMixin(ClientMixin):
             "mutation_token": token,
             "_uuid": self.uuid,
             "btt_dual_send": "false",
-            "nav_chain": (
-                "1qT:feed_timeline:1,1qT:feed_timeline:2,1qT:feed_timeline:3,"
-                "7Az:direct_inbox:4,7Az:direct_inbox:5,5rG:direct_thread:7"
-            ),
+            "nav_chain": nav_chain,
             "is_ae_dual_send": "false",
             "offline_threading_id": token,
         }
@@ -625,6 +640,7 @@ class DirectMixin(ClientMixin):
             f"direct_v2/threads/broadcast/{method}/",
             data=self.with_default_data(kwargs),
             with_signature=False,
+            headers={"X-IG-Nav-Chain": nav_chain},
         )
         return extract_direct_message(result["payload"])
 
