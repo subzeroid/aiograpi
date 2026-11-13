@@ -6,11 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
-## Unreleased
+## 2.1.12 — 2026-11-14
 
 ### Fixed
 
 - Keep `direct_send()` navigation metadata identical in the request header and body, including text, links and replies. Add an optional request-local `nav_chain` argument and support `send_attribute="inbox"` while preserving existing values and the historical default body chain (related to instagrapi #2870).
+
+### Changed
+
+- Record runtime synchronization through instagrapi 3.2.12.
 
 ## 2.1.11 — 2026-11-13
 
