@@ -1829,6 +1829,7 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
     <span class="s2">"python"</span><span class="p">,</span> <span class="n">page_token</span><span class="o">=</span><span class="n">accounts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"next_page_token"</span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
+<p><code>media_search()</code> raises <code>PrivateError</code> when the response omits <code>media_grid</code>, returns <code>null</code>, or has a malformed grid or sections payload. A valid empty grid still returns <code>[]</code>. The exception also propagates on later pages instead of returning partial results. Repeated pagination cursor pairs stop further requests. These checks do not guarantee that Instagram will return search results.</p>
 <h2 id="calling-unwrapped-doc_ids-directly">Calling unwrapped doc_ids directly</h2>
 <p>Prefer <code>user_short_gql()</code> or <code>user_info_v2_gql()</code> for typed profile results. Both use the current web profile query and its required Relay variables; <code>user_info_by_username_v2_gql()</code> resolves a username before using the same query.</p>
 <p>When calling a captured <code>doc_id</code> directly, supply all variables required by that query:</p>
