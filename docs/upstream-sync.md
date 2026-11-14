@@ -5,10 +5,12 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.2.12
+instagrapi 3.2.13
 ```
 
 In aiograpi 2.1.0, the optional [uTLS transport](usage-guide/utls.md) ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.
+
+Aiograpi 2.1.13 records synchronization through instagrapi 3.2.13. Music Note creation now includes the root-field and pando request headers while retaining the existing operation and payload.
 
 Aiograpi 2.1.12 records synchronization through instagrapi 3.2.12. Awaited `direct_send()` shares one request-local navigation chain between the header and body and supports inbox attribution while retaining existing values and the historical default chain. This request-shape fix does not guarantee recovery from Direct restrictions.
 
@@ -81,6 +83,7 @@ Aiograpi 2.1.0 includes cookie-only session identity restoration and the documen
 | 3.2.10 | 2.1.10 | Private comment-likers endpoint, awaited raw user dictionaries and optional amount truncation; explicit GraphQL helpers retained. |
 | 3.2.11 | 2.1.11 | Public-key-derived USDID key IDs, explicit media-search grid errors and repeated-cursor termination. |
 | 3.2.12 | 2.1.12 | Request-local Direct navigation header/body alignment, optional custom chains and inbox attribution; historical default chain retained. |
+| 3.2.13 | 2.1.13 | Music Note root-field and pando request headers; existing operation and payload retained. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 

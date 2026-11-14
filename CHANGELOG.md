@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## 2.1.13 — 2026-11-14
+
+### Fixed
+
+- Restore `create_music_note()` by sending the root-field and pando headers with the existing operation and payload (instagrapi #2949).
+
+### Changed
+
+- Record runtime synchronization through instagrapi 3.2.13.
+
 ## 2.1.12 — 2026-11-14
 
 ### Fixed
