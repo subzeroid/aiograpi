@@ -76,16 +76,27 @@ class NoteMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_create_note_posts_note_audience_enum_wire_value(self):
         client = Client()
-        client.uuid = "uuid-1"
         client._user_id = "123"
-        client.private_request = AsyncMock(return_value=self._note_response(audience=1))
-
+        response = {
+            "data": {
+                "mutation": {
+                    "success": True,
+                    "inbox_tray_item": {
+                        "note_dict": {
+                            "note_id": "42",
+                            "text": "hello",
+                            "author_id": "123",
+                            "audience": 1,
+                            "created_at": 1710000000,
+                        }
+                    },
+                }
+            }
+        }
+        client.private_graphql_request = AsyncMock(return_value=response)
         note = await client.create_note("hello", audience=NoteAudience.CLOSE_FRIENDS)
-
-        client.private_request.assert_awaited_once_with(
-            "notes/create_note",
-            data={"note_style": 0, "text": "hello", "_uuid": "uuid-1", "audience": 1},
-        )
+        client.private_graphql_request.assert_awaited_once()
+        assert json.loads(client.private_graphql_request.call_args.args[0]["variables"])["request"]["audience"] == 1
         assert note.audience == 1
 
     async def test_create_note_rejects_raw_int_audience(self):
