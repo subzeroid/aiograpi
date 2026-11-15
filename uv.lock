@@ -10,7 +10,7 @@ resolution-markers = [
 
 [[package]]
 name = "aiograpi"
-version = "2.1.13"
+version = "2.1.14"
 source = { editable = "." }
 dependencies = [
     { name = "curl-cffi" },

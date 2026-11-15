@@ -6,11 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
-## Unreleased
+## 2.1.14 — 2026-11-15
 
 ### Fixed
 
 - Preserve emoji in `create_note()` by using the text-only Inbox Tray GraphQL mutation instead of the legacy REST endpoint (instagrapi #2886). Preserve the audience argument and typed `Note` return; reject unsuccessful or malformed creation responses without retrying the mutation.
+
+### Changed
+
+- Record runtime synchronization through instagrapi 3.2.14.
 
 ## 2.1.13 — 2026-11-14
 
