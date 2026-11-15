@@ -41,6 +41,8 @@ if TYPE_CHECKING:
         mid: str
         num_retry: int
         password: str
+        proxy: Optional[str]
+        override_app_version: bool
         phone_id: str
         phone_number: Optional[str]
         private: Any
@@ -67,6 +69,8 @@ if TYPE_CHECKING:
         usdid_private_key: str
         usdid_registered: bool
         with_challenge_flow: bool
+
+        def get_settings(self) -> Dict[str, Any]: ...
 
         @property
         def authorization(self) -> str: ...

@@ -34,6 +34,8 @@ Required fields have no default value. `Optional[...]` fields may be absent from
 
 ::: aiograpi.types.Account
 
+::: aiograpi.types.SecondaryAccount
+
 ::: aiograpi.types.User
 
 ::: aiograpi.types.UserShort

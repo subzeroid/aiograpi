@@ -139,3 +139,52 @@ Example:
   ...
 }
 ```
+
+## Create an additional profile
+
+`await client.create_secondary_account(username, *, link_to_main_account=True)`
+uses an authenticated main account to create an additional Instagram profile in
+its Accounts Center, without a separate email address, phone number or password.
+Calling this method accepts Instagram's terms for the new account. Instagram can
+require verification or reject creation; unsupported screens stop the flow.
+Only the linked Accounts Center flow is supported. Passing
+`link_to_main_account=False` raises `ValueError` before sending a request.
+
+```python
+from aiograpi import Client
+from aiograpi.exceptions import SecondaryAccountError
+
+main = Client()
+await main.login(MAIN_USERNAME, MAIN_PASSWORD)
+try:
+    result = await main.create_secondary_account("new_additional_profile")
+except SecondaryAccountError as exc:
+    print(exc.stage, exc.creation_may_have_succeeded)
+    # Never retry automatically: a timeout after submission can still create
+    # an account. Check the main account's Accounts Center first.
+    raise
+
+additional = Client(settings=result.settings, proxy=main.proxy)
+print(result.user.pk, result.user.username)
+# main still uses its original identity and cookies.
+```
+
+The returned `SecondaryAccount` contains `user: UserShort` and `settings: dict`.
+Settings contain credentials for the new session: keep them private and persist
+with the same care as `Client.get_settings()`. They are omitted from the result's
+representation, but included when explicitly serializing the result. Proxy
+credentials are not included; pass the intended proxy to the new client.
+Temporary connections used by creation are closed before returning.
+
+Creation does not retry automatically or follow HTTP redirects. If the final
+submission fails or its response cannot be validated,
+`SecondaryAccountError.creation_may_have_succeeded` is true. Cancellation after
+submission can also leave an uncertain result. Do not call the method again as
+a recovery step without checking the account first. No automatic onboarding,
+contact upload, follows, or legacy account-family mutation is performed.
+
+Accounts Center linkage and the legacy `get_account_family_v1()` lists are
+separate observations: `child_accounts` and `main_accounts` can remain empty
+after successful creation. Validate the returned identity/session; an empty
+legacy list alone does not mean that creation failed. An "additional profile"
+here is not a child-age or parental-supervision account.

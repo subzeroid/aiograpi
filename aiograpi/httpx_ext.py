@@ -158,7 +158,7 @@ class Session:
             await self._client.__aenter__()
         headers = self.headers | (headers or {})
         headers = {k: v for k, v in headers.items() if v is not None}
-        kwargs = {k: v for k, v in kwargs.items() if v}
+        kwargs = {k: v for k, v in kwargs.items() if v or (k == "follow_redirects" and v is False)}
         return await self._client.request(*args, headers=headers, **kwargs)
 
     async def get(self, *args, **kwargs):

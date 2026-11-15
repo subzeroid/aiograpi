@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## Unreleased
+
+### Added
+
+- Add `create_secondary_account()` for the modern linked additional-profile flow, returning a typed user and separate session settings while preserving the main client. Reject ambiguous continuations and report potentially successful creation after an uncertain final response without retrying the mutation.
+
 ## 2.1.14 — 2026-11-15
 
 ### Fixed

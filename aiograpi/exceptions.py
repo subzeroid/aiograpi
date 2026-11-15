@@ -22,6 +22,18 @@ class ClientError(Exception):
             self.code = self.response.status_code
 
 
+class SecondaryAccountError(ClientError):
+    """An additional-profile flow stopped; a submitted creation must not be retried blindly."""
+
+    def __init__(self, stage: str, creation_may_have_succeeded: bool = False):
+        self.stage = stage
+        self.creation_may_have_succeeded = creation_may_have_succeeded
+        message = f"Additional-profile flow stopped at {stage}."
+        if creation_may_have_succeeded:
+            message += " Creation may have succeeded; verify the account before trying again."
+        super().__init__(message)
+
+
 class CrosspostingDestinationError(ClientError):
     """No confirmed linked destination is available for cross-posting."""
 
