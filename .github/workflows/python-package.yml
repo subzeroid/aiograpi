@@ -24,7 +24,7 @@ on:
           - all
 
 env:
-  PYTHON_VERSION: "3.13.5"
+  PYTHON_VERSION: "3.13"
 
 jobs:
   dependency-audit:
