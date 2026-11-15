@@ -177,11 +177,28 @@ class MultipleAccountsMixin(ClientMixin):
             raise SecondaryAccountError(stage, creation_may_have_succeeded=submitted) from None
         finally:
             sessions = (worker.private, worker.public, worker.graphql)
+
             # Attempt every close even when one transport fails; preserve any
             # original flow error or cancellation rather than masking it.
-            errors = await asyncio.gather(
-                *(session._close_retired_clients() for session in sessions), return_exceptions=True
-            )
-            errors += await asyncio.gather(*(session._client.aclose() for session in sessions), return_exceptions=True)
+            async def close_all():
+                errors = await asyncio.gather(
+                    *(session._close_retired_clients() for session in sessions), return_exceptions=True
+                )
+                errors += await asyncio.gather(
+                    *(session._client.aclose() for session in sessions), return_exceptions=True
+                )
+                return errors
+
+            cleanup = asyncio.create_task(close_all())
+            cancelled = False
+            while not cleanup.done():
+                try:
+                    await asyncio.shield(cleanup)
+                except asyncio.CancelledError:
+                    # Repeated caller cancellation must not abandon the drain.
+                    cancelled = True
+            errors = cleanup.result()
+            if cancelled:
+                raise asyncio.CancelledError
             if completed and any(isinstance(error, BaseException) for error in errors):
                 raise SecondaryAccountError("cleanup", creation_may_have_succeeded=submitted) from None

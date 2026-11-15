@@ -311,3 +311,59 @@ class SecondaryFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(raised.exception.creation_may_have_succeeded)
         self.assertNotIn("sensitive", str(raised.exception))
         self.assertGreaterEqual(len(closed), 3)
+
+    async def test_repeated_cancellation_during_each_cleanup_phase_drains_clients(self):
+        import asyncio
+        from unittest.mock import patch
+
+        import httpx
+
+        from aiograpi.httpx_ext import Session
+
+        original_retired = Session._close_retired_clients
+        original_close = httpx.AsyncClient.aclose
+        for phase in ("retired", "active"):
+            for request_cancelled in (False, True):
+                with self.subTest(phase=phase, request_cancelled=request_cancelled):
+                    self.calls = []
+                    entered = asyncio.Event()
+                    release = asyncio.Event()
+                    sessions = []
+                    calls_before_cleanup = 2 if request_cancelled else 4
+
+                    async def retired(session):
+                        if len(self.calls) == calls_before_cleanup:
+                            sessions.append(session)
+                            if phase == "retired":
+                                entered.set()
+                                await release.wait()
+                        await original_retired(session)
+
+                    async def close(client):
+                        if len(self.calls) == calls_before_cleanup and phase == "active":
+                            entered.set()
+                            await release.wait()
+                        await original_close(client)
+
+                    with (
+                        patch(
+                            "httpx.AsyncClient._send_single_request",
+                            self.transport(fail_at=1 if request_cancelled else None, cancel=request_cancelled),
+                        ),
+                        patch.object(Session, "_close_retired_clients", retired),
+                        patch.object(httpx.AsyncClient, "aclose", close),
+                    ):
+                        task = asyncio.create_task(self.parent.create_secondary_account("extra_profile"))
+                        try:
+                            await asyncio.wait_for(entered.wait(), timeout=2)
+                            task.cancel()
+                            await asyncio.sleep(0)
+                            task.cancel()
+                            await asyncio.sleep(0)
+                            self.assertFalse(task.done(), "Cancellation abandoned connection cleanup")
+                        finally:
+                            release.set()
+                            with self.assertRaises(asyncio.CancelledError):
+                                await task
+                    self.assertEqual(len(sessions), 3)
+                    self.assertTrue(all(s._client.is_closed and not s._retired_clients for s in sessions))
