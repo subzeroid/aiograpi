@@ -389,6 +389,8 @@ class GraphQLRequestMixin(ClientMixin):
         domain: str = PRIVATE_GRAPHQL_WWW_DOMAIN,
         extra_headers: Optional[dict] = None,
         purpose: Optional[str] = "fetch",
+        *,
+        follow_redirects: bool = True,
     ) -> dict:
         data = {
             "method": "post",
@@ -430,6 +432,7 @@ class GraphQLRequestMixin(ClientMixin):
                 data=data,
                 headers=merged,
                 timeout=self.read_timeout,
+                **({"follow_redirects": False} if not follow_redirects else {}),
             )
             self.request_log(response)
             self.last_response = response
