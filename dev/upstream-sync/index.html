@@ -1525,10 +1525,11 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.2.14
+<div class="highlight"><pre><span></span><code>instagrapi 3.2.15
 </code></pre></div>
 <p>In aiograpi 2.1.0, the optional <a href="../usage-guide/utls/">uTLS transport</a> ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.</p>
-<p>Aiograpi 2.1.15 adds the async-only linked additional-profile creation flow and preserves the recorded instagrapi 3.2.14 baseline. <code>create_secondary_account()</code> returns a separate session while retaining the main client; this feature has not yet been ported to instagrapi.</p>
+<p>The current source records synchronization through instagrapi 3.2.15. Its linked additional-profile feature was ported from aiograpi 2.1.15, so no additional async runtime port is needed. The shared parser is identical; async transport options and cancellation-safe cleanup remain native to aiograpi. The synchronous release documents unsuccessful live creation attempts; this does not replace the separate async validation evidence. This metadata/documentation update does not require a new package release.</p>
+<p>Aiograpi 2.1.15 originally shipped the linked additional-profile creation flow while recording the instagrapi 3.2.14 baseline. <code>create_secondary_account()</code> returns a separate session while retaining the main client.</p>
 <p>Aiograpi 2.1.14 records synchronization through instagrapi 3.2.14. Awaited <code>create_note()</code> uses the text-only Inbox Tray GraphQL operation to preserve emoji, with the existing audience argument and typed <code>Note</code> return.</p>
 <p>Aiograpi 2.1.13 records synchronization through instagrapi 3.2.13. Music Note creation now includes the root-field and pando request headers while retaining the existing operation and payload.</p>
 <p>Aiograpi 2.1.12 records synchronization through instagrapi 3.2.12. Awaited <code>direct_send()</code> shares one request-local navigation chain between the header and body and supports inbox attribution while retaining existing values and the historical default chain. This request-shape fix does not guarantee recovery from Direct restrictions.</p>
@@ -1772,7 +1773,12 @@
 <tr>
 <td>3.2.14</td>
 <td>2.1.15</td>
-<td>Same upstream baseline, plus async-only linked additional-profile creation with separate sessions.</td>
+<td>Original release baseline, plus linked additional-profile creation with separate sessions.</td>
+</tr>
+<tr>
+<td>3.2.15</td>
+<td>main (after 2.1.15)</td>
+<td>Reconciled the synchronous port of the existing additional-profile feature; no new async runtime changes or package release.</td>
 </tr>
 </tbody>
 </table>
