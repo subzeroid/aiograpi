@@ -6,11 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
-## Unreleased
+## 2.1.16 — 2026-11-17
+
+### Fixed
+
+- Preserve the initial CAA outcome and response when the existing legacy fallback raises a login error. The standalone diagnostic exports a shareable summary of the initial stage; raw exception attributes remain private (instagrapi #2881).
 
 ### Changed
 
-- Record synchronization through instagrapi 3.2.15, which ports the additional-profile feature already released in aiograpi 2.1.15. Update upstream documentation without changing client behavior or package version.
+- Record synchronization through instagrapi 3.2.16, including the earlier reconciliation of the additional-profile flow already released in aiograpi 2.1.15.
 
 ## 2.1.15 — 2026-11-16
 
