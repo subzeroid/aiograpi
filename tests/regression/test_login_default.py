@@ -130,6 +130,42 @@ class LoginDefaultRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.client.pre_login_flow.assert_awaited_once_with()
 
+    async def test_initial_caa_evidence_survives_legacy_error_and_second_caa_attempt(self):
+        first = self.caa_outcome_with_actions(["CAA_LOGIN_FALLBACK:fallback_triggered"])
+        first["result"]["private_token"] = "DO_NOT_SHARE_initial"
+        expected_first = deepcopy(first)
+        initial_response = Mock(status_code=200)
+        legacy_response = Mock(status_code=400)
+        error = UnknownError("Upgrade required", response=legacy_response, error_type="needs_upgrade")
+        calls = []
+
+        def caa(**kwargs):
+            calls.append("caa")
+            if len(calls) == 1:
+                self.client.last_response = initial_response
+                return first
+            first["result"]["private_token"] = "changed_later"
+            self.client.last_response = Mock(status_code=200)
+            return self.caa_outcome()
+
+        self.client.bloks_caa_login = AsyncMock(side_effect=caa)
+        self.client.pre_login_flow = AsyncMock(return_value=True)
+        self.client.password_encrypt = AsyncMock(return_value="encrypted")
+        self.client.private_request = AsyncMock(side_effect=error)
+        with self.assertRaises(UnknownError) as ctx:
+            await self.client.login("synthetic-user", "synthetic-password")
+
+        self.assertIs(ctx.exception, error)
+        self.assertIs(error.response, legacy_response)
+        self.assertEqual(error.caa_initial_outcome, expected_first)
+        self.assertIs(error.caa_initial_response, initial_response)
+        self.assertEqual(len(calls), 2)
+        self.client.private_request.assert_awaited_once()
+        self.assertEqual(str(error), "Upgrade required")
+        self.assertTrue(error.__notes__)
+        self.assertNotIn("DO_NOT_SHARE", str(error) + " ".join(error.__notes__))
+        self.client.login_flow.assert_not_awaited()
+
     async def test_login_reports_caa_action_markers_when_no_fallback_is_requested(self):
         self.client.bloks_caa_login = AsyncMock(
             return_value=self.caa_outcome_with_actions(

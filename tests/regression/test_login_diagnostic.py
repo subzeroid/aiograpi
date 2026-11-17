@@ -1497,6 +1497,7 @@ def test_bloks_extraction_failure_uses_fixed_schema_without_session_changes(diag
         "fallback_reference_present",
         "login_success_reference_present",
         "continuation_reference_present",
+        "account_recovery_reference_present",
         "error_reference_present",
         "login_response_reference_present",
         "two_step_context_parsed",
@@ -1561,3 +1562,35 @@ def test_non_string_error_metadata_does_not_hide_decoded_payload(diagnostic, err
     assert summary["bloks"]["sessionid_cookie_present"] is True
     assert summary["bloks"]["inspection_error"] is False
     assert SECRET not in json.dumps(summary)
+
+
+def test_account_recovery_reference_is_reported_without_exporting_values(diagnostic):
+    payload = {
+        "layout": {"bloks_payload": {"action": '(f4i (dkc "login_surface") (dkc "account_recovery"))'}},
+        "private": SECRET,
+    }
+    summary = diagnostic.summarize_bloks(payload)
+    assert summary["account_recovery_reference_present"] is True
+    assert SECRET not in json.dumps(summary)
+    assert (
+        diagnostic.summarize_bloks({"message": "prefix_account_recovery_suffix"})["account_recovery_reference_present"]
+        is False
+    )
+
+
+@async_test
+async def test_retained_initial_caa_summary_does_not_export_raw_outcome(diagnostic, clients):
+    from aiograpi.exceptions import ClientError
+
+    client = clients(private_transport="requests")
+    error = ClientError(SECRET)
+    error.caa_initial_outcome = {
+        "logged_in": False,
+        "reason": SECRET,
+        "result": {"action": '(f4i (dkc "login_surface") (dkc "account_recovery"))', "token": SECRET},
+    }
+    client.login = AsyncMock(side_effect=error)
+    report = await diagnostic.diagnose(client, "synthetic", SECRET)
+    assert report["initial_caa"]["bloks"]["account_recovery_reference_present"] is True
+    assert report["initial_caa"]["reason"] == "other"
+    assert SECRET not in json.dumps(report)
