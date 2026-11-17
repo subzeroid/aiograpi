@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## Unreleased
+
+### Changed
+
+- Record synchronization through instagrapi 3.2.15, which ports the additional-profile feature already released in aiograpi 2.1.15. Update upstream documentation without changing client behavior or package version.
+
 ## 2.1.15 — 2026-11-16
 
 ### Added

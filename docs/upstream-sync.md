@@ -5,12 +5,14 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.2.14
+instagrapi 3.2.15
 ```
 
 In aiograpi 2.1.0, the optional [uTLS transport](usage-guide/utls.md) ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.
 
-Aiograpi 2.1.15 adds the async-only linked additional-profile creation flow and preserves the recorded instagrapi 3.2.14 baseline. `create_secondary_account()` returns a separate session while retaining the main client; this feature has not yet been ported to instagrapi.
+The current source records synchronization through instagrapi 3.2.15. Its linked additional-profile feature was ported from aiograpi 2.1.15, so no additional async runtime port is needed. The shared parser is identical; async transport options and cancellation-safe cleanup remain native to aiograpi. The synchronous release documents unsuccessful live creation attempts; this does not replace the separate async validation evidence. This metadata/documentation update does not require a new package release.
+
+Aiograpi 2.1.15 originally shipped the linked additional-profile creation flow while recording the instagrapi 3.2.14 baseline. `create_secondary_account()` returns a separate session while retaining the main client.
 
 Aiograpi 2.1.14 records synchronization through instagrapi 3.2.14. Awaited `create_note()` uses the text-only Inbox Tray GraphQL operation to preserve emoji, with the existing audience argument and typed `Note` return.
 
@@ -89,7 +91,8 @@ Aiograpi 2.1.0 includes cookie-only session identity restoration and the documen
 | 3.2.12 | 2.1.12 | Request-local Direct navigation header/body alignment, optional custom chains and inbox attribution; historical default chain retained. |
 | 3.2.13 | 2.1.13 | Music Note root-field and pando request headers; existing operation and payload retained. |
 | 3.2.14 | 2.1.14 | Text Note emoji preservation through Inbox Tray GraphQL; audience and typed return preserved. |
-| 3.2.14 | 2.1.15 | Same upstream baseline, plus async-only linked additional-profile creation with separate sessions. |
+| 3.2.14 | 2.1.15 | Original release baseline, plus linked additional-profile creation with separate sessions. |
+| 3.2.15 | main (after 2.1.15) | Reconciled the synchronous port of the existing additional-profile feature; no new async runtime changes or package release. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
