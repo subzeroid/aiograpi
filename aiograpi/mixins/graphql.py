@@ -123,6 +123,9 @@ class GraphQLRequestMixin(ClientMixin):
         if isinstance(target, list):
             if not isinstance(key, int):
                 return
+            if key == len(target):
+                target.append(value)
+                return
             try:
                 current = target[key]
             except IndexError:
@@ -141,13 +144,16 @@ class GraphQLRequestMixin(ClientMixin):
     def _json_from_graphql_response(self, response):
         try:
             return response.json()
-        except orjson.JSONDecodeError:
+        except json.JSONDecodeError:
             chunks = [orjson.loads(line) for line in response.text.splitlines() if line.strip()]
             if not chunks:
                 raise
             body = chunks[0]
             for chunk in chunks[1:]:
-                self._merge_incremental_graphql_payload(body, chunk)
+                updates = chunk if isinstance(chunk, list) else (chunk,)
+                for update in updates:
+                    if isinstance(update, dict):
+                        self._merge_incremental_graphql_payload(body, update)
             return body
 
     @property

@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## Unreleased
+
+### Added
+
+- Add `media_search_top_gql()` to return typed media from the first page of mobile Top GraphQL search (instagrapi #2961).
+
+### Fixed
+
+- Assemble batched GraphQL updates and append streamed list items in response order.
+
 ## 2.1.16 — 2026-11-17
 
 ### Fixed
