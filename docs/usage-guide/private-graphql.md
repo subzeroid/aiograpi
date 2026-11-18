@@ -43,6 +43,7 @@ query) and as **named convenience wrappers** (`user_info_v2_gql`,
 | Search typeahead stream | `Client.fbsearch_typeahead_stream(query)` |
 | Typeahead users (flattened) | `Client.fbsearch_typehead(query)` |
 | Top media search | `Client.media_search(query, amount=27)` |
+| First page of mobile Top GraphQL media search | `Client.media_search_top_gql(query, amount=0)` |
 | Generic SERP fetch (top / user / clips / popular) | `Client.fbsearch_item(item_id, search_surface, query)` |
 | Accounts SERP (v2) | `Client.fbsearch_accounts_v2(query, page_token=None)` |
 | Reels SERP (v2) | `Client.fbsearch_reels_v2(query, reels_max_id=None, rank_token=None)` |
@@ -103,6 +104,7 @@ top = await cl.fbsearch_topsearch_v2("python")
 accounts = await cl.fbsearch_accounts_v2("python")
 reels = await cl.fbsearch_reels_v2("python")
 media_hits = await cl.media_search("python", amount=3)
+top_media_hits = await cl.media_search_top_gql("python", amount=3)
 
 # Pagination: pass the cursor from the previous response back in.
 more_accounts = await cl.fbsearch_accounts_v2(
