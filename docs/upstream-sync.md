@@ -5,10 +5,12 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.2.17
+instagrapi 3.2.18
 ```
 
 In aiograpi 2.1.0, the optional [uTLS transport](usage-guide/utls.md) ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.
+
+Aiograpi 2.1.18 records synchronization through instagrapi 3.2.18 and adds `media_search_top_gql_chunk()` for mobile Top GraphQL pagination.
 
 Aiograpi 2.1.17 records synchronization through instagrapi 3.2.17 and adds `media_search_top_gql()` for typed media from the first page of the mobile Top GraphQL search.
 
@@ -99,6 +101,7 @@ Aiograpi 2.1.0 includes cookie-only session identity restoration and the documen
 | 3.2.15 | main (after 2.1.15) | Reconciled the synchronous port of the existing additional-profile feature. |
 | 3.2.16 | 2.1.16 | Preserve the initial CAA evidence after a failed legacy fallback, with a shareable diagnostic summary. |
 | 3.2.17 | 2.1.17 | First-page mobile Top GraphQL media search and batched response updates. |
+| 3.2.18 | 2.1.18 | Cursor-based mobile Top GraphQL media search. |
 
 See the [login migration guide](usage-guide/login-migration.md) for the current defaults and compatibility options. From aiograpi 2.0.3, `login()` follows an explicit fallback instruction returned by Instagram; it does not retry every failed CAA login through the legacy endpoint.
 
