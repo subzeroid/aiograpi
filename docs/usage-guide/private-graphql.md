@@ -44,6 +44,7 @@ query) and as **named convenience wrappers** (`user_info_v2_gql`,
 | Typeahead users (flattened) | `Client.fbsearch_typehead(query)` |
 | Top media search | `Client.media_search(query, amount=27)` |
 | First page of mobile Top GraphQL media search | `Client.media_search_top_gql(query, amount=0)` |
+| Paginated mobile Top GraphQL media search | `Client.media_search_top_gql_chunk(query, cursor=None)` |
 | Generic SERP fetch (top / user / clips / popular) | `Client.fbsearch_item(item_id, search_surface, query)` |
 | Accounts SERP (v2) | `Client.fbsearch_accounts_v2(query, page_token=None)` |
 | Reels SERP (v2) | `Client.fbsearch_reels_v2(query, reels_max_id=None, rank_token=None)` |
@@ -110,6 +111,15 @@ top_media_hits = await cl.media_search_top_gql("python", amount=3)
 more_accounts = await cl.fbsearch_accounts_v2(
     "python", page_token=accounts.get("next_page_token")
 )
+```
+
+Top GraphQL pagination returns media and an opaque cursor. Pass the cursor with the same query and authenticated session. A page can be empty when more pages are available. Stop when the cursor is `None`.
+
+```python
+medias, cursor = await cl.media_search_top_gql_chunk("python")
+while cursor is not None:
+    page, cursor = await cl.media_search_top_gql_chunk("python", cursor)
+    medias.extend(page)
 ```
 
 `media_search()` raises `PrivateError` when the response omits `media_grid`, returns `null`, or has a malformed grid or sections payload. A valid empty grid still returns `[]`. The exception also propagates on later pages instead of returning partial results. Repeated pagination cursor pairs stop further requests. These checks do not guarantee that Instagram will return search results.
