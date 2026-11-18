@@ -1525,9 +1525,10 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.2.16
+<div class="highlight"><pre><span></span><code>instagrapi 3.2.17
 </code></pre></div>
 <p>In aiograpi 2.1.0, the optional <a href="../usage-guide/utls/">uTLS transport</a> ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.</p>
+<p>Aiograpi 2.1.17 records synchronization through instagrapi 3.2.17 and adds <code>media_search_top_gql()</code> for typed media from the first page of the mobile Top GraphQL search.</p>
 <p>Aiograpi 2.1.16 records synchronization through instagrapi 3.2.16 and retains the initial CAA evidence when legacy fallback fails. Its diagnostic exports a shareable summary.</p>
 <p>Instagrapi 3.2.15's linked additional-profile feature was ported from aiograpi 2.1.15, so no additional async runtime port is needed. The shared parser is identical; async transport options and cancellation-safe cleanup remain native to aiograpi. The synchronous release documents unsuccessful live creation attempts; this does not replace the separate async validation evidence.</p>
 <p>Aiograpi 2.1.15 originally shipped the linked additional-profile creation flow while recording the instagrapi 3.2.14 baseline. <code>create_secondary_account()</code> returns a separate session while retaining the main client.</p>
@@ -1785,6 +1786,11 @@
 <td>3.2.16</td>
 <td>2.1.16</td>
 <td>Preserve the initial CAA evidence after a failed legacy fallback, with a shareable diagnostic summary.</td>
+</tr>
+<tr>
+<td>3.2.17</td>
+<td>2.1.17</td>
+<td>First-page mobile Top GraphQL media search and batched response updates.</td>
 </tr>
 </tbody>
 </table>
