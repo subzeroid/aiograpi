@@ -1278,6 +1278,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Using the named wrappers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#web-account-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web account search
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1535,6 +1552,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Using the named wrappers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#web-account-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web account search
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1731,6 +1765,10 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
 <td><code>Client.private_graphql_update_inbox_tray_last_seen()</code></td>
 </tr>
 <tr>
+<td>Account search in the web search box</td>
+<td><code>Client.web_search_users(query)</code></td>
+</tr>
+<tr>
 <td>Search keyword typeahead</td>
 <td><code>Client.fbsearch_keyword_typeahead(query)</code></td>
 </tr>
@@ -1845,6 +1883,10 @@ query) and as <strong>named convenience wrappers</strong> (<code>user_info_v2_gq
     <span class="n">medias</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
 </code></pre></div>
 <p><code>media_search()</code> raises <code>PrivateError</code> when the response omits <code>media_grid</code>, returns <code>null</code>, or has a malformed grid or sections payload. A valid empty grid still returns <code>[]</code>. The exception also propagates on later pages instead of returning partial results. Repeated pagination cursor pairs stop further requests. These checks do not guarantee that Instagram will return search results.</p>
+<h3 id="web-account-search">Web account search</h3>
+<p>With an authenticated session loaded, fetch account suggestions as <code>UserShort</code> objects. A blank query raises <code>ValueError</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">accounts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">cl</span><span class="o">.</span><span class="n">web_search_users</span><span class="p">(</span><span class="s2">"python"</span><span class="p">)</span>
+</code></pre></div>
 <h2 id="calling-unwrapped-doc_ids-directly">Calling unwrapped doc_ids directly</h2>
 <p>Prefer <code>user_short_gql()</code> or <code>user_info_v2_gql()</code> for typed profile results. Both use the current web profile query and its required Relay variables; <code>user_info_by_username_v2_gql()</code> resolves a username before using the same query.</p>
 <p>When calling a captured <code>doc_id</code> directly, supply all variables required by that query:</p>
