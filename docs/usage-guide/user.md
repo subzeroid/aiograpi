@@ -81,7 +81,9 @@ Low level methods:
 | search_followers_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by followers by Private Mobile API                                  |
 | search_following_v1(user_id: str, query: str)                                       | List[UserShort]             | Search by following by Private Mobile API                                  |
 | private_graphql_followers_list(user_id: str, rank_token: str, ..., order: Optional[FOLLOWERS_ORDER] = None) | dict | Raw private mobile GraphQL followers list. Supports `date_followed_latest` and `date_followed_earliest` |
-| private_graphql_following_list(user_id: str, rank_token: str, ..., order: Optional[FOLLOWERS_ORDER] = None) | dict | Raw private mobile GraphQL following list. Supports mobile `order` when accepted by Instagram |
+| private_graphql_following_list(user_id: str, rank_token: str, ..., order: Optional[FOLLOWERS_ORDER] = None) | dict | Raw private mobile GraphQL following list. Accepts the mobile `order` option |
+
+Use `order="date_followed_latest"` or `order="date_followed_earliest"` with `FollowingList` to request chronological sorting for your own following list. When you request another account’s list, Instagram may ignore both values and return the same viewer-ranked order. The raw and typed GraphQL helpers preserve the order returned by Instagram. [See issue #2857](https://github.com/subzeroid/instagrapi/issues/2857).
 
 `user_follow()` returns `True` only when it sends a new follow action and Instagram reports either an immediate follow or a new outgoing follow request for a private account. It returns `False` when the current account already follows the target or already has a pending outgoing follow request. Use `user_friendship_v1()` when you need to distinguish `following` from `outgoing_request`.
 
