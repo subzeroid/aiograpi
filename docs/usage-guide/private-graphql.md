@@ -39,6 +39,7 @@ query) and as **named convenience wrappers** (`user_info_v2_gql`,
 | Top audio trends categories | `Client.private_graphql_top_audio_trends_eligible_categories()` |
 | Memories pog (story memories pog in home tray) | `Client.private_graphql_memories_pog()` |
 | Mark inbox tray as seen | `Client.private_graphql_update_inbox_tray_last_seen()` |
+| Account search in the web search box | `Client.web_search_users(query)` |
 | Search keyword typeahead | `Client.fbsearch_keyword_typeahead(query)` |
 | Search typeahead stream | `Client.fbsearch_typeahead_stream(query)` |
 | Typeahead users (flattened) | `Client.fbsearch_typehead(query)` |
@@ -123,6 +124,14 @@ while cursor is not None:
 ```
 
 `media_search()` raises `PrivateError` when the response omits `media_grid`, returns `null`, or has a malformed grid or sections payload. A valid empty grid still returns `[]`. The exception also propagates on later pages instead of returning partial results. Repeated pagination cursor pairs stop further requests. These checks do not guarantee that Instagram will return search results.
+
+### Web account search
+
+With an authenticated session loaded, fetch account suggestions as `UserShort` objects. A blank query raises `ValueError`.
+
+```python
+accounts = await cl.web_search_users("python")
+```
 
 ## Calling unwrapped doc_ids directly
 
