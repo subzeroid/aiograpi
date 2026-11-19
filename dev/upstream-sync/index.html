@@ -1525,9 +1525,10 @@
 <h1 id="upstream-sync-policy">Upstream sync policy</h1>
 <p><code>aiograpi</code> is the async port of <code>instagrapi</code>. Package versions remain independent, but every sync release records the <code>instagrapi</code> tag it has been ported through.</p>
 <p>The current recorded upstream synchronization baseline is:</p>
-<div class="highlight"><pre><span></span><code>instagrapi 3.2.18
+<div class="highlight"><pre><span></span><code>instagrapi 3.2.19
 </code></pre></div>
 <p>In aiograpi 2.1.0, the optional <a href="../usage-guide/utls/">uTLS transport</a> ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.</p>
+<p>Aiograpi 2.1.19 records synchronization through instagrapi 3.2.19 and adds <code>web_search_users()</code> for typed web account search.</p>
 <p>Aiograpi 2.1.18 records synchronization through instagrapi 3.2.18 and adds <code>media_search_top_gql_chunk()</code> for mobile Top GraphQL pagination.</p>
 <p>Aiograpi 2.1.17 records synchronization through instagrapi 3.2.17 and adds <code>media_search_top_gql()</code> for typed media from the first page of the mobile Top GraphQL search.</p>
 <p>Aiograpi 2.1.16 records synchronization through instagrapi 3.2.16 and retains the initial CAA evidence when legacy fallback fails. Its diagnostic exports a shareable summary.</p>
@@ -1797,6 +1798,11 @@
 <td>3.2.18</td>
 <td>2.1.18</td>
 <td>Cursor-based mobile Top GraphQL media search.</td>
+</tr>
+<tr>
+<td>3.2.19</td>
+<td>2.1.19</td>
+<td>Typed account results from the Instagram web search box.</td>
 </tr>
 </tbody>
 </table>
