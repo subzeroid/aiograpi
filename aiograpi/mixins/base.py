@@ -31,6 +31,7 @@ if TYPE_CHECKING:
         domain: str
         email: Optional[str]
         graphql: Any
+        GRAPHQL_PUBLIC_WEB_API_URL: str
         handle_exception: Any
         ig_u_rur: Optional[str]
         ig_www_claim: Optional[str]

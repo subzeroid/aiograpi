@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## Unreleased
+
+### Added
+
+- Search for accounts through the Instagram web search box with `web_search_users()` and get typed `UserShort` results (instagrapi #2962).
+
 ## 2.1.18 — 2026-11-19
 
 ### Added
