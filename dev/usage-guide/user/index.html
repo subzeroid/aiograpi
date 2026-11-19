@@ -1828,10 +1828,11 @@ Pass <code>None</code> to keep Instagram's default follower order.</p>
 <tr>
 <td>private_graphql_following_list(user_id: str, rank_token: str, ..., order: Optional[FOLLOWERS_ORDER] = None)</td>
 <td>dict</td>
-<td>Raw private mobile GraphQL following list. Supports mobile <code>order</code> when accepted by Instagram</td>
+<td>Raw private mobile GraphQL following list. Accepts the mobile <code>order</code> option</td>
 </tr>
 </tbody>
 </table>
+<p>Use <code>order="date_followed_latest"</code> or <code>order="date_followed_earliest"</code> with <code>FollowingList</code> to request chronological sorting for your own following list. When you request another account’s list, Instagram may ignore both values and return the same viewer-ranked order. The raw and typed GraphQL helpers preserve the order returned by Instagram. <a href="https://github.com/subzeroid/instagrapi/issues/2857">See issue #2857</a>.</p>
 <p><code>user_follow()</code> returns <code>True</code> only when it sends a new follow action and Instagram reports either an immediate follow or a new outgoing follow request for a private account. It returns <code>False</code> when the current account already follows the target or already has a pending outgoing follow request. Use <code>user_friendship_v1()</code> when you need to distinguish <code>following</code> from <code>outgoing_request</code>.</p>
 <p><code>UserShort</code> objects returned from private GraphQL follow-list payloads preserve selected v2-only fields when Instagram sends them: <code>friendship_status</code>, <code>profile_pic_id</code>, <code>fbid_v2</code>, <code>interop_messaging_user_fbid</code>, <code>strong_id__</code>, and raw <code>account_badges</code>. The legacy <code>latest_reel_media</code> property is also populated from Instagram's current <code>1llatest_reel_media</code> key.</p>
 <p>When authenticated, <code>user_followers()</code> and <code>user_following()</code> use the private mobile API and may restart through private GraphQL (<code>FollowersList</code>/<code>FollowingList</code>) for endpoint/schema failures or a limited followers response. They do not fall back to legacy public queries. Authorization, challenge, throttling, transport and programming errors propagate.</p>
