@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## 2.1.20 — 2026-11-24
+
+### Fixed
+
+- Keep carousels and their child media in Top GraphQL search when an individual user tag has invalid coordinates. Preserve a tag's valid `x` and `y` fields when `position` is unusable ([instagrapi #2973](https://github.com/subzeroid/instagrapi/issues/2973)).
+
 ## 2.1.19 — 2026-11-19
 
 ### Added
