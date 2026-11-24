@@ -420,6 +420,21 @@ class StoryMixinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual([media.media_pk for media in story.medias], [media_pk, 123])
 
+    async def test_extract_story_web_accepts_location_without_name(self):
+        # Web stories can carry a location sticker whose location has only a pk.
+        payload = web_story_payload()
+        payload["story_locations"] = [
+            {"location": {"pk": 2167925883460980}, "x": 0.5, "y": 0.4, "width": 0.3, "height": 0.1, "rotation": 0},
+            {"location": {"pk": 213385402, "name": "Sao Paulo"}, "x": 0.5, "y": 0.6},
+        ]
+        original = deepcopy(payload)
+
+        story = extract_story_web(payload)
+
+        self.assertEqual(payload, original)
+        self.assertEqual([loc.location.pk for loc in story.locations], [2167925883460980, 213385402])
+        self.assertEqual([loc.location.name for loc in story.locations], ["", "Sao Paulo"])
+
     async def test_extract_story_web_requires_identifiers(self):
         for kind in ("story", "user"):
             payload = web_story_payload()
