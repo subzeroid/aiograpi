@@ -95,6 +95,8 @@ Use `--relogin` to request password login despite an authorized saved session, `
 
 The sanitized report includes response order, error categories, parsed-context booleans and CAA outcomes captured before fallback overwrites state. Marker and dialog presence flags record references. They do not prove callback execution, credential validity, verification-code acceptance or a usable session; HTTP 200 alone does not prove these either. Review only the report before sharing. Keep the settings file private: it contains session credentials and is updated even after failure. Both files are written atomically with mode 0600; saved retry preferences are retained.
 
+`responses[].bloks.referenced_apps` includes `com.bloks.www.caa.ar.authentication_confirmation.async` if the response references that operation. Each response has its own list, so you can compare the initial CAA response with a later fallback response.
+
 Applications can `await diagnose(client, username, password)` from the repository example. The helper restores its temporary request methods and callbacks even after cancellation, and leaves cleanup and settings persistence to the caller. Use a dedicated client/process because output suppression affects the process during observation. See the [examples README](https://github.com/subzeroid/aiograpi/blob/main/examples/README.md#login-diagnostics) for async usage.
 
 ## Installation requirements
