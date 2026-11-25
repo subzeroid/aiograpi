@@ -86,6 +86,62 @@ class ClipPinRegressionTestCase(unittest.IsolatedAsyncioTestCase):
         assert json.loads(payload["blend_impressions"]) == ["3917361171492779702"]
         assert payload["_uid"] == "29060001803"
         assert payload["_uuid"] == "uuid"
+        assert "progress_impressions" not in payload
+
+    async def test_clip_seen_posts_reported_progress(self):
+        client = Client()
+        client._user_id = "42"
+        with (
+            mock.patch.object(client, "private_request", return_value={"status": "ok"}) as private_request,
+            mock.patch("aiograpi.mixins.clip.time.time", return_value=1_700_000_000.125),
+        ):
+            result = await client.clip_seen(
+                ["3917361171492779700_25025320"],
+                ["3917361171492779701"],
+                progress=[
+                    ("3917361171492779700_25025320", 1_000),
+                    ("3917361171492779701", 2**31),
+                    ("3917361171492779702", 1_234),
+                    ("3917361171492779700_25025320", 0),
+                ],
+            )
+
+        assert result is True
+        private_request.assert_awaited_once()
+        assert private_request.call_args.args == ("clips/write_seen_state/",)
+        data = private_request.call_args.kwargs["data"]
+        assert json.loads(data["impressions"]) == ["3917361171492779700"]
+        assert json.loads(data["blend_impressions"]) == ["3917361171492779701"]
+        expected = [
+            {"media_id": "3917361171492779700_25025320", "position_ms": 0, "updated_at_ms": 1_700_000_000_125},
+            {"media_id": "3917361171492779701", "position_ms": 2**31 - 1, "updated_at_ms": 1_700_000_000_125},
+            {"media_id": "3917361171492779702", "position_ms": 1_234, "updated_at_ms": 1_700_000_000_125},
+        ]
+        assert data["progress_impressions"] == json.dumps(expected, separators=(",", ":"))
+
+    async def test_clip_seen_omits_empty_progress(self):
+        client = Client()
+        client._user_id = "42"
+        with mock.patch.object(client, "private_request", return_value={"status": "ok"}) as private_request:
+            assert await client.clip_seen(["3917361171492779700"], progress=[])
+
+        assert "progress_impressions" not in private_request.call_args.kwargs["data"]
+
+    async def test_clip_seen_rejects_invalid_progress_before_dispatch(self):
+        client = Client()
+        client._user_id = "42"
+        with mock.patch.object(client, "private_request") as private_request:
+            for row in (
+                ("", 0),
+                (12, 0),
+                ("3917361171492779700", -1),
+                ("3917361171492779700", 1.5),
+                ("3917361171492779700", True),
+            ):
+                with self.subTest(row=row), self.assertRaises(ValueError):
+                    await client.clip_seen([], progress=[row])
+
+        private_request.assert_not_called()
 
     async def test_clip_mashup_info_posts_media_id_and_identity(self):
         client = Client()
