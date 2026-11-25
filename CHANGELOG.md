@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## Unreleased
+
+### Added
+
+- Accept optional playback progress in `clip_seen()` for Reels and Clips ([instagrapi #2974](https://github.com/subzeroid/instagrapi/issues/2974)).
+
 ## 2.1.20 — 2026-11-24
 
 ### Fixed

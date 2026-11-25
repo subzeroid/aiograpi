@@ -52,7 +52,7 @@ In terms of Instagram, this is called Media, usually users call it publications 
 | media_pin(media_id: str)                                        | bool               | Pin a media to user profile
 | media_unpin(media_id: str)                                      | bool               | Unpin a media to user profile
 | clip_mashup_info(media_pk: str)                                 | dict               | Fetch Reel remix/reuse availability metadata
-| clip_seen(media_ids: List[str], blend_media_ids: List[str] = None) | bool            | Mark Reels/Clips as seen through the Clips seen-state endpoint
+| clip_seen(media_ids, blend_media_ids=None, *, progress=None) | bool            | Mark Reels/Clips as seen through the Clips seen-state endpoint
 | clip_pin(media_pk: str)                                         | bool               | Pin a Reel to the Reels tab/profile Reels grid
 | clip_unpin(media_pk: str)                                       | bool               | Unpin a Reel from the Reels tab/profile Reels grid
 | media_upload_status(post_client_id: str)                        | dict               | Poll the processing status of an async upload by its client-side upload id until `COMPLETED`
@@ -63,6 +63,11 @@ Media notes are separate from Direct inbox Notes. Use `media_note_create()` and 
 `media_link_reel()` uses Instagram's private `media/{media_id}/edit_media/` endpoint. Pass full media IDs when you have them; plain media PKs are normalized with `media_id()` before the request.
 
 Use `clip_seen()` for Reels/Clips. `media_seen()` keeps the older story/reel-tray seen payload. Instagram still decides whether a seen-state event is counted in view analytics.
+
+Pass `progress=[(media_id, position_ms)]` to include playback progress you measured. The SDK
+preserves each media ID as supplied, uses the last position for repeated IDs, and adds the
+current Unix timestamp in milliseconds. Each position must be a non-negative integer.
+Omit `progress` or pass an empty sequence to send a seen-state request without progress.
 
 `media_share_to_story()` uploads a story background and attaches the feed media as a story sticker. Pass a 9:16
 background image, or omit `background` to generate a temporary black 720x1280 image.

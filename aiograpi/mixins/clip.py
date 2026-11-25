@@ -5,7 +5,7 @@ import os
 import tempfile
 import time
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Sequence, Union
 from uuid import uuid4
 
 from aiograpi import config
@@ -122,7 +122,13 @@ class ClipMixin(ClientMixin):
             },
         )
 
-    async def clip_seen(self, media_ids: List[str], blend_media_ids: Optional[List[str]] = None) -> bool:
+    async def clip_seen(
+        self,
+        media_ids: List[str],
+        blend_media_ids: Optional[List[str]] = None,
+        *,
+        progress: Optional[Sequence[tuple[str, int]]] = None,
+    ) -> bool:
         """
         Mark Clips/Reels as seen using Instagram's Clips seen-state endpoint.
 
@@ -132,6 +138,10 @@ class ClipMixin(ClientMixin):
             Clip/Reel media ids or pks.
         blend_media_ids: List[str], optional
             Clip/Reel media ids or pks seen from Blend surfaces.
+        progress: Sequence[tuple[str, int]], optional
+            Media ids and playback positions in milliseconds. Keep the media id as
+            supplied and use the last position for each id. Large positions are
+            capped at the signed 32-bit maximum. Empty progress is omitted.
 
         Returns
         -------
@@ -141,15 +151,29 @@ class ClipMixin(ClientMixin):
         assert self.user_id, "Login required"
         media_pks = [self.media_pk(media_id) for media_id in media_ids]
         blend_media_pks = [self.media_pk(media_id) for media_id in (blend_media_ids or [])]
-        result = await self.private_request(
-            "clips/write_seen_state/",
-            data={
-                "impressions": json.dumps(media_pks, separators=(",", ":")),
-                "_uid": str(self.user_id),
-                "_uuid": self.uuid,
-                "blend_impressions": json.dumps(blend_media_pks, separators=(",", ":")),
-            },
-        )
+        data = {
+            "impressions": json.dumps(media_pks, separators=(",", ":")),
+            "_uid": str(self.user_id),
+            "_uuid": self.uuid,
+            "blend_impressions": json.dumps(blend_media_pks, separators=(",", ":")),
+        }
+        if progress:
+            positions = {}
+            for media_id, position_ms in progress:
+                if not isinstance(media_id, str) or not media_id:
+                    raise ValueError("progress media_id must be a non-empty string")
+                if not isinstance(position_ms, int) or isinstance(position_ms, bool) or position_ms < 0:
+                    raise ValueError("progress position_ms must be a non-negative integer")
+                positions[media_id] = min(position_ms, 2**31 - 1)
+            updated_at_ms = int(time.time() * 1000)
+            data["progress_impressions"] = json.dumps(
+                [
+                    {"media_id": media_id, "position_ms": position_ms, "updated_at_ms": updated_at_ms}
+                    for media_id, position_ms in positions.items()
+                ],
+                separators=(",", ":"),
+            )
+        result = await self.private_request("clips/write_seen_state/", data=data)
         return result.get("status") == "ok"
 
     async def clip_pin(self, media_pk: str, revert: bool = False) -> bool:
