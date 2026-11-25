@@ -5,10 +5,12 @@
 The current recorded upstream synchronization baseline is:
 
 ```text
-instagrapi 3.2.20
+instagrapi 3.2.21
 ```
 
 In aiograpi 2.1.0, the optional [uTLS transport](usage-guide/utls.md) ports the strict native TLS/HTTP2 engine, verified source installer and HTTP/2 peer validation from instagrapi 3.1.0 through an asynchronous HTTPX boundary. Curl remains the default. The documentation Git identity correction was already ported, including aiograpi's tag-push fallback.
+
+Aiograpi 2.1.21 records synchronization through instagrapi 3.2.21 and adds optional playback progress to `clip_seen()`.
 
 Aiograpi 2.1.20 records synchronization through instagrapi 3.2.20 and keeps carousels in Top GraphQL search when individual user tags have invalid coordinates.
 
