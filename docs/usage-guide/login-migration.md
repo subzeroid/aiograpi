@@ -95,6 +95,8 @@ Use `--relogin` to request password login despite an authorized saved session, `
 
 The sanitized report includes response order, error categories, parsed-context booleans and CAA outcomes captured before fallback overwrites state. Marker and dialog presence flags record references. They do not prove callback execution, credential validity, verification-code acceptance or a usable session; HTTP 200 alone does not prove these either. Review only the report before sharing. Keep the settings file private: it contains session credentials and is updated even after failure. Both files are written atomically with mode 0600; saved retry preferences are retained.
 
+For `usdid/registration`, `responses[].usdid` includes the Boolean registration result and whether the response contained a nonempty GraphQL error list. It records only the known error code `4789001` and the Boolean `is_transient` and `allow_user_retry` flags from the first error when available. The registration result, code, and flags are `null` when absent or unrecognized. The report omits the error text and device data. An HTTP 200 response can still contain a GraphQL registration error.
+
 Applications can `await diagnose(client, username, password)` from the repository example. The helper restores its temporary request methods and callbacks even after cancellation, and leaves cleanup and settings persistence to the caller. Use a dedicated client/process because output suppression affects the process during observation. See the [examples README](https://github.com/subzeroid/aiograpi/blob/main/examples/README.md#login-diagnostics) for async usage.
 
 ## Installation requirements
