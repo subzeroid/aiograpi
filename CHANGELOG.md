@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 starting with 1.0.0.
 
+## 2.1.22 — 2026-11-26
+
+### Fixed
+
+- Keep web stories with location stickers that supply a location ID and omit its name. Use an empty string for the missing or null name.
+
+## 2.1.21 — 2026-11-26
+
+### Added
+
+- Accept optional playback progress in `clip_seen()` for Reels and Clips ([instagrapi #2974](https://github.com/subzeroid/instagrapi/issues/2974)).
+
 ## 2.1.20 — 2026-11-24
 
 ### Fixed
