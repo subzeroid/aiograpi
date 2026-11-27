@@ -97,6 +97,8 @@ The sanitized report includes response order, error categories, parsed-context b
 
 For `usdid/registration`, `responses[].usdid` includes the Boolean registration result and whether the response contained a nonempty GraphQL error list. It records only the known error code `4789001` and the Boolean `is_transient` and `allow_user_retry` flags from the first error when available. The registration result, code, and flags are `null` when absent or unrecognized. The report omits the error text and device data. An HTTP 200 response can still contain a GraphQL registration error.
 
+`responses[].bloks.referenced_apps` includes `com.bloks.www.caa.ar.authentication_confirmation.async` if the response references that operation. Each response has its own list, so you can compare the initial CAA response with a later fallback response.
+
 Applications can `await diagnose(client, username, password)` from the repository example. The helper restores its temporary request methods and callbacks even after cancellation, and leaves cleanup and settings persistence to the caller. Use a dedicated client/process because output suppression affects the process during observation. See the [examples README](https://github.com/subzeroid/aiograpi/blob/main/examples/README.md#login-diagnostics) for async usage.
 
 ## Installation requirements
